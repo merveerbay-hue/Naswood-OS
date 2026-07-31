@@ -10,11 +10,13 @@
 
 # 📖 About
 
-Naswood OS is a modular manufacturing management platform developed specifically for wood production facilities.
+Naswood OS is a traceability-first manufacturing operating system developed specifically for industrial wood manufacturing.
 
-The project aims to digitalize every operational process of the factory, from raw log intake to finished product shipment.
+Instead of focusing only on inventory, the system follows every piece of material from raw log reception to the finished product.
 
-The architecture is designed to grow gradually without requiring major redesigns.
+Every transformation, every inventory movement, every production step, every quality inspection and every material loss is digitally recorded.
+
+The goal is to create a complete Digital Twin of the factory.
 
 ---
 
