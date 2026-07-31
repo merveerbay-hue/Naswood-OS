@@ -218,3 +218,29 @@ Naswood OS Team
 Status
 
 Active Development 🚧
+
+Material First
+
+↓
+
+Transformation Tracking
+
+↓
+
+Full Traceability
+
+↓
+
+Yield Analysis
+
+↓
+
+Waste Analysis
+
+↓
+
+Digital Twin
+
+↓
+
+AI Ready
