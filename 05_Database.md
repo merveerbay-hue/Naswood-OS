@@ -92,6 +92,8 @@ paket
 
 kg
 
+mt
+
 hepsi ayrı alanlarda tutulacaktır.
 
 ---
