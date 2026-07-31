@@ -1,6 +1,13 @@
 # 🌲 Naswood OS
 
-> Modern ERP + MES + WMS platform for the wood manufacturing industry.
+Material enters.
+
+Everything is recorded.
+
+Nothing is lost.
+
+Everything is traceable.v> Modern ERP + MES + WMS platform for the wood manufacturing industry.
+
 
 ![Status](https://img.shields.io/badge/Status-Development-orange)
 ![Version](https://img.shields.io/badge/version-0.1-blue)
