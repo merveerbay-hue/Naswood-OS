@@ -11,7 +11,321 @@
 **Status:** Enterprise
 
 ---
+---
 
+# Customer 360°
+
+## Purpose
+
+Customer 360° provides a unified operational, commercial, financial, technical and project-centric view of every customer within Naswood OS.
+
+It consolidates CRM, Sales, Production, Logistics, Finance, Quality, Warranty and Project information into a single intelligent workspace.
+
+Customer 360° serves as the primary dashboard for Sales, Technical Sales, Customer Service, Finance and Executive Management.
+
+---
+
+## Customer Overview
+
+Display:
+
+- Customer ID
+- Customer Code
+- Company Name
+- Customer Category
+- Customer Status
+- Customer Health Score (CHS)
+- Lifetime Value (CLV)
+- Strategic Customer Status
+- Risk Level
+- Assigned Sales Manager
+- Assigned Technical Manager
+- Country
+- Region
+- Preferred Language
+
+---
+
+## Commercial Overview
+
+Display:
+
+- Annual Revenue
+- Lifetime Revenue
+- Gross Profit
+- Net Margin
+- Active Quotations
+- Open Orders
+- Completed Orders
+- Win Rate
+- Average Order Value
+- Payment Terms
+- Discount Group
+
+---
+
+## Sales Pipeline
+
+Display:
+
+- Active Opportunities
+- Proposal Pipeline
+- Expected Revenue
+- Proposal Status
+- Negotiation Status
+- Project Probability
+- Expected Closing Date
+
+---
+
+## Project Overview
+
+Display:
+
+- Active Projects
+- Completed Projects
+- Project Volume (m³)
+- Building Type
+- Architect
+- Contractor
+- Installation Company
+- Project Timeline
+- Delivery Milestones
+
+---
+
+## Production Overview
+
+Display:
+
+- Production Orders
+- Production Progress
+- Reserved Capacity
+- Reserved Materials
+- Estimated Completion
+- Delayed Production
+- Manufacturing Status
+
+---
+
+## Logistics Overview
+
+Display:
+
+- Planned Shipments
+- Delivered Shipments
+- Active Containers
+- Tracking Numbers
+- Delivery Performance
+- Delivery Timeline
+- POD Documents
+
+---
+
+## Financial Overview
+
+Display:
+
+- Current Balance
+- Outstanding Receivables
+- Credit Limit
+- Credit Utilization
+- Payment Performance
+- Average Payment Days
+- Profitability
+- Currency Exposure
+
+---
+
+## Product Portfolio
+
+Display:
+
+- Purchased Products
+- Preferred Products
+- Preferred Wood Species
+- Thermowood Products
+- Massive Panel Products
+- Facade Systems
+- Decking
+- Cladding
+- Custom Products
+
+---
+
+## Technical Overview
+
+Display:
+
+- CAD Requests
+- BIM Requests
+- Technical Drawings
+- D-01 Details
+- D-02 Details
+- Sample Requests
+- Specification Documents
+- Engineering Support Cases
+
+---
+
+## Quality & Warranty
+
+Display:
+
+- Warranty Cases
+- Service Requests
+- NCR Records
+- Customer Complaints
+- CAPA Status
+- Quality Certificates
+- Moisture Reports
+- Inspection Reports
+
+---
+
+## Sustainability
+
+Display:
+
+- FSC Requirements
+- PEFC Requirements
+- CE Requirements
+- EPD Requirements
+- LEED Projects
+- BREEAM Projects
+- Carbon Reporting
+- Digital Product Passport Status
+
+---
+
+## Communication History
+
+Display:
+
+- Meetings
+- Phone Calls
+- Emails
+- WhatsApp (Integration)
+- Video Meetings
+- Factory Visits
+- Site Visits
+- Notes
+- Attachments
+
+---
+
+## Documents
+
+Quick Access:
+
+- Quotations
+- Contracts
+- Purchase Orders
+- Technical Specifications
+- Drawings
+- Certificates
+- Warranty Documents
+- Invoices
+- Delivery Notes
+
+---
+
+## Customer Timeline
+
+Display all customer events chronologically.
+
+Example:
+
+Lead Created
+
+↓
+
+First Meeting
+
+↓
+
+Technical Presentation
+
+↓
+
+Sample Sent
+
+↓
+
+Quotation Sent
+
+↓
+
+Quotation Approved
+
+↓
+
+Order Created
+
+↓
+
+Production Started
+
+↓
+
+Shipment Delivered
+
+↓
+
+Installation Completed
+
+↓
+
+Warranty Started
+
+↓
+
+Customer Satisfaction Survey
+
+---
+
+## AI Insights
+
+AI shall automatically generate:
+
+- Executive Customer Summary
+- Buying Pattern Analysis
+- Growth Opportunity Analysis
+- Cross-Selling Opportunities
+- Upselling Opportunities
+- Churn Prediction
+- Payment Risk Prediction
+- Customer Satisfaction Prediction
+- Recommended Next Action
+
+---
+
+## Dashboard Widgets
+
+- Customer Health Score
+- Lifetime Value
+- Annual Revenue
+- Open Quotations
+- Open Orders
+- Active Projects
+- Outstanding Receivables
+- Delivery Performance
+- Warranty Cases
+- AI Recommendations
+
+---
+
+## Business Rules
+
+Customer 360° shall aggregate data from all customer-related modules.
+
+Customer KPIs shall update automatically.
+
+Critical customer alerts shall be displayed immediately.
+
+Customer documents shall be version-controlled.
+
+AI recommendations shall continuously adapt based on customer activity.
 # 1. Purpose
 
 The Customers module serves as the centralized master data and intelligence hub for all customer relationships.
