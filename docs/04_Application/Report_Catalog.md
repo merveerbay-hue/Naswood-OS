@@ -639,7 +639,340 @@ Audit Log
 AI
 
 ---
+---
 
+# Naswood Specialized Reports
+
+The following reports are specifically designed for timber manufacturing, thermowood production and advanced material traceability.
+
+These reports extend the standard ERP reporting capabilities and provide complete operational visibility across the manufacturing lifecycle.
+
+---
+
+## Timber Recovery Report
+
+Purpose
+
+Analyze raw log utilization and production efficiency.
+
+Contents
+
+- Incoming Log Volume (m³)
+- Log Species Distribution
+- Log Diameter Classes
+- Prism Yield
+- Lumber Yield
+- Panel Yield
+- Recovery Rate (%)
+- Waste Volume
+- Sawdust Production
+- Wood Chip Production
+- Pellet Raw Material
+- Recovery by Species
+- Recovery by Supplier
+- Recovery Trend
+
+KPIs
+
+- Recovery %
+- Waste %
+- Yield %
+- By-product Ratio
+
+---
+
+## Thermowood Batch Report
+
+Purpose
+
+Analyze every Thermowood treatment batch.
+
+Contents
+
+- Batch Number
+- Kiln Number
+- Recipe Name
+- Wood Species
+- Material Volume
+- Material Quantity
+- Start Time
+- Finish Time
+- Process Duration
+- Maximum Temperature
+- Temperature Curve
+- Humidity Curve
+- Fan Runtime
+- Energy Consumption
+- Operator
+- Batch Status
+- Final Quality Result
+
+KPIs
+
+- Average Cycle Time
+- Energy per m³
+- Batch Success Rate
+- Reject Rate
+
+---
+
+## Kiln Drying Report
+
+Purpose
+
+Analyze kiln drying performance.
+
+Contents
+
+- Kiln Number
+- Drying Recipe
+- Moisture Before Drying
+- Moisture After Drying
+- Drying Time
+- Energy Consumption
+- Drying Curve
+- Temperature Curve
+- Relative Humidity
+- Fan Runtime
+- Alarm History
+
+KPIs
+
+- Moisture Accuracy
+- Average Drying Time
+- Energy Consumption
+- Drying Efficiency
+
+---
+
+## Material Genealogy Report
+
+Purpose
+
+Display the complete history of a selected material.
+
+Contents
+
+- Material Code
+- Parent Material
+- Child Materials
+- Transformation History
+- Production Orders
+- Machines Used
+- Tools Used
+- Operators
+- Recipes
+- Quality Inspections
+- Inventory Movements
+- Warehouse Locations
+- Package Information
+- Shipment Information
+- Customer Information
+
+KPIs
+
+- Total Processing Time
+- Total Value Added
+- Material Yield
+- Complete Traceability
+
+---
+
+## Transformation History Report
+
+Purpose
+
+Analyze all material transformations.
+
+Contents
+
+- Source Material
+- Result Material
+- Transformation Type
+- Machine
+- Tool
+- Recipe
+- Operator
+- Production Order
+- Timestamp
+- Quality Status
+
+KPIs
+
+- Transformation Success Rate
+- Average Transformation Time
+- Yield by Operation
+
+---
+
+## Machine Productivity Report
+
+Purpose
+
+Evaluate machine performance.
+
+Contents
+
+- Machine Runtime
+- Downtime
+- Idle Time
+- Setup Time
+- Production Quantity
+- Energy Consumption
+- Tool Changes
+- Alarm Count
+- OEE
+
+KPIs
+
+- OEE
+- Availability
+- Performance
+- Quality
+- MTBF
+- MTTR
+
+---
+
+## Tool Performance Report
+
+Purpose
+
+Monitor tooling efficiency.
+
+Contents
+
+- Tool Life
+- Knife Life
+- Sharpening Count
+- Total Production
+- Material Processed
+- Profile Produced
+- Replacement History
+- Failure History
+
+KPIs
+
+- Tool Life
+- Cost per m³
+- Sharpening Frequency
+- Replacement Rate
+
+---
+
+## Production Timeline Report
+
+Purpose
+
+Visualize the complete production timeline.
+
+Contents
+
+- Production Order
+- Planned Start
+- Actual Start
+- Planned Finish
+- Actual Finish
+- Waiting Time
+- Processing Time
+- Downtime
+- Quality Time
+- Packaging Time
+- Shipment Time
+
+KPIs
+
+- Lead Time
+- Processing Time
+- Waiting Time
+- On-Time Completion
+
+---
+
+## Factory Digital Twin Snapshot Report
+
+Purpose
+
+Capture the operational state of the factory at a specific moment.
+
+Contents
+
+- Active Machines
+- Running Production Orders
+- WIP Materials
+- Warehouse Occupancy
+- Active Operators
+- Energy Consumption
+- Tool Status
+- Maintenance Status
+- Active Shipments
+- Critical Alarms
+
+KPIs
+
+- Factory Utilization
+- OEE
+- WIP Level
+- Energy Efficiency
+
+---
+
+## Sustainability Report
+
+Purpose
+
+Measure environmental performance.
+
+Contents
+
+- Energy Consumption
+- Biomass Utilization
+- Waste Recovery
+- Carbon Emissions
+- Water Consumption
+- Pellet Production
+- Recycled Material
+- Renewable Energy Usage
+
+KPIs
+
+- Carbon per m³
+- Waste Recovery %
+- Biomass Utilization %
+- Energy per m³
+
+---
+
+## Executive Factory Summary
+
+Purpose
+
+Provide a complete executive overview of factory performance.
+
+Contents
+
+- Daily Production
+- Monthly Production
+- Revenue
+- Manufacturing Cost
+- Inventory Value
+- OEE
+- Waste
+- Yield
+- Delivery Performance
+- Active Orders
+- Delayed Orders
+- AI Recommendations
+- Critical Risks
+
+KPIs
+
+- Revenue
+- Gross Margin
+- OEE
+- Inventory Turnover
+- On-Time Delivery
+- Recovery Rate
 # Future Extensions
 
 The architecture supports:
