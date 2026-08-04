@@ -11,7 +11,292 @@
 **Status:** Enterprise
 
 ---
+---
 
+# Shipment 360°
+
+## Purpose
+
+Shipment 360° provides a unified operational, logistics, production and customer view of every shipment within Naswood OS.
+
+It consolidates production, warehouse, packaging, transportation, customer delivery and quality information into a single intelligent workspace.
+
+Shipment 360° serves as the primary dashboard for Logistics, Warehouse, Production Planning, Customer Service and Management.
+
+---
+
+## Shipment Overview
+
+Display:
+
+- Shipment Number
+- Shipment Type
+- Shipment Status
+- Shipment Priority
+- Customer
+- Dealer
+- Project
+- Sales Order
+- Production Order
+- Warehouse
+- Carrier
+- Vehicle
+- Driver
+- Shipment Health Score (SHS)
+- Current GPS Status
+
+---
+
+## Customer & Project Overview
+
+Display:
+
+- Customer Name
+- Project Name
+- Architect
+- Contractor
+- Delivery Address
+- Site Contact
+- Delivery Appointment
+- Installation Schedule
+- Delivery Priority
+- Project Phase
+- Block
+- Floor
+- Zone
+
+---
+
+## Production Overview
+
+Display:
+
+- Production Completion %
+- Finished Goods Status
+- Quality Approval
+- Batch Numbers
+- Material Genealogy
+- Reserved Inventory
+- Production Timeline
+- Estimated Completion
+
+---
+
+## Packaging Overview
+
+Display:
+
+- Total Packages
+- Pallets
+- Bundles
+- Containers
+- Package Dimensions
+- Gross Weight
+- Net Weight
+- Packaging Status
+- Packaging Photos
+- QR Codes
+- RFID Status
+
+---
+
+## Warehouse Overview
+
+Display:
+
+- Warehouse
+- Storage Locations
+- Loading Dock
+- Loading Queue
+- Forklift Assignment
+- Loading Progress
+- Loading Sequence
+- Warehouse Operator
+
+---
+
+## Transportation Overview
+
+Display:
+
+- Carrier
+- Vehicle
+- Driver
+- GPS Location
+- Route
+- ETA
+- Distance Remaining
+- Travel Duration
+- Fuel Consumption
+- Traffic Status
+
+---
+
+## Delivery Overview
+
+Display:
+
+- Planned Delivery
+- Actual Delivery
+- Delivery Performance
+- Proof of Delivery
+- Customer Acceptance
+- Digital Signature
+- Delivery Photos
+- Delivery Notes
+
+---
+
+## Quality Overview
+
+Display:
+
+- Final Inspection
+- Packaging Inspection
+- Shipment Inspection
+- Moisture Reports
+- Certificates
+- Damage Reports
+- NCR Records
+- Acceptance Status
+
+---
+
+## Digital Product Passport
+
+Display:
+
+- DPP ID
+- QR Code
+- Production History
+- Material Genealogy
+- Environmental Data
+- FSC / PEFC
+- CE
+- EPD
+- Warranty Information
+
+---
+
+## Financial Overview
+
+Display:
+
+- Freight Cost
+- Transportation Cost
+- Packaging Cost
+- Shipment Value
+- Insurance
+- Export Cost
+- Delivery Cost Analysis
+
+---
+
+## Export Overview
+
+Display:
+
+- Commercial Invoice
+- Packing List
+- Bill of Lading
+- Customs Declaration
+- Certificate of Origin
+- Export Certificates
+- Customs Clearance Status
+
+---
+
+## Timeline
+
+Display all shipment events chronologically.
+
+Example:
+
+Shipment Created
+
+↓
+
+Packaging Completed
+
+↓
+
+Quality Approved
+
+↓
+
+Loading Started
+
+↓
+
+Loading Completed
+
+↓
+
+Vehicle Departed
+
+↓
+
+Border Crossing
+
+↓
+
+Delivered
+
+↓
+
+Customer Accepted
+
+↓
+
+Warranty Activated
+
+---
+
+## AI Insights
+
+AI shall automatically generate:
+
+- Shipment Summary
+- Delivery Risk Analysis
+- ETA Prediction
+- Delay Prediction
+- Damage Risk Prediction
+- Route Optimization
+- Alternative Delivery Route
+- Carrier Performance Analysis
+- Customer Delivery Analysis
+- Recommended Actions
+
+---
+
+## Dashboard Widgets
+
+- Shipment Health Score
+- GPS Tracking
+- Delivery Performance
+- Loading Progress
+- ETA
+- Active Shipments
+- Delayed Shipments
+- Container Utilization
+- Customer Acceptance
+- AI Recommendations
+
+---
+
+## Business Rules
+
+Shipment 360° shall aggregate information from all logistics-related modules.
+
+GPS information shall update continuously.
+
+Delivery KPIs shall update automatically.
+
+Proof of Delivery shall be linked to the shipment.
+
+All shipment events shall remain fully auditable.
+
+AI recommendations shall be recalculated continuously until shipment completion.
 # 1. Purpose
 
 The Shipment module manages the complete outbound logistics lifecycle from shipment planning through loading, transportation, delivery confirmation and customer acceptance.
