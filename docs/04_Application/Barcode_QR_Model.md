@@ -1,533 +1,657 @@
-
-# Barcode & QR Code Model
+# Barcode & QR Model
 
 **Project:** Naswood OS
-**Document:** Barcode & QR Code Model
-**Version:** 1.0
+
+**Document:** Barcode & QR Model
+
+**Version:** 2.0
+
 **Status:** Approved
 
 ---
 
-# Purpose
+# 1. Purpose
 
-The Barcode & QR Code Model defines the identification, labeling and scanning standards used throughout Naswood OS.
+This document defines the identification standards used throughout Naswood OS.
 
-Every physical entity within the manufacturing process shall be uniquely identifiable.
+Every physical object shall receive a unique digital identity represented by QR Codes, Barcodes and optionally RFID tags.
 
-Barcode and QR Code technologies enable complete traceability from Receiving to Customer Delivery.
-
----
-
-# Philosophy
-
-Every physical object shall have a digital identity.
-
-Labels identify objects.
-
-Scans record Events.
-
-Scanning never changes data directly.
-
-Business logic executes after validation.
+The identification system supports complete material traceability from log receiving to customer delivery.
 
 ---
 
-# Supported Technologies
+# 2. Objectives
 
-Linear Barcode
+- Unique identification
+- End-to-end traceability
+- Fast shop-floor operations
+- Warehouse automation
+- Logistics integration
+- Digital Product Passport
+- AI-assisted material recognition
 
-- Code 128
-- GS1-128
+---
 
-2D Codes
+# 3. Identification Principles
+
+Every physical entity shall have one immutable Business Code.
+
+Every Business Code may be represented by:
 
 - QR Code
-- Data Matrix (Future)
-
-RFID
-
-Future Extension
-
-NFC
-
-Future Extension
+- Barcode
+- RFID (optional)
+- GS1 Digital Link (future)
 
 ---
 
-# Identifiable Entities
+# 4. Identifiable Objects
 
-Receiving Lot
+## Materials
 
-Material
+Log
 
-Package
+Prism
 
-Product
+Green Lumber
 
-Warehouse
+Kiln Dried Lumber
 
-Warehouse Location
+Thermowood
 
-Machine
+Profiles
 
-Tool
+Massive Panels
 
-Knife
+CLT Lamellas
 
-Tool Assembly
+Glulam Lamellas
 
-Production Order
+By-Products
 
-Shipment
+Waste
 
-Customer Order
+---
 
-Operator ID
+## Products
 
-Maintenance Work Order
+Commercial Products
 
-Inspection
+Customer Products
+
+Custom Products
+
+---
+
+## Packages
+
+Bundle
 
 Pallet
 
+Crate
+
+Box
+
 Container
 
-Vehicle
+Export Package
 
 ---
 
-# Barcode Standards
+## Production
 
-Linear Barcode
+Production Orders
 
-Purpose
+Operations
 
-Fast industrial scanning
+Recipes
 
-Contains
-
-Business Code only
-
-Example
-
-```
-MAT-TW-PN-000245
-```
+Work Orders
 
 ---
 
-# QR Code Standard
+## Warehouses
 
-Purpose
+Warehouse
 
-Rich Information Access
+Zone
 
-QR contains
+Rack
 
-Entity Type
+Shelf
+
+Bin
+
+Storage Location
+
+---
+
+## Assets
+
+Machine
+
+Tool Assembly
+
+Knife Set
+
+Maintenance Asset
+
+Calibration Device
+
+Forklift
+
+---
+
+## Logistics
+
+Shipment
+
+Truck
+
+Container
+
+Loading Unit
+
+Delivery Note
+
+---
+
+## Quality
+
+Inspection
+
+Sample
+
+Quality Certificate
+
+Test Report
+
+---
+
+## Users
+
+Employee Badge
+
+Operator Card
+
+Visitor Badge
+
+---
+
+# 5. Business Code Standards
+
+Examples
+
+```text
+MAT-TW-000001
+PRD-000542
+PKG-000345
+PAL-000021
+CNT-000004
+PO-000845
+OPR-000245
+WHS-000012
+MAC-000087
+TOOL-000011
+```
+
+Business Codes are immutable.
+
+Codes are never reused.
+
+---
+
+# 6. Barcode Standards
+
+Supported formats
+
+Code 128
+
+GS1-128
+
+EAN-13
+
+EAN-8
+
+UPC
+
+Data Matrix
+
+PDF417
+
+---
+
+Recommended
+
+Internal Operations
+
+→ Code 128
+
+Customer Logistics
+
+→ GS1-128
+
+---
+
+# 7. QR Code Standards
+
+QR Codes shall contain:
 
 Business Code
 
-Entity UUID
+Entity Type
 
 Version
 
 Checksum
 
+Optional Digital Signature
+
+Optional URL
+
+---
+
 Example
+
+```text
+MAT-TW-000542
+```
+
+or
 
 ```json
 {
-  "entity":"Material",
-  "code":"MAT-TW-PN-000245",
-  "uuid":"8c1d4a1f...",
-  "version":1
+ "type":"Material",
+ "code":"MAT-TW-000542",
+ "version":"1",
+ "url":"https://naswood.com/dpp/MAT-TW-000542"
 }
 ```
 
 ---
 
-# Standard Label Layout
+# 8. Package QR Structure
 
-Every label should include
+Every package receives a unique QR identity.
 
-Company Logo
+Example
 
-Business Code
+```text
+PKG-000021
+```
 
-Human Readable Description
+Package QR includes:
 
-Barcode
-
-QR Code
-
-Material Information
-
-Timestamp
-
-Revision
-
-Optional Customer Information
-
----
-
-# Material Label
-
-Contains
-
-Material Code
-
-Species
-
-Material Type
-
-Dimensions
-
-Moisture
-
-Grade
-
-Status
-
-Current Warehouse
-
-Production Date
-
-QR Code
-
-Barcode
-
----
-
-# Package Label
-
-Contains
-
-Package Code
+Package ID
 
 Package Type
 
-Quantity
+Product
 
-Total Volume
+Quantity
 
 Weight
 
-Destination
+Dimensions
 
-Shipment Number
+Production Date
 
-QR Code
+Production Order
 
-Barcode
+Warehouse
 
----
+Shipment Status
 
-# Tool Label
-
-Contains
-
-Tool Code
-
-Tool Type
-
-Profile
-
-Sharpening Count
-
-Current Status
-
-QR Code
-
-Barcode
+Digital Product Passport Link
 
 ---
 
-# Machine Label
+# 9. Pallet QR Structure
+
+Each pallet has its own identity.
 
 Contains
 
-Machine Code
+Pallet ID
 
-Machine Name
+Package List
 
-Machine Group
+Gross Weight
 
-QR Code
+Net Weight
 
-Barcode
-
----
-
-# Warehouse Location Label
-
-Contains
-
-Warehouse Code
-
-Location Code
-
-QR Code
-
-Barcode
-
----
-
-# Shipment Label
-
-Contains
-
-Shipment Number
+Stack Height
 
 Customer
 
 Destination
 
-Carrier
+Warehouse
 
-Vehicle
+Shipment
 
-QR Code
+---
+
+# 10. Container QR Structure
+
+Container QR contains
+
+Container Number
+
+Shipment Number
+
+Package Count
+
+Pallet Count
+
+Gross Weight
+
+Seal Number
+
+Destination
+
+Loading Date
+
+Export Documentation
+
+---
+
+# 11. Label Structure
+
+Every label includes
+
+Company Logo
+
+Business Code
+
+Human Readable Code
+
+QR
 
 Barcode
 
----
+Description
 
-# QR Code Actions
+Dimensions
 
-Scanning a QR Code may open
+Quantity
 
-Material Details
+Weight
 
-Package Details
+Production Date
 
-Machine Dashboard
+Batch
 
-Maintenance History
-
-Tool History
-
-Production Order
-
-Inspection Result
-
-Shipment Details
-
-Inventory Location
+Operator
 
 ---
 
-# Barcode Actions
+# 12. GS1 Digital Link
 
-Barcode scanning performs
+Future Support
 
-Fast Identification
+https://naswood.com/id/MAT-TW-000542
 
-Material Confirmation
+Links may contain
 
-Inventory Movement
+Digital Product Passport
 
-Picking
+Certificates
 
-Packing
+EPD
+
+CE
+
+FSC
+
+PEFC
+
+Technical Datasheet
+
+Installation Guide
+
+---
+
+# 13. RFID Support
+
+Future implementation
+
+Supported Objects
+
+Finished Goods
+
+Packages
+
+Pallets
+
+Containers
+
+Forklifts
+
+Tools
+
+Warehouse Locations
+
+---
+
+# 14. Mobile Scanning
+
+Supported Devices
+
+Android
+
+iOS
+
+Industrial PDA
+
+Forklift Terminal
+
+Tablet
+
+Scanner
+
+---
+
+Supported Operations
+
+Material Lookup
+
+Package Verification
+
+Warehouse Transfer
+
+Shipment Confirmation
+
+Inventory Count
+
+Production Start
+
+Production Finish
+
+Quality Inspection
+
+Maintenance Request
+
+---
+
+# 15. Scan Workflows
+
+Receiving
+
+Scan Log
+
+↓
+
+Create Material
+
+↓
+
+Assign Yard
+
+↓
+
+Inventory
+
+---
+
+Production
+
+Scan Material
+
+↓
+
+Verify Recipe
+
+↓
+
+Start Operation
+
+↓
+
+Complete Operation
+
+↓
+
+Generate Output Material
+
+---
+
+Packaging
+
+Scan Finished Goods
+
+↓
+
+Create Package
+
+↓
+
+Generate Label
+
+↓
+
+Generate QR
+
+↓
+
+Warehouse
+
+---
 
 Shipping
 
-Receiving
-
-Production Confirmation
-
----
-
-# Mobile Workflow
-
-Scan
+Scan Package
 
 ↓
 
-Identify Entity
+Verify Shipment
 
 ↓
 
-Load Entity
+Load Truck
 
 ↓
 
-Validate Permissions
-
-↓
-
-Execute Workflow
-
-↓
-
-Generate Event
-
-↓
-
-Generate Audit Log
-
-↓
-
-Refresh Dashboard
+Close Shipment
 
 ---
 
-# Label Printing
+# 16. Verification Rules
 
-Supported Printers
+QR shall exist
 
-Zebra
+Barcode shall exist
 
-Brother
+Business Code shall exist
 
-TSC
+Object Status shall be valid
 
-Honeywell
+Warehouse shall match
 
-Industrial PDF Printing
+Shipment shall match
 
----
-
-# Label Sizes
-
-100 × 150 mm
-
-100 × 100 mm
-
-75 × 50 mm
-
-50 × 30 mm
-
-Custom
+Package shall be complete
 
 ---
 
-# Scan Validation
+# 17. Security
 
-Every scan validates
+Signed QR
 
-Entity Exists
+Tamper Detection
 
-Entity Active
+Encrypted URLs
 
-Permission
+Access Tokens
 
-Workflow State
+Role-Based Validation
 
-Current Location
-
-Current Status
-
-Checksum
+Audit Logs
 
 ---
 
-# Offline Support
+# 18. Printing Rules
 
-Mobile devices may cache
+Automatic QR Generation
 
-QR Definitions
+Automatic Barcode Generation
 
-Master Data
+Automatic Label Printing
 
-Locations
+Reprint History
 
-Permissions
+Printer Assignment
 
-Pending Transactions
-
-Offline transactions synchronize automatically.
+Label Templates
 
 ---
 
-# Error Handling
+# 19. AI Capabilities
 
-Unknown Code
+Automatic QR Recognition
 
-Duplicate Code
+Vision-Based Barcode Reading
 
-Invalid Checksum
+Damaged QR Recovery
 
-Unauthorized Scan
+Duplicate Detection
 
-Inactive Entity
+Label Quality Verification
 
-Expired Label
+Package Verification
 
-Damaged Label
+AI Warehouse Scanning
 
----
+Vision Inventory Counting
 
-# Business Rules
+Digital Twin Synchronization
 
-### QR-001
-
-Every physical Material shall have a unique Barcode and QR Code.
+Object Recognition
 
 ---
 
-### QR-002
+# 20. API Resources
 
-Business Codes shall never be reused.
+GET /barcode/{code}
 
----
+GET /qr/{code}
 
-### QR-003
+GET /packages/{id}/qr
 
-QR Codes shall remain valid throughout the entity lifecycle.
+GET /materials/{id}/qr
 
----
+POST /labels/print
 
-### QR-004
+POST /qr/generate
 
-Every successful scan generates a Business Event.
+POST /barcode/generate
 
----
-
-### QR-005
-
-Critical scan operations generate Audit Logs.
+POST /verify
 
 ---
 
-### QR-006
-
-Labels shall be printable at any time.
-
----
-
-### QR-007
-
-Damaged labels may be reprinted without changing the Business Code.
-
----
-
-### QR-008
-
-QR Codes shall reference immutable Business Codes.
-
----
-
-### QR-009
-
-Scanning shall never bypass Workflow or Security validation.
-
----
-
-### QR-010
-
-Every physical Package shall contain only Materials registered within Naswood OS.
-
----
-
-# Integration
-
-Barcode & QR integrates with
-
-Receiving
-
-Materials
+# 21. Integrations
 
 Inventory
 
@@ -537,60 +661,74 @@ Production
 
 Packaging
 
-Quality
-
-Machines
-
-Tooling
-
-Maintenance
+Finished Goods
 
 Logistics
 
-Sales
-
-Workflow
-
-Events
-
-Audit Log
+Quality
 
 Mobile Application
 
-AI Copilot
+Printing
+
+Digital Product Passport
+
+Digital Twin
+
+AI
 
 ---
 
-# Future Extensions
+# 22. Related Documents
 
-The architecture supports
+Printing Model
+
+Label Templates
+
+Packaging Module
+
+Finished Goods Module
+
+Inventory Module
+
+Warehouse Module
+
+Digital Product Passport
+
+API Contracts
+
+Mobile Application
+
+---
+
+# 23. Future Extensions
+
+GS1 Digital Link
 
 RFID
 
 NFC
 
+BLE Tags
+
 Computer Vision
-
-OCR
-
-Voice Commands
 
 Smart Glasses
 
-Autonomous Forklifts
+Autonomous Warehouse
 
-Digital Product Passport (DPP)
+Drone Inventory
 
-GS1 Digital Link
+IoT Tags
+
+Blockchain Identity
 
 ---
 
-# Barcode & QR Philosophy
+# 24. Module Philosophy
 
-Every physical object in the factory has a unique digital identity.
+Barcode and QR technologies provide the digital identity layer of Naswood OS.
 
-Barcode enables fast industrial operations.
+Every material, product, package, warehouse location and shipment can be uniquely identified and traced through standardized identification methods.
 
-QR Code provides complete access to operational information.
-
-Together they form the foundation of full manufacturing traceability within Naswood OS.
+This model enables complete traceability, automation, AI integration and compliance with modern manufacturing and logistics standards.
