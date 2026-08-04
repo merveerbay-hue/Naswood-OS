@@ -1,705 +1,699 @@
 # API Contracts
 
 **Project:** Naswood OS
+
 **Document:** API Contracts
-**Version:** 1.0
+
+**Version:** 2.0
+
 **Status:** Approved
 
 ---
 
-# Purpose
+# 1. Purpose
 
-This document defines the application-level API contracts for Naswood OS.
+This document defines all REST API contracts exposed by Naswood OS.
 
-API Contracts specify how applications communicate with the system while remaining independent from internal implementation details.
+The API layer provides standardized access to all business capabilities across Production, Inventory, Warehouse, Logistics, Sales, AI, Analytics and Digital Twin services.
 
-The document complements the API Standards by defining request and response behaviors, resource contracts and integration principles.
-
----
-
-# API Philosophy
-
-Naswood OS follows an API-First architecture.
-
-All clients use the same APIs.
-
-Examples
-
-- Web Application
-- Mobile Application
-- AI Copilot
-- Dealer Portal
-- Customer Portal
-- ERP Integration
-- PLC Gateway
-
-Business logic never exists inside the client.
+All APIs are versioned, documented and secured.
 
 ---
 
-# API Categories
-
-Master Data
-
-Production
-
-Inventory
-
-Quality
-
-Machines
-
-Tooling
-
-Maintenance
-
-Sales
-
-Purchasing
-
-Finance
-
-Logistics
-
-Workflow
-
-Notifications
-
-Analytics
-
-AI
-
-Administration
-
----
-
-# Resource Naming
-
-Resources use plural nouns.
-
-Examples
+# 2. API Architecture
 
 ```
-/materials
-```
-
-```
-/production-orders
-```
-
-```
-/inventory
-```
-
-```
-/shipments
-```
-
-```
-/machines
+Client
+      │
+      ▼
+API Gateway
+      │
+ ├── Authentication
+ ├── Authorization
+ ├── Rate Limiting
+ ├── Validation
+ ├── Logging
+ ├── Monitoring
+ └── Versioning
+      │
+      ▼
+Business Services
+      │
+      ▼
+Database
 ```
 
 ---
 
-# Standard Operations
+# 3. API Principles
 
-Every resource should support when applicable:
+RESTful
 
-GET
+JSON
 
-Retrieve
+Stateless
 
-POST
+Versioned
 
-Create
+Secure
 
-PUT
+Documented
 
-Replace
+Idempotent where applicable
 
-PATCH
-
-Partial Update
-
-DELETE
-
-Logical Delete
-
-SEARCH
-
-Advanced Filtering
-
-EXPORT
-
-Report Export
+OpenAPI Compatible
 
 ---
 
-# Standard Request
+# 4. Base URL
 
-Example
-
-```http
-POST /api/v1/materials
+```
+/api/v1
 ```
 
-```json
-{
-  "materialType": "THERMOWOOD",
-  "species": "PINE",
-  "thickness": 26,
-  "width": 140,
-  "length": 3600
-}
+Future
+
+```
+/api/v2
 ```
 
 ---
 
-# Standard Response
+# 5. Authentication
+
+JWT
+
+OAuth2
+
+OpenID Connect
+
+API Key
+
+Bearer Token
+
+Refresh Token
+
+MFA Supported
+
+---
+
+# 6. Standard Headers
+
+Authorization
+
+Content-Type
+
+Accept
+
+X-Correlation-ID
+
+X-Request-ID
+
+X-Organization-ID
+
+X-Factory-ID
+
+X-Language
+
+X-Timezone
+
+---
+
+# 7. Standard Response
 
 ```json
 {
   "success": true,
+  "message": "",
   "data": {},
-  "meta": {},
-  "errors": []
+  "errors": [],
+  "metadata": {}
 }
 ```
 
 ---
 
-# Error Response
+# 8. Standard Error
 
 ```json
 {
-  "success": false,
-  "errors": [
-    {
-      "code": "MAT-001",
-      "message": "Material not found."
-    }
-  ]
+ "success":false,
+ "code":"VALIDATION_ERROR",
+ "message":"Validation failed",
+ "errors":[]
 }
 ```
 
 ---
 
-# Pagination
+# 9. API Versioning
 
-Large collections shall support pagination.
-
-Example
-
-```
-GET /materials?page=1&pageSize=100
-```
-
----
-
-# Filtering
-
-Example
-
-```
-GET /materials
-
-?species=PINE
-
-&status=AVAILABLE
-
-&warehouse=RAW01
-```
-
----
-
-# Sorting
-
-```
-GET /materials
-
-?sort=createdAt
-
-&order=desc
-```
-
----
-
-# Searching
-
-Search shall support:
-
-- Business Code
-- Material Code
-- Product Code
-- Package Code
-- Lot Number
-- QR Code
-- Barcode
-
----
-
-# Authentication
-
-Authentication uses JWT.
-
-```
-Authorization
-
-Bearer <token>
-```
-
-API Keys are supported for system integrations.
-
----
-
-# Authorization
-
-Authorization follows RBAC.
-
-Permissions are validated before execution.
-
-Unauthorized requests return:
-
-```
-403 Forbidden
-```
-
----
-
-# Idempotency
-
-Critical POST operations support
-
-```
-Idempotency-Key
-```
-
-Examples
-
-- Material Registration
-- Package Creation
-- Shipment Creation
-- Production Order Creation
-
----
-
-# Validation
-
-Validation occurs in multiple layers.
-
-Client
-
-↓
-
-API
-
-↓
-
-Domain
-
-↓
-
-Database
-
-Invalid requests never reach persistence.
-
----
-
-# Standard Headers
-
-```
-Authorization
-```
-
-```
-Content-Type
-```
-
-```
-Accept
-```
-
-```
-X-Correlation-ID
-```
-
-```
-Idempotency-Key
-```
-
----
-
-# Correlation ID
-
-Every request shall contain a Correlation ID.
-
-The same ID shall propagate through:
-
-- Events
-- Audit Logs
-- Workflow
-- Notifications
-
----
-
-# File Upload
-
-Supported formats
-
-PDF
-
-JPG
-
-PNG
-
-DXF
-
-DWG
-
-STEP
-
-IFC
-
-XLSX
-
-CSV
-
-Maximum size is configurable.
-
----
-
-# Event Behavior
-
-Successful business operations publish Business Events.
-
-Examples
-
-MaterialRegistered
-
-TransformationCompleted
-
-InspectionPassed
-
-PackageCreated
-
-ShipmentCompleted
-
-Events are asynchronous.
-
----
-
-# Audit Behavior
-
-Critical API operations generate Audit Logs.
-
-Examples
-
-Inventory Adjustment
-
-Permission Change
-
-Recipe Update
-
-Price Update
-
-User Management
-
----
-
-# Async Operations
-
-Long-running processes return
-
-```
-202 Accepted
-```
-
-Processing continues asynchronously.
-
-Examples
-
-Large Imports
-
-Mass Label Printing
-
-AI Analysis
-
-Bulk Inventory Registration
-
----
-
-# API Versioning
-
-Current
+URI Versioning
 
 ```
 /api/v1/
 ```
 
-Breaking changes require:
-
-```
-/api/v2/
-```
+Breaking changes require new versions.
 
 ---
 
-# Rate Limiting
+# 10. Pagination
 
-Default
+page
 
-100 requests
+pageSize
 
-per minute
+sort
 
-per authenticated client.
+order
 
-Configurable by API Client.
+filter
+
+search
 
 ---
 
-# Standard Modules
+# 11. Master Data APIs
 
-The following resources expose APIs.
+## Materials
 
-Materials
+GET /materials
 
-Products
+POST /materials
 
-Production Orders
+PATCH /materials/{id}
 
-Transformations
+DELETE /materials/{id}
 
-Inventory
+GET /materials/search
 
-Warehouse
+GET /materials/{id}/genealogy
 
-Receiving
+GET /materials/{id}/events
 
-Machines
+---
 
-Tooling
+## Products
 
-Quality
+GET /products
 
-Maintenance
+POST /products
 
-Packaging
+PATCH /products/{id}
 
-Shipments
+---
 
-Sales Orders
+## Customers
 
-Purchase Orders
+GET /customers
 
-Customers
+POST /customers
 
-Suppliers
+PATCH /customers/{id}
+
+GET /customers/{id}/packaging-rules
+
+GET /customers/{id}/quality-profile
+
+GET /customers/{id}/certificates
+
+---
+
+## Suppliers
+
+GET /suppliers
+
+POST /suppliers
+
+PATCH /suppliers/{id}
+
+GET /suppliers/{id}/performance
+
+GET /suppliers/{id}/certificates
+
+---
+
+## Warehouses
+
+GET /warehouses
+
+POST /warehouses
+
+PATCH /warehouses/{id}
+
+GET /warehouses/map
+
+GET /warehouses/{id}/locations
+
+GET /warehouses/{id}/capacity
+
+---
+
+# 12. Production APIs
+
+## Production Orders
+
+GET /production-orders
+
+POST /production-orders
+
+PATCH /production-orders/{id}
+
+POST /production-orders/{id}/release
+
+POST /production-orders/{id}/schedule
+
+POST /production-orders/{id}/cancel
+
+---
+
+## Operations
+
+GET /operations
+
+POST /operations
+
+PATCH /operations/{id}
+
+POST /operations/{id}/start
+
+POST /operations/{id}/pause
+
+POST /operations/{id}/resume
+
+POST /operations/{id}/complete
+
+---
+
+## Routing
+
+GET /routing
+
+POST /routing
+
+PATCH /routing/{id}
+
+---
+
+## Recipes
+
+GET /recipes
+
+POST /recipes
+
+PATCH /recipes/{id}
+
+---
+
+# 13. Inventory APIs
+
+GET /inventory
+
+GET /inventory/movements
+
+GET /inventory/availability
+
+POST /inventory/transfer
+
+POST /inventory/reserve
+
+POST /inventory/count
+
+---
+
+# 14. Warehouse APIs
+
+GET /warehouse/map
+
+GET /warehouse/utilization
+
+GET /warehouse/heatmap
+
+POST /warehouse/move
+
+POST /warehouse/allocate
+
+---
+
+# 15. Packaging APIs
+
+GET /packages
+
+POST /packages
+
+PATCH /packages/{id}
+
+POST /packages/{id}/verify
+
+POST /packages/{id}/close
+
+GET /packages/{id}/labels
+
+GET /packages/{id}/genealogy
+
+---
+
+# 16. Finished Goods APIs
+
+GET /finished-goods
+
+POST /finished-goods
+
+GET /finished-goods/{id}
+
+GET /finished-goods/{id}/dpp
+
+GET /finished-goods/{id}/history
+
+---
+
+# 17. Logistics APIs
+
+GET /shipments
+
+POST /shipments
+
+PATCH /shipments/{id}
+
+POST /shipments/{id}/dispatch
+
+POST /shipments/{id}/deliver
+
+GET /containers
+
+GET /routes
+
+GET /carriers
+
+---
+
+# 18. Quality APIs
+
+GET /quality/inspections
+
+POST /quality/inspection
+
+POST /quality/approve
+
+POST /quality/reject
+
+GET /quality/certificates
+
+---
+
+# 19. Maintenance APIs
+
+GET /maintenance
+
+POST /maintenance
+
+POST /maintenance/workorder
+
+POST /maintenance/complete
+
+GET /machines/{id}/health
+
+---
+
+# 20. Barcode & Printing APIs
+
+POST /barcode/generate
+
+POST /qr/generate
+
+POST /labels/print
+
+POST /printing/reprint
+
+GET /printing/jobs
+
+---
+
+# 21. Analytics APIs
+
+GET /analytics/kpi
+
+GET /analytics/dashboard
+
+GET /analytics/trends
+
+GET /analytics/oee
+
+GET /analytics/forecast
+
+---
+
+# 22. AI APIs
+
+POST /ai/chat
+
+POST /ai/copilot
+
+POST /ai/recommendation
+
+POST /ai/predict
+
+POST /ai/anomaly
+
+POST /ai/root-cause
+
+POST /ai/forecast
+
+---
+
+# 23. Digital Twin APIs
+
+GET /digital-twin/factory
+
+GET /digital-twin/material-flow
+
+GET /digital-twin/machines
+
+GET /digital-twin/wip
+
+GET /digital-twin/warehouse
+
+---
+
+# 24. Event APIs
+
+GET /events
+
+GET /events/{id}
+
+POST /events/replay
+
+GET /events/subscriptions
+
+---
+
+# 25. Notification APIs
+
+POST /notifications/email
+
+POST /notifications/push
+
+POST /notifications/sms
+
+GET /notifications/history
+
+---
+
+# 26. Mobile APIs
+
+GET /mobile/tasks
+
+GET /mobile/worklist
+
+POST /mobile/scan
+
+POST /mobile/photo
+
+POST /mobile/signature
+
+---
+
+# 27. Security APIs
+
+POST /login
+
+POST /logout
+
+POST /refresh
+
+GET /users/me
+
+GET /permissions
+
+GET /roles
+
+---
+
+# 28. Webhooks
+
+ProductionCompleted
+
+MaterialCreated
+
+PackageCreated
+
+ShipmentDispatched
+
+ShipmentDelivered
+
+MachineAlarm
+
+InventoryLow
+
+QualityRejected
+
+MaintenanceCompleted
+
+---
+
+# 29. Rate Limits
+
+Authentication
+
+10 req/min
+
+Read
+
+1000 req/min
+
+Write
+
+300 req/min
+
+Bulk Operations
+
+50 req/min
+
+AI APIs
+
+60 req/min
+
+---
+
+# 30. Idempotency
+
+The following operations require idempotency keys:
+
+Production Order Creation
+
+Inventory Transfer
+
+Shipment Creation
+
+Package Creation
+
+Payment Operations
+
+---
+
+# 31. API Security
+
+HTTPS Only
+
+JWT Validation
+
+Role Based Access
+
+Organization Isolation
+
+Factory Isolation
+
+Request Logging
+
+Audit Logging
+
+API Throttling
+
+IP Restrictions
+
+Token Expiration
+
+---
+
+# 32. OpenAPI
+
+Every endpoint shall be documented using OpenAPI 3.x.
+
+Swagger UI shall be generated automatically.
+
+---
+
+# 33. Monitoring
+
+Request Count
+
+Average Response Time
+
+Error Rate
+
+Latency
+
+Availability
+
+API Usage
+
+Authentication Failures
+
+---
+
+# 34. Related Documents
+
+System Architecture
+
+Database Schema
+
+Security Model
 
 Workflow
 
-Notifications
+Events
 
 Analytics
 
-AI
+Barcode & QR
 
----
-
-# Integration Contracts
-
-APIs support integration with:
-
-ERP
-
-PLC
-
-SCADA
-
-MES
-
-WMS
-
-CRM
-
-Power BI
-
-AI Services
+Printing Model
 
 Digital Twin
 
-IoT Devices
-
----
-
-# Error Codes
-
-Business Validation
-
-```
-MAT-xxx
-```
-
-Production
-
-```
-PRD-xxx
-```
-
-Inventory
-
-```
-INV-xxx
-```
-
-Quality
-
-```
-QLT-xxx
-```
-
-Machine
-
-```
-MAC-xxx
-```
-
-Maintenance
-
-```
-MNT-xxx
-```
-
-Sales
-
-```
-SAL-xxx
-```
-
-Purchasing
-
-```
-PUR-xxx
-```
-
-Finance
-
-```
-FIN-xxx
-```
-
-Security
-
-```
-SEC-xxx
-```
-
-Workflow
-
-```
-WF-xxx
-```
-
 AI
 
-```
-AI-xxx
-```
+---
+
+# 35. Future Extensions
+
+GraphQL Gateway
+
+gRPC Services
+
+MQTT API
+
+OPC-UA Gateway
+
+WebSocket Streaming
+
+Server Sent Events
+
+Kafka Event API
+
+FHIR (if healthcare integration required)
+
+EDI Integration
+
+GS1 Digital Link API
 
 ---
 
-# OpenAPI
+# 36. Module Philosophy
 
-All APIs shall be documented using OpenAPI 3.x.
+The API layer is the integration backbone of Naswood OS.
 
-Swagger documentation shall be generated automatically.
+Every module exposes standardized, secure and versioned services, enabling seamless interaction between web applications, mobile devices, PLCs, AI services, Digital Twin, ERP systems and external partners.
 
----
-
-# Business Rules
-
-### API-001
-
-Every request shall be authenticated unless explicitly marked as public.
-
----
-
-### API-002
-
-Every response shall use the standard response model.
-
----
-
-### API-003
-
-Business logic shall never exist in Controllers.
-
----
-
-### API-004
-
-Controllers shall delegate processing to the Application Layer.
-
----
-
-### API-005
-
-Every successful business transaction publishes a Business Event.
-
----
-
-### API-006
-
-Critical operations generate Audit Logs.
-
----
-
-### API-007
-
-Every API shall support traceability using Correlation IDs.
-
----
-
-### API-008
-
-API Contracts shall remain backward compatible within the same major version.
-
----
-
-### API-009
-
-Internal database identifiers shall never be exposed to external systems unless explicitly required.
-
-Business Codes should be preferred whenever possible.
-
----
-
-### API-010
-
-All APIs shall be self-documented and testable through OpenAPI.
-
----
-
-# Future Extensions
-
-The architecture supports:
-
-- GraphQL
-- gRPC
-- WebSockets
-- MQTT
-- OPC-UA
-- Event Streaming
-- Kafka
-- AI Function Calling
-- MCP (Model Context Protocol)
-
----
-
-# API Contract Philosophy
-
-API Contracts define the public behavior of Naswood OS.
-
-Applications interact through stable, versioned and secure contracts rather than internal database structures.
-
-This ensures long-term maintainability, interoperability and compatibility across web, mobile, AI and enterprise integrations.
+The API Contracts ensure consistency, interoperability and scalability across the Manufacturing Operating System.
