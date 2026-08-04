@@ -449,6 +449,70 @@ Operation
 1 → N Recipe Executions
 
 ---
+# production_batch_material
+
+Materials assigned to a production batch.
+
+A production batch may contain materials from different Production Orders when business rules allow.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| production_batch_id | UUID FK |
+| material_id | UUID FK |
+| production_order_line_id | UUID FK |
+| sequence | INTEGER |
+| loaded_at | TIMESTAMP |
+| unloaded_at | TIMESTAMP |
+
+Business Rules
+
+- One material may belong to only one active batch.
+- A batch may contain materials from multiple Production Orders.
+- Batch composition must remain traceable.
+- Material genealogy shall not be broken.
+ # production_batch_rule
+
+Defines batch compatibility rules.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| batch_type | VARCHAR |
+| species_id | UUID FK |
+| thickness_min | NUMERIC |
+| thickness_max | NUMERIC |
+| moisture_min | NUMERIC |
+| moisture_max | NUMERIC |
+| recipe_id | UUID FK |
+
+The Planning Engine uses these rules to build optimized production batches.
+
+# operation_resource
+
+Resources required during an operation.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| operation_id | UUID FK |
+| resource_type | VARCHAR |
+| resource_id | UUID |
+| planned_quantity | NUMERIC |
+| actual_quantity | NUMERIC |
+
+# operation_checklist
+
+Operational verification before execution.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| operation_id | UUID FK |
+| checklist_item | VARCHAR |
+| result | BOOLEAN |
+| checked_by | UUID FK |
+| checked_at | TIMESTAMP |
 
 # General Rules
 
