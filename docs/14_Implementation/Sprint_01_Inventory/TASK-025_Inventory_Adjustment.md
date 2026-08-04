@@ -1,4 +1,4 @@
-# TASK-010 Inventory Adjustment
+# TASK-025 Inventory Adjustment
 
 **Sprint:** Sprint_01_Inventory
 
