@@ -614,3 +614,345 @@ Mobile_App.md
 - Delivery timeline
 - Margin simulation
 - What-if quotation analysis
+
+- ---
+
+# AI Proposal Generator
+
+## Purpose
+
+The AI Proposal Generator automatically creates complete, professional and brand-compliant commercial proposals using CRM, ERP, production and technical engineering data.
+
+Instead of generating only pricing tables, the system prepares a complete proposal document ready to be sent to the customer.
+
+The generated proposal shall follow Naswood corporate identity and maintain consistent formatting across all quotations.
+
+---
+
+## Proposal Generation Workflow
+
+Opportunity
+
+↓
+
+Customer Analysis
+
+↓
+
+Project Analysis
+
+↓
+
+Product Selection
+
+↓
+
+Pricing Calculation
+
+↓
+
+Cost & Margin Analysis
+
+↓
+
+Technical Documentation
+
+↓
+
+Production Capacity Check
+
+↓
+
+Delivery Planning
+
+↓
+
+Certificate Assignment
+
+↓
+
+Proposal Generation
+
+↓
+
+Approval Workflow
+
+↓
+
+PDF / DOCX Export
+
+↓
+
+Customer Delivery
+
+---
+
+## Proposal Structure
+
+The proposal may automatically generate the following sections:
+
+### Cover Page
+
+- Customer Name
+- Project Name
+- Proposal Number
+- Revision
+- Proposal Date
+- Sales Representative
+- Company Branding
+
+---
+
+### Executive Summary
+
+AI shall generate a concise business summary including:
+
+- Project overview
+- Customer requirements
+- Proposed solution
+- Estimated delivery
+- Commercial highlights
+- Key advantages
+
+---
+
+### Company Introduction
+
+Optional company profile including:
+
+- Company overview
+- Manufacturing capabilities
+- Production capacity
+- Export markets
+- Sustainability commitments
+- Certifications
+
+---
+
+### Proposed Products
+
+Each product shall include:
+
+- Product image
+- Product description
+- Technical specifications
+- Species
+- Dimensions
+- Surface treatment
+- Thermowood class
+- Quantity
+- Unit
+- Optional alternatives
+
+---
+
+### Technical Documentation
+
+Automatically attach:
+
+- Technical Datasheets
+- CAD Drawings
+- DWG Files
+- DXF Files
+- BIM Objects
+- D-01 Details
+- D-02 Details
+- Installation Manuals
+- Product Catalog Pages
+
+---
+
+### Commercial Proposal
+
+Automatically generate:
+
+- Pricing Table
+- Discounts
+- Currency
+- Taxes
+- Freight
+- Packaging
+- Payment Terms
+- Incoterms
+
+---
+
+### Production & Delivery Plan
+
+Include:
+
+- Estimated Production Time
+- Factory Capacity
+- Planned Completion
+- Shipment Schedule
+- Installation Sequence
+- Delivery Milestones
+
+---
+
+### Certifications
+
+Automatically include applicable documents:
+
+- FSC
+- PEFC
+- CE
+- EPD
+- Fire Classification
+- ISO Certificates
+- Digital Product Passport
+
+---
+
+### Warranty
+
+Automatically insert:
+
+- Warranty Terms
+- Product Care Instructions
+- Maintenance Guide
+- Service Contact
+
+---
+
+### Commercial Terms
+
+Include:
+
+- Validity Period
+- Payment Conditions
+- Delivery Conditions
+- Cancellation Policy
+- Legal Notes
+
+---
+
+### Closing Page
+
+AI shall generate:
+
+- Thank You Message
+- Contact Information
+- QR Code
+- Digital Signature
+- Website
+- Social Media
+
+---
+
+## AI Writing Engine
+
+The AI shall automatically generate:
+
+- Executive summaries
+- Technical explanations
+- Product descriptions
+- Customer-specific introductions
+- Project recommendations
+- Sustainability statements
+- Competitive advantages
+- Closing messages
+
+Writing style shall be selectable:
+
+- Corporate
+- Executive
+- Technical
+- Architectural
+- Marketing
+- Government Tender
+- International Export
+
+---
+
+## Customer Personalization
+
+AI shall customize every proposal using:
+
+- Customer Industry
+- Previous Purchases
+- Country
+- Preferred Language
+- Preferred Products
+- Previous Projects
+- Technical Requirements
+- Sustainability Requirements
+- Dealer Information
+
+---
+
+## Proposal Templates
+
+Templates shall include:
+
+- Standard Sales Proposal
+- Dealer Proposal
+- Export Proposal
+- Government Tender
+- Architectural Proposal
+- Technical Proposal
+- Budget Proposal
+- Framework Agreement
+- Sample Proposal
+
+---
+
+## Proposal Version Control
+
+Every proposal revision shall preserve:
+
+- Revision Number
+- Author
+- AI Version
+- Pricing Changes
+- Margin Changes
+- Product Changes
+- Technical Changes
+- Customer Feedback
+
+---
+
+## AI Capabilities
+
+AI shall support:
+
+- Automatic proposal creation
+- Intelligent product recommendations
+- Similar proposal search
+- Automatic executive summary generation
+- Margin optimization
+- Alternative product suggestions
+- Delivery optimization
+- Cross-selling suggestions
+- Upselling recommendations
+- Sustainability optimization
+
+---
+
+## Export Formats
+
+The proposal may be exported as:
+
+- PDF
+- DOCX
+- PPTX
+- HTML
+- Customer Portal
+- Dealer Portal
+- Interactive Web Proposal
+
+---
+
+## Business Rules
+
+Every proposal shall follow Naswood branding guidelines.
+
+Only approved pricing shall be used.
+
+Only approved technical documents may be attached.
+
+Proposal revisions shall remain immutable.
+
+Every exported proposal shall be archived.
+
+Generated proposals shall be linked to CRM Opportunities and Sales Orders.
