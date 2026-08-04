@@ -322,7 +322,209 @@ Approved Supplier
 Created Date
 
 ---
+# 9A. Wood Supplier Profile
 
+The following information shall be maintained for all timber and lumber suppliers.
+
+## Forest Information
+
+Forest Region
+
+Forest Management Unit
+
+Country of Origin
+
+Harvest Region
+
+GPS Coordinates (Optional)
+
+Forest Type
+
+Plantation
+
+Natural Forest
+
+Mixed Forest
+
+---
+
+## Legal Compliance
+
+Harvest Permit Number
+
+Harvest Date
+
+Transport Permit Number
+
+Chain of Custody Number
+
+FSC License Code
+
+PEFC License Code
+
+Legal Verification Documents
+
+Environmental Compliance Status
+
+---
+
+## Supply Profile
+
+Preferred Species
+
+Available Species
+
+Typical Diameter Range
+
+Typical Length Range
+
+Typical Log Quality
+
+Typical Moisture Content
+
+Typical Density
+
+Average Bark Percentage
+
+Typical Defects
+
+Knots
+
+Cracks
+
+Blue Stain
+
+Warp
+
+Rot
+
+Resin
+
+---
+
+## Capacity
+
+Annual Supply Capacity (m³)
+
+Monthly Capacity
+
+Maximum Truck Loads per Week
+
+Average Delivery Quantity
+
+Preferred Delivery Days
+
+Seasonal Availability
+
+Lead Time
+
+Minimum Order Quantity
+
+Maximum Order Quantity
+
+---
+
+## Transportation
+
+Transportation Method
+
+Truck
+
+Container
+
+Rail
+
+Ship
+
+Preferred Carrier
+
+Loading Method
+
+Delivery Conditions
+
+Average Delivery Time
+
+Average Transport Cost
+
+---
+
+## Sustainability
+
+FSC Certified
+
+PEFC Certified
+
+Carbon Footprint Data
+
+Environmental Rating
+
+Sustainability Score
+
+Renewable Source
+
+Reforestation Program
+
+---
+
+## Quality Performance
+
+Average Incoming Quality Score
+
+Acceptance Rate
+
+Rejection Rate
+
+Average Moisture
+
+Average Density
+
+Average Diameter
+
+Average Length
+
+Supplier Grade
+
+---
+
+## Commercial Information
+
+Payment Terms
+
+Currency
+
+Incoterms
+
+Contract Start
+
+Contract End
+
+Preferred Supplier
+
+Strategic Supplier
+
+Approved Supplier
+
+Risk Level
+
+Insurance Information
+
+---
+
+## AI Supplier Profile
+
+Supplier Reliability Score
+
+Quality Prediction
+
+Delivery Prediction
+
+Risk Prediction
+
+Recommended Purchase Volume
+
+Alternative Supplier Suggestions
+
+Historical Performance Trend
 # 10. Certificates
 
 FSC
