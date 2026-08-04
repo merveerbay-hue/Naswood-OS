@@ -174,6 +174,36 @@ Satılabilir
 
 Evet
 
+#Fırınlı kereste
+Malzeme Tipi
+
+Yarı Mamul
+
+Oluşabilir
+
+- Kurutma Fırını
+
+veya
+
+- Satın Alma
+
+Kullanılabilir
+
+- Satış
+
+- Thermowood
+
+- Solid Panel
+
+- Finger Joint
+
+Satılabilir
+
+Evet
+
+Yarı Mamul
+
+Evet
 Yarı Mamul
 
 Hayır
