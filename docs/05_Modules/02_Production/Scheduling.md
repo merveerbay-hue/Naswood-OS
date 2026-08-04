@@ -2,9 +2,9 @@
 
 **Project:** Naswood OS
 
-**Document:** Scheduling
+**Document:** Advanced Scheduling
 
-**Module Code:** MOD-SCH-001
+**Module Code:** MOD-PRO-SCH-001
 
 **Version:** 2.0
 
@@ -14,642 +14,395 @@
 
 # 1. Purpose
 
-The Scheduling module transforms Production Plans into executable manufacturing schedules.
+The Scheduling module provides finite-capacity scheduling, real-time production sequencing and intelligent factory orchestration across all manufacturing operations.
 
-It allocates machines, work centers, operators, tools, materials, kilns, Thermowood batches, packaging stations and logistics resources while respecting capacity, priorities and operational constraints.
+It synchronizes machines, operators, tooling, materials, energy availability and logistics constraints to generate executable production schedules while continuously adapting to operational changes.
 
-Scheduling provides real-time optimization and continuous rescheduling based on shop-floor events.
+The module serves as the Advanced Scheduling & Factory Orchestration Platform (ASFOP) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
-- Optimize production execution
-- Balance workloads
-- Reduce lead times
-- Minimize idle resources
-- Improve OEE
-- Prevent bottlenecks
-- Enable AI-assisted scheduling
+- Generate executable production schedules
+- Optimize finite capacity utilization
+- Minimize setup and changeover times
+- Synchronize material flow
+- Reduce production delays
+- Support AI-assisted scheduling
 - Synchronize Digital Twin
 
 ---
 
-# 3. Scheduling Types
+# 3. Scheduling Lifecycle
 
-Master Schedule
+Production Plan
 
-Finite Capacity Scheduling
-
-Infinite Capacity Scheduling
-
-Forward Scheduling
-
-Backward Scheduling
-
-Dynamic Scheduling
-
-Shift Scheduling
-
-Machine Scheduling
-
-Operator Scheduling
-
-Kiln Scheduling
-
-Thermowood Scheduling
-
-Packaging Scheduling
-
-Loading Scheduling
-
-Container Scheduling
-
-AI Optimized Scheduling
-
-Emergency Scheduling
-
----
-
-# 4. Scheduling Sources
+↓
 
 Production Orders
 
-Production Planning
+↓
 
-Sales Orders
+Routing
 
-Forecasts
+↓
 
-Maintenance Calendar
+Resource Validation
 
-Machine Availability
+↓
 
-Material Availability
+Constraint Evaluation
 
-Warehouse Capacity
+↓
 
-Quality Holds
+Finite Scheduling
 
-Customer Priorities
+↓
 
-AI Recommendations
+Execution
 
----
+↓
 
-# 5. Scheduling Dimensions
+Real-Time Monitoring
 
-Factory
+↓
 
-Production Area
+Dynamic Rescheduling
 
-Production Line
+↓
 
-Work Center
-
-Machine
-
-Operator
-
-Shift
-
-Tool Assembly
-
-Warehouse
-
-Package Type
-
-Container
-
-Carrier
+Performance Analysis
 
 ---
 
-# 6. Resource Scheduling
+# 4. Scheduling Types
+
+Master Schedule
+
+Finite Capacity Schedule
+
+Machine Schedule
+
+Shift Schedule
+
+Operator Schedule
+
+Campaign Schedule
+
+Maintenance-Aware Schedule
+
+Energy-Aware Schedule
+
+Project Schedule
+
+Emergency Schedule
+
+---
+
+# 5. Scheduling Objects
+
+Production Orders
+
+Operations
 
 Machines
 
-Operators
-
-Tools
-
 Work Centers
 
-Warehouses
+Tool Assemblies
 
-Forklifts
+Knife Sets
+
+Operators
+
+Shifts
+
+Materials
 
 Kilns
 
 Thermowood Furnaces
 
-Packaging Stations
-
-Loading Docks
-
 Containers
-
-Energy Capacity
 
 ---
 
-# 7. Scheduling Constraints
+# 6. Scheduling Constraints
 
 Machine Capacity
 
-Operator Skills
-
-Operator Certification
+Operator Availability
 
 Material Availability
 
-Warehouse Capacity
-
 Tool Availability
 
-Maintenance Window
+Maintenance Windows
+
+Quality Holds
 
 Energy Limits
 
-Customer Due Date
+Warehouse Capacity
 
-Shift Availability
-
-Packaging Capacity
-
-Transport Availability
-
----
-
-# 8. Priority Rules
+Delivery Deadlines
 
 Customer Priority
 
-Production Order Priority
+---
 
-Export Orders
+# 7. Resource Scheduling
 
-Rush Orders
+Machine Allocation
 
-Project Orders
+Operator Assignment
 
-FIFO
+Tool Assignment
 
-LIFO
+Shift Allocation
 
-EDD (Earliest Due Date)
+Work Center Balancing
 
-SPT (Shortest Processing Time)
+Parallel Operations
 
-Critical Ratio
+Alternative Resources
 
-AI Dynamic Priority
+Setup Optimization
 
 ---
 
-# 9. Timber Yard Scheduling
+# 8. Campaign Scheduling
 
-Truck Arrival Schedule
+Species Grouping
 
-Log Receiving Queue
+Dimension Grouping
 
-Log Measurement Queue
+Thermowood Recipe Grouping
 
-Sorting Queue
+Kiln Batch Grouping
 
-Storage Assignment
+Color Class Grouping
 
-Primary Saw Queue
+Customer Priority
 
-Supplier Priority
-
-Species Priority
-
-AI Yard Optimization
-
----
-
-# 10. Kiln Scheduling
-
-Kiln Occupancy
-
-Drying Batch Planning
-
-Recipe Compatibility
-
-Moisture Target
-
-Loading Sequence
-
-Cooling Sequence
+Export Campaigns
 
 Energy Optimization
 
-Expected Finish Time
-
-AI Kiln Scheduler
-
 ---
 
-# 11. Thermowood Scheduling
+# 9. Real-Time Rescheduling
 
-Batch Planning
-
-Recipe Planning
-
-Kiln Assignment
-
-Cooling Planning
-
-Color Consistency
-
-Energy Planning
-
-Quality Constraints
-
-AI Batch Optimization
-
----
-
-# 12. Machine Scheduling
-
-Preferred Machine
-
-Alternative Machine
-
-Backup Machine
-
-Capacity Check
-
-Maintenance Check
-
-OEE Analysis
-
-Tool Availability
-
-Energy Consumption
-
-AI Machine Allocation
-
----
-
-# 13. Operator Scheduling
-
-Skill Matrix
-
-Certification Check
-
-Shift Planning
-
-Overtime
-
-Leave Calendar
-
-Training Schedule
-
-Workload Balancing
-
-AI Workforce Optimization
-
----
-
-# 14. Packaging Scheduling
-
-Packaging Queue
-
-Bundle Capacity
-
-Pallet Capacity
-
-Container Capacity
-
-Label Printing
-
-Inspection Queue
-
-Shipment Deadline
-
----
-
-# 15. Logistics Scheduling
-
-Truck Booking
-
-Carrier Assignment
-
-Loading Dock Planning
-
-Container Allocation
-
-Route Planning
-
-ETA
-
-Export Documentation
-
----
-
-# 16. Rescheduling
-
-Machine Failure
-
-Material Delay
+Machine Breakdown
 
 Operator Absence
 
-Maintenance Event
+Material Shortage
 
-Quality Hold
+Urgent Orders
 
-Urgent Customer Order
+Quality Rework
 
-Energy Restriction
+Energy Events
 
-AI Continuous Rescheduling
+Maintenance Events
+
+Customer Changes
 
 ---
 
-# 17. AI Capabilities
+# 10. AI Capabilities
 
-AI Schedule Optimization
+Schedule Optimization
 
-Autonomous Rescheduling
-
-Material Shortage Prediction
-
-Machine Load Balancing
-
-Operator Recommendation
-
-Shift Optimization
-
-Tool Availability Prediction
-
-Kiln Optimization
-
-Thermowood Optimization
-
-Packaging Optimization
-
-Loading Optimization
-
-Energy Optimization
-
-Carbon Optimization
+Constraint Analysis
 
 Delay Prediction
 
-What-if Simulation
+Bottleneck Detection
 
-Scenario Comparison
+Campaign Optimization
 
-Factory Bottleneck Detection
+Resource Recommendation
 
-Root Cause Analysis
+Dynamic Rescheduling
 
-Production Copilot
+Scheduling Copilot
 
 ---
 
-# 18. Digital Twin Integration
-
-Live Schedule
-
-Machine Timeline
-
-Operator Timeline
+# 11. Digital Twin Integration
 
 Factory Timeline
 
-Material Flow
+Machine Timeline
 
-WIP Flow
-
-Energy Flow
-
-Production Simulation
-
-What-if Analysis
-
----
-
-# 19. Dashboard Widgets
-
-Production Calendar
-
-Machine Calendar
-
-Operator Calendar
-
-Kiln Calendar
-
-Thermowood Calendar
-
-Packaging Calendar
-
-Loading Calendar
+Schedule Replay
 
 Capacity Heat Map
 
-Critical Orders
+Live Scheduling Board
 
-Late Orders
-
-Current WIP
-
-Factory Bottlenecks
-
-Energy Consumption
-
-Carbon Emissions
-
-AI Schedule Suggestions
+Scenario Simulation
 
 ---
 
-# 20. Reports
+# 12. Dashboard Widgets
 
-Daily Schedule
+Today's Schedule
 
-Weekly Schedule
+Machine Loading
 
-Monthly Capacity
+Operator Loading
 
-Machine Utilization
+Schedule Stability
 
-Operator Utilization
+Delay Risk
 
-Kiln Schedule
+Resource Utilization
 
-Thermowood Schedule
+Campaign Status
 
-Packaging Schedule
+AI Recommendations
 
-Loading Schedule
+---
 
-Schedule Adherence
+# 13. Reports
 
-Planning Accuracy
+Scheduling Report
 
-Late Order Analysis
+Capacity Utilization Report
 
-Energy Schedule
+Machine Loading Report
 
-Carbon Report
+Delay Analysis
+
+Schedule Stability Report
+
+Campaign Efficiency Report
 
 AI Scheduling Report
 
 ---
 
-# 21. API Resources
+# 14. API Resources
 
-GET /schedules
+GET /scheduling
 
-GET /schedules/calendar
+GET /scheduling/calendar
 
-GET /schedules/resources
+GET /scheduling/resources
 
-GET /schedules/conflicts
+GET /scheduling/campaigns
 
-GET /schedules/machines
+GET /scheduling/timeline
 
-GET /schedules/operators
+POST /scheduling/generate
 
-GET /schedules/kilns
+POST /scheduling/optimize
 
-GET /schedules/thermowood
+POST /scheduling/reschedule
 
-GET /schedules/packages
-
-POST /schedules/generate
-
-POST /schedules/optimize
-
-POST /schedules/reschedule
-
-POST /schedules/simulate
+POST /scheduling/simulate
 
 ---
 
-# 22. Events
+# 15. Events
 
-ScheduleCreated
-
-ScheduleUpdated
-
-ScheduleReleased
+ScheduleGenerated
 
 ScheduleOptimized
 
-ScheduleRescheduled
+MachineRescheduled
 
-MachineAllocated
-
-OperatorAllocated
-
-KilnAllocated
-
-ThermowoodBatchScheduled
-
-PackagingScheduled
-
-ShipmentScheduled
-
-ConflictDetected
+OperatorAssigned
 
 DelayDetected
 
-AIScheduleGenerated
+CampaignStarted
+
+CampaignCompleted
+
+AIRecommendationGenerated
 
 ---
 
-# 23. Mobile
+# 16. Mobile
 
-Today's Schedule
+Daily Schedule
 
-Operator Tasks
+Machine Schedule
 
-Machine Queue
+Operator Schedule
 
-QR Scan
+Alerts
 
-Schedule Approval
+Approvals
 
-Delay Reporting
-
-Photo Capture
-
-Offline Mode
+Offline Snapshot
 
 ---
 
-# 24. Business Rules
+# 17. Business Rules
 
-Only Released Production Orders may be scheduled.
+Every production order shall be assigned to a finite-capacity schedule.
 
-Finite Capacity Scheduling shall not overload machines.
+Scheduling shall respect machine, labor, tooling and material constraints.
 
-Operator certifications shall be validated before assignment.
+Real-time rescheduling shall preserve completed operations.
 
-Kiln schedules shall respect recipe compatibility.
+Critical scheduling changes shall require approval where defined by policy.
 
-Thermowood batches shall not mix incompatible recipes.
-
-Packaging capacity shall be reserved before shipment planning.
-
-Every scheduling change shall generate Events and Audit Logs.
-
-AI recommendations require planner approval unless autonomous scheduling is enabled.
+Every scheduling revision shall be version-controlled and auditable.
 
 ---
 
-# 25. Future Extensions
+# 18. Future Extensions
 
-Advanced APS
+Autonomous Scheduling
 
-Constraint Solver
+Reinforcement Learning Scheduler
 
-Multi Factory Scheduling
+Multi-Plant Scheduling
 
-Cross Factory Optimization
+Global Factory Scheduling
 
-AGV Scheduling
-
-AMR Scheduling
-
-Robot Scheduling
-
-Autonomous Factory
+Energy Market Optimization
 
 Industry 5.0
+
+Digital Thread
 
 MCP Scheduling Agents
 
 ---
 
-# 26. Architecture Review
+# 19. Architecture Review
 
 ## Database Changes
 
 schedules
 
-schedule_operations
+schedule_versions
 
 schedule_resources
 
 schedule_constraints
 
-schedule_conflicts
+schedule_timelines
 
-schedule_versions
+schedule_events
 
-schedule_ai_recommendations
+schedule_ai
 
 schedule_simulations
 
-resource_calendars
+schedule_campaigns
 
-resource_allocations
+schedule_revisions
+
+schedule_kpis
 
 ## Related Modules
 
@@ -657,35 +410,29 @@ Production_Planning
 
 Production_Orders
 
-Routing
-
 Operations
 
-Work_Centers
+Routing
 
 Machines
 
 Tooling
 
-Materials
+Maintenance
 
 Inventory
 
-Warehouses
+Warehouse
 
-Packaging
+Energy
 
-Finished_Goods
-
-Logistics
-
-Maintenance
-
-Quality
+Shipment
 
 Analytics
 
 AI
+
+Factory_Copilot
 
 Digital_Twin
 
@@ -693,74 +440,57 @@ Digital_Twin
 
 API_Contracts.md
 
-Dashboard_Definitions.md
+Scheduling_Engine.md
 
-Report_Catalog.md
+Constraint_Model.md
 
-Screen_Catalog.md
-
-UI_Flows.md
+Timeline_Definitions.md
 
 Events.md
 
+Dashboard_Definitions.md
+
+Mobile_App.md
+
+---
+
 ## Naswood-Specific Enhancements
 
-### Timber Yard Scheduling
+### Timber Scheduling
 
-- Log receiving appointments
-- Supplier unloading windows
-- Yard occupancy optimization
-- Log rotation planning
-- Species segregation
+- Log flow scheduling
+- Saw line balancing
+- Kiln loading schedules
+- Thermowood campaign scheduling
+- Cooling synchronization
 
-### Kiln Scheduling
+### Manufacturing Scheduling
 
-- Batch grouping by moisture target
-- Recipe compatibility matrix
-- Cooling buffer management
-- Energy tariff-aware scheduling
+- Machine balancing
+- Tool-aware scheduling
+- Shift optimization
+- Parallel operation scheduling
+- Setup minimization
 
-### Thermowood Scheduling
+### Logistics Synchronization
 
-- Recipe family sequencing
-- Furnace occupancy optimization
-- Color consistency grouping
-- Batch traceability
+- Warehouse synchronization
+- Packaging synchronization
+- Loading synchronization
+- Shipment synchronization
 
-### Production Campaign Scheduling
+### AI Optimization
 
-- Group similar profiles
-- Group same species
-- Group identical dimensions
-- Reduce setup times
-- Optimize knife changes
-
-### Packaging & Export Scheduling
-
-- Customer-specific packaging windows
-- Container booking synchronization
-- Export documentation deadlines
-- Loading sequence optimization
-
-### Sustainability Scheduling
-
-- Peak energy avoidance
-- Carbon-aware production sequencing
-- Waste minimization scheduling
-- Pellet production synchronization
-
-### AI Scheduling
-
-- Autonomous schedule generation
-- Live disruption management
-- Predictive bottleneck avoidance
-- Scenario ranking
-- AI planner assistant
+- Dynamic rescheduling
+- Delay prediction
+- Constraint optimization
+- Campaign optimization
+- Schedule recommendations
 
 ### Digital Twin
 
-- Live Gantt visualization
+- Live scheduling board
 - Factory timeline
-- Resource occupancy map
-- Real-time WIP animation
-- What-if schedule simulation
+- Resource heat maps
+- Scenario replay
+- Capacity visualization
