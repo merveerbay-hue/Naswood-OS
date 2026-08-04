@@ -1,1 +1,18 @@
+| ID       | Task             |
+| -------- | ---------------- |
+| TASK-016 | Customer         |
+| TASK-017 | Supplier         |
+| TASK-018 | Contact          |
+| TASK-019 | Address          |
+| TASK-020 | Material         |
+| TASK-021 | Product          |
+| TASK-022 | Product Category |
+| TASK-023 | Unit             |
+| TASK-024 | Currency         |
+| TASK-025 | Tax              |
+| TASK-026 | Brand            |
+| TASK-027 | Manufacturer     |
+| TASK-028 | Warehouse        |
+| TASK-029 | Location         |
+| TASK-030 | Barcode          |
 
