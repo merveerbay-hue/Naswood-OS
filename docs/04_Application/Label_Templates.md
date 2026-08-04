@@ -4,175 +4,263 @@
 
 **Document:** Label Templates
 
-**Version:** 1.0
+**Version:** 2.0
 
 **Status:** Approved
 
 ---
 
-# Purpose
+# 1. Purpose
 
-This document defines the standard label templates used throughout Naswood OS.
+This document defines all label templates used throughout Naswood OS.
 
-Labels uniquely identify physical entities and provide the information required for manufacturing, inventory, quality and logistics.
-
-All labels shall comply with the Barcode & QR Code Model.
+Every physical object generated or managed by the system shall use standardized labels to ensure traceability, identification and compliance with customer, regulatory and logistics requirements.
 
 ---
 
-# Philosophy
+# 2. Objectives
 
-Every physical entity shall have a standardized label.
-
-Labels identify.
-
-Scans validate.
-
-Business Codes remain immutable throughout the entity lifecycle.
-
-Labels may be reprinted without changing the Business Code.
+- Standardize all labels
+- Improve traceability
+- Support warehouse automation
+- Support customer requirements
+- Enable AI Vision verification
+- Enable Digital Product Passport
+- Support export documentation
 
 ---
 
-# Standard Label Components
+# 3. Label Categories
 
-Every label may contain:
+## Material Labels
+
+Log Label
+
+Prism Label
+
+Green Lumber Label
+
+Kiln Dried Lumber Label
+
+Thermowood Label
+
+Profile Label
+
+Massive Panel Label
+
+CLT Lamella Label
+
+Glulam Label
+
+Pellet Label
+
+Waste Label
+
+---
+
+## Production Labels
+
+Production Order Label
+
+Operation Label
+
+Recipe Label
+
+Batch Label
+
+Work Order Label
+
+Transformation Label
+
+---
+
+## Inventory Labels
+
+Warehouse Label
+
+Location Label
+
+Rack Label
+
+Shelf Label
+
+Bin Label
+
+Storage Position Label
+
+Inventory Count Label
+
+---
+
+## Packaging Labels
+
+Bundle Label
+
+Pallet Label
+
+Crate Label
+
+Box Label
+
+Container Label
+
+Mixed Package Label
+
+Export Package Label
+
+Domestic Package Label
+
+Customer Package Label
+
+---
+
+## Logistics Labels
+
+Shipment Label
+
+Truck Label
+
+Container Label
+
+Loading Unit Label
+
+Delivery Label
+
+Cross Dock Label
+
+---
+
+## Quality Labels
+
+Inspection Label
+
+Quality Hold Label
+
+Rejected Material Label
+
+Rework Label
+
+Released Material Label
+
+Sample Label
+
+Laboratory Label
+
+---
+
+## Asset Labels
+
+Machine Label
+
+Tool Label
+
+Knife Set Label
+
+Calibration Label
+
+Forklift Label
+
+Maintenance Label
+
+---
+
+## Personnel Labels
+
+Employee Badge
+
+Visitor Badge
+
+Operator Card
+
+Contractor Badge
+
+---
+
+# 4. Standard Label Layout
+
+Every label shall contain
 
 Company Logo
 
 Business Code
 
-Human Readable Description
-
-QR Code
-
-Barcode (Code 128)
-
-Revision
-
-Print Date
-
-Optional Customer Information
-
----
-
-# Standard Label Sizes
-
-100 × 150 mm
-
-100 × 100 mm
-
-75 × 50 mm
-
-50 × 30 mm
-
-Custom
-
----
-
-# Label Types
-
-Receiving
-
-Material
-
-Package
-
-Product
-
-Warehouse
-
-Location
-
-Machine
-
-Tool
-
-Knife
-
-Production Order
-
-Shipment
-
-Pallet
-
-Container
-
-Inspection
-
-Maintenance
-
-Customer Order
-
----
-
-# Receiving Label
-
-Purpose
-
-Incoming truck and receiving identification.
-
-Contains
-
-Receiving Number
-
-Supplier
-
-Truck Number
-
-Arrival Date
-
-Material Type
-
-Quantity
+Human Readable Name
 
 QR Code
 
 Barcode
 
+Description
+
+Date
+
+Revision
+
+Operator (optional)
+
+Customer (optional)
+
 ---
 
-# Material Label
-
-Purpose
-
-Individual material identification.
+# 5. Material Label
 
 Contains
 
 Material Code
 
-Material Type
-
 Species
+
+Dimensions
 
 Grade
 
-Thickness
-
-Width
-
-Length
-
 Moisture
 
-Current Status
+Volume
 
-Warehouse Location
+Weight
+
+Warehouse
 
 Production Date
 
-QR Code
+QR
 
 Barcode
 
 ---
 
-# Package Label
+# 6. Finished Goods Label
 
-Purpose
+Contains
 
-Finished package identification.
+Finished Goods Code
+
+Product Name
+
+Dimensions
+
+Species
+
+Grade
+
+Package Code
+
+Production Date
+
+Revision
+
+Customer
+
+QR
+
+Barcode
+
+Digital Product Passport Link
+
+---
+
+# 7. Package Label
 
 Contains
 
@@ -182,97 +270,91 @@ Package Type
 
 Package Quantity
 
-Volume (m³)
+Gross Weight
 
-Weight
-
-Destination
-
-Customer
-
-Shipment Number
-
-QR Code
-
-Barcode
-
----
-
-# Product Label
-
-Purpose
-
-Finished product identification.
-
-Contains
-
-Product Code
-
-Product Name
-
-Revision
+Net Weight
 
 Dimensions
 
-Quantity
+Customer
 
-Production Order
+Destination
 
-QR Code
+Shipment Number
+
+QR
 
 Barcode
 
 ---
 
-# Warehouse Label
+# 8. Pallet Label
 
-Purpose
+Contains
 
-Warehouse identification.
+Pallet ID
+
+Packages
+
+Weight
+
+Height
+
+Destination
+
+Warehouse
+
+Shipment
+
+QR
+
+Barcode
+
+---
+
+# 9. Container Label
+
+Contains
+
+Container Number
+
+Shipment
+
+Seal Number
+
+Destination
+
+Loading Date
+
+Gross Weight
+
+QR
+
+Barcode
+
+---
+
+# 10. Warehouse Label
 
 Contains
 
 Warehouse Code
 
-Warehouse Name
-
-QR Code
-
-Barcode
-
----
-
-# Warehouse Location Label
-
-Purpose
-
-Storage location identification.
-
-Contains
-
-Warehouse
-
-Location Code
-
-Row
+Zone
 
 Rack
 
-Level
+Shelf
 
 Bin
 
-QR Code
+QR
 
 Barcode
 
 ---
 
-# Machine Label
-
-Purpose
-
-Machine identification.
+# 11. Machine Label
 
 Contains
 
@@ -280,444 +362,490 @@ Machine Code
 
 Machine Name
 
-Machine Group
+Asset Number
 
-QR Code
+Maintenance Status
 
-Barcode
-
----
-
-# Tool Label
-
-Purpose
-
-Tool traceability.
-
-Contains
-
-Tool Code
-
-Tool Type
-
-Tool Assembly
-
-Profile
-
-Current Status
-
-Sharpening Count
-
-QR Code
+QR
 
 Barcode
 
 ---
 
-# Knife Label
+# 12. Quality Labels
 
-Purpose
+Quality Hold
 
-Knife identification.
+Rejected
 
-Contains
+Released
 
-Knife Code
+Under Inspection
 
-Profile
-
-Height
-
-Sharpening Count
-
-Status
-
-QR Code
-
-Barcode
-
----
-
-# Production Order Label
-
-Purpose
-
-Production order identification.
+Rework
 
 Contains
-
-Production Order Number
-
-Product
-
-Quantity
-
-Priority
-
-Status
-
-QR Code
-
-Barcode
-
----
-
-# Shipment Label
-
-Purpose
-
-Shipment identification.
-
-Contains
-
-Shipment Number
-
-Customer
-
-Carrier
-
-Vehicle
-
-Destination
-
-Loading Date
-
-QR Code
-
-Barcode
-
----
-
-# Pallet Label
-
-Purpose
-
-Pallet identification.
-
-Contains
-
-Pallet Number
-
-Package Count
-
-Weight
-
-Volume
-
-QR Code
-
-Barcode
-
----
-
-# Container Label
-
-Purpose
-
-Export container identification.
-
-Contains
-
-Container Number
-
-Container Type
-
-Seal Number
-
-Destination
-
-Customer
-
-QR Code
-
-Barcode
-
----
-
-# Inspection Label
-
-Purpose
-
-Quality inspection tracking.
-
-Contains
-
-Inspection Number
-
-Material Code
-
-Inspection Type
 
 Status
 
 Inspector
 
-QR Code
+Date
 
-Barcode
+Reason
+
+QR
 
 ---
 
-# Maintenance Label
+# 13. Customer Labels
 
-Purpose
+Each customer may define
 
-Maintenance work identification.
+Company Logo
+
+Private Branding
+
+Language
+
+Label Size
+
+Font
+
+Required Fields
+
+Required Certifications
+
+QR Position
+
+Barcode Position
+
+Shipping Marks
+
+Special Instructions
+
+---
+
+# 14. Export Labels
+
+Additional fields
+
+Country of Origin
+
+HS Code
+
+Incoterms
+
+Package Marks
+
+Container Number
+
+Exporter
+
+Importer
+
+Gross Weight
+
+Net Weight
+
+Certificates
+
+CE
+
+FSC
+
+PEFC
+
+EPD
+
+---
+
+# 15. Digital Product Passport Label
 
 Contains
 
-Work Order Number
+Product Identity
 
-Machine
+Material Identity
 
-Maintenance Type
+Production History
 
-Priority
+Certificates
 
-QR Code
+Carbon Footprint
 
-Barcode
+EPD
 
----
+FSC
 
-# Customer Order Label
+PEFC
 
-Purpose
+CE
 
-Customer order identification.
+Installation Manual
 
-Contains
+Technical Datasheet
 
-Sales Order Number
+QR
 
-Customer
-
-Requested Delivery
-
-Priority
-
-QR Code
-
-Barcode
+GS1 Digital Link
 
 ---
 
-# Color Standards
+# 16. GS1 Label Support
 
-Green
+Supported Standards
 
-Approved
+GS1-128
 
-Blue
+GS1 Digital Link
 
-Information
+SSCC
 
-Yellow
+GTIN
 
-Inspection Required
+Serial Number
 
-Orange
+Batch Number
 
-Production
-
-Red
-
-Rejected
-
-Gray
-
-Archived
+Expiration Date (optional)
 
 ---
 
-# Print Rules
+# 17. Label Templates
 
-Labels shall be printed automatically after:
+Default Templates
 
-Receiving Registration
+Thermowood
 
-Material Registration
+Decking
 
-Package Creation
+Cladding
 
-Shipment Creation
+Massive Panel
 
-Production Order Release
+CLT
 
-Maintenance Work Order Creation
+Glulam
 
-Manual reprinting is allowed with authorization.
+Finger Joint
 
----
+Profiles
 
-# QR Code Contents
-
-QR Codes contain
-
-Entity Type
-
-Business Code
-
-Entity UUID
-
-Version
-
-Checksum
+Pellets
 
 ---
 
-# Barcode Contents
+Customer Templates
 
-Barcode contains
+Dealer Templates
 
-Business Code only
+Export Templates
 
-Example
+Private Label Templates
 
-MAT-TW-PN-000245
-
----
-
-# Reprint Policy
-
-Reprinting shall not generate a new Business Code.
-
-Every reprint shall generate:
-
-Audit Log
-
-Business Event
-
-Print Counter Update
+OEM Templates
 
 ---
 
-# Business Rules
+# 18. Printer Management
 
-### LAB-001
+Supported Printers
 
-Every physical entity shall have a printable label.
+Zebra
 
----
+TSC
 
-### LAB-002
+Honeywell
 
-Business Codes are immutable.
+Brother
 
----
+Industrial Laser Printers
 
-### LAB-003
-
-QR Codes shall reference immutable Business Codes.
+PDF Output
 
 ---
 
-### LAB-004
+Printer Assignment
 
-Labels shall follow standardized layouts.
+Warehouse
 
----
+Production Line
 
-### LAB-005
+Packaging
 
-Reprinted labels shall be visually identical except for the print timestamp.
+Shipping
 
----
-
-### LAB-006
-
-Every label shall support both QR Code and Barcode.
+Quality
 
 ---
 
-### LAB-007
+Automatic Printing
 
-Label templates shall be version-controlled.
+Operation Complete
 
----
+Package Complete
 
-### LAB-008
+Shipment Ready
 
-Label printing shall generate Business Events.
+Receiving Complete
 
----
-
-### LAB-009
-
-Unauthorized label printing is prohibited.
+Quality Released
 
 ---
 
-### LAB-010
+# 19. AI Vision Support
 
-Every label shall remain readable throughout the manufacturing lifecycle.
+Automatic Label Verification
+
+QR Verification
+
+Barcode Verification
+
+OCR Verification
+
+Missing Label Detection
+
+Wrong Label Detection
+
+Duplicate Label Detection
+
+Print Quality Inspection
+
+Label Position Detection
+
+Damaged Label Detection
 
 ---
 
-# Integration
+# 20. Printing Workflow
 
-Labels integrate with:
+Generate Label
 
-Receiving
+↓
 
-Materials
+Generate QR
+
+↓
+
+Generate Barcode
+
+↓
+
+Print
+
+↓
+
+Vision Verification
+
+↓
+
+Attach to Object
+
+↓
+
+Scan Validation
+
+↓
+
+Complete
+
+---
+
+# 21. API Resources
+
+GET /labels
+
+GET /labels/templates
+
+GET /labels/{id}
+
+POST /labels/print
+
+POST /labels/generate
+
+POST /labels/verify
+
+PATCH /labels/templates
+
+---
+
+# 22. Integrations
+
+Barcode Model
+
+Printing Model
+
+Packaging
+
+Finished Goods
+
+Warehouse
 
 Inventory
 
 Production
 
-Packaging
-
-Quality
-
-Machines
-
-Tooling
-
-Maintenance
-
-Sales
-
-Purchasing
-
 Logistics
 
-Barcode & QR Model
+Digital Product Passport
 
-Events
+GS1
 
-Audit Log
+ERP
 
 Mobile Application
 
+AI Vision
+
 ---
 
-# Future Extensions
+# 23. Business Rules
 
-The architecture supports:
+Every physical object shall have one label.
+
+Labels shall contain Business Codes.
+
+QR Codes are mandatory.
+
+Package Labels shall reference Package IDs.
+
+Customer-specific templates override default templates.
+
+Export labels require regulatory information.
+
+Every reprint shall be recorded.
+
+---
+
+# 24. Security
+
+Label Template Version Control
+
+Digital Signature (Optional)
+
+Access Control
+
+Print Authorization
+
+Audit Logging
+
+---
+
+# 25. Reports
+
+Label Print History
+
+Reprint History
+
+Label Verification Report
+
+Missing Labels
+
+Damaged Labels
+
+Print Performance
+
+Printer Utilization
+
+Customer Label Usage
+
+Export Label Report
+
+Label Audit Report
+
+---
+
+# 26. Dashboard Widgets
+
+Labels Printed Today
+
+Print Queue
+
+Printer Status
+
+Label Errors
+
+Missing Labels
+
+Reprint Requests
+
+Customer Templates
+
+AI Verification Status
+
+Print Performance
+
+---
+
+# 27. AI Capabilities
+
+Automatic Template Selection
+
+Customer Template Recommendation
+
+AI Layout Optimization
+
+Label Readability Analysis
+
+Vision Quality Control
+
+QR Damage Recovery
+
+Barcode Verification
+
+Print Quality Prediction
+
+Printer Failure Prediction
+
+AI Print Assistant
+
+---
+
+# 28. Future Extensions
 
 RFID Labels
 
 NFC Labels
 
-Electronic Shelf Labels
+Electronic Paper Labels
 
-Digital Product Passport
+Color Labels
 
-GS1 Digital Link
+IoT Smart Labels
 
-Smart Labels
+Blockchain Verification
 
-Tamper-Evident Labels
+Digital Watermark
 
-Sustainability Labels
+Augmented Reality Labels
 
 ---
 
-# Label Philosophy
+# 29. Related Documents
 
-Labels provide the physical identity of digital entities within Naswood OS.
+Barcode_QR_Model
 
-Every label follows a standardized structure, ensuring consistency across receiving, production, warehousing, quality, maintenance and logistics.
+Printing_Model
 
-Standardized labels are the foundation of complete manufacturing traceability.
+Packaging Module
+
+Finished Goods Module
+
+Warehouse Module
+
+Customers Module
+
+Digital Product Passport
+
+API Contracts
+
+---
+
+# 30. Module Philosophy
+
+Labels are the physical representation of the digital identity managed by Naswood OS.
+
+Every material, product, package, warehouse location and shipment is identified through standardized labels containing Business Codes, QR Codes and Barcodes.
+
+The Label Templates module ensures operational consistency, regulatory compliance, customer-specific customization and seamless integration with AI, Digital Product Passport and warehouse automation technologies.
