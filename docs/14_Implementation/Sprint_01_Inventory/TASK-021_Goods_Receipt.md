@@ -1,4 +1,4 @@
-# TASK-006 Goods Receipt
+# TASK-021 Goods Receipt
 
 **Sprint:** Sprint_01_Inventory
 
