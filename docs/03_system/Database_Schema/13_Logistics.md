@@ -1,401 +1,841 @@
-# Database Schema — Logistics
+# Logistics Database Schema
 
 **Project:** Naswood OS
-**Document:** Logistics Schema
-**Database:** PostgreSQL
-**Version:** 1.0
+
+**Document:** Logistics Database Schema
+
+**Version:** 2.0
+
 **Status:** Approved
 
 ---
 
 # Purpose
 
-The Logistics module manages all internal and external material movements after production.
+Defines all logistics-related database entities used throughout Naswood OS.
 
-It covers warehouse transfers, loading operations, transportation, shipment planning and delivery confirmation.
-
-Logistics ensures that every Material and Package reaches the correct destination while maintaining complete traceability.
+The Logistics module manages internal material movements, warehouse transfers, packaging, shipment planning, transportation, export operations and customer delivery.
 
 ---
 
-# Philosophy
+# Logistics Architecture
 
-Production creates products.
+Receiving
 
-Logistics moves products.
+↓
 
-Every movement is traceable.
+Warehouse
 
-Every shipment is planned.
+↓
 
-Every delivery is verifiable.
+Internal Transfer
+
+↓
+
+Production
+
+↓
+
+Packaging
+
+↓
+
+Finished Goods
+
+↓
+
+Shipment
+
+↓
+
+Loading
+
+↓
+
+Transportation
+
+↓
+
+Customer
 
 ---
 
-# Entity List
+# Main Entities
 
-TransferOrder
+Shipment
 
-TransferOrderLine
+Shipment Item
 
-LoadingPlan
+Package
 
-LoadingOperation
+Package Item
+
+Pallet
+
+Pallet Item
+
+Container
+
+Container Item
+
+Loading Unit
+
+Loading Event
 
 Vehicle
 
 Carrier
 
-ShipmentRoute
+Route
 
 Delivery
 
-DeliveryConfirmation
+Transfer Order
 
-ExportDocument
+Transfer Item
+
+Dock
+
+Dock Appointment
+
+Export Document
+
+Delivery Confirmation
+
+GPS Tracking
+
+Logistics Event
 
 ---
 
-# transfer_order
+# Table: shipments
 
-Represents an internal logistics request.
+Shipment_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| transfer_number | VARCHAR(30) |
-| from_warehouse_id | UUID FK |
-| to_warehouse_id | UUID FK |
-| requested_by | UUID FK |
-| status | VARCHAR(30) |
-| planned_date | DATE |
+Shipment_No
+
+Customer_ID
+
+Carrier_ID
+
+Route_ID
+
+Shipment_Type
 
 Status
 
-- Draft
-- Planned
-- Released
-- In Progress
-- Completed
-- Cancelled
+Planned_Date
+
+Actual_Date
+
+Warehouse_ID
+
+Destination
+
+Incoterms
+
+Priority
+
+Created_By
+
+Created_Date
 
 ---
 
-# transfer_order_line
+# Table: shipment_items
 
-Materials or Packages to be transferred.
+Shipment_Item_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| transfer_order_id | UUID FK |
-| material_id | UUID FK |
-| package_id | UUID FK |
-| quantity | NUMERIC(18,3) |
+Shipment_ID
 
----
+Package_ID
 
-# loading_plan
+Material_ID
 
-Represents planned loading for one vehicle.
+Finished_Goods_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| shipment_id | UUID FK |
-| vehicle_id | UUID FK |
-| loading_date | TIMESTAMP |
-| loading_status | VARCHAR(30) |
+Quantity
 
-Loading Status
+Weight
 
-- Planned
-- Loading
-- Completed
-- Cancelled
+Volume
+
+Status
 
 ---
 
-# loading_operation
+# Table: packages
 
-Individual loading records.
+Package_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| loading_plan_id | UUID FK |
-| package_id | UUID FK |
-| loaded_by | UUID FK |
-| loaded_at | TIMESTAMP |
+Package_Code
 
----
+Package_Type
 
-# vehicle
+Customer_ID
 
-Transportation vehicle.
+Product_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| plate_number | VARCHAR(30) |
-| vehicle_type | VARCHAR(50) |
-| capacity_weight | NUMERIC |
-| capacity_volume | NUMERIC |
-| active | BOOLEAN |
+Package_Status
 
-Vehicle Types
+Gross_Weight
 
-- Truck
-- Trailer
-- Container
-- Forklift
-- Internal Transport
+Net_Weight
 
----
+Volume
 
-# carrier
+Length
 
-Transportation company.
+Width
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| code | VARCHAR(30) |
-| company_name | VARCHAR(200) |
-| contact_person | VARCHAR(150) |
-| phone | VARCHAR(50) |
-| active | BOOLEAN |
+Height
+
+Package_Date
+
+Warehouse_ID
+
+QR_Code
+
+Barcode
+
+DPP_Link
 
 ---
 
-# shipment_route
+# Table: package_items
 
-Shipment route information.
+Package_Item_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| shipment_id | UUID FK |
-| departure_location | VARCHAR(150) |
-| destination_location | VARCHAR(150) |
-| estimated_distance_km | NUMERIC |
-| estimated_duration_hours | NUMERIC |
+Package_ID
 
----
+Finished_Goods_ID
 
-# delivery
+Material_ID
 
-Represents product delivery.
+Quantity
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| shipment_id | UUID FK |
-| customer_id | UUID FK |
-| delivery_date | TIMESTAMP |
-| delivery_status | VARCHAR(30) |
+Weight
 
-Delivery Status
+Volume
 
-- Planned
-- In Transit
-- Delivered
-- Delayed
-- Returned
+Sequence_No
 
 ---
 
-# delivery_confirmation
+# Table: pallets
 
-Proof of delivery.
+Pallet_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| delivery_id | UUID FK |
-| confirmed_by | VARCHAR(150) |
-| confirmation_date | TIMESTAMP |
-| document_reference | VARCHAR(100) |
-| remarks | TEXT |
+Pallet_Code
+
+Pallet_Type
+
+Warehouse_ID
+
+Gross_Weight
+
+Net_Weight
+
+Height
+
+QR_Code
+
+Status
 
 ---
 
-# export_document
+# Table: pallet_items
 
-Export documentation.
+Pallet_Item_ID
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| shipment_id | UUID FK |
-| document_type | VARCHAR(50) |
-| document_number | VARCHAR(100) |
-| issue_date | DATE |
+Pallet_ID
 
-Examples
+Package_ID
 
-- Invoice
-- Packing List
-- Certificate of Origin
-- EUR.1
-- Bill of Lading
-- CMR
-- Customs Declaration
+Sequence_No
+
+---
+
+# Table: containers
+
+Container_ID
+
+Container_Number
+
+Container_Type
+
+Seal_Number
+
+Carrier_ID
+
+Route_ID
+
+Shipment_ID
+
+Gross_Weight
+
+Net_Weight
+
+Loading_Date
+
+Departure_Date
+
+Arrival_Date
+
+Destination
+
+Status
+
+QR_Code
+
+---
+
+# Table: container_items
+
+Container_Item_ID
+
+Container_ID
+
+Pallet_ID
+
+Package_ID
+
+Sequence_No
+
+---
+
+# Table: loading_units
+
+Loading_Unit_ID
+
+Shipment_ID
+
+Loading_Type
+
+Vehicle_ID
+
+Loading_Start
+
+Loading_End
+
+Operator_ID
+
+Dock_ID
+
+Status
+
+---
+
+# Table: loading_events
+
+Loading_Event_ID
+
+Loading_Unit_ID
+
+Package_ID
+
+Timestamp
+
+Operator_ID
+
+Action
+
+Result
+
+---
+
+# Table: transfer_orders
+
+Transfer_Order_ID
+
+Transfer_No
+
+Source_Warehouse
+
+Destination_Warehouse
+
+Status
+
+Priority
+
+Created_By
+
+Created_Date
+
+---
+
+# Table: transfer_items
+
+Transfer_Item_ID
+
+Transfer_Order_ID
+
+Material_ID
+
+Package_ID
+
+Quantity
+
+Status
+
+---
+
+# Table: carriers
+
+Carrier_ID
+
+Carrier_Name
+
+Carrier_Type
+
+Contact
+
+Country
+
+Vehicle_Count
+
+Insurance
+
+Performance_Score
+
+Status
+
+---
+
+# Table: vehicles
+
+Vehicle_ID
+
+Plate_Number
+
+Vehicle_Type
+
+Carrier_ID
+
+Capacity
+
+Driver
+
+GPS_Device
+
+Status
+
+---
+
+# Table: routes
+
+Route_ID
+
+Route_Name
+
+Country
+
+Distance
+
+Estimated_Time
+
+Risk_Level
+
+Carbon_Factor
+
+---
+
+# Table: docks
+
+Dock_ID
+
+Dock_Name
+
+Warehouse_ID
+
+Dock_Type
+
+Status
+
+---
+
+# Table: dock_appointments
+
+Appointment_ID
+
+Dock_ID
+
+Shipment_ID
+
+Vehicle_ID
+
+Arrival_Time
+
+Departure_Time
+
+Status
+
+---
+
+# Table: export_documents
+
+Export_Document_ID
+
+Shipment_ID
+
+Document_Type
+
+Country
+
+Document_No
+
+Issue_Date
+
+Status
+
+File_Link
+
+---
+
+# Table: delivery_confirmations
+
+Confirmation_ID
+
+Shipment_ID
+
+Delivery_Date
+
+Receiver
+
+Signature
+
+GPS_Location
+
+Photo
+
+Status
+
+---
+
+# Table: gps_tracking
+
+Tracking_ID
+
+Shipment_ID
+
+Latitude
+
+Longitude
+
+Speed
+
+Timestamp
+
+---
+
+# Table: logistics_events
+
+Event_ID
+
+Entity_Type
+
+Entity_ID
+
+Event_Type
+
+Timestamp
+
+User_ID
+
+Description
 
 ---
 
 # Relationships
 
-Transfer Order
-
-1 → N Transfer Order Lines
-
-Loading Plan
-
-1 → N Loading Operations
-
-Vehicle
-
-1 → N Loading Plans
-
-Carrier
-
-1 → N Shipments
-
 Shipment
 
-1 → 1 Shipment Route
+↓
 
-Shipment
+Packages
 
-1 → 1 Delivery
+↓
+
+Pallets
+
+↓
+
+Containers
+
+↓
 
 Delivery
 
-1 → 1 Delivery Confirmation
+---
 
-Shipment
+Package
 
-1 → N Export Documents
+↓
+
+Finished Goods
+
+↓
+
+Material Genealogy
+
+↓
+
+Production Order
+
+---
+
+Transfer Order
+
+↓
+
+Transfer Items
+
+↓
+
+Warehouse
+
+↓
+
+Inventory
+
+---
+
+# Shipment Lifecycle
+
+Draft
+
+↓
+
+Planned
+
+↓
+
+Picking
+
+↓
+
+Packing
+
+↓
+
+Loaded
+
+↓
+
+In Transit
+
+↓
+
+Delivered
+
+↓
+
+Closed
+
+---
+
+# Package Lifecycle
+
+Created
+
+↓
+
+Verified
+
+↓
+
+Stored
+
+↓
+
+Reserved
+
+↓
+
+Loaded
+
+↓
+
+Shipped
+
+↓
+
+Delivered
+
+↓
+
+Archived
+
+---
+
+# Container Lifecycle
+
+Created
+
+↓
+
+Loading
+
+↓
+
+Sealed
+
+↓
+
+Dispatched
+
+↓
+
+In Transit
+
+↓
+
+Arrived
+
+↓
+
+Unloaded
+
+↓
+
+Closed
 
 ---
 
 # Business Rules
 
-### BR-1301
+Every Shipment shall have one Customer.
 
-Every internal warehouse movement shall be initiated by a Transfer Order.
+Every Package shall have one QR Code.
 
----
+Every Package belongs to one Shipment.
 
-### BR-1302
+Every Container belongs to one Shipment.
 
-Every Shipment shall have one Loading Plan.
+Every Transfer shall update Inventory automatically.
 
----
+Every Loading Event shall be logged.
 
-### BR-1303
+Export Shipments require Export Documents.
 
-Only approved Packages may be loaded.
-
----
-
-### BR-1304
-
-Loading Operations shall generate Inventory Movements.
+Digital Product Passport shall be linked to every export package.
 
 ---
 
-### BR-1305
+# Indexes
 
-Delivery confirmation shall complete the Shipment lifecycle.
+Shipment_No
 
----
+Package_Code
 
-### BR-1306
+Pallet_Code
 
-Returned deliveries shall generate reverse Inventory Movements.
+Container_Number
 
----
+Transfer_No
 
-### BR-1307
+QR_Code
 
-Export Shipments shall include all mandatory export documents.
+Barcode
 
----
-
-### BR-1308
-
-Vehicles shall not exceed configured weight or volume capacities.
+GPS Timestamp
 
 ---
 
-### BR-1309
+# AI Support
 
-Every logistics transaction shall generate Business Events and Audit Logs.
+Shipment Optimization
+
+Container Optimization
+
+Loading Optimization
+
+Vehicle Recommendation
+
+Carrier Recommendation
+
+Route Optimization
+
+Carbon Footprint Calculation
+
+Delay Prediction
+
+ETA Prediction
+
+Logistics Risk Detection
+
+Warehouse Traffic Optimization
+
+Dock Scheduling Optimization
 
 ---
 
-### BR-1310
+# Digital Twin Integration
 
-Package traceability shall remain intact throughout transportation.
+Live Shipment Tracking
+
+Warehouse Loading Visualization
+
+Container Visualization
+
+Dock Utilization
+
+Forklift Movement
+
+Package Heat Map
+
+Vehicle Tracking
+
+Real-Time Logistics Dashboard
 
 ---
 
-# Integration
+# Related Modules
 
-Logistics integrates with:
+Packaging
 
-- Inventory
-- Packaging
-- Sales
-- Production
-- Warehouse
-- Finance
-- Analytics
-- GPS (Future)
-- Carrier Systems
-- AI Route Optimization
+Finished Goods
+
+Warehouse
+
+Inventory
+
+Production
+
+Customers
+
+Transportation
+
+Analytics
+
+Printing
+
+Barcode & QR
+
+Digital Product Passport
+
+AI
 
 ---
 
 # Future Extensions
 
-The architecture supports:
+Autonomous Vehicles
 
-- GPS Vehicle Tracking
-- Live Shipment Tracking
-- RFID Gate Control
-- QR Code Loading Verification
-- Dock Scheduling
-- Route Optimization
-- AI Load Optimization
-- Freight Cost Optimization
-- Customer Delivery Portal
+AGV Integration
 
----
+RFID Tracking
 
-# Logistics KPIs
+IoT Sensors
 
-The Logistics module shall support calculation of:
+Smart Containers
 
-- On-Time Delivery
-- Vehicle Utilization
-- Warehouse Transfer Time
-- Loading Time
-- Delivery Accuracy
-- Freight Cost per m³
-- Freight Cost per Shipment
-- Average Delivery Duration
-- Loading Efficiency
-- Container Utilization
+Blockchain Logistics
 
----
+GS1 EPCIS
 
-# Logistics Philosophy
+EDI Integration
 
-Logistics is responsible for the controlled movement of Materials and Products throughout the supply chain.
+Drone Inventory
 
-Every transfer, loading operation, shipment and delivery is digitally recorded, fully traceable and linked to the originating Materials, Packages and Sales Orders.
-
-Reliable logistics completes the manufacturing lifecycle by ensuring the correct product reaches the correct customer at the correct time.
+Carbon Accounting
