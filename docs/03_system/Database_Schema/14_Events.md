@@ -1,516 +1,40 @@
-# Database Schema — Events
+# Events Database Schema
 
 **Project:** Naswood OS
-**Document:** Events Schema
-**Database:** PostgreSQL
-**Version:** 1.0
+
+**Document:** Events Database Schema
+
+**Version:** 2.0
+
 **Status:** Approved
 
 ---
 
 # Purpose
 
-The Events module records every business event occurring within Naswood OS.
+The Events module records every significant business event occurring within Naswood OS.
 
-Events represent immutable business facts.
+Events provide the foundation for:
 
-They enable complete traceability, workflow automation, integrations and AI-driven analytics.
-
-Unlike Audit Logs, Events describe what happened in the business rather than who performed the action.
-
----
-
-# Philosophy
-
-Business activities generate Events.
+- Auditability
+- Material Traceability
+- Manufacturing Genealogy
+- Workflow Automation
+- Notification Services
+- AI Learning
+- Analytics
+- Digital Twin Synchronization
+- Event-Driven Architecture
 
 Events are immutable.
 
-Events are never updated.
+Events are append-only.
 
 Events are never deleted.
 
-Every Event represents a fact that occurred at a specific moment.
-
 ---
 
-# Entity List
-
-BusinessEvent
-
-EventPayload
-
-EventSubscription
-
-EventQueue
-
-EventProcessing
-
----
-
-# business_event
-
-Represents one immutable business event.
-
-| Field | Type |
-|--------|------|
-| id | UUID |
-| event_id | UUID |
-| event_type | VARCHAR(100) |
-| event_version | INTEGER |
-| source_module | VARCHAR(50) |
-| entity_type | VARCHAR(50) |
-| entity_id | UUID |
-| entity_code | VARCHAR(50) |
-| correlation_id | UUID |
-| causation_id | UUID |
-| event_time | TIMESTAMP |
-| published_by | VARCHAR(50) |
-
----
-
-# event_payload
-
-Stores the event data.
-
-| Field | Type |
-|--------|------|
-| id | UUID |
-| business_event_id | UUID FK |
-| payload_json | JSONB |
-
----
-
-# event_subscription
-
-Defines consumers interested in specific Events.
-
-| Field | Type |
-|--------|------|
-| id | UUID |
-| subscriber_name | VARCHAR(100) |
-| event_type | VARCHAR(100) |
-| active | BOOLEAN |
-
-Examples
-
-- Inventory
-- Production
-- ERP
-- CRM
-- Analytics
-- AI Copilot
-- Notification Service
-
----
-
-# event_queue
-
-Tracks asynchronous processing.
-
-| Field | Type |
-|--------|------|
-| id | UUID |
-| business_event_id | UUID FK |
-| subscriber_name | VARCHAR(100) |
-| processing_status | VARCHAR(30) |
-| retry_count | INTEGER |
-| processed_at | TIMESTAMP |
-
-Processing Status
-
-- Pending
-- Processing
-- Completed
-- Failed
-- Dead Letter
-
----
-
-# event_processing
-
-Execution history.
-
-| Field | Type |
-|--------|------|
-| id | UUID |
-| event_queue_id | UUID FK |
-| started_at | TIMESTAMP |
-| completed_at | TIMESTAMP |
-| execution_time_ms | INTEGER |
-| error_message | TEXT |
-
----
-
-# Event Categories
-
-Receiving
-
-Inventory
-
-Production
-
-Transformation
-
-Quality
-
-Packaging
-
-Shipment
-
-Sales
-
-Purchasing
-
-Maintenance
-
-Machine
-
-Tooling
-
-Finance
-
-Security
-
-Integration
-
-AI
-
----
-
-# Standard Event Types
-
-## Material Lifecycle
-
-MaterialRegistered
-
-MaterialReceived
-
-MaterialMeasured
-
-MaterialClassified
-
-MaterialMoved
-
-MaterialReserved
-
-MaterialReleased
-
-MaterialSplit
-
-MaterialMerged
-
-MaterialConsumed
-
-MaterialRecovered
-
-MaterialScrapped
-
-MaterialReturned
-
----
-
-## Production Lifecycle
-
-ProductionOrderCreated
-
-ProductionStarted
-
-ProductionPaused
-
-ProductionResumed
-
-ProductionCompleted
-
-TransformationStarted
-
-TransformationCompleted
-
-RecipeExecuted
-
-OperationStarted
-
-OperationCompleted
-
----
-
-## Material Processing
-
-MaterialKilnDried
-
-MaterialThermallyModified
-
-MaterialPlaned
-
-MaterialProfiled
-
-MaterialFingerJointed
-
-MaterialPressed
-
-MaterialCalibrated
-
-MaterialPackaged
-
----
-
-## Machine
-
-MachineStarted
-
-MachineStopped
-
-MachineStatusChanged
-
-MachineAlarmRaised
-
-MachineAlarmCleared
-
-MachineSetupStarted
-
-MachineSetupCompleted
-
-ToolChanged
-
----
-
-## Tooling
-
-ToolInstalled
-
-ToolRemoved
-
-KnifeSharpened
-
-ToolLifeUpdated
-
-ToolInspectionPassed
-
-ToolInspectionFailed
-
-ToolConfigurationChanged
-
----
-
-## Quality
-
-InspectionCreated
-
-InspectionStarted
-
-InspectionCompleted
-
-InspectionPassed
-
-InspectionFailed
-
-QualityApproved
-
-QualityRejected
-
-NonConformanceCreated
-
-LaboratoryTestCompleted
-
----
-
-## Inventory
-
-InventoryAdjusted
-
-InventoryReserved
-
-InventoryReleased
-
-WarehouseTransferCompleted
-
-LocationChanged
-
-PackageCreated
-
-PackageLoaded
-
-PackageUnloaded
-
----
-
-## Logistics
-
-ShipmentCreated
-
-ShipmentLoaded
-
-ShipmentDispatched
-
-ShipmentDelivered
-
-ShipmentReturned
-
-DeliveryConfirmed
-
----
-
-## Purchasing
-
-PurchaseRequestCreated
-
-PurchaseOrderApproved
-
-PurchaseOrderReceived
-
-SupplierRejected
-
----
-
-## Sales
-
-QuotationCreated
-
-QuotationApproved
-
-SalesOrderConfirmed
-
-SalesOrderCancelled
-
-CustomerReturnCreated
-
----
-
-## Maintenance
-
-MaintenancePlanned
-
-MaintenanceStarted
-
-MaintenanceCompleted
-
-MachineFailureDetected
-
-DowntimeStarted
-
-DowntimeEnded
-
----
-
-## Finance
-
-CostCalculated
-
-InventoryValuationCompleted
-
-ERPExportCompleted
-
-BudgetExceeded
-
----
-
-## Security
-
-UserCreated
-
-UserDisabled
-
-PermissionChanged
-
-RoleAssigned
-
-UserLoggedIn
-
-UserLoggedOut
-
----
-
-## AI
-
-AIRecommendationGenerated
-
-AIRecommendationApproved
-
-AIRecommendationRejected
-
-PredictionGenerated
-
-ForecastCompleted
-
-# Relationships
-
-Business Event
-
-1 → 1 Event Payload
-
-Business Event
-
-1 → N Event Queue
-
-Event Queue
-
-1 → N Event Processing Records
-
----
-
-# Business Rules
-
-### BR-1401
-
-Every critical business operation shall generate a Business Event.
-
----
-
-### BR-1402
-
-Business Events are immutable.
-
----
-
-### BR-1403
-
-Business Events shall never be deleted.
-
----
-
-### BR-1404
-
-Every Event shall contain a Correlation ID.
-
----
-
-### BR-1405
-
-Related Events shall reference the originating Causation ID.
-
----
-
-### BR-1406
-
-Subscribers process Events asynchronously.
-
----
-
-### BR-1407
-
-Failed processing attempts shall be retried according to configurable policies.
-
----
-
-### BR-1408
-
-Events shall be version-controlled.
-
----
-
-### BR-1409
-
-Every Event shall reference exactly one business entity.
-
----
-
-### BR-1410
-
-Event processing shall never modify historical Events.
-
----
-
-# Event Flow
+# Event Architecture
 
 Business Action
 
@@ -520,7 +44,11 @@ Business Event
 
 ↓
 
-Event Queue
+Event Store
+
+↓
+
+Event Bus
 
 ↓
 
@@ -528,61 +56,882 @@ Subscribers
 
 ↓
 
-Processing
+Notifications
 
 ↓
 
-Completion
+Analytics
+
+↓
+
+AI
+
+↓
+
+Digital Twin
 
 ---
 
-# Integration
+# Main Tables
 
-Events integrate with:
+events
 
-- Inventory
-- Production
-- Quality
-- Machines
-- Tooling
-- Maintenance
-- Sales
-- Purchasing
-- Finance
-- ERP
-- CRM
-- Analytics
-- AI Platform
-- Notification Service
+event_types
+
+event_categories
+
+event_subscriptions
+
+event_handlers
+
+event_queue
+
+event_failures
+
+event_replay
+
+event_snapshots
+
+---
+
+# Table: events
+
+Event_ID (UUID)
+
+Event_Type
+
+Category
+
+Source_Module
+
+Entity_Type
+
+Entity_ID
+
+Business_Code
+
+Parent_Event_ID
+
+Correlation_ID
+
+Session_ID
+
+User_ID
+
+Organization_ID
+
+Factory_ID
+
+Production_Order_ID
+
+Operation_ID
+
+Material_ID
+
+Package_ID
+
+Shipment_ID
+
+Machine_ID
+
+Severity
+
+Status
+
+Event_Data (JSON)
+
+Metadata (JSON)
+
+Created_At
+
+Processed_At
+
+Version
+
+---
+
+# Table: event_types
+
+Event_Type_ID
+
+Event_Name
+
+Category
+
+Description
+
+Source_Module
+
+Is_System
+
+Version
+
+Active
+
+---
+
+# Table: event_categories
+
+Category_ID
+
+Category_Name
+
+Description
+
+---
+
+# Categories
+
+Master Data
+
+Production
+
+Inventory
+
+Warehouse
+
+Packaging
+
+Quality
+
+Maintenance
+
+Purchasing
+
+Sales
+
+Finance
+
+Logistics
+
+Security
+
+Workflow
+
+Notification
+
+AI
+
+Digital Twin
+
+IoT
+
+Analytics
+
+System
+
+---
+
+# Table: event_subscriptions
+
+Subscription_ID
+
+Subscriber_Name
+
+Module
+
+Event_Type
+
+Handler
+
+Retry_Count
+
+Active
+
+---
+
+# Table: event_handlers
+
+Handler_ID
+
+Handler_Name
+
+Module
+
+Priority
+
+Timeout
+
+Retry
+
+---
+
+# Table: event_queue
+
+Queue_ID
+
+Event_ID
+
+Status
+
+Attempts
+
+Created_At
+
+Processed_At
+
+---
+
+# Table: event_failures
+
+Failure_ID
+
+Event_ID
+
+Reason
+
+Stacktrace
+
+Retry_Count
+
+Resolved
+
+---
+
+# Table: event_replay
+
+Replay_ID
+
+Replay_Name
+
+Start_Date
+
+End_Date
+
+Status
+
+Started_By
+
+---
+
+# Table: event_snapshots
+
+Snapshot_ID
+
+Aggregate_Type
+
+Aggregate_ID
+
+Version
+
+Snapshot_Data
+
+Created_At
+
+---
+
+# Event Naming Standard
+
+<EventDomain><Action>
+
+Examples
+
+MaterialCreated
+
+ProductionOrderReleased
+
+OperationStarted
+
+PackageCreated
+
+ShipmentClosed
+
+MachineStopped
+
+QualityApproved
+
+MaintenanceCompleted
+
+---
+
+# Material Lifecycle Events
+
+MaterialCreated
+
+MaterialReceived
+
+MaterialMeasured
+
+MaterialClassified
+
+MaterialStored
+
+MaterialReserved
+
+MaterialIssued
+
+MaterialTransferred
+
+MaterialConsumed
+
+MaterialTransformed
+
+MaterialSplit
+
+MaterialMerged
+
+MaterialReturned
+
+MaterialReworked
+
+MaterialRejected
+
+MaterialReleased
+
+MaterialPacked
+
+MaterialLoaded
+
+MaterialShipped
+
+MaterialDelivered
+
+MaterialArchived
+
+---
+
+# Production Events
+
+ProductionOrderCreated
+
+ProductionOrderReleased
+
+ProductionOrderScheduled
+
+ProductionOrderStarted
+
+ProductionOrderPaused
+
+ProductionOrderResumed
+
+ProductionOrderCompleted
+
+ProductionOrderCancelled
+
+---
+
+# Operation Events
+
+OperationCreated
+
+OperationReleased
+
+OperationAssigned
+
+OperationStarted
+
+OperationPaused
+
+OperationResumed
+
+OperationCompleted
+
+OperationFailed
+
+OperationCancelled
+
+CycleCompleted
+
+SetupStarted
+
+SetupCompleted
+
+---
+
+# Routing Events
+
+RoutingAssigned
+
+RoutingChanged
+
+RoutingCompleted
+
+AlternativeRoutingSelected
+
+---
+
+# Recipe Events
+
+RecipeAssigned
+
+RecipeChanged
+
+RecipeValidated
+
+RecipeApproved
+
+---
+
+# Machine Events
+
+MachineStarted
+
+MachineStopped
+
+MachineIdle
+
+MachineAlarm
+
+MachineFailure
+
+MachineRecovered
+
+MachineMaintenanceDue
+
+MachineConnected
+
+MachineDisconnected
+
+PLCConnected
+
+PLCDisconnected
+
+---
+
+# Tool Events
+
+ToolInstalled
+
+ToolRemoved
+
+ToolChanged
+
+ToolCalibrated
+
+KnifeChanged
+
+---
+
+# Inventory Events
+
+InventoryReceived
+
+InventoryReserved
+
+InventoryAllocated
+
+InventoryMoved
+
+InventoryAdjusted
+
+InventoryCounted
+
+InventoryBlocked
+
+InventoryReleased
+
+InventoryExpired
+
+---
+
+# Warehouse Events
+
+WarehouseCreated
+
+WarehouseActivated
+
+WarehouseCapacityExceeded
+
+WarehouseLocationAssigned
+
+WarehouseTransferCompleted
+
+WarehouseOptimized
+
+---
+
+# Quality Events
+
+InspectionStarted
+
+InspectionCompleted
+
+InspectionApproved
+
+InspectionRejected
+
+QualityHoldCreated
+
+QualityReleased
+
+CAPAOpened
+
+CAPAClosed
+
+NCRCreated
+
+SPCAlert
+
+---
+
+# Packaging Events
+
+PackageCreated
+
+PackageUpdated
+
+PackageVerified
+
+PackageClosed
+
+PackageStored
+
+PackageReserved
+
+PackageLoaded
+
+PackageShipped
+
+PackageDelivered
+
+PackageReopened
+
+PalletCreated
+
+ContainerLoaded
+
+ContainerSealed
+
+ContainerClosed
+
+LabelPrinted
+
+QRCodeGenerated
+
+BarcodeGenerated
+
+DigitalPassportGenerated
+
+---
+
+# Finished Goods Events
+
+FinishedGoodsCreated
+
+FinishedGoodsReleased
+
+FinishedGoodsPackaged
+
+FinishedGoodsStored
+
+FinishedGoodsReserved
+
+FinishedGoodsAllocated
+
+FinishedGoodsLoaded
+
+FinishedGoodsShipped
+
+FinishedGoodsDelivered
+
+FinishedGoodsArchived
+
+---
+
+# Logistics Events
+
+ShipmentCreated
+
+ShipmentApproved
+
+ShipmentLoaded
+
+ShipmentDispatched
+
+ShipmentDelayed
+
+ShipmentArrived
+
+ShipmentDelivered
+
+TransferOrderCreated
+
+VehicleAssigned
+
+DockAssigned
+
+RouteOptimized
+
+CarrierAssigned
+
+---
+
+# Maintenance Events
+
+MaintenancePlanned
+
+MaintenanceStarted
+
+MaintenanceCompleted
+
+MaintenanceCancelled
+
+BreakdownOccurred
+
+CalibrationCompleted
+
+---
+
+# Sales Events
+
+CustomerCreated
+
+QuotationCreated
+
+QuotationApproved
+
+SalesOrderCreated
+
+SalesOrderConfirmed
+
+SalesOrderCancelled
+
+---
+
+# Purchasing Events
+
+SupplierCreated
+
+PurchaseRequestCreated
+
+PurchaseOrderCreated
+
+GoodsReceived
+
+SupplierEvaluated
+
+---
+
+# Finance Events
+
+InvoiceCreated
+
+InvoicePaid
+
+PaymentReceived
+
+CostCalculated
+
+BudgetExceeded
+
+---
+
+# Security Events
+
+UserLoggedIn
+
+UserLoggedOut
+
+LoginFailed
+
+PermissionChanged
+
+RoleAssigned
+
+PasswordChanged
+
+MFAValidated
+
+---
+
+# AI Events
+
+PredictionGenerated
+
+RecommendationCreated
+
+AnomalyDetected
+
+QualityPredictionCompleted
+
+DemandForecastCompleted
+
+RouteOptimizedByAI
+
+ProductionOptimizedByAI
+
+WarehouseOptimizedByAI
+
+---
+
+# Digital Twin Events
+
+TwinUpdated
+
+MachinePositionUpdated
+
+MaterialPositionUpdated
+
+EnergyUpdated
+
+SimulationStarted
+
+SimulationCompleted
+
+---
+
+# IoT Events
+
+SensorReadingReceived
+
+TemperatureExceeded
+
+HumidityExceeded
+
+VibrationDetected
+
+EnergyConsumptionRecorded
+
+---
+
+# Notification Events
+
+EmailSent
+
+SMSDelivered
+
+PushNotificationSent
+
+TeamsMessageSent
+
+WebhookTriggered
+
+---
+
+# Event Severity
+
+Info
+
+Warning
+
+Critical
+
+Emergency
+
+---
+
+# Event Status
+
+Pending
+
+Queued
+
+Processing
+
+Completed
+
+Failed
+
+DeadLetter
+
+Replayed
+
+---
+
+# Business Rules
+
+Every business transaction shall generate at least one event.
+
+Events are immutable.
+
+Events are append-only.
+
+Events shall never be physically deleted.
+
+Every event shall have a Correlation ID.
+
+Every event shall support replay.
+
+Every event shall support versioning.
+
+Events shall be processed asynchronously unless marked Critical.
+
+---
+
+# AI Support
+
+Anomaly Detection
+
+Event Correlation
+
+Predictive Alerts
+
+Root Cause Analysis
+
+Failure Prediction
+
+Automatic Workflow Triggering
+
+Digital Twin Synchronization
+
+Operational Intelligence
+
+---
+
+# Monitoring
+
+Events Per Minute
+
+Failed Events
+
+Queue Length
+
+Average Processing Time
+
+Retry Count
+
+Dead Letter Queue
+
+Subscriber Performance
+
+AI Processing Queue
+
+---
+
+# Integrations
+
+Workflow
+
+Audit Logs
+
+Notifications
+
+Analytics
+
+AI
+
+Digital Twin
+
+IoT
+
+Mobile
+
+API Gateway
+
+MES
+
+ERP
 
 ---
 
 # Future Extensions
 
-The architecture supports:
+Apache Kafka
 
-- Kafka
-- RabbitMQ
-- Azure Service Bus
-- AWS EventBridge
-- MQTT
-- OPC-UA Events
-- PLC Events
-- IoT Sensors
-- Digital Twin Synchronization
-- Event Replay
+RabbitMQ
 
----
+Azure Service Bus
 
-# Event Philosophy
+AWS EventBridge
 
-Business Events describe what happened.
+Event Store DB
 
-Events are immutable facts.
+CQRS
 
-They provide the foundation for traceability, automation, analytics and Artificial Intelligence.
+Event Sourcing
 
-Every important action in Naswood OS becomes a permanent business event that can be replayed, analyzed and integrated with other systems.
+Real-Time Streaming
 
+Digital Thread
 
-
+Industry 4.0 Event Hub
