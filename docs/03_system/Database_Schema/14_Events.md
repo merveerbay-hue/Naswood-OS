@@ -180,21 +180,47 @@ AI
 
 # Standard Event Types
 
-ReceivingCreated
-
-ReceivingCompleted
+## Material Lifecycle
 
 MaterialRegistered
 
+MaterialReceived
+
+MaterialMeasured
+
+MaterialClassified
+
 MaterialMoved
+
+MaterialReserved
+
+MaterialReleased
 
 MaterialSplit
 
 MaterialMerged
 
-MaterialReserved
+MaterialConsumed
 
-MaterialReleased
+MaterialRecovered
+
+MaterialScrapped
+
+MaterialReturned
+
+---
+
+## Production Lifecycle
+
+ProductionOrderCreated
+
+ProductionStarted
+
+ProductionPaused
+
+ProductionResumed
+
+ProductionCompleted
 
 TransformationStarted
 
@@ -202,13 +228,77 @@ TransformationCompleted
 
 RecipeExecuted
 
+OperationStarted
+
+OperationCompleted
+
+---
+
+## Material Processing
+
+MaterialKilnDried
+
+MaterialThermallyModified
+
+MaterialPlaned
+
+MaterialProfiled
+
+MaterialFingerJointed
+
+MaterialPressed
+
+MaterialCalibrated
+
+MaterialPackaged
+
+---
+
+## Machine
+
 MachineStarted
 
 MachineStopped
 
+MachineStatusChanged
+
 MachineAlarmRaised
 
+MachineAlarmCleared
+
+MachineSetupStarted
+
+MachineSetupCompleted
+
+ToolChanged
+
+---
+
+## Tooling
+
+ToolInstalled
+
+ToolRemoved
+
+KnifeSharpened
+
+ToolLifeUpdated
+
+ToolInspectionPassed
+
+ToolInspectionFailed
+
+ToolConfigurationChanged
+
+---
+
+## Quality
+
 InspectionCreated
+
+InspectionStarted
+
+InspectionCompleted
 
 InspectionPassed
 
@@ -218,37 +308,129 @@ QualityApproved
 
 QualityRejected
 
+NonConformanceCreated
+
+LaboratoryTestCompleted
+
+---
+
+## Inventory
+
+InventoryAdjusted
+
+InventoryReserved
+
+InventoryReleased
+
+WarehouseTransferCompleted
+
+LocationChanged
+
 PackageCreated
 
 PackageLoaded
 
+PackageUnloaded
+
+---
+
+## Logistics
+
 ShipmentCreated
 
-ShipmentCompleted
+ShipmentLoaded
+
+ShipmentDispatched
+
+ShipmentDelivered
+
+ShipmentReturned
+
+DeliveryConfirmed
+
+---
+
+## Purchasing
+
+PurchaseRequestCreated
+
+PurchaseOrderApproved
+
+PurchaseOrderReceived
+
+SupplierRejected
+
+---
+
+## Sales
+
+QuotationCreated
+
+QuotationApproved
 
 SalesOrderConfirmed
 
-ProductionOrderCreated
+SalesOrderCancelled
 
-PurchaseOrderApproved
+CustomerReturnCreated
+
+---
+
+## Maintenance
+
+MaintenancePlanned
 
 MaintenanceStarted
 
 MaintenanceCompleted
 
-InventoryAdjusted
+MachineFailureDetected
+
+DowntimeStarted
+
+DowntimeEnded
+
+---
+
+## Finance
+
+CostCalculated
+
+InventoryValuationCompleted
+
+ERPExportCompleted
+
+BudgetExceeded
+
+---
+
+## Security
 
 UserCreated
 
+UserDisabled
+
 PermissionChanged
+
+RoleAssigned
+
+UserLoggedIn
+
+UserLoggedOut
+
+---
+
+## AI
 
 AIRecommendationGenerated
 
 AIRecommendationApproved
 
-ERPExportCompleted
+AIRecommendationRejected
 
----
+PredictionGenerated
+
+ForecastCompleted
 
 # Relationships
 
@@ -401,3 +583,6 @@ Events are immutable facts.
 They provide the foundation for traceability, automation, analytics and Artificial Intelligence.
 
 Every important action in Naswood OS becomes a permanent business event that can be replayed, analyzed and integrated with other systems.
+
+
+
