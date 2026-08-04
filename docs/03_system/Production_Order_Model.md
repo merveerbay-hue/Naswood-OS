@@ -1,1 +1,558 @@
 
+# Production Order Model
+
+**Project:** Naswood OS  
+**Document:** Production Order Model  
+**Version:** 1.0  
+**Status:** Active Development
+
+---
+
+# 1. Purpose
+
+This document defines how production demand is converted into executable manufacturing orders within Naswood OS.
+
+A Production Order represents the manufacturing requirement for one or more products.
+
+It defines:
+
+- What will be produced
+- How much will be produced
+- Which materials are required
+- Which routing will be followed
+- Which work orders will be generated
+
+Production Orders bridge commercial demand and factory execution.
+
+---
+
+# 2. Business Philosophy
+
+Production Orders are planning objects.
+
+They do not directly produce materials.
+
+Execution is performed through Work Orders and Transformations.
+
+Business Flow
+
+Customer Order
+
+↓
+
+Production Planning
+
+↓
+
+Production Order
+
+↓
+
+Work Orders
+
+↓
+
+Transformations
+
+↓
+
+Finished Materials
+
+↓
+
+Packaging
+
+↓
+
+Shipment
+
+---
+
+# 3. Production Order Lifecycle
+
+Draft
+
+↓
+
+Planned
+
+↓
+
+Approved
+
+↓
+
+Released
+
+↓
+
+In Production
+
+↓
+
+Completed
+
+↓
+
+Closed
+
+Possible alternative states
+
+Paused
+
+Cancelled
+
+Rejected
+
+---
+
+# 4. Production Order Structure
+
+Each Production Order contains:
+
+Production Order Number
+
+Factory
+
+Production Line
+
+Priority
+
+Planning Date
+
+Due Date
+
+Requested Delivery Date
+
+Planner
+
+Status
+
+Customer Reference
+
+Sales Order Reference
+
+Notes
+
+---
+
+# 5. Production Demand
+
+A Production Order may originate from:
+
+Customer Order
+
+Stock Replenishment
+
+Forecast
+
+Internal Consumption
+
+Sample Production
+
+R&D
+
+---
+# 5.1 Production Strategy
+
+Every Production Order shall define a production strategy.
+
+Production Strategy determines how the Planning Engine creates production orders and allocates inventory.
+
+Supported strategies include:
+
+## MTS – Make to Stock
+
+Products are manufactured based on predefined stock levels.
+
+Production is triggered when inventory falls below minimum stock.
+
+Typical products:
+
+- Standard Thermowood Profiles
+- Standard Decking
+- Standard Cladding
+
+---
+
+## MTO – Make to Order
+
+Production begins only after a confirmed customer order.
+
+Inventory is not produced in advance.
+
+Typical products:
+
+- Custom Panels
+- Project-Based Profiles
+- Special Dimensions
+
+---
+
+## ATO – Assemble to Order
+
+Finished products are assembled using existing semi-finished inventory.
+
+Typical examples:
+
+- Panels produced from stock lamellas
+- Packaged products assembled from standard profiles
+
+---
+
+## ETO – Engineer to Order
+
+Products require engineering, design approval or customer-specific manufacturing before production begins.
+
+Typical examples:
+
+- Architectural façade systems
+- Special CNC components
+- Custom structural elements
+
+---
+
+The Planning Engine shall use the selected Production Strategy when:
+
+- Calculating material requirements
+- Generating Production Orders
+- Allocating inventory
+- Scheduling Work Orders
+- Estimating lead times
+# 6. Production Order Lines
+
+Each Production Order may contain multiple lines.
+
+Each line defines:
+
+Product
+
+Variant
+
+Quantity
+
+Unit
+
+Quality
+
+Dimensions
+
+Species
+
+Packaging Type
+
+Required Date
+
+Priority
+
+Each line may generate one or many Work Orders.
+
+---
+
+# 7. Material Planning
+
+The planning engine calculates required materials.
+
+Possible sources
+
+Existing Stock
+
+Semi-Finished Inventory
+
+Recovered Materials
+
+New Production
+
+Purchased Materials
+
+The system should always prioritize available inventory before creating new production.
+
+---
+
+# 8. Routing Selection
+
+Each Production Order selects the appropriate routing based on:
+
+Product
+
+Species
+
+Dimensions
+
+Quality
+
+Available Machines
+
+Current Capacity
+
+Routing Version
+
+---
+
+# 9. Recipe Selection
+
+The system automatically suggests the correct recipe.
+
+Examples
+
+Kiln Program
+
+Thermowood Program
+
+Profile Program
+
+Finger Joint Program
+
+Panel Press Program
+
+Operators may change recipes only with authorization.
+
+---
+
+# 10. Work Order Generation
+
+Production Orders generate one or more Work Orders.
+
+One Production Order
+
+↓
+
+Many Work Orders
+
+Example
+
+Production Order
+
+↓
+
+Kiln
+
+↓
+
+Thermowood
+
+↓
+
+Profiling
+
+↓
+
+Packaging
+
+Each operation may become an independent Work Order.
+
+---
+
+# 11. Material Allocation
+
+Before production starts, materials are allocated.
+
+Allocation Priority
+
+1. Finished Stock
+
+2. Semi-Finished Stock
+
+3. Recoverable Materials
+
+4. New Production
+
+5. Purchase
+
+The system prevents duplicate allocation.
+
+---
+
+# 12. Capacity Planning
+
+The planning engine evaluates:
+
+Machine Capacity
+
+Shift Capacity
+
+Operator Availability
+
+Tool Availability
+
+Warehouse Capacity
+
+Production Calendar
+
+Maintenance Schedule
+
+Capacity conflicts generate planning alerts.
+
+---
+
+# 13. Scheduling
+
+Scheduling considers:
+
+Priority
+
+Delivery Date
+
+Machine Availability
+
+Material Availability
+
+Recipe Constraints
+
+Maintenance Windows
+
+Shift Calendar
+
+Scheduling recommendations are generated by the Planning Engine.
+
+---
+
+# 14. Production Monitoring
+
+Each Production Order displays:
+
+Planned Quantity
+
+Produced Quantity
+
+Remaining Quantity
+
+Rejected Quantity
+
+Recovered Quantity
+
+Waste Quantity
+
+Completion Percentage
+
+Estimated Finish Time
+
+---
+
+# 15. Cost Planning
+
+Estimated costs include:
+
+Material
+
+Labor
+
+Glue
+
+Energy
+
+Machine
+
+Tooling
+
+Packaging
+
+Waste
+
+Transportation
+
+Estimated costs are compared against actual production costs after completion.
+
+---
+
+# 16. Traceability
+
+Production Orders are linked to:
+
+Sales Order
+
+↓
+
+Work Orders
+
+↓
+
+Transformations
+
+↓
+
+Materials
+
+↓
+
+Packages
+
+↓
+
+Shipments
+
+Complete genealogy remains available.
+
+---
+
+# 17. Event Generation
+
+Production Orders generate events.
+
+Examples
+
+ProductionOrderCreated
+
+ProductionOrderApproved
+
+ProductionOrderReleased
+
+ProductionOrderRescheduled
+
+ProductionOrderPaused
+
+ProductionOrderCompleted
+
+ProductionOrderClosed
+
+---
+
+# 18. AI Integration
+
+AI supports:
+
+Production Prioritization
+
+Capacity Optimization
+
+Material Optimization
+
+Waste Prediction
+
+Delivery Prediction
+
+Production Duration Prediction
+
+Machine Selection
+
+Recipe Recommendation
+
+Cost Prediction
+
+---
+
+# 19. Business Rules
+
+- Every Production Order must contain at least one Production Order Line.
+- A Production Order may generate multiple Work Orders.
+- Materials must be allocated before release.
+- Capacity validation is required before approval.
+- Production Orders remain traceable after completion.
+- Completed Production Orders cannot be modified.
+- Production Orders are linked to Sales Orders when customer-driven.
+- Stock replenishment orders do not require a Sales Order.
+
+---
+
+# 20. Future Extensions
+
+The model supports:
+
+- Multi-factory production
+- Multi-company planning
+- Outsourced manufacturing
+- Automatic production balancing
+- Finite capacity scheduling
+- AI-driven production sequencing
+- Digital Twin simulation
+
