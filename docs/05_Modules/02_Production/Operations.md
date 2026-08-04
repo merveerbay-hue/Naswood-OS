@@ -323,50 +323,327 @@ Custom Operation
 
 ---
 
-# 10. Standard Fields
+# 10. Operation Templates
 
-Operation Code
+Operation Templates provide standardized definitions for recurring manufacturing operations.
 
-Operation Type
+Templates reduce manual configuration, improve consistency and ensure compliance with production standards.
 
-Operation Name
-
-Production Order
-
-Material
-
-Machine
-
-Tool
-
-Recipe
-
-Operator
-
-Shift
-
-Planned Start
-
-Actual Start
-
-Planned Finish
-
-Actual Finish
-
-Planned Quantity
-
-Produced Quantity
-
-Rejected Quantity
-
-Scrap Quantity
-
-Downtime
-
-Status
+Each template may be assigned to multiple Products, Materials and Production Orders.
 
 ---
 
+## Standard Template Structure
+
+Operation Template Code
+
+Template Name
+
+Operation Type
+
+Description
+
+Applicable Material Types
+
+Applicable Product Families
+
+Default Machine Group
+
+Default Machine
+
+Default Tool Group
+
+Default Tool Assembly
+
+Default Recipe Type
+
+Default Recipe
+
+Quality Control Plan
+
+Required Operator Skills
+
+Required Certifications
+
+Required PPE
+
+Estimated Cycle Time
+
+Setup Time
+
+Expected Yield
+
+Maximum Scrap Rate
+
+Energy Target
+
+Required Input Materials
+
+Expected Output Materials
+
+Required Documents
+
+Safety Checklist
+
+Inspection Checklist
+
+Default Workflow
+
+Default Storage Function
+
+Active Status
+
+Revision
+
+---
+
+## Standard Operation Templates
+
+### Log Receiving
+
+Truck Reception
+
+Log Measurement
+
+Log Classification
+
+Log Tagging
+
+Receiving Inspection
+
+Storage Assignment
+
+---
+
+### Sawmill
+
+Primary Sawing
+
+Prism Cutting
+
+Edge Trimming
+
+Optimization Cutting
+
+Material Registration
+
+---
+
+### Kiln Drying
+
+Kiln Loading
+
+Recipe Selection
+
+Drying Process
+
+Moisture Verification
+
+Kiln Unloading
+
+Storage Assignment
+
+---
+
+### Thermowood
+
+Material Loading
+
+Recipe Selection
+
+Thermal Modification
+
+Cooling
+
+Final Moisture Verification
+
+Quality Inspection
+
+Warehouse Transfer
+
+---
+
+### Planing
+
+Machine Setup
+
+Tool Verification
+
+Surface Planing
+
+Dimensional Verification
+
+Quality Inspection
+
+---
+
+### Profiling
+
+Tool Assembly Verification
+
+Profile Machining
+
+Surface Inspection
+
+Dimensional Control
+
+Packaging Transfer
+
+---
+
+### Finger Joint
+
+Defect Cutting
+
+Finger Milling
+
+Glue Application
+
+Pressing
+
+Curing
+
+Final Inspection
+
+---
+
+### Massive Panel
+
+Lamella Selection
+
+Glue Application
+
+Panel Pressing
+
+Calibration
+
+Sanding
+
+Quality Inspection
+
+---
+
+### CLT
+
+Layer Assembly
+
+Cross Layer Placement
+
+Pressing
+
+Panel Calibration
+
+CNC Processing
+
+Final Inspection
+
+---
+
+### Packaging
+
+Package Creation
+
+Label Printing
+
+QR Verification
+
+Wrapping
+
+Strapping
+
+Warehouse Transfer
+
+---
+
+## Template Assignment Rules
+
+Templates may be assigned by:
+
+Product Family
+
+Material Type
+
+Machine Group
+
+Production Area
+
+Factory
+
+Organization
+
+Customer
+
+---
+
+## Template Versioning
+
+Templates are version controlled.
+
+Only one version may be Active.
+
+Historical Production Orders always reference the version used during execution.
+
+---
+
+## Business Rules
+
+### OPS-TMP-001
+
+Every Operation shall be created from an Operation Template unless manually authorized.
+
+---
+
+### OPS-TMP-002
+
+Released Templates cannot be modified.
+
+---
+
+### OPS-TMP-003
+
+Template revisions create new versions.
+
+---
+
+### OPS-TMP-004
+
+Machine, Tool and Recipe compatibility shall be validated automatically.
+
+---
+
+### OPS-TMP-005
+
+Operation Templates shall define mandatory Quality Checkpoints.
+
+---
+
+### OPS-TMP-006
+
+Operation Templates shall define mandatory Safety Requirements.
+
+---
+
+## AI Capabilities
+
+Automatic Template Selection
+
+Template Optimization
+
+Cycle Time Prediction
+
+Yield Prediction
+
+Energy Optimization
+
+Template Recommendation
+
+Operator Recommendation
+
+Machine Recommendation
+
+Quality Prediction
+
+Continuous Improvement Suggestions
 # 11. Operation States
 
 Planned
@@ -682,7 +959,33 @@ Quality Prediction
 Operation Risk Detection
 
 AI Production Copilot
+Operation Template Recommendation
 
+Automatic Operation Sequencing
+
+Resource Conflict Detection
+
+Real-Time Bottleneck Detection
+
+Production Flow Optimization
+
+Machine Load Balancing
+
+Operator Skill Matching
+
+Dynamic Recipe Recommendation
+
+Predictive Quality Control
+
+Predictive Scrap Analysis
+
+Energy Consumption Optimization
+
+Digital Twin Simulation
+
+Root Cause Analysis
+
+Autonomous Scheduling Suggestions
 ---
 
 # 26. API Resources
