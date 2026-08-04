@@ -153,7 +153,72 @@ Sample Production
 R&D
 
 ---
+# 5.1 Production Strategy
 
+Every Production Order shall define a production strategy.
+
+Production Strategy determines how the Planning Engine creates production orders and allocates inventory.
+
+Supported strategies include:
+
+## MTS – Make to Stock
+
+Products are manufactured based on predefined stock levels.
+
+Production is triggered when inventory falls below minimum stock.
+
+Typical products:
+
+- Standard Thermowood Profiles
+- Standard Decking
+- Standard Cladding
+
+---
+
+## MTO – Make to Order
+
+Production begins only after a confirmed customer order.
+
+Inventory is not produced in advance.
+
+Typical products:
+
+- Custom Panels
+- Project-Based Profiles
+- Special Dimensions
+
+---
+
+## ATO – Assemble to Order
+
+Finished products are assembled using existing semi-finished inventory.
+
+Typical examples:
+
+- Panels produced from stock lamellas
+- Packaged products assembled from standard profiles
+
+---
+
+## ETO – Engineer to Order
+
+Products require engineering, design approval or customer-specific manufacturing before production begins.
+
+Typical examples:
+
+- Architectural façade systems
+- Special CNC components
+- Custom structural elements
+
+---
+
+The Planning Engine shall use the selected Production Strategy when:
+
+- Calculating material requirements
+- Generating Production Orders
+- Allocating inventory
+- Scheduling Work Orders
+- Estimating lead times
 # 6. Production Order Lines
 
 Each Production Order may contain multiple lines.
