@@ -1,37 +1,40 @@
 # Dashboard Definitions
 
 **Project:** Naswood OS
+
 **Document:** Dashboard Definitions
-**Version:** 1.0
+
+**Version:** 2.0
+
 **Status:** Approved
 
 ---
 
 # Purpose
 
-This document defines all operational dashboards available within Naswood OS.
+This document defines all dashboards available in Naswood OS.
 
-Dashboards provide real-time operational visibility for each organizational role.
+Dashboards provide real-time operational visibility, performance monitoring and decision support for every organizational role.
 
-Each dashboard displays only the information required for that role.
-
-All dashboard data is read-only and sourced from operational modules and analytics.
+Each dashboard is role-based, configurable and powered by Analytics.
 
 ---
 
 # Dashboard Philosophy
 
-The right information shall be available to the right person at the right time.
-
-Dashboards shall support operational decisions without exposing unnecessary complexity.
-
-Every KPI shall originate from real manufacturing data.
+Dashboards present operational intelligence.
 
 Dashboards never modify business data.
 
+Every KPI originates from trusted operational data.
+
+Every widget supports drill-down into detailed information.
+
+Artificial Intelligence provides insights but never executes business actions.
+
 ---
 
-# Standard Dashboard Layout
+# Standard Dashboard Components
 
 Every dashboard may contain:
 
@@ -41,11 +44,17 @@ Every dashboard may contain:
 
 • Tables
 
-• Alerts
+• Heat Maps
+
+• Gauges
+
+• Timelines
+
+• AI Insights
+
+• Notifications
 
 • Active Tasks
-
-• AI Recommendations
 
 • Recent Events
 
@@ -59,11 +68,17 @@ Executive
 
 Production
 
+Timber Yard
+
+Kiln & Thermowood
+
 Warehouse
 
 Quality
 
 Maintenance
+
+Machines
 
 Sales
 
@@ -73,9 +88,11 @@ Finance
 
 Logistics
 
-Engineering
+Material Genealogy
 
-AI
+Factory Digital Twin
+
+AI Copilot
 
 Administration
 
@@ -85,36 +102,103 @@ Administration
 
 Target Users
 
-- CEO
-- General Manager
-- Factory Director
+CEO
+
+General Manager
+
+Factory Director
 
 Widgets
 
-- Daily Production
-- Monthly Production
-- Revenue
-- Production Cost
-- OEE
-- Order Backlog
-- Machine Availability
-- Inventory Value
-- Waste Rate
-- Energy Consumption
-- Active Orders
-- Delayed Orders
-- Shipment Performance
-- AI Executive Summary
+Daily Production
+
+Monthly Production
+
+Revenue
+
+Manufacturing Cost
+
+Gross Margin
+
+Order Backlog
+
+Inventory Value
+
+OEE
+
+Delivery Performance
+
+Waste Rate
+
+Energy Consumption
+
+Critical Alerts
+
+AI Executive Summary
 
 KPIs
 
-- Revenue
-- Gross Margin
-- OEE
-- On-Time Delivery
-- Manufacturing Cost
-- Waste %
-- Inventory Turnover
+Revenue
+
+Gross Margin
+
+Production Cost
+
+Inventory Turnover
+
+OEE
+
+On-Time Delivery
+
+Recovery Rate
+
+---
+
+# Timber Yard Dashboard
+
+Target Users
+
+Raw Material Manager
+
+Log Yard Supervisor
+
+Receiving Team
+
+Widgets
+
+Truck Queue
+
+Incoming Logs
+
+Log Yard Map
+
+Species Distribution
+
+Diameter Classes
+
+Volume by Species
+
+Receiving Status
+
+Pending Inspection
+
+Stock by Location
+
+AI Yard Optimization
+
+KPIs
+
+Incoming Volume (m³)
+
+Stock Volume (m³)
+
+Average Diameter
+
+Average Length
+
+Receiving Time
+
+Supplier Performance
 
 ---
 
@@ -122,31 +206,93 @@ KPIs
 
 Target Users
 
-- Production Manager
-- Shift Supervisor
-- Planner
+Production Manager
+
+Shift Supervisor
+
+Planner
 
 Widgets
 
-- Active Production Orders
-- Machine Status
-- Current Shift
-- Production Schedule
-- Bottlenecks
-- Machine Utilization
-- WIP
-- Material Availability
-- Tool Changes
-- AI Production Suggestions
+Production Orders
+
+Machine Status
+
+Shift Performance
+
+Production Queue
+
+Material Availability
+
+Tool Changes
+
+Downtime
+
+WIP
+
+Production Timeline
+
+AI Production Suggestions
 
 KPIs
 
-- Production Rate
-- OEE
-- Cycle Time
-- Downtime
-- Production Efficiency
-- Setup Time
+Production Output
+
+Production Efficiency
+
+OEE
+
+Cycle Time
+
+Setup Time
+
+Downtime
+
+Yield
+
+---
+
+# Kiln & Thermowood Dashboard
+
+Target Users
+
+Kiln Operators
+
+Production Manager
+
+Widgets
+
+Kiln Status
+
+Thermowood Status
+
+Running Batches
+
+Recipe Status
+
+Temperature Curve
+
+Humidity Curve
+
+Energy Consumption
+
+Remaining Time (ETA)
+
+Alarm History
+
+AI Recipe Optimization
+
+KPIs
+
+Average Drying Time
+
+Energy per m³
+
+Thermowood Cycle Time
+
+Recipe Success Rate
+
+Batch Success Rate
 
 ---
 
@@ -154,27 +300,41 @@ KPIs
 
 Target Users
 
-- Warehouse Manager
-- Warehouse Operators
+Warehouse Manager
+
+Warehouse Operators
 
 Widgets
 
-- Current Inventory
-- Warehouse Occupancy
-- Reserved Materials
-- Material Movements
-- Receiving Queue
-- Shipment Queue
-- Stock Alerts
-- Cycle Count Status
+Warehouse Map
+
+Inventory Levels
+
+Reserved Materials
+
+Warehouse Transfers
+
+Location Occupancy
+
+Cycle Count
+
+Package Inventory
+
+Loading Queue
+
+AI Warehouse Suggestions
 
 KPIs
 
-- Inventory Accuracy
-- Warehouse Occupancy
-- Stock Turnover
-- Receiving Time
-- Picking Time
+Inventory Accuracy
+
+Warehouse Occupancy
+
+Inventory Turnover
+
+Picking Time
+
+Receiving Time
 
 ---
 
@@ -182,26 +342,41 @@ KPIs
 
 Target Users
 
-- Quality Manager
-- Quality Engineers
+Quality Manager
+
+Quality Engineers
 
 Widgets
 
-- Pending Inspections
-- Failed Inspections
-- SPC Charts
-- Moisture Distribution
-- Customer Complaints
-- Non-Conformities
-- Quality Trends
-- AI Root Cause Suggestions
+Inspection Queue
+
+Rejected Materials
+
+SPC Charts
+
+Moisture Distribution
+
+Dimensional Accuracy
+
+Customer Complaints
+
+Corrective Actions
+
+Quality Trends
+
+AI Root Cause Analysis
 
 KPIs
 
-- First Pass Yield
-- Rework Rate
-- Complaint Rate
-- Defect Rate
+First Pass Yield
+
+Defect Rate
+
+Rework Rate
+
+Complaint Rate
+
+Inspection Lead Time
 
 ---
 
@@ -209,25 +384,75 @@ KPIs
 
 Target Users
 
-- Maintenance Manager
-- Maintenance Technicians
+Maintenance Manager
+
+Technicians
 
 Widgets
 
-- Machine Status
-- Preventive Maintenance Schedule
-- Active Work Orders
-- Machine Alarms
-- Downtime
-- Spare Parts
-- AI Failure Prediction
+Machine Status
+
+Work Orders
+
+Maintenance Calendar
+
+Machine Alarms
+
+Downtime
+
+Spare Parts
+
+Preventive Maintenance
+
+AI Failure Prediction
 
 KPIs
 
-- MTBF
-- MTTR
-- Downtime
-- Preventive Maintenance Ratio
+MTBF
+
+MTTR
+
+Downtime
+
+Maintenance Cost
+
+Preventive Ratio
+
+---
+
+# Machines Dashboard
+
+Target Users
+
+Production Engineers
+
+Maintenance
+
+Widgets
+
+Runtime
+
+Idle Time
+
+Energy
+
+Alarm History
+
+Tool Usage
+
+Machine Health
+
+KPIs
+
+Availability
+
+Performance
+
+Energy Efficiency
+
+Runtime
+
+Alarm Frequency
 
 ---
 
@@ -235,25 +460,37 @@ KPIs
 
 Target Users
 
-- Sales Manager
-- Sales Representatives
+Sales Manager
+
+Sales Team
 
 Widgets
 
-- Quotations
-- Sales Orders
-- Customer Pipeline
-- Dealer Performance
-- Delivery Status
-- Revenue
-- Forecast
+Sales Pipeline
+
+Quotations
+
+Orders
+
+Dealer Performance
+
+Revenue
+
+Customer Performance
+
+Shipment Status
+
+AI Sales Forecast
 
 KPIs
 
-- Sales Growth
-- Quotation Conversion
-- Order Fulfillment
-- Customer Satisfaction
+Sales Growth
+
+Quotation Conversion
+
+Order Fulfillment
+
+Customer Satisfaction
 
 ---
 
@@ -261,23 +498,33 @@ KPIs
 
 Target Users
 
-- Purchasing Manager
+Purchasing Manager
 
 Widgets
 
-- Purchase Requests
-- Purchase Orders
-- Supplier Performance
-- Deliveries
-- Material Shortages
-- AI Purchasing Suggestions
+Purchase Requests
+
+Purchase Orders
+
+Supplier Performance
+
+Deliveries
+
+Material Shortages
+
+Price Trends
+
+AI Purchasing Suggestions
 
 KPIs
 
-- Supplier Performance
-- Purchase Lead Time
-- Material Availability
-- Cost Variance
+Lead Time
+
+Supplier Performance
+
+Purchase Cost
+
+Material Availability
 
 ---
 
@@ -285,23 +532,31 @@ KPIs
 
 Target Users
 
-- Finance Manager
+Finance Manager
 
 Widgets
 
-- Manufacturing Cost
-- Product Cost
-- Inventory Value
-- Budget Performance
-- Cost Variance
-- Profitability
+Manufacturing Cost
+
+Inventory Value
+
+Budget
+
+Cost Analysis
+
+Profitability
+
+ERP Status
 
 KPIs
 
-- Cost per m³
-- Product Margin
-- Inventory Value
-- Budget Utilization
+Cost per m³
+
+Margin
+
+Budget Performance
+
+Inventory Value
 
 ---
 
@@ -309,72 +564,163 @@ KPIs
 
 Target Users
 
-- Logistics Manager
+Logistics Manager
 
 Widgets
 
-- Planned Shipments
-- Active Vehicles
-- Container Loading
-- Delivery Status
-- Freight Cost
-- Route Status
+Shipment Plan
+
+Container Loading
+
+Vehicle Status
+
+Loading Performance
+
+Delivery Status
+
+Export Documents
 
 KPIs
 
-- On-Time Delivery
-- Loading Efficiency
-- Vehicle Utilization
-- Freight Cost
+On-Time Delivery
+
+Loading Efficiency
+
+Vehicle Utilization
+
+Freight Cost
 
 ---
 
-# Engineering Dashboard
+# Material Genealogy Dashboard
 
 Target Users
 
-- Engineering
-- Process Engineering
+Production
+
+Quality
+
+Engineering
 
 Widgets
 
-- Product Revisions
-- BOM Status
-- Recipe Versions
-- Tool Library
-- Machine Parameters
-- Engineering Changes
+Material Search
+
+Parent–Child Tree
+
+Transformation Timeline
+
+Machine History
+
+Tool History
+
+Operator History
+
+Inspection History
+
+Warehouse History
+
+Shipment History
+
+Customer Information
 
 KPIs
 
-- Change Lead Time
-- Recipe Accuracy
-- Standardization Rate
+Traceability Completeness
+
+Transformation Count
+
+Processing Time
+
+Yield
 
 ---
 
-# AI Dashboard
+# Factory Digital Twin Dashboard
 
 Target Users
 
-- AI Supervisors
-- Management
+Factory Management
+
+Production
+
+Maintenance
 
 Widgets
 
-- AI Recommendations
-- Accepted Recommendations
-- Prediction Accuracy
-- AI Insights
-- Active AI Agents
-- AI Cost Savings
+Factory Layout
+
+Live Machine Status
+
+Production Flow
+
+Warehouse Heat Map
+
+Energy Flow
+
+WIP Map
+
+Active Operators
+
+Critical Alarms
+
+Production Timeline
+
+AI Factory Status
 
 KPIs
 
-- Recommendation Acceptance
-- Prediction Accuracy
-- Estimated Savings
-- AI Usage
+Factory Utilization
+
+Live OEE
+
+Energy Efficiency
+
+Machine Availability
+
+WIP
+
+---
+
+# AI Copilot Dashboard
+
+Target Users
+
+Management
+
+Engineering
+
+Production
+
+Widgets
+
+AI Recommendations
+
+Prompt History
+
+Knowledge Search
+
+Accepted Suggestions
+
+Rejected Suggestions
+
+Prediction Accuracy
+
+AI Cost
+
+AI Memory
+
+Running AI Agents
+
+KPIs
+
+Recommendation Acceptance
+
+Prediction Accuracy
+
+Cost Savings
+
+AI Usage
 
 ---
 
@@ -382,36 +728,67 @@ KPIs
 
 Target Users
 
-- System Administrators
+System Administrator
 
 Widgets
 
-- Active Users
-- Login Activity
-- API Usage
-- System Health
-- Integration Status
-- Security Alerts
+Users
+
+Sessions
+
+API Health
+
+Integration Status
+
+Audit Logs
+
+Printer Status
+
+Security Alerts
+
+Database Status
 
 KPIs
 
-- System Availability
-- API Response Time
-- Failed Logins
-- Integration Success Rate
+System Availability
+
+API Response Time
+
+Failed Logins
+
+Integration Success Rate
 
 ---
 
-# Dashboard Personalization
+# Standard Widget Types
 
-Users may configure:
+KPI Card
 
-- Favorite Widgets
-- Widget Order
-- Refresh Interval
-- Filters
-- Theme
-- Default Dashboard
+Chart
+
+Line Chart
+
+Bar Chart
+
+Pie Chart
+
+Gauge
+
+Heat Map
+
+Timeline
+
+Table
+
+Map
+
+AI Insight
+
+Notification List
+
+Task List
+
+Calendar
 
 ---
 
@@ -419,60 +796,159 @@ Users may configure:
 
 Real-Time
 
-- Machine Status
-- Production
-- Alarms
+Machine Status
+
+Production
+
+Alarms
+
+Energy
 
 Every Minute
 
-- Inventory
-- Warehouse
-- Maintenance
+Inventory
+
+Warehouse
+
+Maintenance
 
 Every Five Minutes
 
-- Sales
-- Purchasing
+Sales
+
+Purchasing
 
 Hourly
 
-- Finance
-- Analytics
+Finance
+
+Analytics
 
 Daily
 
-- Executive KPIs
+Executive Reports
+
+---
+
+# Drill Down
+
+Every dashboard widget supports drill-down.
+
+Example
+
+Executive Dashboard
+
+↓
+
+Production Dashboard
+
+↓
+
+Production Order
+
+↓
+
+Operation
+
+↓
+
+Material
+
+↓
+
+Transformation
+
+↓
+
+Machine
 
 ---
 
 # Dashboard Security
 
-Dashboard visibility follows Role-Based Access Control.
+Dashboards follow Role-Based Access Control.
 
-Users only see dashboards permitted by their assigned roles.
+Each user only sees dashboards and widgets authorized by their assigned role.
 
-Sensitive financial information is restricted to authorized users.
+Sensitive financial data is visible only to authorized users.
 
 ---
 
-# Dashboard Integration
+# Business Rules
 
-Dashboards receive data from:
+### DASH-001
 
-- Production
-- Inventory
-- Quality
-- Maintenance
-- Machines
-- Tooling
-- Sales
-- Purchasing
-- Finance
-- Logistics
+Every dashboard shall be role-based.
+
+---
+
+### DASH-002
+
+Every KPI shall originate from Analytics.
+
+---
+
+### DASH-003
+
+Dashboards shall be read-only.
+
+---
+
+### DASH-004
+
+Widgets shall support drill-down navigation.
+
+---
+
+### DASH-005
+
+AI recommendations shall be clearly distinguished from operational data.
+
+---
+
+### DASH-006
+
+Dashboard configuration may be personalized.
+
+---
+
+### DASH-007
+
+Dashboard refresh intervals shall be configurable.
+
+---
+
+### DASH-008
+
+Every dashboard shall support filtering.
+
+---
+
+### DASH-009
+
+Critical alarms shall appear immediately.
+
+---
+
+### DASH-010
+
+Dashboard access follows Role-Based Access Control.
+
+---
+
+# Integration
+
+Dashboard Definitions integrates with:
+
+- Screen Catalog
+- UI Flows
+- Analytics
+- Reports
 - Workflow
 - Events
-- Analytics
+- Notifications
 - AI
+- Mobile Application
 
 ---
 
@@ -480,23 +956,28 @@ Dashboards receive data from:
 
 The architecture supports:
 
-- Drag-and-Drop Dashboards
-- Power BI Embedding
-- Grafana
-- Mobile Dashboards
-- TV Factory Displays
-- Digital Twin Visualization
-- AI Generated Dashboards
-- Voice Dashboard Assistant
+Power BI Embedding
+
+Grafana
+
+Drag-and-Drop Dashboards
+
+Digital Twin Visualization
+
+AI Generated Dashboards
+
+Voice Dashboards
+
+Multi-Screen Factory Displays
+
+Augmented Reality Dashboards
 
 ---
 
 # Dashboard Philosophy
 
-Dashboards provide role-specific operational intelligence.
+Dashboards transform operational manufacturing data into actionable business intelligence.
 
-Every widget is based on real manufacturing data.
+Every dashboard is designed for a specific organizational role, ensuring that users receive the right information, at the right time, in the right format.
 
-Every KPI is traceable to its originating business process.
-
-Dashboards enable faster decisions, improved visibility and continuous operational improvement across the entire manufacturing lifecycle.
+Dashboards provide real-time visibility, complete traceability and AI-assisted decision support across the entire Manufacturing Operating System.
