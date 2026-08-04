@@ -1,1 +1,675 @@
+# Report Catalog
 
+**Project:** Naswood OS
+
+**Document:** Report Catalog
+
+**Version:** 1.0
+
+**Status:** Approved
+
+---
+
+# Purpose
+
+This document defines all standard reports available within Naswood OS.
+
+Reports provide printable, exportable and auditable business information for operational, managerial and regulatory purposes.
+
+Reports are generated from operational and analytical data without modifying business records.
+
+---
+
+# Philosophy
+
+Reports present trusted business information.
+
+Reports are generated from live or historical data.
+
+Reports are version-controlled.
+
+Generated reports may be archived for legal and operational purposes.
+
+---
+
+# Report Categories
+
+Executive
+
+Production
+
+Materials
+
+Inventory
+
+Warehouse
+
+Quality
+
+Maintenance
+
+Machines
+
+Tooling
+
+Sales
+
+Purchasing
+
+Finance
+
+Logistics
+
+Engineering
+
+Sustainability
+
+Security
+
+AI
+
+---
+
+# Executive Reports
+
+Daily Executive Summary
+
+Weekly Factory Performance
+
+Monthly Production Summary
+
+Monthly Financial Summary
+
+Executive KPI Report
+
+Operational Risk Report
+
+AI Executive Summary
+
+---
+
+# Production Reports
+
+Production Order Summary
+
+Production History
+
+Production by Machine
+
+Production by Shift
+
+Production by Operator
+
+Production by Product
+
+Production by Species
+
+Production by Material Type
+
+Production Efficiency
+
+Production Downtime
+
+Setup Time Analysis
+
+Capacity Utilization
+
+Bottleneck Analysis
+
+Production Timeline
+
+---
+
+# Material Reports
+
+Material Genealogy
+
+Material Lifecycle
+
+Material History
+
+Material Consumption
+
+Material Yield
+
+Recovery Analysis
+
+Species Performance
+
+Material Traceability
+
+Material Aging
+
+Material Movement History
+
+---
+
+# Inventory Reports
+
+Current Inventory
+
+Inventory Valuation
+
+Inventory Aging
+
+Inventory Accuracy
+
+Inventory Movement
+
+Inventory Turnover
+
+Reserved Inventory
+
+Cycle Count Results
+
+Warehouse Occupancy
+
+Slow Moving Inventory
+
+---
+
+# Warehouse Reports
+
+Receiving Summary
+
+Warehouse Transfers
+
+Warehouse Utilization
+
+Location Occupancy
+
+Package Inventory
+
+Picking Performance
+
+Loading Performance
+
+---
+
+# Quality Reports
+
+Inspection Results
+
+Quality Trends
+
+Rejected Materials
+
+Non-Conformance Report
+
+Customer Complaints
+
+Root Cause Analysis
+
+Moisture Analysis
+
+Dimensional Accuracy
+
+SPC Report
+
+First Pass Yield
+
+---
+
+# Maintenance Reports
+
+Preventive Maintenance
+
+Corrective Maintenance
+
+Machine Downtime
+
+Maintenance Cost
+
+MTBF
+
+MTTR
+
+Spare Parts Consumption
+
+Machine Failure Analysis
+
+Maintenance Schedule
+
+---
+
+# Machine Reports
+
+Machine Utilization
+
+Machine Runtime
+
+Machine Alarms
+
+Energy Consumption
+
+Machine Performance
+
+Idle Time
+
+Operating Hours
+
+Machine History
+
+---
+
+# Tooling Reports
+
+Tool Inventory
+
+Tool Life
+
+Knife Sharpening History
+
+Tool Configuration
+
+Tool Usage
+
+Tool Replacement
+
+Tool Cost
+
+Profile Library
+
+---
+
+# Sales Reports
+
+Quotation Summary
+
+Quotation Conversion
+
+Sales Orders
+
+Order Fulfillment
+
+Customer Sales
+
+Dealer Performance
+
+Sales by Region
+
+Sales by Product
+
+Customer Profitability
+
+Backlog Report
+
+---
+
+# Purchasing Reports
+
+Purchase Requests
+
+Purchase Orders
+
+Supplier Performance
+
+Supplier Lead Time
+
+Material Procurement
+
+Purchase Cost Analysis
+
+Open Purchase Orders
+
+Supplier Scorecard
+
+---
+
+# Finance Reports
+
+Manufacturing Cost
+
+Cost by Product
+
+Cost by Material
+
+Inventory Valuation
+
+Budget Performance
+
+Cost Variance
+
+Profitability
+
+Cost Center Summary
+
+Energy Cost
+
+---
+
+# Logistics Reports
+
+Shipment Summary
+
+Delivery Performance
+
+Loading Performance
+
+Container Utilization
+
+Vehicle Utilization
+
+Freight Cost
+
+Transfer History
+
+Delivery Accuracy
+
+Export Shipments
+
+---
+
+# Engineering Reports
+
+Recipe Versions
+
+Routing Changes
+
+Engineering Changes
+
+BOM Comparison
+
+Drawing Revisions
+
+Machine Parameter History
+
+Tool Library
+
+---
+
+# Sustainability Reports
+
+Energy Consumption
+
+Carbon Emissions
+
+Waste Analysis
+
+Recycling Performance
+
+Biomass Utilization
+
+Water Consumption
+
+Environmental KPI Summary
+
+---
+
+# Security Reports
+
+User Activity
+
+Login History
+
+Permission Changes
+
+Audit Log Summary
+
+API Usage
+
+Security Events
+
+Failed Login Attempts
+
+---
+
+# AI Reports
+
+AI Recommendation History
+
+Accepted Recommendations
+
+Prediction Accuracy
+
+AI Usage Statistics
+
+Prompt History
+
+AI Cost Analysis
+
+AI Performance
+
+Knowledge Source Usage
+
+---
+
+# Standard Report Features
+
+Filtering
+
+Sorting
+
+Grouping
+
+Drill-Down
+
+Drill-Through
+
+Scheduled Generation
+
+Export
+
+Archive
+
+Digital Signature (Future)
+
+---
+
+# Supported Export Formats
+
+PDF
+
+Excel (XLSX)
+
+CSV
+
+JSON
+
+XML
+
+HTML
+
+Power BI Dataset
+
+---
+
+# Report Scheduling
+
+On Demand
+
+Hourly
+
+Daily
+
+Weekly
+
+Monthly
+
+Quarterly
+
+Yearly
+
+---
+
+# Report Distribution
+
+Email
+
+In-App
+
+Shared Folder
+
+Cloud Storage
+
+API
+
+Webhook
+
+---
+
+# Report Security
+
+Reports follow Role-Based Access Control.
+
+Users may only access reports permitted by their assigned roles.
+
+Sensitive financial reports require explicit authorization.
+
+---
+
+# Report Metadata
+
+Every generated report stores:
+
+Report Name
+
+Version
+
+Generated By
+
+Generated Date
+
+Filters Applied
+
+Export Format
+
+Execution Time
+
+---
+
+# Business Rules
+
+### REP-001
+
+All reports shall be generated from authoritative system data.
+
+---
+
+### REP-002
+
+Reports shall never modify business records.
+
+---
+
+### REP-003
+
+Generated reports shall include metadata.
+
+---
+
+### REP-004
+
+Scheduled reports shall execute automatically.
+
+---
+
+### REP-005
+
+Reports shall respect Role-Based Access Control.
+
+---
+
+### REP-006
+
+Historical reports shall remain reproducible.
+
+---
+
+### REP-007
+
+Exported reports shall preserve formatting and data integrity.
+
+---
+
+### REP-008
+
+Report templates are version-controlled.
+
+---
+
+### REP-009
+
+Large reports shall support asynchronous generation.
+
+---
+
+### REP-010
+
+Report execution shall generate Audit Logs.
+
+---
+
+# Integration
+
+Reports integrate with:
+
+Analytics
+
+Dashboard
+
+Production
+
+Inventory
+
+Warehouse
+
+Quality
+
+Maintenance
+
+Machines
+
+Tooling
+
+Sales
+
+Purchasing
+
+Finance
+
+Logistics
+
+Workflow
+
+Events
+
+Audit Log
+
+AI
+
+---
+
+# Future Extensions
+
+The architecture supports:
+
+Power BI Publishing
+
+Interactive Reports
+
+Self-Service Reporting
+
+Embedded Analytics
+
+Digital Product Passport Reports
+
+Regulatory Compliance Reports
+
+Customer Portal Reporting
+
+Supplier Portal Reporting
+
+AI Generated Reports
+
+Natural Language Reporting
+
+---
+
+# Report Philosophy
+
+Reports transform operational and analytical data into structured business documents.
+
+Every report is traceable, reproducible and generated from trusted manufacturing data.
+
+Reports support operational excellence, management decision-making, customer communication and regulatory compliance.
