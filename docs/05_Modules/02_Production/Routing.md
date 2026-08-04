@@ -2,9 +2,9 @@
 
 **Project:** Naswood OS
 
-**Document:** Routing
+**Document:** Manufacturing Routing
 
-**Module Code:** MOD-ROUT-001
+**Module Code:** MOD-PRO-ROU-001
 
 **Version:** 2.0
 
@@ -14,365 +14,53 @@
 
 # 1. Purpose
 
-The Routing module defines the complete manufacturing path that materials and products follow from raw material to finished goods.
+The Routing module defines, manages and optimizes manufacturing process routes for every product family within Naswood OS.
 
-A Routing consists of ordered Operations, Work Centers, Machines, Quality Gates, Material Transformations and Resource Requirements.
+It specifies operation sequences, work centers, machines, tooling, process parameters, quality checkpoints and alternative manufacturing paths while supporting AI-assisted optimization and Digital Twin synchronization.
 
-Routing serves as the production blueprint for every manufactured product.
+The module serves as the Manufacturing Routing & Process Intelligence Platform (MRPIP) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
-- Standardize production flow
-- Optimize manufacturing sequence
-- Support multiple production methods
-- Reduce production time
-- Improve traceability
-- Enable AI optimization
+- Standardize manufacturing routes
+- Improve production consistency
+- Optimize resource utilization
+- Support flexible manufacturing
+- Enable complete process traceability
+- Support AI-assisted routing
 - Synchronize Digital Twin
 
 ---
 
-# 3. Routing Types
+# 3. Routing Lifecycle
 
-Standard Routing
+Product Definition
 
-Customer Routing
+↓
 
-Thermowood Routing
+Routing Template
 
-Kiln Routing
+↓
 
-Massive Panel Routing
+Operation Sequence
 
-Finger Joint Routing
+↓
 
-Profil Routing
+Resource Assignment
 
-CLT Routing
+↓
 
-Glulam Routing
+Parameter Definition
 
-Pellet Routing
+↓
 
-Export Routing
+Quality Checkpoints
 
-Rework Routing
-
-Prototype Routing
-
-Emergency Routing
-
-AI Optimized Routing
-
----
-
-# 4. Routing Sources
-
-Product Family
-
-Customer
-
-Recipe
+↓
 
 Production Order
-
-Engineering
-
-Quality Requirement
-
-Sales Order
-
-AI Recommendation
-
----
-
-# 5. Routing Structure
-
-Routing
-
-↓
-
-Operation
-
-↓
-
-Work Center
-
-↓
-
-Machine Group
-
-↓
-
-Machine
-
-↓
-
-Tool Assembly
-
-↓
-
-Recipe
-
-↓
-
-Quality Gate
-
-↓
-
-Expected Output
-
-↓
-
-Next Operation
-
----
-
-# 6. Standard Routing Steps
-
-Material Receiving
-
-Log Measurement
-
-Log Classification
-
-Log Yard Storage
-
-Primary Sawing
-
-Prism Cutting
-
-Kiln Drying
-
-Thermowood Treatment
-
-Scanning
-
-Optimization
-
-Finger Joint
-
-Planing
-
-Profiling
-
-Massive Panel Pressing
-
-CLT Assembly
-
-Glue Curing
-
-Calibration
-
-Sanding
-
-Final Inspection
-
-Packaging
-
-Finished Goods
-
-Shipment
-
----
-
-# 7. Work Center Assignment
-
-Timber Yard
-
-Primary Saw Line
-
-Kiln
-
-Thermowood
-
-Sorting Line
-
-Scanner
-
-Finger Joint
-
-Planer
-
-Profiling
-
-Massive Panel
-
-CLT
-
-Packaging
-
-Finished Goods Warehouse
-
-Shipping
-
----
-
-# 8. Machine Assignment
-
-Preferred Machine
-
-Alternative Machine
-
-Backup Machine
-
-Machine Group
-
-Capacity Validation
-
-Maintenance Validation
-
-Energy Validation
-
-AI Machine Recommendation
-
----
-
-# 9. Tool Assignment
-
-Knife Set
-
-Tool Group
-
-Tool Assembly
-
-Calibration Status
-
-Tool Life
-
-Replacement Threshold
-
-AI Tool Recommendation
-
----
-
-# 10. Recipe Assignment
-
-Kiln Recipe
-
-Thermowood Recipe
-
-Glue Recipe
-
-Profil Recipe
-
-Customer Recipe
-
-Quality Recipe
-
-AI Recipe Recommendation
-
----
-
-# 11. Material Transformation
-
-Input Materials
-
-Intermediate Materials
-
-Output Materials
-
-Yield
-
-Expected Scrap
-
-Recovered Materials
-
-By-products
-
-Waste
-
-Material Genealogy
-
----
-
-# 12. Quality Gates
-
-Incoming Inspection
-
-Machine Setup Approval
-
-First Piece Inspection
-
-In Process Inspection
-
-Dimensional Inspection
-
-Moisture Inspection
-
-Surface Inspection
-
-Final Inspection
-
-Packaging Inspection
-
-Shipment Approval
-
----
-
-# 13. Routing Constraints
-
-Machine Capacity
-
-Operator Skills
-
-Shift Availability
-
-Material Availability
-
-Tool Availability
-
-Energy Limits
-
-Maintenance Windows
-
-Warehouse Capacity
-
-Packaging Capacity
-
-Customer Due Date
-
----
-
-# 14. Routing Versions
-
-Draft
-
-Under Review
-
-Approved
-
-Released
-
-Obsolete
-
-Archived
-
-Only one version may be active for a product revision.
-
----
-
-# 15. Routing Lifecycle
-
-Draft
-
-↓
-
-Validation
-
-↓
-
-Simulation
-
-↓
-
-Approval
-
-↓
-
-Release
 
 ↓
 
@@ -380,263 +68,315 @@ Execution
 
 ↓
 
-Monitoring
-
-↓
-
-Revision
-
-↓
-
-Archive
+Continuous Improvement
 
 ---
 
-# 16. AI Capabilities
+# 4. Routing Types
 
-Dynamic Routing Recommendation
+Standard Routing
 
-Alternative Routing Selection
+Alternative Routing
 
-Machine Load Balancing
+Customer-Specific Routing
 
-Operator Skill Matching
+Project Routing
 
-Material Optimization
+Prototype Routing
 
-Yield Prediction
-
-Cycle Time Prediction
-
-Bottleneck Detection
-
-Energy Optimization
-
-Carbon Optimization
-
-Recipe Optimization
-
-Thermowood Optimization
-
-Kiln Optimization
-
-Predictive Scheduling
-
-Root Cause Analysis
-
-Digital Twin Simulation
-
-Autonomous Routing Optimization
-
-AI Routing Copilot
-
----
-
-# 17. Digital Twin Integration
-
-Live Routing Visualization
-
-Material Flow
-
-Operation Status
-
-Machine Status
-
-Work Center Status
-
-WIP Tracking
-
-Energy Flow
-
-Factory Bottlenecks
-
-Simulation
-
----
-
-# 18. Dashboard Widgets
-
-Routing Performance
-
-Routing Versions
-
-Operation Sequence
-
-Machine Utilization
-
-Routing Bottlenecks
-
-Current WIP
-
-Alternative Routing Usage
-
-Quality Gate Status
-
-Energy Consumption
-
-Carbon Footprint
-
-Thermowood Routing
-
-Kiln Queue
-
-AI Recommendations
-
----
-
-# 19. Reports
-
-Routing List
-
-Routing Comparison
-
-Routing History
-
-Operation Sequence
-
-Routing Performance
-
-Routing Cost
-
-Routing Time
-
-Routing Yield
-
-Routing Genealogy
+Rework Routing
 
 Thermowood Routing
 
 Kiln Routing
 
-Quality Gates
+Maintenance Routing
 
-Machine Usage
+Emergency Routing
+
+---
+
+# 5. Routing Master
+
+Routing Code
+
+Revision
+
+Product Family
+
+Product
+
+Version
+
+Plant
+
+Production Line
+
+Status
+
+Effective Date
+
+Expiration Date
+
+Default Routing
+
+---
+
+# 6. Operation Sequence
+
+Operation Number
+
+Operation Name
+
+Sequence
+
+Predecessor
+
+Successor
+
+Parallel Operations
+
+Mandatory
+
+Optional
+
+Estimated Duration
+
+---
+
+# 7. Work Center Assignment
+
+Work Center
+
+Machine
+
+Alternative Machine
+
+Capacity
+
+Setup Time
+
+Changeover Time
+
+Efficiency
+
+Availability
+
+---
+
+# 8. Tool Assignment
+
+Tool Assembly
+
+Knife Set
+
+Tool Parameters
+
+Expected Tool Life
+
+Sharpening Rules
+
+Replacement Rules
+
+---
+
+# 9. Process Parameters
+
+Feed Speed
+
+Spindle Speed
+
+Temperature
+
+Pressure
+
+Moisture Target
+
+Kiln Recipe
+
+Thermowood Recipe
+
+Tolerance Limits
+
+---
+
+# 10. Quality Checkpoints
+
+Incoming Inspection
+
+In-Process Inspection
+
+Final Inspection
+
+Moisture Check
+
+Dimensional Inspection
+
+Visual Inspection
+
+Color Classification
+
+Release Criteria
+
+---
+
+# 11. AI Capabilities
+
+Routing Optimization
+
+Alternative Route Recommendation
+
+Cycle Time Prediction
+
+Machine Recommendation
+
+Tool Recommendation
+
+Constraint Analysis
+
+Routing Copilot
+
+---
+
+# 12. Digital Twin Integration
+
+Routing Visualization
+
+Operation Flow
+
+Factory Simulation
+
+Alternative Route Simulation
+
+Material Flow
+
+Execution Replay
+
+---
+
+# 13. Dashboard Widgets
+
+Routing Library
+
+Active Routings
+
+Revision Status
+
+Alternative Routes
+
+Cycle Time
+
+Routing Performance
+
+AI Recommendations
+
+---
+
+# 14. Reports
+
+Routing Report
+
+Cycle Time Analysis
+
+Routing Comparison
+
+Revision History
+
+Alternative Routing Report
 
 AI Routing Analysis
 
 ---
 
-# 20. API Resources
+# 15. API Resources
 
 GET /routing
 
 GET /routing/{id}
 
-GET /routing/{id}/operations
+GET /routing/revisions
 
-GET /routing/{id}/versions
-
-GET /routing/{id}/simulation
-
-GET /routing/{id}/genealogy
+GET /routing/operations
 
 POST /routing
 
-POST /routing/{id}/approve
+POST /routing/revise
 
-POST /routing/{id}/release
+POST /routing/simulate
 
-POST /routing/{id}/simulate
-
-POST /routing/{id}/optimize
-
-PATCH /routing/{id}
+POST /routing/optimize
 
 ---
 
-# 21. Events
+# 16. Events
 
 RoutingCreated
 
-RoutingUpdated
+RoutingRevised
 
-RoutingApproved
+OperationAdded
+
+MachineChanged
+
+ToolChanged
+
+QualityUpdated
+
+AIRecommendationGenerated
 
 RoutingReleased
 
-RoutingArchived
-
-RoutingVersionCreated
-
-RoutingSimulationStarted
-
-RoutingSimulationCompleted
-
-RoutingOptimized
-
-AlternativeRoutingSelected
-
-QualityGateAdded
-
-MachineAssigned
-
-RecipeAssigned
-
 ---
 
-# 22. Mobile
+# 17. Mobile
 
 Routing Viewer
 
-Operation Flow
+Operation Sequence
 
-QR Scan
+QR Lookup
 
-Machine Assignment
+Revision History
 
-Quality Checklist
-
-Photo Capture
-
-Offline Support
+Approvals
 
 ---
 
-# 23. Business Rules
+# 18. Business Rules
 
-Every Product shall have at least one approved Routing.
+Every product shall have at least one approved routing.
 
-Only released Routings may be used in Production Orders.
+Routing revisions shall be version-controlled.
 
-Routing changes create a new version.
+Alternative routings shall be documented.
 
-All routing revisions shall preserve history.
+Released production orders shall reference a routing revision.
 
-Thermowood products require a Thermowood Routing.
+Routing changes shall not affect active production orders.
 
-Kiln operations require an approved Drying Recipe.
-
-Customer-specific Routings override default Routings.
+Critical routing changes shall require approval.
 
 ---
 
-# 24. Future Extensions
+# 19. Future Extensions
 
-Constraint-Based Routing
+Adaptive Routing
 
-Vision AI Verification
+Self-Learning Routing
 
-Collaborative Robots
+Dynamic Process Routing
 
-AGV Routing
-
-AMR Routing
-
-IoT Driven Routing
-
-RFID Tracking
-
-Blockchain Genealogy
+Autonomous Process Optimization
 
 Digital Thread
 
 Industry 5.0
 
-MCP AI Routing Agents
+MCP Routing Services
 
 ---
 
-# 25. Architecture Review
+# 20. Architecture Review
 
 ## Database Changes
 
@@ -646,136 +386,103 @@ routing_versions
 
 routing_operations
 
-routing_resources
+routing_work_centers
 
-routing_quality_gates
+routing_tools
 
-routing_constraints
+routing_parameters
+
+routing_quality
+
+routing_alternatives
+
+routing_history
+
+routing_ai
 
 routing_simulations
 
-routing_ai_recommendations
-
----
-
 ## Related Modules
-
-Production_Planning
 
 Production_Orders
 
-Operations
+Production_Planning
 
-Work_Centers
+Operations
 
 Machines
 
 Tooling
 
-Recipes
-
-Materials
+Work_Centers
 
 Quality
 
-Packaging
+Kiln
 
-Finished_Goods
-
-Warehouse
-
-Inventory
-
-Logistics
+Thermowood
 
 Analytics
 
 AI
 
-Digital_Twin
+Factory_Copilot
 
----
+Digital_Twin
 
 ## Application Updates
 
 API_Contracts.md
 
-Dashboard_Definitions.md
+Routing_Workflow.md
 
-Report_Catalog.md
-
-Screen_Catalog.md
-
-UI_Flows.md
+Operation_Definitions.md
 
 Events.md
 
----
+Dashboard_Definitions.md
+
+Manufacturing_Playbooks.md
 
 ## Naswood-Specific Enhancements
 
-### Timber Routing
+### Timber Manufacturing Routing
 
-- Log receiving optimization
-- Species-based routing
-- Diameter and length decision rules
-- Supplier-specific routing
+- Log breakdown routing
+- Sawing routing
+- Planing routing
+- Finger Joint routing
+- Lamination routing
+- Profiling routing
 
 ### Kiln & Thermowood Routing
 
-- Automatic kiln loading sequence
-- Recipe compatibility validation
-- Moisture target verification
-- Batch balancing
-- Cooling sequence management
-- Color consistency checkpoints
+- Kiln loading routes
+- Drying process routing
+- Thermowood treatment routing
+- Cooling routing
+- Recipe routing
 
-### Massif Panel Routing
+### Flexible Manufacturing
 
-- Lamella selection rules
-- Glue spread validation
-- Press sequence
-- Calibration workflow
+- Alternative machines
+- Parallel operations
+- Customer-specific routes
+- Project routing
+- Rework routing
 
-### Finger Joint Routing
+### AI Optimization
 
-- Defect scanning
-- Automatic defect cutting
-- Finger profile verification
-- Press timing control
-
-### Profil Routing
-
-- Tool profile verification
-- Cutter life monitoring
-- Surface quality checkpoints
-
-### Packaging & Logistics Routing
-
-- Customer-specific packaging path
-- Automatic palletization
-- Container loading sequence
-- Export documentation trigger
-
-### Sustainability
-
-- Carbon footprint per routing
-- Energy consumption per operation
-- Waste generation tracking
-- Pellet recovery flow
-
-### AI Planning
-
-- AI route comparison
-- Best routing recommendation
-- Automatic rerouting after machine failure
-- Bottleneck avoidance
-- Predictive routing based on live factory conditions
+- Routing optimization
+- Constraint analysis
+- Machine recommendations
+- Tool recommendations
+- Alternative routing generation
 
 ### Digital Twin
 
-- 2D/3D routing visualization
-- Live WIP animation
-- Material genealogy tree
-- Factory flow simulation
-- What-if scenario analysis
+- Routing visualization
+- Factory simulation
+- Process replay
+- Material flow visualization
+- Alternative route simulation
