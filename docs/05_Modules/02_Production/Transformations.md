@@ -4,7 +4,7 @@
 
 **Document:** Material Transformations
 
-**Module Code:** MOD-TRF-001
+**Module Code:** MOD-PRO-TRF-001
 
 **Version:** 2.0
 
@@ -14,140 +14,33 @@
 
 # 1. Purpose
 
-The Transformations module manages every physical transformation of materials throughout the manufacturing lifecycle.
+The Transformations module manages the complete material transformation lifecycle across all manufacturing processes.
 
-Every transformation records the relationship between input materials and output materials, preserving complete genealogy, traceability and production history.
+It tracks every physical, dimensional, qualitative and economic transformation of timber from raw log to finished product while preserving full genealogy, process intelligence and Digital Twin synchronization.
 
-Transformations create the Digital Thread of every product manufactured within Naswood OS.
+The module serves as the Material Transformation & Value Stream Intelligence Platform (MTVSIP) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
-- Preserve complete material genealogy
-- Track every physical transformation
-- Enable parent-child relationships
-- Support production traceability
-- Calculate yield and losses
-- Support AI optimization
+- Track every material transformation
+- Preserve end-to-end genealogy
+- Improve timber recovery
+- Measure value addition
+- Optimize material utilization
+- Support AI-assisted optimization
 - Synchronize Digital Twin
-- Enable Digital Product Passport
 
 ---
 
-# 3. Transformation Philosophy
+# 3. Transformation Lifecycle
 
-Every material transformation creates:
-
-Input Materials
+Raw Log
 
 ↓
 
-Transformation Event
-
-↓
-
-Output Materials
-
-↓
-
-Genealogy Update
-
-↓
-
-Inventory Update
-
-↓
-
-Quality Update
-
-↓
-
-Analytics
-
-↓
-
-Digital Twin
-
-↓
-
-Digital Product Passport
-
----
-
-# 4. Transformation Types
-
-Log Measurement
-
-Log Classification
-
-Primary Sawing
-
-Prism Cutting
-
-Edge Trimming
-
-Optimization Cutting
-
-Kiln Drying
-
-Thermowood Treatment
-
-Scanning
-
-Defect Detection
-
-Defect Removal
-
-Finger Joint
-
-Glue Application
-
-Pressing
-
-Planing
-
-Profiling
-
-Calibration
-
-Sanding
-
-CNC Processing
-
-Massive Panel Pressing
-
-CLT Assembly
-
-Glulam Assembly
-
-Packaging
-
-Rework
-
-Splitting
-
-Merging
-
-Recovery
-
-Waste Processing
-
-Pellet Production
-
----
-
-# 5. Material Lifecycle
-
-Standing Tree
-
-↓
-
-Harvest
-
-↓
-
-Log
+Primary Processing
 
 ↓
 
@@ -155,7 +48,7 @@ Prism
 
 ↓
 
-Dry Lumber
+Drying
 
 ↓
 
@@ -163,7 +56,7 @@ Thermowood
 
 ↓
 
-Profile
+Planing
 
 ↓
 
@@ -171,407 +64,117 @@ Finger Joint
 
 ↓
 
-Massive Panel
+Lamination
+
+↓
+
+Profiling
+
+↓
+
+Packaging
 
 ↓
 
 Finished Goods
 
-↓
+---
 
-Package
+# 4. Transformation Types
 
-↓
+Dimension Transformation
 
-Pallet
+Moisture Transformation
 
-↓
+Density Transformation
 
-Container
+Color Transformation
 
-↓
+Surface Transformation
 
-Shipment
+Structural Transformation
 
-↓
+Assembly Transformation
 
-Customer
+Packaging Transformation
+
+Rework Transformation
+
+Waste Transformation
 
 ---
 
-# 6. Transformation Structure
+# 5. Transformation Master
 
-Transformation
+Transformation ID
 
-↓
+Transformation Type
 
-Input Materials
+Source Material
 
-↓
+Target Material
 
-Operations
+Product Family
 
-↓
-
-Machine
-
-↓
-
-Tool
-
-↓
-
-Recipe
-
-↓
-
-Operator
-
-↓
-
-Quality
-
-↓
-
-Output Materials
-
-↓
-
-Events
-
-↓
-
-Genealogy
-
----
-
-# 7. Input Materials
-
-Material ID
-
-Material Type
-
-Species
-
-Dimensions
-
-Volume
-
-Weight
-
-Moisture
-
-Grade
-
-Warehouse
-
-Batch
-
-QR Code
-
----
-
-# 8. Output Materials
-
-Material ID
-
-Material Type
-
-Species
-
-Dimensions
-
-Volume
-
-Weight
-
-Moisture
-
-Grade
-
-Yield
-
-Scrap
-
-Recovery
-
-QR Code
-
----
-
-# 9. Parent–Child Relationships
-
-One Parent
-
-↓
-
-Many Children
-
-Many Parents
-
-↓
-
-One Child
-
-Many Parents
-
-↓
-
-Many Children
-
-Relationship Types
-
-Split
-
-Merge
-
-Transform
-
-Recover
-
-Recycle
-
----
-
-# 10. Genealogy
-
-Every Transformation stores
-
-Original Log
-
-Parent Material
-
-Child Material
-
-Transformation Order
-
-Production Order
+Process Stage
 
 Operation
 
-Routing
-
 Machine
-
-Tool
-
-Recipe
 
 Operator
 
-Shift
+Batch
 
-Quality Results
+Status
 
-Package
-
-Shipment
-
-Customer
+Timestamp
 
 ---
 
-# 11. Yield Management
+# 6. Material Properties
 
-Input Volume
-
-Output Volume
-
-Yield %
-
-Loss %
-
-Recovery %
-
-Waste %
-
-Pellet %
-
-Glue %
-
-Energy Consumption
-
-Carbon Impact
-
----
-
-# 12. Waste Management
-
-Saw Dust
-
-Wood Chips
-
-Trim Waste
-
-Rejected Material
-
-Glue Waste
-
-Packaging Waste
-
-Recovered Material
-
-Pellet Raw Material
-
-Waste Destination
-
----
-
-# 13. Quality Integration
-
-Incoming Inspection
-
-In Process Inspection
-
-Final Inspection
-
-Moisture
+Species
 
 Dimensions
 
-Surface
+Volume
 
-Strength
+Weight
 
-Visual Grade
+Moisture
 
-Certificates
+Density
 
----
+Color Class
 
-# 14. Packaging Integration
+Strength Class
 
-Package Assignment
+Surface Finish
 
-Bundle Assignment
-
-Pallet Assignment
-
-Container Assignment
-
-Customer Packaging Rules
-
----
-
-# 15. Digital Product Passport
-
-Material Origin
-
-Transformation History
-
-Certificates
-
-Carbon Data
-
-FSC
-
-PEFC
-
-EPD
-
-Production History
-
-Installation Documents
-
-Maintenance Information
-
----
-
-# 16. Digital Twin
-
-Live Material Flow
-
-Transformation Timeline
-
-Material Position
-
-Factory Animation
-
-Heat Map
-
-Material Queue
-
-WIP
-
-Simulation
-
----
-
-# 17. AI Capabilities
-
-Material Optimization
-
-Yield Prediction
-
-Scrap Prediction
-
-Recovery Optimization
-
-Thermowood Optimization
-
-Kiln Optimization
-
-Recipe Optimization
-
-Transformation Recommendation
-
-Material Matching
-
-Defect Prediction
-
-Root Cause Analysis
-
-Genealogy Search
-
-Carbon Optimization
-
-Energy Optimization
-
-Autonomous Material Allocation
-
-AI Material Copilot
-
----
-
-# 18. Reports
-
-Material Genealogy
-
-Transformation History
-
-Parent-Child Tree
-
-Yield Analysis
-
-Waste Analysis
-
-Recovery Analysis
-
-Pellet Production
-
-Thermowood Batch History
-
-Kiln History
-
-Transformation Timeline
+Grade
 
 Carbon Footprint
 
-Energy Consumption
-
-Transformation KPI
-
-AI Optimization Report
-
 ---
 
-# 19. Dashboard Widgets
+# 7. Value Stream Tracking
 
-Live Material Flow
+Material Cost
 
-Genealogy Explorer
+Processing Cost
 
-Transformation Timeline
+Labor Cost
+
+Machine Cost
+
+Energy Cost
+
+Tool Cost
+
+Added Value
+
+Current Value
 
 Yield
 
@@ -579,138 +182,320 @@ Recovery
 
 Waste
 
-Pellet Production
+---
 
-Thermowood Queue
+# 8. Genealogy
 
-Kiln Queue
+Raw Material
 
-Material Tree
+Production Order
 
-Carbon
+Batch
 
-Energy
+Machine
 
-AI Suggestions
+Operator
+
+Tool
+
+Quality Results
+
+Warehouse
+
+Shipment
+
+Customer
 
 ---
 
-# 20. API Resources
+# 9. Quality Integration
+
+Incoming Inspection
+
+Process Inspection
+
+Final Inspection
+
+Moisture
+
+Dimensions
+
+Visual Quality
+
+Color Classification
+
+Release Status
+
+---
+
+# 10. AI Capabilities
+
+Transformation Optimization
+
+Yield Prediction
+
+Waste Prediction
+
+Recovery Optimization
+
+Value Stream Analysis
+
+Root Cause Analysis
+
+Transformation Copilot
+
+---
+
+# 11. Digital Twin Integration
+
+Transformation Timeline
+
+Material Flow
+
+Factory Visualization
+
+Transformation Replay
+
+Value Stream Visualization
+
+Material Genealogy
+
+---
+
+# 12. Dashboard Widgets
+
+Transformation Flow
+
+Recovery Rate
+
+Yield
+
+Material Loss
+
+Value Added
+
+Transformation Efficiency
+
+Waste Analysis
+
+AI Recommendations
+
+---
+
+# 13. Reports
+
+Transformation Report
+
+Material Genealogy Report
+
+Yield Report
+
+Recovery Report
+
+Waste Analysis
+
+Value Stream Report
+
+AI Transformation Report
+
+---
+
+# 14. API Resources
 
 GET /transformations
 
 GET /transformations/{id}
 
-GET /transformations/{id}/genealogy
+GET /transformations/genealogy
 
-GET /transformations/{id}/timeline
-
-GET /transformations/{id}/tree
-
-GET /materials/{id}/parents
-
-GET /materials/{id}/children
-
-GET /materials/{id}/lifecycle
+GET /transformations/value-stream
 
 POST /transformations
 
-POST /transformations/split
-
-POST /transformations/merge
-
-POST /transformations/recover
+POST /transformations/analyze
 
 POST /transformations/simulate
 
+POST /transformations/optimize
+
 ---
 
-# 21. Events
+# 15. Events
 
 TransformationCreated
 
 TransformationCompleted
 
-MaterialSplit
+YieldCalculated
 
-MaterialMerged
+WasteRecorded
 
-MaterialRecovered
-
-MaterialReworked
+ValueUpdated
 
 GenealogyUpdated
 
-YieldCalculated
-
-WasteGenerated
-
-RecoveryCompleted
-
-PackageAssigned
-
-DPPUpdated
-
-AIOptimizationCompleted
+AIRecommendationGenerated
 
 ---
 
-# 22. Mobile
+# 16. Mobile
 
-Material Scan
+QR Material Lookup
 
-QR Verification
+Transformation Timeline
 
-Transformation Entry
+Batch Tracking
 
-Photo Capture
+Quality Results
 
-Voice Notes
-
-Offline Support
-
-Digital Signature
+Offline Mode
 
 ---
 
-# 23. Business Rules
+# 17. Business Rules
 
-Every transformation requires at least one input material.
+Every transformation shall preserve genealogy.
 
-Every output material shall reference its parent material(s).
+Every material state shall be uniquely identifiable.
 
-Every transformation shall generate genealogy records.
+Transformation history shall be immutable.
 
-Material history shall never be deleted.
+Yield and recovery shall be calculated automatically.
 
-Yield shall be calculated automatically.
-
-Waste shall be classified.
-
-Recovered material shall receive a new material identity while preserving genealogy.
-
-Thermowood transformations require approved recipes.
-
-Kiln drying requires approved drying curves.
+Transformation records shall synchronize with Digital Twin.
 
 ---
 
-# 24. Future Extensions
+# 18. Future Extensions
 
-Vision AI Material Recognition
+Digital Material Passport
 
-Automatic Material Classification
+Carbon Accounting
 
-RFID Tracking
+Circular Economy Tracking
 
-Blockchain Genealogy
+Autonomous Material Flow
 
 Digital Thread
 
-IoT Material Tracking
-
-Autonomous Material Routing
-
 Industry 5.0
 
-MCP AI Material Agents
+MCP Material Services
+
+---
+
+# 19. Architecture Review
+
+## Database Changes
+
+transformations
+
+transformation_steps
+
+transformation_properties
+
+transformation_batches
+
+transformation_genealogy
+
+transformation_costs
+
+transformation_yield
+
+transformation_ai
+
+transformation_history
+
+transformation_events
+
+## Related Modules
+
+Timber_Yard
+
+Production_Orders
+
+Operations
+
+Routing
+
+Kiln
+
+Thermowood
+
+Inventory
+
+Quality
+
+Costing
+
+Finished_Goods
+
+Analytics
+
+AI
+
+Factory_Copilot
+
+Digital_Twin
+
+## Application Updates
+
+API_Contracts.md
+
+Material_Genealogy.md
+
+Value_Stream.md
+
+Transformation_Workflow.md
+
+Events.md
+
+Dashboard_Definitions.md
+
+Mobile_App.md
+
+## Naswood-Specific Enhancements
+
+### Timber Transformations
+
+- Log to prism conversion
+- Prism optimization
+- Drying transformation
+- Thermowood treatment
+- Planing transformation
+- Finger Joint transformation
+- Lamination transformation
+- Profiling transformation
+
+### Material Intelligence
+
+- Volume tracking
+- Moisture evolution
+- Density changes
+- Color evolution
+- Yield tracking
+- Recovery analysis
+
+### Value Stream Intelligence
+
+- Added value calculation
+- Cost evolution
+- Energy per transformation
+- Waste analysis
+- Carbon footprint tracking
+
+### AI Optimization
+
+- Yield optimization
+- Recovery optimization
+- Waste reduction
+- Process recommendations
+- Root cause analysis
+
+### Digital Twin
+
+- Live transformation flow
+- Material genealogy
+- Factory replay
+- Value stream visualization
+- Transformation timeline
