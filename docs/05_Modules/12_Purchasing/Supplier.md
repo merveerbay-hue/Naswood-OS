@@ -11,7 +11,307 @@
 **Status:** Enterprise
 
 ---
+---
 
+# Supplier 360°
+
+## Purpose
+
+Supplier 360° provides a unified operational, commercial, financial and quality view of every supplier within Naswood OS.
+
+It consolidates procurement, logistics, quality, finance and sustainability information into a single dashboard, enabling faster decisions and complete supplier visibility.
+
+Supplier 360° serves as the primary workspace for Purchasing, Quality, Finance and Supply Chain teams.
+
+---
+
+## Supplier Overview
+
+The dashboard shall display:
+
+- Supplier ID
+- Supplier Code
+- Company Name
+- Supplier Category
+- Supplier Status
+- Strategic Supplier Status
+- Preferred Supplier Status
+- Supplier Health Score (SHS)
+- Risk Level
+- Overall Performance
+- Primary Contact
+- Country
+- Region
+- Assigned Buyer
+
+---
+
+## Commercial Overview
+
+Display:
+
+- Annual Purchase Volume
+- Current Year Spend
+- Total Purchase Orders
+- Open Purchase Orders
+- Framework Agreements
+- Price Agreements
+- Payment Terms
+- Currency
+- Discount Agreements
+- Contract Expiration Dates
+
+---
+
+## Procurement Overview
+
+Display:
+
+- Purchase Requests
+- Purchase Orders
+- Pending Approvals
+- Open Deliveries
+- Delayed Deliveries
+- Average Lead Time
+- Fill Rate
+- Order Accuracy
+- Procurement KPIs
+
+---
+
+## Material Portfolio
+
+Display:
+
+- Approved Materials
+- Wood Species
+- Product Categories
+- Thermowood Materials
+- Adhesives
+- Chemicals
+- Packaging
+- Spare Parts
+- Cutting Tools
+- Services
+
+Each material shall display:
+
+- Approved Status
+- Purchase History
+- Last Purchase Price
+- Preferred Warehouse
+- Lead Time
+- MOQ
+
+---
+
+## Delivery Performance
+
+Display:
+
+- On-Time Delivery %
+- Average Delay
+- Delivery Accuracy
+- Partial Deliveries
+- Emergency Deliveries
+- Container Performance
+- Transportation Performance
+- Carrier Performance
+- Delivery Trend
+
+---
+
+## Quality Overview
+
+Display:
+
+- Incoming Inspection Results
+- Accepted Deliveries
+- Rejected Deliveries
+- NCR Count
+- CAPA Status
+- Supplier Quality Score
+- Moisture Compliance
+- Dimension Compliance
+- Species Verification
+- Audit Results
+
+---
+
+## Sustainability & Compliance
+
+Display:
+
+- FSC Status
+- PEFC Status
+- ISO Certifications
+- ESG Rating
+- Carbon Footprint
+- Forest Origin
+- Responsible Sourcing Status
+- Digital Product Passport Compliance
+- Certificate Expiration Dates
+
+---
+
+## Financial Overview
+
+Display:
+
+- Outstanding Balance
+- Total Spend
+- Average Payment Days
+- Credit Terms
+- Budget Allocation
+- Price Trend
+- Currency Exposure
+- Cost Savings
+- Payment History
+
+---
+
+## Logistics Overview
+
+Display:
+
+- Active Shipments
+- Containers
+- Trucks
+- Delivery Schedule
+- Receiving Performance
+- Dock Performance
+- Customs Status
+- Tracking Numbers
+
+---
+
+## Risk Analysis
+
+Display:
+
+- Supply Risk
+- Financial Risk
+- Delivery Risk
+- Quality Risk
+- Sustainability Risk
+- Geopolitical Risk
+- Currency Risk
+- Capacity Risk
+
+Each risk shall include:
+
+- Current Status
+- Trend
+- AI Prediction
+- Recommended Action
+
+---
+
+## AI Insights
+
+AI shall automatically generate:
+
+- Supplier Summary
+- Performance Analysis
+- Improvement Opportunities
+- Alternative Supplier Suggestions
+- Procurement Risks
+- Price Forecast
+- Lead Time Forecast
+- Quality Forecast
+- Strategic Recommendations
+
+---
+
+## Documents
+
+Display quick access to:
+
+- Contracts
+- Framework Agreements
+- Price Lists
+- Certificates
+- Audit Reports
+- Technical Datasheets
+- Safety Datasheets
+- Insurance Documents
+- NDA
+- Delivery Documents
+
+---
+
+## Timeline
+
+Display all supplier events chronologically.
+
+Examples:
+
+Supplier Approved
+
+↓
+
+First Purchase Order
+
+↓
+
+First Delivery
+
+↓
+
+Incoming Inspection
+
+↓
+
+Quality Issue
+
+↓
+
+Corrective Action
+
+↓
+
+Audit
+
+↓
+
+Contract Renewal
+
+↓
+
+Performance Review
+
+↓
+
+Strategic Partnership
+
+---
+
+## Dashboard Widgets
+
+- Supplier Health Score
+- Annual Spend
+- Open Purchase Orders
+- Delivery Performance
+- Quality Performance
+- Lead Time Trend
+- Active NCRs
+- Certificate Status
+- Financial Exposure
+- AI Risk Index
+
+---
+
+## Business Rules
+
+Supplier 360° shall aggregate data from all procurement-related modules.
+
+All supplier KPIs shall be updated automatically.
+
+Critical supplier alerts shall be displayed immediately.
+
+Certificate expiration alerts shall be generated automatically.
+
+AI recommendations shall be continuously updated based on live supplier performance.
 # 1. Purpose
 
 The Supplier module manages the complete supplier lifecycle from qualification through strategic partnership.
