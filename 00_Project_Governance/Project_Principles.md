@@ -424,7 +424,63 @@ AI enhances experience.
 People remain responsible.
 
 ---
+---
 
+# Principle 21
+
+## Zero Material Blind Spots
+
+Every physical material inside the factory must exist within the digital system.
+
+No material may enter, move, transform, wait, recover, become waste or leave the factory without being digitally traceable.
+
+Manual processes must always generate digital records.
+
+---
+
+# Principle 22
+
+## Real Factory Before Perfect Software
+
+The software shall adapt to real manufacturing processes.
+
+Factory operations should never be redesigned simply to satisfy software limitations.
+
+Real production is always the primary reference.
+
+Software evolves together with manufacturing.
+
+---
+
+# Principle 23
+
+## One Platform — One Data Model
+
+Every module inside Naswood OS shall use the same business entities.
+
+Production
+
+Inventory
+
+Quality
+
+Maintenance
+
+Sales
+
+Purchasing
+
+Finance
+
+AI
+
+must all operate on a unified data model.
+
+Duplicate master data is prohibited.
+
+Every business object has a single source of truth.
+
+---
 # Final Principle
 
 Every decision made during the development of Naswood OS shall answer one question:
