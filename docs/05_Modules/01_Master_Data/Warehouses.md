@@ -561,21 +561,101 @@ Status Changed
 
 Warehouse List
 
-Warehouse Capacity
+Warehouse Capacity Report
 
-Warehouse Occupancy
+Warehouse Occupancy Report
 
-Warehouse Utilization
+Warehouse Utilization Report
 
-Location Utilization
+Warehouse Performance Report
 
-Material Distribution
+Storage Function Report
 
-Storage History
+Warehouse Heat Map Report
 
-Warehouse Map
+Warehouse Layout Report
 
----
+Location Utilization Report
+
+Location Occupancy Report
+
+Material Distribution Report
+
+Inventory by Warehouse
+
+Inventory by Location
+
+Inventory Aging by Warehouse
+
+Storage History Report
+
+Material Movement Report
+
+Warehouse Transfer Report
+
+Receiving Report
+
+Shipping Report
+
+Loading Report
+
+Production Buffer Report
+
+Work In Progress (WIP) Report
+
+Quality Hold Inventory Report
+
+Rejected Material Report
+
+Finished Goods Inventory Report
+
+Raw Material Inventory Report
+
+Thermowood Inventory Report
+
+Kiln Buffer Report
+
+Packaging Area Report
+
+By-Product Inventory Report
+
+Pellet Raw Material Report
+
+Wood Chips Inventory Report
+
+Sawdust Inventory Report
+
+Bark Inventory Report
+
+Warehouse Capacity Forecast
+
+Warehouse Congestion Report
+
+Storage Turnover Report
+
+Cycle Count Report
+
+Inventory Accuracy Report
+
+Warehouse Productivity Report
+
+Warehouse KPI Report
+
+Warehouse Energy Consumption Report
+
+Forklift Activity Report
+
+Warehouse Traffic Report
+
+Storage Cost Analysis
+
+Warehouse Risk Analysis
+
+Warehouse Audit Report
+
+Warehouse Exception Report
+
+Warehouse Traceability Report
 
 # 19. Dashboard Widgets
 
