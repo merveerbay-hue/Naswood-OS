@@ -345,7 +345,310 @@ Customer Delivery Journey
 Factory Capacity View
 
 Scenario Simulation
+---
 
+# Project-Based Order Management
+
+## Purpose
+
+Naswood primarily delivers products for architectural, construction and industrial projects rather than standard stock sales.
+
+Therefore, every Sales Order shall support complete project-based planning, production, logistics and installation management.
+
+This functionality enables the entire factory to execute production according to the project's construction schedule rather than only the requested delivery date.
+
+---
+
+## Project Information
+
+Every Sales Order may be linked to a Project.
+
+Project Information includes:
+
+- Project ID
+- Project Name
+- Customer
+- Dealer
+- Architect
+- Contractor
+- Investor
+- Country
+- City
+- Construction Site
+- Building Type
+- Project Status
+- Project Manager
+- Site Manager
+- Installation Company
+
+---
+
+## Construction Structure
+
+Large projects shall support hierarchical structures.
+
+Example:
+
+Project
+
+↓
+
+Phase
+
+↓
+
+Block
+
+↓
+
+Building
+
+↓
+
+Floor
+
+↓
+
+Zone
+
+↓
+
+Facade
+
+↓
+
+Room
+
+↓
+
+Installation Area
+
+↓
+
+Order Line
+
+Each Sales Order Line may reference one installation location.
+
+---
+
+## Delivery Planning
+
+Orders shall support phased deliveries.
+
+Delivery Types
+
+- Phase Delivery
+- Block Delivery
+- Floor Delivery
+- Facade Delivery
+- Zone Delivery
+- Product Group Delivery
+- Batch Delivery
+- Container Delivery
+- Partial Delivery
+- Emergency Delivery
+
+Each delivery shall maintain independent logistics and traceability.
+
+---
+
+## Installation Planning
+
+Each order line may contain installation information.
+
+Fields:
+
+Installation Sequence
+
+Installation Date
+
+Installation Team
+
+Installation Priority
+
+Installation Area
+
+Required Equipment
+
+Required Accessories
+
+Installation Notes
+
+Estimated Installation Duration
+
+Completion Status
+
+---
+
+## Production Planning Integration
+
+Production Planning shall automatically consider:
+
+- Construction schedule
+- Installation sequence
+- Delivery milestones
+- Site readiness
+- Material availability
+- Factory capacity
+- Machine availability
+- Production lead time
+
+Production shall prioritize installation sequence instead of order entry date whenever required.
+
+---
+
+## Logistics Integration
+
+Shipment planning shall support:
+
+- Multi-site delivery
+- Multi-phase delivery
+- Mixed containers
+- Mixed trucks
+- Cross-docking
+- Warehouse staging
+- Delivery appointments
+- GPS tracking
+
+---
+
+## Material Traceability
+
+Every installation area shall maintain complete traceability.
+
+Traceability includes:
+
+- Production Order
+- Batch Number
+- Material Genealogy
+- Package Number
+- Pallet Number
+- Container Number
+- Shipment Number
+- Delivery Confirmation
+- Installation Confirmation
+
+---
+
+## Quality Integration
+
+Quality records shall be linked to project locations.
+
+Each installation area may include:
+
+- Moisture Report
+- Dimensional Inspection
+- Color Classification
+- Surface Inspection
+- Final Inspection
+- CE Documents
+- FSC / PEFC Certificates
+- EPD
+- Digital Product Passport
+
+---
+
+## Project Timeline
+
+Every project shall maintain a unified timeline.
+
+Example:
+
+Quotation
+
+↓
+
+Order
+
+↓
+
+Engineering Approval
+
+↓
+
+Production Started
+
+↓
+
+Production Completed
+
+↓
+
+Packaging
+
+↓
+
+Shipment
+
+↓
+
+Delivered
+
+↓
+
+Installed
+
+↓
+
+Warranty Started
+
+↓
+
+Project Closed
+
+---
+
+## AI Capabilities
+
+AI shall support project-based optimization.
+
+Capabilities include:
+
+- Delivery sequencing
+- Installation sequencing
+- Capacity optimization
+- Production prioritization
+- Shipment optimization
+- Delay prediction
+- Material availability prediction
+- Site readiness prediction
+- Resource optimization
+
+---
+
+## Dashboard Widgets
+
+Project Progress
+
+Project Deliveries
+
+Installation Progress
+
+Delayed Milestones
+
+Production Readiness
+
+Shipment Status
+
+Installation Status
+
+AI Risk Analysis
+
+---
+
+## Business Rules
+
+Every project order shall support phased execution.
+
+Every delivery shall be traceable to a project location.
+
+Production priorities may follow construction milestones.
+
+Installation sequence shall override shipment sequence when required.
+
+All project revisions shall remain fully auditable.
+
+Project completion shall automatically archive all associated production, logistics and quality records.
 ---
 
 # 16. Dashboard Widgets
