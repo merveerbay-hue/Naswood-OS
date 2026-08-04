@@ -337,6 +337,25 @@ Cost Center Summary
 Energy Cost
 
 ---
+Warehouse Capacity Report
+
+Storage Function Report
+
+Manufacturing Buffer Report
+
+WIP Inventory Report
+
+Quality Hold Inventory Report
+
+Finished Goods Report
+
+Warehouse Occupancy Report
+
+Warehouse Heat Map Report
+
+Warehouse Utilization Trend
+
+Storage Turnover Report
 
 # Logistics Reports
 
