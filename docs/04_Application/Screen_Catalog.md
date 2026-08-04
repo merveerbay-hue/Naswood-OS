@@ -4,7 +4,7 @@
 
 **Document:** Screen Catalog
 
-**Version:** 1.0
+**Version:** 2.0
 
 **Status:** Approved
 
@@ -12,65 +12,61 @@
 
 # Purpose
 
-This document defines all application screens available within Naswood OS.
+This document defines every application screen available in Naswood OS.
 
-The Screen Catalog serves as the central registry of user interfaces across Web, Mobile and future applications.
+It serves as the central registry for all user interfaces across Web, Mobile and future client applications.
 
-Each screen belongs to a business module and follows common UI and navigation principles.
-
----
-
-# Philosophy
-
-Every screen has one primary responsibility.
-
-Screens display business information.
-
-Business logic belongs to the Application Layer.
-
-Every screen supports Role-Based Access Control.
+Each screen belongs to a business module and follows common navigation, security and workflow principles.
 
 ---
 
-# Screen Categories
+# Screen Philosophy
 
-Authentication
+Every screen has a single responsibility.
 
-Home
+Screens display and collect business information.
 
-Dashboard
+Business logic is executed through Application Services.
 
-Master Data
+Every screen follows Role-Based Access Control (RBAC).
 
-Production
+Every business action generates Events and Audit Logs when applicable.
 
-Inventory
+---
 
-Warehouse
+# Application Structure
 
-Quality
+The application is divided into the following areas.
 
-Maintenance
+• Authentication
 
-Machines
+• Home
 
-Tooling
+• Dashboards
 
-Sales
+• Master Data
 
-Purchasing
+• Operations
 
-Finance
+• Manufacturing
 
-Logistics
+• Warehouse & Inventory
 
-Analytics
+• Quality
 
-Workflow
+• Maintenance
 
-Administration
+• Commercial
 
-AI
+• Finance
+
+• Analytics
+
+• Workflow
+
+• Administration
+
+• AI Copilot
 
 ---
 
@@ -78,17 +74,15 @@ AI
 
 Login
 
-Logout
-
 Forgot Password
 
 Reset Password
 
-Change Password
-
 Multi-Factor Authentication
 
-Session Expired
+Session Timeout
+
+Change Password
 
 ---
 
@@ -96,21 +90,21 @@ Session Expired
 
 Home
 
-Notifications
-
 My Tasks
+
+Notifications
 
 Recent Activities
 
 Favorites
 
-Search
+Global Search
 
-Help
+Help Center
 
 ---
 
-# Dashboard
+# Dashboards
 
 Executive Dashboard
 
@@ -140,9 +134,25 @@ Administration Dashboard
 
 # Master Data
 
+Organizations
+
+Users
+
+Roles
+
+Permissions
+
+Employees
+
+Customers
+
+Suppliers
+
 Material Types
 
 Materials
+
+Product Families
 
 Products
 
@@ -158,57 +168,49 @@ Warehouses
 
 Warehouse Locations
 
-Customers
-
-Suppliers
-
-Employees
-
-Organizations
-
-Cost Centers
-
 Machine Groups
+
+Machines
 
 Tool Categories
 
+Tools
+
+Recipes
+
+Routing Library
+
 ---
 
-# Receiving
+# Timber Yard
 
 Truck Reception
 
 Receiving Lots
 
-Material Registration
+Log Yard Map
 
-Incoming Inspection
+Log Inventory
 
-Receiving History
+Log Measurement
+
+Log Classification
+
+Receiving Inspection
+
+Log Stock Movements
 
 ---
 
-# Production Planning
+# Manufacturing
 
-Production Planning Board
-
-Production Orders
+Production Planning
 
 Production Calendar
 
-Production Queue
-
 Capacity Planning
 
-Scheduling
-
-Production Simulation
-
----
-
-# Production
-
-Production Order Details
+Production Orders
 
 Operation Execution
 
@@ -216,57 +218,35 @@ Transformation History
 
 Material Consumption
 
-Production History
-
-Production Timeline
-
 Packaging
 
 Finished Goods
 
----
+Kiln Dashboard
 
-# Machines
+Kiln Schedule
 
-Machine List
+Kiln Batch Management
 
-Machine Details
+Kiln Recipes
 
-Machine Dashboard
+Kiln Monitoring
 
-Machine Parameters
+Thermowood Dashboard
 
-Machine Runtime
+Thermowood Batch Management
 
-Machine Alarms
+Thermowood Recipes
 
-Machine Maintenance
+Temperature Curves
+
+Humidity Curves
 
 Energy Monitoring
 
 ---
 
-# Tooling
-
-Tool Inventory
-
-Tool Assemblies
-
-Knife Library
-
-Knife Profiles
-
-Tool Configuration
-
-Sharpening History
-
-Tool Life
-
-Tool Installation
-
----
-
-# Warehouse
+# Warehouse & Inventory
 
 Warehouse Overview
 
@@ -286,6 +266,10 @@ Inventory Adjustments
 
 Package Management
 
+Shipment Preparation
+
+Loading Operations
+
 ---
 
 # Quality
@@ -294,13 +278,17 @@ Inspection Queue
 
 Inspection Details
 
-Measurements
+Incoming Inspection
+
+In-Process Inspection
+
+Final Inspection
 
 Moisture Measurement
 
 Dimensional Inspection
 
-Quality Approvals
+Quality Approval
 
 Non-Conformance
 
@@ -308,29 +296,63 @@ Corrective Actions
 
 Quality History
 
+Laboratory Results
+
 ---
 
 # Maintenance
 
 Maintenance Dashboard
 
-Work Orders
-
-Maintenance Calendar
-
 Preventive Maintenance
 
 Corrective Maintenance
 
-Asset Details
+Work Orders
 
-Spare Parts
+Machine History
 
 Failure Analysis
 
+Spare Parts
+
+Maintenance Calendar
+
+Asset Registry
+
 ---
 
-# Sales
+# Machines & Tooling
+
+Machine Dashboard
+
+Machine Parameters
+
+Machine Runtime
+
+Machine Alarms
+
+Energy Monitoring
+
+Tool Inventory
+
+Tool Assemblies
+
+Knife Library
+
+Knife Profiles
+
+Tool Configuration
+
+Sharpening History
+
+Tool Life
+
+Tool Installation
+
+---
+
+# Commercial
 
 CRM
 
@@ -338,7 +360,7 @@ Leads
 
 Customers
 
-Opportunities
+Dealer Management
 
 Quotations
 
@@ -346,29 +368,15 @@ Quotation Revisions
 
 Sales Orders
 
-Dealer Portal
-
-Shipment Tracking
-
-Customer History
-
----
-
-# Purchasing
-
 Purchase Requests
 
 Purchase Orders
 
-Suppliers
-
 Supplier Evaluation
 
-Receiving Status
+Shipment Tracking
 
-Supplier Price Lists
-
-Material Procurement
+Customer History
 
 ---
 
@@ -388,6 +396,8 @@ Cost Analysis
 
 ERP Export Status
 
+Financial Reports
+
 ---
 
 # Logistics
@@ -406,25 +416,43 @@ Delivery Tracking
 
 Export Documents
 
+Carrier Management
+
 ---
 
 # Analytics
 
 Reports
 
-KPIs
-
-Dashboards
+KPI Explorer
 
 Forecasts
 
 Trend Analysis
 
-Digital Twin
+Executive Reports
 
 Material Genealogy
 
-Executive Reports
+Factory Digital Twin
+
+---
+
+# Material Genealogy
+
+Material Lifecycle
+
+Material Genealogy
+
+Parent–Child Tree
+
+Transformation History
+
+Batch Traceability
+
+Package Traceability
+
+Shipment Traceability
 
 ---
 
@@ -436,11 +464,11 @@ Approvals
 
 Workflow History
 
-Workflow Designer (Future)
-
-Tasks
+Task Queue
 
 Escalations
+
+Workflow Designer (Future)
 
 ---
 
@@ -458,37 +486,43 @@ Audit Logs
 
 API Clients
 
-Integration Monitor
-
 Printer Management
 
 Label Templates
 
+Integration Monitor
+
 System Settings
+
+Master Data Import
 
 ---
 
-# AI
+# AI Copilot
 
 Factory Copilot
 
 Production Advisor
 
-Maintenance Advisor
-
 Quality Advisor
+
+Maintenance Advisor
 
 Sales Assistant
 
-Purchasing Assistant
+Purchasing Advisor
+
+Knowledge Search (RAG)
 
 AI Recommendations
 
-AI History
-
-Knowledge Base
-
 Prompt History
+
+AI Memory
+
+AI Agent Monitor
+
+Document Assistant
 
 ---
 
@@ -496,11 +530,13 @@ Prompt History
 
 Global Search
 
-Notifications
+Notification Center
 
 Task Center
 
-Help Center
+QR Scanner
+
+Barcode Scanner
 
 User Profile
 
@@ -508,39 +544,43 @@ Language Selector
 
 Theme Selector
 
-Recent Items
-
 Favorites
 
-QR Scanner
+Recent Items
 
-Barcode Scanner
+Help Center
 
 ---
 
 # Screen Types
 
-List Screen
-
-Detail Screen
-
-Create Screen
-
-Edit Screen
-
 Dashboard
+
+List
+
+Detail
+
+Create
+
+Edit
 
 Wizard
 
-Approval Screen
+Approval
 
-Report Screen
+Configuration
 
-Configuration Screen
+Monitoring
 
-Monitoring Screen
+Analytics
 
-Analytics Screen
+Report
+
+Map
+
+Timeline
+
+Tree View
 
 ---
 
@@ -550,21 +590,14 @@ Maximum navigation depth: 3 levels.
 
 Every screen shall include:
 
-Breadcrumb
-
-Page Title
-
-Primary Actions
-
-Secondary Actions
-
-Context Menu
-
-Search
-
-Filters
-
-Help
+- Breadcrumb
+- Page Title
+- Search
+- Filters
+- Primary Actions
+- Secondary Actions
+- Context Menu
+- Help
 
 ---
 
@@ -582,11 +615,11 @@ Toolbar
 
 ↓
 
-Filters
+Search & Filters
 
 ↓
 
-Content
+Main Content
 
 ↓
 
@@ -598,41 +631,9 @@ Status Bar
 
 ---
 
-# Search
-
-Global Search supports:
-
-Material Code
-
-Product Code
-
-Package Code
-
-Production Order
-
-Sales Order
-
-Purchase Order
-
-Shipment
-
-Machine
-
-Tool
-
-QR Code
-
-Barcode
-
-Customer
-
-Supplier
-
----
-
 # Mobile Availability
 
-The following screens shall support Mobile:
+The following modules support Mobile Application.
 
 Receiving
 
@@ -656,11 +657,15 @@ QR Scanner
 
 Barcode Scanner
 
+AI Copilot
+
 ---
 
-# Permissions
+# Security
 
-Every screen shall define:
+Every screen follows Role-Based Access Control.
+
+Permissions include:
 
 View
 
@@ -668,9 +673,9 @@ Create
 
 Update
 
-Delete
-
 Approve
+
+Delete
 
 Export
 
@@ -688,83 +693,73 @@ Every screen belongs to exactly one functional module.
 
 ### SCR-002
 
-Every screen follows Role-Based Access Control.
+Every screen shall support localization.
 
 ---
 
 ### SCR-003
 
-Every screen shall support localization.
+Every screen shall support responsive layouts where applicable.
 
 ---
 
 ### SCR-004
 
-Every screen shall support responsive layouts where applicable.
+All business actions shall execute through Workflow and Application Services.
 
 ---
 
 ### SCR-005
 
-All business actions shall execute through Workflows and APIs.
+Screens shall display Business Codes instead of internal database identifiers whenever possible.
 
 ---
 
 ### SCR-006
 
-Every screen shall display immutable Business Codes rather than database identifiers whenever possible.
+Critical operational screens shall support QR Code and Barcode scanning.
 
 ---
 
 ### SCR-007
 
-Every screen shall support Audit Log and Business Event generation through application services.
+Every business action shall generate Business Events and Audit Logs when applicable.
 
 ---
 
 ### SCR-008
 
-Navigation shall remain consistent across all modules.
+Dashboard visibility shall follow Role-Based Access Control.
 
 ---
 
 ### SCR-009
 
-Critical operational screens shall support QR and Barcode scanning.
+Navigation shall remain consistent across all modules.
 
 ---
 
 ### SCR-010
 
-Dashboard screens shall be configurable according to user roles.
+AI-assisted screens shall clearly distinguish AI recommendations from user actions.
 
 ---
 
 # Integration
 
-Screen Catalog integrates with:
+This document integrates with:
 
-UI Flows
-
-Module Specifications
-
-Dashboard Definitions
-
-API Contracts
-
-Workflow
-
-Permissions
-
-Barcode & QR Model
-
-Mobile Application
-
-Notifications
-
-Analytics
-
-AI
+- Module Specifications
+- UI Flows
+- Dashboard Definitions
+- API Contracts
+- Workflow
+- Permission Model
+- Barcode & QR Model
+- Mobile Application
+- Notifications
+- Analytics
+- AI
 
 ---
 
@@ -772,28 +767,21 @@ AI
 
 The architecture supports:
 
-Low-Code Screen Builder
-
-AI Generated Forms
-
-Custom User Dashboards
-
-Drag-and-Drop Layouts
-
-Digital Twin Visualization
-
-Augmented Reality Interfaces
-
-Voice Navigation
-
-Multi-Monitor Factory Displays
+- Low-Code Screen Builder
+- Drag-and-Drop Dashboards
+- Digital Twin Visualization
+- AI Generated Forms
+- Voice Navigation
+- Augmented Reality Interfaces
+- Multi-Monitor Factory Displays
+- Smart Glass Integration
 
 ---
 
 # Screen Philosophy
 
-Each screen represents a single business capability within Naswood OS.
+The Screen Catalog defines every user interface within Naswood OS.
 
-Screens provide intuitive access to manufacturing information while enforcing workflow, security and traceability.
+Each screen represents a single business capability while maintaining consistency in navigation, security, workflow and traceability.
 
-A consistent screen architecture ensures usability, maintainability and scalability across web, mobile and future application platforms.
+A standardized screen architecture ensures usability, maintainability and long-term scalability across the entire Manufacturing Operating System.
