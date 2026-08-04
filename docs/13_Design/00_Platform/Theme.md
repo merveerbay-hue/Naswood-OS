@@ -768,3 +768,26 @@ Plugin Theme Support
 Dynamic Color System
 
 White Label Support
+
+# Theme Architecture
+
+The visual design of Naswood OS is based on the Platform Design System.
+
+See:
+
+- Design_System/Colors.md
+- Design_System/Typography.md
+- Design_System/Icons.md
+- Design_System/Buttons.md
+- Design_System/Inputs.md
+- Design_System/Forms.md
+- Design_System/Tables.md
+- Design_System/Cards.md
+- Design_System/Charts.md
+- Design_System/Navigation.md
+- Design_System/Header.md
+- Design_System/Sidebar.md
+- Design_System/Dashboard.md
+- Design_System/Reports.md
+- Design_System/PDF.md
+- Design_System/Email_Templates.md
