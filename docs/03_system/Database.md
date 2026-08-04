@@ -1,275 +1,476 @@
 # Database Design
 
-**Project:** Naswood OS  
-**Document:** Database Design  
-**Version:** 1.0  
-**Status:** Active Development
+**Project:** Naswood OS
+**Document:** Database Design
+**Version:** 2.0
+**Status:** Architecture Approved
 
 ---
 
 # 1. Purpose
 
-This document defines the database architecture of Naswood OS.
+This document defines the database architecture, storage strategy, and data organization principles for Naswood OS.
 
-It establishes:
+The database is designed to support:
 
-- Data layers
-- Entity organization
-- Database standards
-- Naming conventions
-- Relationships
-- Storage principles
-- Performance strategy
-- Scalability strategy
+- Material-centric manufacturing
+- Full traceability
+- Event-driven architecture
+- High-volume production
+- AI analytics
+- Multi-factory operations
+- Long-term scalability
 
-The physical database implementation shall follow the principles defined in this document.
+The database is the single source of truth for all operational data.
 
 ---
 
 # 2. Database Philosophy
 
-Naswood OS uses a relational database as the primary source of truth.
+Naswood OS does not store documents.
 
-The database is designed around:
+It stores business objects and business events.
+
+Examples:
 
 - Materials
+- Transformations
+- Operations
+- Measurements
 - Events
-- Operations
-- Traceability
-
-rather than traditional ERP documents.
-
-Every physical movement, transformation and business action must be represented in the database.
-
----
-
-# 3. Database Engine
-
-Primary Database
-
-PostgreSQL
-
-Supported Features
-
-- UUID
-- JSONB
-- Full Text Search
-- Partitioning
-- Materialized Views
-- Triggers
-- Transactions
-
----
-
-# 4. Data Layers
-
-Naswood OS separates data into five logical layers.
-
-```
-Master Data
-Transaction Data
-Event Store
-Analytics Data
-Audit Data
-```
-
----
-
-# 5. Master Data
-
-Master Data contains relatively stable business information.
-
-Entities include:
-
-- Material Types
-- Wood Species
-- Quality Grades
-- Defect Types
-- Machines
-- Tools
-- Cutter Heads
-- Recipes
-- Warehouses
-- Warehouse Locations
-- Customers
-- Suppliers
-- Employees
-- Products
-- Units
-- Currencies
-- Companies
-- Factories
-
-Master Data is shared across all business modules.
-
----
-
-# 6. Transaction Data
-
-Transaction Data stores operational records.
-
-Entities include:
-
-- Receiving Lots
-- Materials
-- Material Transformations
 - Inventory Movements
-- Work Orders
-- Operations
-- Packages
-- Shipments
-- Purchase Orders
-- Sales Orders
-- Maintenance Orders
-- Tool Installations
-- Quality Events
 
-Transaction records are immutable whenever possible.
+Every business action creates a permanent digital history.
 
 ---
 
-# 7. Event Store
+# 3. Storage Architecture
 
-Every completed business action generates an event.
+The database consists of five logical layers.
 
-Examples:
+```
 
-- MaterialReceived
-- MaterialCreated
-- MaterialSplit
-- MaterialMerged
-- MaterialConsumed
-- MaterialProduced
-- MaterialRecovered
-- QualityApproved
-- MachineStarted
-- MachineStopped
-- PackageCreated
-- ShipmentCompleted
-
-Events are never modified.
-
-Events are never deleted.
-
----
-
-# 8. Analytics Data
-
-Analytics tables contain summarized information.
-
-Examples:
-
-- KPI Snapshots
-- Daily Production
-- Daily Inventory
-- Machine Statistics
-- Waste Statistics
-- AI Predictions
-- Dashboard Snapshots
-
-Analytics data may be regenerated from source data.
-
----
-
-# 9. Audit Data
-
-Audit data records user activity.
-
-Examples:
-
-- Login History
-- Permission Changes
-- Record Changes
-- Approval History
-- Security Events
-
-Audit records are immutable.
-
----
-
-# 10. Primary Key Strategy
-
-Every entity shall use:
-
-UUID
-
-as its primary key.
-
-Human-readable business codes are stored separately.
-
-Example:
-
-UUID
+Master Data
 
 ↓
 
-550e8400-e29b-41d4-a716-446655440000
-
-Business Code
+Transaction Data
 
 ↓
 
-THM-PN-000254
+Event Store
+
+↓
+
+Analytics
+
+↓
+
+Audit
+
+```
+
+Each layer has its own responsibility.
 
 ---
 
-# 11. Business Codes
+# 4. Master Data
 
-Business codes are defined by Naming_Standards.md.
+Master Data contains relatively static business information.
 
-Business codes may be displayed to users.
+Examples
 
-Internal UUIDs are used for relationships.
+Company
 
----
+Factory
 
-# 12. Material Identity
+Department
 
-Every physical material has:
+Position
 
-UUID
+Employee
 
-Business Code
+Role
 
-Receiving Lot
+Permission
 
 Material Type
 
 Species
 
-Quality
+Product
 
-Dimensions
+Product Variant
 
-Current Status
+Quality Grade
 
-Current Location
+Defect
 
-Parent Relationship
+Machine
 
-Creation Timestamp
+Machine Group
 
-The UUID never changes.
+Tool
 
-Business attributes may change.
+Cutter Head
+
+Recipe
+
+Warehouse
+
+Warehouse Location
+
+Customer
+
+Supplier
+
+Currency
+
+Unit
+
+Measurement Type
+
+Transformation Type
+
+Waste Type
+
+Package Type
+
+Shipment Type
+
+Shift
+
+Production Calendar
+
+Master Data is version-controlled.
 
 ---
 
-# 13. Transformation Model
+# 5. Transaction Data
 
-Material transformations are stored separately.
+Stores daily business operations.
 
-Transformation Types:
+Receiving Lots
 
-- Split
-- Merge
-- Conversion
-- Recovery
-- Scrap
+Production Orders
 
-Transformation records connect parent and child materials.
+Work Orders
 
-This preserves complete genealogy.
+Transformations
+
+Materials
+
+Inventory Movements
+
+Measurements
+
+Quality Events
+
+Maintenance Orders
+
+Tool Installations
+
+Packages
+
+Shipments
+
+Purchase Orders
+
+Sales Orders
+
+Customer Complaints
+
+Documents
+
+Transactions represent the operational state of the factory.
+
+---
+
+# 6. Event Store
+
+Every completed business action generates an immutable event.
+
+Examples
+
+MaterialReceived
+
+TransformationStarted
+
+TransformationCompleted
+
+MaterialSplit
+
+MaterialMerged
+
+MaterialRecovered
+
+QualityApproved
+
+MachineStarted
+
+ToolChanged
+
+PackageCreated
+
+ShipmentCompleted
+
+Events are append-only.
+
+No event is updated.
+
+No event is deleted.
+
+---
+
+# 7. Analytics Layer
+
+Analytics data is generated from transactions and events.
+
+Examples
+
+Daily KPIs
+
+Production KPIs
+
+Inventory KPIs
+
+Machine KPIs
+
+Waste KPIs
+
+Recovery KPIs
+
+Financial KPIs
+
+AI Predictions
+
+Forecasts
+
+Dashboard Snapshots
+
+Analytics tables may be regenerated.
+
+---
+
+# 8. Audit Layer
+
+Stores security and compliance records.
+
+Examples
+
+User Login
+
+Permission Change
+
+Configuration Change
+
+Approval History
+
+Record Change
+
+Data Export
+
+Security Events
+
+Audit records are immutable.
+
+---
+
+# 9. Identity Strategy
+
+Every business object has two identities.
+
+Internal UUID
+
+Example
+
+550e8400-e29b-41d4-a716-446655440000
+
+Business Code
+
+Example
+
+THM-PN-000145
+
+UUID is used internally.
+
+Business Code is displayed to users.
+
+Business codes follow Naming_Standards.md.
+
+---
+
+# 10. Core Business Objects
+
+The database revolves around these core entities.
+
+Organization
+
+↓
+
+Factory
+
+↓
+
+Receiving Lot
+
+↓
+
+Material
+
+↓
+
+Transformation
+
+↓
+
+Operation
+
+↓
+
+Package
+
+↓
+
+Shipment
+
+↓
+
+Customer
+
+Supporting entities include:
+
+Recipe
+
+Machine
+
+Tool
+
+Measurement
+
+Quality Event
+
+Inventory Movement
+
+Document
+
+Event
+
+---
+
+# 11. Transformation-Centric Design
+
+Transformation is the central operational entity.
+
+Each Transformation records:
+
+Inputs
+
+Outputs
+
+Waste
+
+Recovery
+
+Machine
+
+Operator
+
+Recipe
+
+Measurements
+
+Energy
+
+Duration
+
+Quality
+
+Cost
+
+Traceability
+
+Every produced material references its source Transformation.
+
+---
+
+# 12. Material Model
+
+Material is a physical object.
+
+Every Material contains:
+
+UUID
+
+Business Code
+
+Material Type
+
+Species
+
+Dimensions
+
+Moisture
+
+Quality
+
+Current Location
+
+Current Status
+
+Receiving Lot
+
+Transformation Reference
+
+Package Reference
+
+Shipment Reference
+
+A Material never changes identity.
+
+---
+
+# 13. Measurement Model
+
+Measurements are stored independently.
+
+Examples
+
+Moisture
+
+Thickness
+
+Width
+
+Length
+
+Weight
+
+Density
+
+Temperature
+
+Pressure
+
+Humidity
+
+Glue Spread
+
+Machine Parameters
+
+Every measurement references:
+
+Material
+
+Transformation
+
+Machine
+
+Measurement Device
+
+Operator
+
+Timestamp
 
 ---
 
@@ -277,166 +478,83 @@ This preserves complete genealogy.
 
 Inventory is movement-based.
 
-Current stock is calculated from inventory movements.
+There is no editable stock balance.
 
-Inventory entities:
+Current stock is calculated from movements.
 
-- Warehouse
-- Location
-- Inventory Movement
-- Reservation
+Movement Types
 
-No stock value is manually edited.
+Receiving
+
+Production
+
+Transfer
+
+Reservation
+
+Consumption
+
+Recovery
+
+Shipment
+
+Adjustment
+
+Inventory movements remain immutable.
 
 ---
 
 # 15. Quality Model
 
-Quality data is stored independently.
+Quality is event-based.
 
-Entities:
+Each inspection creates a Quality Event.
 
-- Quality Event
-- Defect
-- Inspection
-- Measurements
-- Attachments
+Quality history is never overwritten.
 
-Quality history remains permanently accessible.
+Inspection photos and documents are stored externally.
 
 ---
 
-# 16. Machine Model
+# 16. File Storage
 
-Machine data includes:
+Binary files are stored outside PostgreSQL.
 
-- Machine Master
-- Machine Events
-- Operating Hours
-- Downtime
-- OEE History
-- Maintenance History
-
----
-
-# 17. Tooling Model
-
-Tooling data includes:
-
-- Tool
-- Cutter Head
-- Tool Assembly
-- Recipe
-- Sharpening
-- Tool Life
-
----
-
-# 18. Package Model
-
-Packages are independent entities.
-
-A package references many materials.
-
-One package belongs to one shipment.
-
----
-
-# 19. Shipment Model
-
-Shipment includes:
-
-Customer
-
-Packages
-
-Vehicle
-
-Driver
-
-Delivery Date
-
-Documents
-
----
-
-# 20. Relationship Principles
-
-Relationships use UUID.
-
-Foreign keys enforce integrity.
-
-Cascade delete is prohibited.
-
-Soft delete is preferred.
-
----
-
-# 21. Soft Delete Strategy
-
-Business records shall never be permanently removed.
-
-Entities include:
-
-Created At
-
-Updated At
-
-Deleted At
-
-Deleted By
-
-Historical information remains available.
-
----
-
-# 22. Timestamp Strategy
-
-Every entity contains:
-
-Created At
-
-Updated At
-
-Created By
-
-Updated By
-
-Critical entities additionally include:
-
-Approved At
-
-Approved By
-
----
-
-# 23. File Storage
-
-Large files are not stored inside the database.
-
-Files include:
-
-Photos
-
-Technical Drawings
-
-Certificates
-
-PDF Documents
-
-DXF Files
-
-STEP Files
+Examples
 
 Images
 
-Only file references are stored.
+Certificates
+
+DXF
+
+STEP
+
+PDF
+
+Videos
+
+The database stores metadata and file references only.
 
 ---
 
-# 24. Performance Strategy
+# 17. Data Integrity
 
-Indexes shall be created for:
+Foreign Keys are mandatory.
+
+Cascade Delete is prohibited.
+
+Soft Delete is preferred.
+
+Transactions guarantee consistency.
+
+Every critical operation uses database transactions.
+
+---
+
+# 18. Performance Strategy
+
+Indexes shall exist for:
 
 UUID
 
@@ -444,23 +562,27 @@ Business Code
 
 Material Code
 
-Work Order
+Transformation
 
-Machine
+Receiving Lot
 
 Package
 
 Shipment
 
+Machine
+
 Timestamp
 
-Frequently queried fields.
+Frequently filtered fields.
+
+Large tables shall be partitioned.
 
 ---
 
-# 25. Partitioning Strategy
+# 19. Partitioning Strategy
 
-Large tables may be partitioned by:
+Partition by:
 
 Factory
 
@@ -470,74 +592,133 @@ Month
 
 Event Type
 
-This supports long-term scalability.
+Large production tables:
+
+Events
+
+Measurements
+
+Inventory Movements
+
+Quality Events
+
+Audit Logs
 
 ---
 
-# 26. Backup Strategy
+# 20. Scalability
 
-Daily Backup
+Supports
 
-Weekly Backup
+Multi Factory
+
+Multi Warehouse
+
+Multi Company
+
+Cloud
+
+On-Premise
+
+Hybrid
+
+Microservice Migration
+
+Future Distributed Databases
+
+---
+
+# 21. Backup Strategy
+
+Daily Incremental Backup
+
+Weekly Full Backup
 
 Monthly Archive
 
 Point-in-Time Recovery
 
-Backup verification is mandatory.
+Backup Validation
+
+Disaster Recovery Tests
 
 ---
 
-# 27. Security
+# 22. Security
 
-Database access is role-based.
+Encrypted Connections
 
-Production database is never accessed directly by users.
+Role-Based Access
 
-Sensitive information is encrypted.
+Attribute-Based Access
 
-Passwords are never stored in plain text.
+Row-Level Security (Future)
 
----
+Encrypted Sensitive Data
 
-# 28. Scalability
+API Authentication
 
-The database supports:
-
-- Multiple Factories
-- Multiple Warehouses
-- Multiple Companies
-- Multi-language
-- Multi-currency
-- Cloud Deployment
-- On-Premise Deployment
+Audit Logging
 
 ---
 
-# 29. Design Principles
+# 23. Database Standards
 
-- UUID-based architecture
-- Fully normalized business data
-- Immutable event history
-- Traceability-first design
-- Material-centric data model
-- API-first compatibility
-- AI-ready structure
-- Future-proof schema
+UUID Primary Keys
+
+UTC Timestamps
+
+ISO Date Formats
+
+Soft Delete
+
+Immutable Events
+
+Normalized Business Data
+
+JSONB only for flexible payloads
+
+No duplicated business logic
 
 ---
 
-# 30. Future Extensions
+# 24. Future Extensions
 
-The architecture is prepared for:
+Prepared for:
 
-- CLT Production
-- Glulam Production
-- CNC Manufacturing
-- Digital Twin
-- BIM Integration
-- Carbon Tracking
-- Digital Product Passport
-- Machine Vision
-- IoT Integration
-- Advanced AI Analytics
+Digital Twin
+
+Machine Vision
+
+IoT Sensors
+
+OPC-UA Integration
+
+PLC Integration
+
+Carbon Tracking
+
+Digital Product Passport
+
+AI Copilot
+
+Predictive Maintenance
+
+Autonomous Scheduling
+
+Multi-Tenant SaaS Architecture
+
+---
+
+# 25. Design Principles
+
+- Material-centric
+- Transformation-centric
+- Event-driven
+- API-first
+- AI-ready
+- Traceability-first
+- Cloud-ready
+- Modular
+- Extensible
+- Long-term maintainable
