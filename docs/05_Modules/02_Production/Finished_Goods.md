@@ -2,141 +2,65 @@
 
 **Project:** Naswood OS
 
-**Document:** Finished Goods Module
+**Document:** Finished Goods
+
+**Module Code:** MOD-PRO-FGD-001
 
 **Version:** 2.0
 
-**Status:** Approved
+**Status:** Enterprise
 
 ---
 
-# 1. Module Overview
+# 1. Purpose
 
-## Module Name
+The Finished Goods module manages completed products from production completion through storage, shipment, customer delivery and lifecycle tracking.
 
-Finished Goods
+It provides complete product genealogy, quality verification, certification, inventory visibility and Digital Product Passport integration.
 
-## Module Code
-
-MOD-FGD
-
-## Module Category
-
-Production
-
----
-
-## Description
-
-The Finished Goods module manages every manufactured product that has successfully completed production, quality approval and packaging.
-
-Finished Goods are uniquely identified, fully traceable and ready for storage, shipment and customer delivery.
-
-Every Finished Good maintains complete genealogy from raw log to customer.
+The module serves as the Finished Goods & Product Lifecycle Intelligence Platform (FGPLIP) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
-- Manage finished products
-- Complete production lifecycle
-- Maintain genealogy
-- Support warehouse management
-- Support shipment
-- Support Digital Product Passport
-- Support AI optimization
+- Manage finished goods inventory
+- Ensure complete product traceability
+- Improve warehouse visibility
+- Support product certification
+- Enable Digital Product Passports
+- Support AI-assisted analytics
+- Synchronize Digital Twin
 
 ---
 
-# 3. Business Scope
-
-## Included
-
-Finished Goods Registration
+# 3. Finished Goods Lifecycle
 
 Production Completion
 
-Quality Release
+↓
 
-Packaging Assignment
-
-Package Verification
-
-Warehouse Assignment
-
-Shipment Preparation
-
-Customer Reservation
-
-Certificate Management
-
-Digital Product Passport
-
-Carbon Footprint
-
-Genealogy
-
-Export Preparation
-
----
-
-## Excluded
-
-Production Planning
-
-Sales Orders
-
-Purchasing
-
-Accounting
-
----
-
-# 4. User Roles
-
-Production Manager
-
-Warehouse Manager
-
-Warehouse Operator
-
-Quality Engineer
-
-Packaging Operator
-
-Logistics Coordinator
-
-Sales
-
-Administrator
-
-AI Agent
-
----
-
-# 5. Business Process
-
-Production Complete
+Final Inspection
 
 ↓
 
-Quality Released
+Quality Approval
 
 ↓
 
-Finished Good Created
+Label Generation
 
 ↓
 
-Package Assignment
+Finished Goods Registration
 
 ↓
 
-Warehouse Storage
+Warehouse Allocation
 
 ↓
 
-Customer Reservation
+Inventory Management
 
 ↓
 
@@ -144,878 +68,465 @@ Shipment
 
 ↓
 
-Delivery
+Customer Delivery
 
 ↓
 
-Archive
+Lifecycle Tracking
 
 ---
 
-# 6. Screens
-
-Finished Goods Dashboard
-
-Finished Goods List
-
-Finished Goods Detail
-
-Genealogy View
-
-Material Tree
-
-Package Assignment
-
-Warehouse Location
-
-Certificates
-
-Digital Product Passport
-
-Shipment Status
-
-History Timeline
-
-Customer Reservation
-
-Export Information
-
----
-
-# 7. User Actions
-
-Create
-
-Approve
-
-Reserve
-
-Assign Package
-
-Assign Warehouse
-
-Generate QR
-
-Generate Barcode
-
-Generate DPP
-
-Print Labels
-
-Print Certificates
-
-Prepare Shipment
-
-Archive
-
-Export
-
----
-
-# 8. Data Model
-
-Primary Entity
-
-Finished Good
-
-Business Code
-
-FG-000001
-
----
-
-Related Entities
-
-Material
-
-Product
-
-Production Order
-
-Operation
-
-Recipe
-
-Package
-
-Pallet
-
-Container
-
-Warehouse
-
-Shipment
-
-Customer
-
-Certificates
-
-Quality
-
-Transformation
-
-Genealogy
-
-Digital Product Passport
-
-Audit Log
-
----
-
-# 9. Finished Goods Types
+# 4. Product Categories
 
 Thermowood
 
+Solid Panels
+
+Laminated Timber
+
+Finger Joint Products
+
+Exterior Cladding
+
 Decking
-
-Cladding
-
-Massive Panel
-
-Finger Joint
-
-CLT
-
-Glulam
 
 Profiles
 
-Custom Products
+Structural Components
 
-OEM Products
+Pellets
 
----
-
-# 10. Finished Goods Structure
-
-Finished Good
-
-↓
-
-Package
-
-↓
-
-Pallet
-
-↓
-
-Container
-
-↓
-
-Shipment
-
-↓
-
-Customer
+By-products
 
 ---
 
-# 11. Product Identity
+# 5. Product Master
 
-Every Finished Good contains
+Product Code
 
-Business Code
+Description
 
-Serial Number
+Product Family
 
-QR
+Species
+
+Dimensions
+
+Grade
+
+Moisture
+
+Density
+
+Surface Finish
+
+Color Class
+
+Certification
 
 Barcode
 
-GS1 Digital Link
+QR Code
 
-Digital Product Passport
+RFID
 
-Carbon ID
-
-Production History
+Digital Product Passport ID
 
 ---
 
-# 12. Material Genealogy
+# 6. Product Traceability
 
-Every Finished Good stores
+Production Order
 
-Original Log
+Batch Number
 
-Prism
+Raw Material
 
-Drying Batch
+Kiln Batch
 
 Thermowood Batch
 
-Operations
+Machine History
 
-Machines
+Operator History
 
-Operators
+Quality History
 
-Recipes
+Warehouse Location
 
-Quality Results
+Shipment History
 
-Packages
-
-Shipment
-
-Customer
-
-Genealogy is immutable.
+Customer History
 
 ---
 
-# 13. Package Relationships
+# 7. Quality Status
 
-One Finished Good
+Inspection Status
 
-↓
+Quality Grade
 
-One Package
+Moisture Result
 
-↓
+Dimensional Inspection
 
-One Pallet
+Visual Inspection
 
-↓
+Color Classification
 
-One Container
+Packaging Approval
 
-↓
-
-One Shipment
-
-Package hierarchy shall always be maintained.
+Release Status
 
 ---
 
-# 14. Customer Assignment
+# 8. Inventory Management
 
-Reserved Customer
+Warehouse
 
-Reserved Order
+Storage Location
 
-Delivery Address
+Available Quantity
 
-Export Destination
+Reserved Quantity
 
-Private Label
+Allocated Quantity
 
-Customer Packaging Rules
-
-Language
-
-Certificates
-
----
-
-# 15. Lifecycle
-
-Created
-
-↓
-
-Quality Released
-
-↓
-
-Packaged
-
-↓
-
-Stored
-
-↓
-
-Reserved
-
-↓
-
-Allocated
-
-↓
-
-Loaded
-
-↓
-
-Shipped
-
-↓
-
-Delivered
-
-↓
-
-Archived
-
----
-
-# 16. State Model
-
-Draft
-
-Released
-
-Stored
-
-Reserved
-
-Allocated
-
-Shipment Ready
-
-Loaded
-
-Delivered
-
-Archived
-
----
-
-# 17. Business Rules
-
-Finished Goods require Quality Release.
-
-Finished Goods require Package Assignment.
-
-Every Finished Good shall have a QR Code.
-
-Every Finished Good shall have a Business Code.
-
-Finished Goods cannot be modified after shipment.
-
-Finished Goods preserve genealogy forever.
-
-Export products require Digital Product Passport.
-
----
-
-# 18. Events
-
-FinishedGoodsCreated
-
-FinishedGoodsReleased
-
-FinishedGoodsPackaged
-
-FinishedGoodsStored
-
-FinishedGoodsReserved
-
-FinishedGoodsAllocated
-
-FinishedGoodsLoaded
-
-FinishedGoodsShipped
-
-FinishedGoodsDelivered
-
-FinishedGoodsArchived
-
----
-
-# 19. Notifications
-
-Shipment Ready
-
-Package Missing
-
-Certificate Missing
-
-Warehouse Assigned
-
-Customer Reserved
-
-Export Ready
-
-DPP Generated
-
----
-
-# 20. Permissions
-
-View
-
-Create
-
-Release
-
-Reserve
-
-Package
-
-Ship
-
-Export
-
-Archive
-
-Generate QR
-
-Generate DPP
-
----
-
-# 21. Audit Log
-
-Created
-
-Released
-
-Reserved
-
-Package Changed
-
-Warehouse Changed
-
-Shipment Assigned
-
-Delivered
-
-Certificate Generated
-
-QR Generated
-
----
-
-# 22. Reports
-
-Finished Goods Inventory
-
-Finished Goods Aging
+Blocked Quantity
 
 Inventory Value
 
-Warehouse Distribution
+Stock Age
 
-Shipment Readiness
+FIFO
 
-Customer Reservation
-
-Package Traceability
-
-Genealogy Report
-
-Transformation Report
-
-Finished Goods History
-
-Export Readiness
-
-Certificates
-
-Carbon Footprint
-
-Digital Product Passport
-
-Production Yield
-
-Finished Goods KPI
+FEFO
 
 ---
 
-# 23. Dashboard Widgets
+# 9. Packaging
 
-Finished Goods Inventory
+Package Number
 
-Ready For Shipment
+Package Type
 
-Reserved Goods
+Dimensions
 
-Warehouse Occupancy
+Weight
 
-Package Status
+Labels
 
-Shipment Queue
+QR Code
 
-Export Queue
+RFID
 
-Certificates
+Pallet Number
 
-Customer Reservations
-
-Genealogy Explorer
-
-Material Flow
-
-Production Today
-
-Carbon Footprint
-
-Digital Product Passport Status
-
-AI Recommendations
+Container Assignment
 
 ---
 
-# 24. KPIs
+# 10. Certifications
 
-Finished Goods Inventory
+FSC
 
-Shipment Readiness
+PEFC
 
-Inventory Turnover
+CE
 
-Storage Time
+Thermowood Certification
 
-Reservation Accuracy
+Quality Certificates
 
-Packaging Accuracy
+Inspection Reports
 
-Export Readiness
+Customer Certificates
 
-Delivery Performance
-
-Inventory Accuracy
-
-Carbon Emissions
+Compliance Documents
 
 ---
 
-# 25. AI Capabilities
+# 11. AI Capabilities
 
-Demand Forecast
-
-Shipment Priority Recommendation
-
-Warehouse Slot Recommendation
-
-Package Optimization
+Product Classification
 
 Inventory Optimization
 
-Customer Allocation
+Shipment Recommendation
 
-Delivery Prediction
+Quality Risk Detection
 
-Export Readiness
+Demand Prediction
 
-Carbon Optimization
+Packaging Optimization
 
-Genealogy Analysis
+Lifecycle Analysis
 
-Quality Prediction
-
-Damage Risk Prediction
-
-Digital Product Passport Validation
-
-AI Warehouse Assistant
-
-AI Shipment Assistant
-
-AI Finished Goods Copilot
+Finished Goods Copilot
 
 ---
 
-# 26. API Resources
+# 12. Digital Twin Integration
+
+Finished Goods Visualization
+
+Warehouse Mapping
+
+Package Tracking
+
+Inventory Heat Map
+
+Shipment Timeline
+
+Product Lifecycle Visualization
+
+---
+
+# 13. Dashboard Widgets
+
+Finished Goods Inventory
+
+Warehouse Capacity
+
+Available Stock
+
+Reserved Stock
+
+Shipment Queue
+
+Product Quality
+
+Inventory Aging
+
+AI Insights
+
+---
+
+# 14. Reports
+
+Finished Goods Report
+
+Inventory Report
+
+Traceability Report
+
+Product Lifecycle Report
+
+Certification Report
+
+Warehouse Report
+
+Shipment Report
+
+AI Product Report
+
+---
+
+# 15. API Resources
 
 GET /finished-goods
 
 GET /finished-goods/{id}
 
-GET /finished-goods/search
+GET /finished-goods/inventory
+
+GET /finished-goods/traceability
+
+GET /finished-goods/certificates
 
 POST /finished-goods
 
-PATCH /finished-goods/{id}
+POST /finished-goods/release
 
-GET /finished-goods/{id}/genealogy
+POST /finished-goods/label
 
-GET /finished-goods/{id}/package
-
-GET /finished-goods/{id}/shipment
-
-GET /finished-goods/{id}/dpp
-
-GET /finished-goods/{id}/history
+POST /finished-goods/ship
 
 ---
 
-# 27. Integrations
+# 16. Events
+
+FinishedGoodsCreated
+
+QualityApproved
+
+ProductReleased
+
+InventoryUpdated
+
+PackageCreated
+
+ShipmentAssigned
+
+CertificateIssued
+
+DigitalPassportGenerated
+
+---
+
+# 17. Mobile
+
+QR Lookup
+
+Warehouse Scanner
+
+Inventory Status
+
+Shipment Status
+
+Digital Product Passport
+
+Offline Inventory
+
+---
+
+# 18. Business Rules
+
+Every finished product shall have a unique identifier.
+
+Finished goods shall not be released before quality approval.
+
+Every product shall maintain complete genealogy.
+
+All inventory movements shall be fully traceable.
+
+Digital Product Passports shall remain linked throughout the product lifecycle.
+
+---
+
+# 19. Future Extensions
+
+Smart Packaging
+
+IoT Product Monitoring
+
+Carbon Footprint Tracking
+
+Circular Economy
+
+Product-as-a-Service
+
+Industry 5.0
+
+Digital Thread
+
+MCP Product Services
+
+---
+
+# 20. Architecture Review
+
+## Database Changes
+
+finished_goods
+
+finished_goods_batches
+
+finished_goods_inventory
+
+finished_goods_packages
+
+finished_goods_certificates
+
+finished_goods_history
+
+finished_goods_status
+
+finished_goods_labels
+
+finished_goods_ai
+
+finished_goods_dpp
+
+finished_goods_shipments
+
+## Related Modules
 
 Production
 
-Operations
-
-Materials
-
-Products
+Inventory
 
 Warehouse
 
-Inventory
+Quality
 
-Packaging
+Final_Inspection
 
-Logistics
+Batch_Traceability
+
+Shipment
+
+Export
+
+Digital_Product_Passport
 
 Customers
 
-Quality
-
-Printing
-
-Barcode
-
-QR
-
-Digital Product Passport
+Orders
 
 Analytics
 
 AI
 
-Digital Twin
+Digital_Twin
 
----
+## Application Updates
 
-# 28. Printing
+API_Contracts.md
 
-Finished Goods Label
+Warehouse_Model.md
 
-Customer Label
+Product_Lifecycle.md
 
-Package Label
+Digital_Product_Passport.md
 
-Pallet Label
+Events.md
 
-QR Label
+Dashboard_Definitions.md
 
-Barcode Label
+Mobile_App.md
 
-Packing List
+## Naswood-Specific Enhancements
 
-Certificates
+### Timber Product Intelligence
 
-DPP
+- Thermowood product management
+- Solid panel inventory
+- Product grading
+- Moisture validation
+- Color classification
+- Package optimization
 
----
+### Product Traceability
 
-# 29. Mobile
+- End-to-end genealogy
+- Batch history
+- Machine history
+- Operator history
+- Quality history
+- Shipment history
 
-Search
+### Warehouse Intelligence
 
-QR Scan
+- Dynamic storage allocation
+- Inventory optimization
+- Package tracking
+- Loading optimization
+- Stock rotation
+- Capacity management
 
-Barcode Scan
+### AI Optimization
 
-Package Verification
+- Product classification
+- Shipment optimization
+- Inventory optimization
+- Product lifecycle analysis
+- Demand forecasting
 
-Shipment Verification
+### Digital Twin
 
-Warehouse Transfer
-
-Photo Capture
-
-Offline Mode
-
----
-
-# 30. Security
-
-Role Based Access
-
-Shipment Authorization
-
-Immutable Genealogy
-
-Digital Signature
-
-Audit Logging
-
-Certificate Protection
-
-DPP Protection
-
----
-
-# 31. Error Handling
-
-Missing Package
-
-Missing Certificate
-
-Shipment Blocked
-
-Duplicate QR
-
-Duplicate Business Code
-
-Warehouse Missing
-
-Invalid State
-
----
-
-# 32. Performance Requirements
-
-Search < 2 seconds
-
-QR Lookup < 1 second
-
-Support 10,000,000+ Finished Goods
-
-Real-Time Synchronization
-
----
-
-# 33. Future Extensions
-
-RFID
-
-NFC
-
-Vision AI
-
-Blockchain Traceability
-
-Autonomous Warehouse
-
-IoT Sensors
-
-Digital Twin
-
-Carbon Passport
-
-EU DPP
-
-Smart Packaging
-
----
-
-# 34. Acceptance Criteria
-
-✓ Finished Good created
-
-✓ Package assigned
-
-✓ QR generated
-
-✓ DPP generated
-
-✓ Shipment ready
-
-✓ Genealogy complete
-
-✓ AI integrated
-
-✓ Audit Log generated
-
----
-
-# 35. Related Documents
-
-Materials
-
-Products
-
-Packaging
-
-Warehouse
-
-Inventory
-
-Logistics
-
-Production Orders
-
-Operations
-
-Barcode & QR
-
-Label Templates
-
-Printing Model
-
-Digital Product Passport
-
-Analytics
-
----
-
-# 36. Operational Metrics
-
-## Success Metrics
-
-Inventory Accuracy
-
-Shipment Readiness
-
-Storage Efficiency
-
-Reservation Accuracy
-
-Package Verification
-
-Export Compliance
-
----
-
-## Failure Metrics
-
-Shipment Delay
-
-Missing Package
-
-Missing Certificate
-
-Inventory Errors
-
-Package Damage
-
----
-
-## Operational Risks
-
-Wrong Shipment
-
-Wrong Customer
-
-Package Damage
-
-Inventory Loss
-
-Missing DPP
-
----
-
-## Monitoring Alerts
-
-High Inventory
-
-Long Storage Time
-
-Package Missing
-
-Shipment Delay
-
-Certificate Expiring
-
-Export Missing Documents
-
-Warehouse Congestion
-
----
-
-## SLA
-
-Finished Goods shall become available for shipment within 30 minutes after Quality Release and Packaging completion.
-
----
-
-## Recovery Procedure
-
-Recover Finished Goods state using Event History, Package History, Audit Logs, Genealogy Records and Digital Product Passport history.
-
----
-
-# 37. Module Philosophy
-
-Finished Goods represent the final digital and physical outcome of manufacturing within Naswood OS.
-
-Every Finished Good carries its complete production history, genealogy, quality records, packaging information, logistics relationships and Digital Product Passport.
-
-The Finished Goods module serves as the bridge between manufacturing, warehousing and logistics, ensuring complete traceability, regulatory compliance and customer confidence across the entire Manufacturing Operating System.
+- Live warehouse visualization
+- Product lifecycle replay
+- Inventory heat maps
+- Package visualization
+- Digital Product Passport integration
