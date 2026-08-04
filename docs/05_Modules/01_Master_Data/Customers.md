@@ -4,7 +4,7 @@
 
 **Document:** Customers Module
 
-**Version:** 1.0
+**Version:** 2.0
 
 **Status:** Approved
 
@@ -28,97 +28,103 @@ Master Data
 
 ## Description
 
-The Customers module manages all customer master data used throughout Naswood OS.
+The Customers module provides a centralized repository for all customer information used across Naswood OS.
 
-It serves as the central repository for customer information and is referenced by Sales, Production, Logistics, Finance and Analytics.
+Customers are commercial partners that interact with Sales, Production, Packaging, Logistics, Finance and Customer Portal.
 
-Each customer has a unique Business Code and may own multiple addresses, contacts, projects and commercial agreements.
-
----
-
-## Objectives
-
-- Maintain centralized customer records
-- Support quotation and order management
-- Enable production traceability
-- Manage delivery destinations
-- Support dealer and distributor structures
-- Improve customer service
-- Enable AI-driven customer analysis
+Customer records contain commercial, operational and technical requirements used throughout the manufacturing lifecycle.
 
 ---
 
-# 2. Business Scope
+# 2. Objectives
 
-## Included Functions
+- Centralize customer master data
+- Support quotations and sales
+- Support production customization
+- Support customer-specific packaging
+- Support export compliance
+- Enable Digital Product Passport
+- Enable AI-driven customer intelligence
+
+---
+
+# 3. Business Scope
+
+## Included
 
 Customer Registration
 
 Customer Classification
 
-Customer Addresses
+Customer Groups
 
-Customer Contacts
+Contacts
 
-Billing Information
+Addresses
 
-Shipping Information
+Projects
 
-Tax Information
+Commercial Agreements
 
-Commercial Information
+Packaging Rules
 
-Credit Information
+Quality Requirements
 
 Certificates
 
-Dealer Management
+Export Requirements
 
-Customer Documents
+Digital Product Passport Access
 
-Customer Status
+Customer Portal
+
+Performance Analytics
 
 ---
 
-## Excluded Functions
-
-Quotation Management
+## Excluded
 
 Sales Orders
 
+Invoices
+
+Accounting
+
 CRM Activities
 
-Financial Accounting
+---
 
-Invoice Management
+# 4. Customer Types
+
+Dealer
+
+Distributor
+
+Wholesaler
+
+Retailer
+
+Contractor
+
+Architect
+
+Construction Company
+
+Government
+
+OEM
+
+Private Label Customer
+
+Industrial Customer
+
+Export Customer
+
+Internal Company
 
 ---
 
-## Dependencies
-
-Organizations
-
-Users
-
-Sales
-
-Production
-
-Logistics
-
-Finance
-
-Analytics
-
-Workflow
-
-Notifications
-
-AI
-
----
-
-# 3. User Roles
+# 5. User Roles
 
 Sales Manager
 
@@ -126,99 +132,123 @@ Sales Representative
 
 Export Manager
 
-Finance
-
-Logistics
-
 Customer Service
 
+Production Planner
+
+Packaging Supervisor
+
+Logistics Manager
+
+Finance
+
 Administrator
+
+Customer Portal User
 
 AI Agent
 
 ---
 
-# 4. Business Processes
+# 6. Business Process
 
-Create Customer
-
-↓
-
-Validate Information
+Customer Registration
 
 ↓
 
-Approval (Optional)
+Commercial Approval
 
 ↓
 
-Activate Customer
+Credit Validation
 
 ↓
 
-Commercial Usage
+Customer Activation
 
 ↓
 
-Archive (Optional)
+Sales
+
+↓
+
+Production
+
+↓
+
+Packaging
+
+↓
+
+Shipment
+
+↓
+
+Support
 
 ---
 
-# 5. Screens
+# 7. Screens
+
+Customer Dashboard
 
 Customer List
 
 Customer Detail
 
-Create Customer
-
-Edit Customer
+Contacts
 
 Addresses
 
-Contacts
-
 Projects
+
+Packaging Rules
 
 Certificates
 
-Documents
-
-Sales History
+Customer Orders
 
 Shipment History
 
-Customer Dashboard
+Production History
+
+Digital Product Passport
+
+Customer Portal
+
+AI Insights
 
 ---
 
-# 6. User Actions
+# 8. User Actions
 
 Create
 
 Update
 
-Archive
-
 Activate
 
 Deactivate
 
-Print
+Archive
+
+Assign Sales Representative
+
+Assign Price List
+
+Assign Packaging Rules
+
+Assign Certificates
 
 Export
 
 Import
 
-Attach Documents
-
-Assign Dealer
-
-View History
+Generate QR
 
 ---
 
-# 7. Data Model
+# 9. Data Model
 
 Primary Entity
 
@@ -228,97 +258,175 @@ Business Code
 
 CUS-000001
 
-Related Entities
+---
 
-Addresses
+Related Entities
 
 Contacts
 
-Projects
+Addresses
 
-Certificates
+Projects
 
 Sales Orders
 
+Production Orders
+
+Finished Goods
+
+Packages
+
 Shipments
 
-Invoices (ERP)
+Invoices
+
+Certificates
+
+Price Lists
 
 Documents
 
+Audit Logs
+
 ---
 
-## Main Fields
+# 10. Customer Profile
 
 Customer Code
 
 Customer Name
 
+Legal Name
+
 Short Name
-
-Customer Type
-
-Dealer
-
-Distributor
-
-Contractor
-
-Architect
-
-Manufacturer
 
 Country
 
 City
 
+Region
+
 Tax Office
 
 Tax Number
 
-Currency
+VAT Number
 
 Language
 
-Payment Terms
+Currency
 
-Delivery Terms (Incoterms)
+Incoterms
+
+Payment Terms
 
 Credit Limit
 
+Risk Level
+
 Status
 
-Created Date
+Website
 
-Active
+Email
 
----
+Phone
 
-# 8. Business Rules
-
-Customer Codes are unique.
-
-Tax Numbers shall be unique where applicable.
-
-Inactive customers cannot receive new Sales Orders.
-
-Archived customers remain searchable for historical records.
-
-Every customer must have at least one address.
+Industry
 
 ---
 
-# 9. Workflow
+# 11. Customer Packaging Rules
 
-Draft
+Preferred Package Type
+
+Maximum Package Weight
+
+Maximum Package Height
+
+Preferred Pallet Type
+
+Private Label
+
+Logo Printing
+
+Preferred Label Language
+
+Export Markings
+
+Wrapping Method
+
+Corner Protection
+
+Moisture Protection
+
+Container Loading Rules
+
+Stacking Rules
+
+QR Format
+
+Barcode Format
+
+GS1 Requirement
+
+---
+
+# 12. Customer Quality Requirements
+
+Required Moisture Range
+
+Required Dimensions
+
+Tolerance Class
+
+Surface Quality
+
+Strength Class
+
+Visual Quality
+
+Inspection Level
+
+Sampling Method
+
+Special Testing
+
+Acceptance Criteria
+
+---
+
+# 13. Customer Certificates
+
+FSC
+
+PEFC
+
+CE
+
+EPD
+
+ISO
+
+DPP
+
+Customer Approval Documents
+
+Custom Certificates
+
+---
+
+# 14. Customer Lifecycle
+
+Prospect
 
 ↓
 
-Validation
+Qualified
 
 ↓
 
-Approval
+Approved
 
 ↓
 
@@ -334,13 +442,13 @@ Archived
 
 ---
 
-# 10. State Model
+# 15. State Model
 
-Draft
-
-Pending Approval
+Prospect
 
 Active
+
+Blocked
 
 Inactive
 
@@ -348,171 +456,201 @@ Archived
 
 ---
 
-# 11. Events
+# 16. Business Rules
+
+Every Customer shall have a unique Business Code.
+
+Every Customer shall define at least one Address.
+
+Export Customers require Incoterms.
+
+Private Label Customers require Packaging Rules.
+
+Archived Customers remain searchable.
+
+---
+
+# 17. Events
 
 CustomerCreated
 
-CustomerUpdated
+CustomerApproved
 
 CustomerActivated
 
-CustomerDeactivated
+CustomerUpdated
+
+CustomerBlocked
+
+PackagingRulesUpdated
 
 CustomerArchived
 
-CustomerAddressUpdated
-
-CustomerCreditChanged
-
 ---
 
-# 12. Notifications
+# 18. Notifications
 
 Customer Approved
 
-Credit Limit Changed
-
-Missing Documents
+Credit Limit Exceeded
 
 Certificate Expiring
 
-Customer Inactivated
+Packaging Rule Changed
+
+Shipment Ready
+
+Customer Portal Invitation
 
 ---
 
-# 13. Permissions
+# 19. Permissions
 
-View Customer
+View
 
-Create Customer
+Create
 
-Update Customer
+Update
 
-Delete Customer
+Archive
 
-Archive Customer
+Export
 
-Export Customer
+Manage Packaging Rules
 
-Manage Documents
+Manage Certificates
 
-Manage Credit Information
+Manage Credit
+
+Portal Administration
 
 ---
 
-# 14. Audit Log
+# 20. Audit Log
 
 Customer Created
 
-Customer Updated
+Profile Updated
 
-Credit Limit Updated
+Packaging Rules Changed
 
-Address Changed
+Certificates Updated
 
-Certificate Updated
+Credit Updated
 
 Status Changed
 
 ---
 
-# 15. Reports
+# 21. Reports
 
 Customer List
 
-Customer Sales Summary
-
-Customer Shipment History
-
 Customer Profitability
-
-Dealer Performance
-
-Customer Activity Report
-
-Export Customer List
-
----
-
-# 16. Dashboard Widgets
-
-Active Customers
-
-New Customers
-
-Top Customers
 
 Sales by Customer
 
-Revenue by Customer
+Production by Customer
 
-Country Distribution
+Shipment History
 
-Dealer Performance
+Packaging Compliance
 
-Customer Growth
+Certificate Status
+
+Export Customers
+
+Customer Risk
+
+Customer Performance
+
+Customer Lifetime Value
+
+Customer KPI Report
 
 ---
 
-# 17. KPIs
+# 22. Dashboard Widgets
+
+Customer Count
 
 Active Customers
 
 New Customers
+
+Revenue by Customer
+
+Top Customers
+
+Export Customers
+
+Customer Risk
+
+Customer Profitability
+
+Shipment Status
+
+Packaging Compliance
+
+Certificate Status
+
+Customer Satisfaction
+
+AI Customer Insights
+
+---
+
+# 23. KPIs
+
+Customer Growth
+
+Customer Retention
 
 Average Order Value
 
 Customer Lifetime Value
 
-Dealer Sales
-
-Export Ratio
-
 Repeat Order Rate
 
-Customer Satisfaction
+On-Time Delivery
+
+Complaint Rate
+
+Customer Profitability
 
 ---
 
-# 18. Mobile Support
-
-Customer Search
-
-Customer Detail
-
-Contact Information
-
-Address Navigation
-
-Sales History
-
-Shipment Status
-
-QR Business Card
-
----
-
-# 19. AI Capabilities
-
-Customer Risk Analysis
-
-Demand Forecast
-
-Product Recommendation
+# 24. AI Capabilities
 
 Customer Segmentation
 
-Sales Opportunity Detection
+Demand Forecast
+
+Cross Selling Recommendation
+
+Upselling Recommendation
+
+Customer Risk Prediction
 
 Payment Risk Prediction
 
-Customer Summary
+Production Forecast
+
+Packaging Recommendation
+
+Quality Requirement Prediction
+
+Preferred Product Recommendation
+
+Delivery Prediction
 
 AI Customer Assistant
 
+Customer Copilot
+
 ---
 
-# 20. API Resources
+# 25. API Resources
 
 GET /customers
 
@@ -520,203 +658,264 @@ GET /customers/{id}
 
 POST /customers
 
-PUT /customers/{id}
-
 PATCH /customers/{id}
-
-DELETE /customers/{id}
 
 GET /customers/search
 
-GET /customers/{id}/history
+GET /customers/{id}/shipments
+
+GET /customers/{id}/packages
+
+GET /customers/{id}/dpp
 
 ---
 
-# 21. Integrations
+# 26. Integrations
 
 Sales
 
-CRM
-
 Production
+
+Packaging
+
+Finished Goods
+
+Warehouse
+
+Inventory
 
 Logistics
 
 Finance
 
+CRM
+
 ERP
 
-Email
+Customer Portal
 
-Power BI
+Digital Product Passport
+
+Analytics
 
 AI
 
 ---
 
-# 22. Printing
+# 27. Printing
 
-Customer Profile
-
-Address List
-
-Commercial Information
+Customer Card
 
 Customer Labels
 
-QR Business Card
+Shipping Labels
+
+Private Labels
+
+Certificates
+
+Customer Reports
 
 ---
 
-# 23. Security
+# 28. Mobile
+
+Customer Search
+
+Customer Dashboard
+
+Contacts
+
+Shipment Tracking
+
+Package Tracking
+
+QR Scan
+
+Digital Product Passport
+
+---
+
+# 29. Security
 
 Role-Based Access
 
-Commercial Information Protection
-
-Credit Information Restriction
+Customer Data Protection
 
 GDPR / KVKK Compliance
 
 Audit Logging
 
+Portal Security
+
+Document Permissions
+
 ---
 
-# 24. Error Handling
+# 30. Error Handling
 
-Duplicate Customer Code
+Duplicate Customer
 
 Duplicate Tax Number
 
-Missing Required Fields
+Missing Address
 
-Invalid Country
+Invalid Credit Limit
 
-Credit Limit Error
+Certificate Expired
 
-Inactive Customer
-
----
-
-# 25. Performance Requirements
-
-Customer Search < 2 seconds
-
-Customer Detail < 1 second
-
-Support 100,000+ customers
-
-Bulk Import Supported
-
-Bulk Export Supported
+Packaging Rules Missing
 
 ---
 
-# 26. Future Enhancements
+# 31. Performance Requirements
 
-Customer Portal
+Customer Search < 1 second
 
-Self-Service Profile Update
+Dashboard < 2 seconds
+
+Support 500,000+ Customers
+
+Bulk Import / Export
+
+---
+
+# 32. Future Extensions
+
+Customer Portal 2.0
+
+Dealer Portal
+
+B2B Ordering
 
 EDI Integration
 
-Digital Product Passport Integration
+Customer BIM Library
 
-Customer Satisfaction Surveys
+Carbon Reporting
 
-AI Sales Coach
+EU Digital Product Passport
 
-Carbon Footprint by Customer
-
----
-
-# 27. Acceptance Criteria
-
-✓ Customer can be created
-
-✓ Customer code generated automatically
-
-✓ Customer searchable
-
-✓ Addresses managed
-
-✓ Documents attached
-
-✓ Audit Logs generated
-
-✓ Events generated
-
-✓ Mobile supported
-
-✓ AI supported
+Digital Warranty
 
 ---
 
-# 28. Related Documents
+# 33. Acceptance Criteria
 
-Database Schema
+✓ Customer Created
 
-Sales Module
+✓ Packaging Rules Defined
 
-CRM Module
+✓ Quality Requirements Defined
 
-Workflow
+✓ Certificates Assigned
 
-Permissions
+✓ AI Enabled
 
-API Contracts
+✓ Audit Logs Generated
 
-Dashboard Definitions
+✓ Portal Enabled
 
-Analytics
+---
 
-Finance
+# 34. Related Documents
+
+Products
+
+Finished Goods
+
+Packaging
+
+Warehouse
 
 Logistics
 
----
+Sales
 
-# 29. Operational Metrics
+Pricing
 
-Success Metrics
+Barcode & QR
 
-- Customer creation time
-- Customer data completeness
-- Duplicate customer rate
-- Customer activation time
+Label Templates
 
-Failure Metrics
+Printing Model
 
-- Duplicate records
-- Invalid tax information
-- Missing mandatory fields
+Digital Product Passport
 
-Operational Risks
-
-- Duplicate customer creation
-- Incorrect commercial data
-- Inactive customer usage
-
-Monitoring Alerts
-
-- Duplicate tax number detected
-- Expiring customer certificates
-- Credit limit exceeded
-
-SLA
-
-Customer creation < 2 minutes
-
-Recovery Procedure
-
-Restore customer data from Audit Log and version history if accidental modifications occur.
+Analytics
 
 ---
 
-# Module Philosophy
+# 35. Operational Metrics
 
-Customers are strategic business entities within Naswood OS.
+## Success Metrics
 
-Every customer record serves as the foundation for quotations, sales orders, production planning, logistics, financial reporting and complete product traceability.
+Customer Satisfaction
 
-The module ensures a single source of truth for customer information across the entire Manufacturing Operating System.
+Repeat Orders
+
+On-Time Delivery
+
+Packaging Compliance
+
+Export Compliance
+
+---
+
+## Failure Metrics
+
+Complaints
+
+Late Deliveries
+
+Packaging Errors
+
+Certificate Issues
+
+---
+
+## Operational Risks
+
+Incorrect Customer Data
+
+Wrong Packaging
+
+Wrong Certificates
+
+Wrong Shipment
+
+---
+
+## Monitoring Alerts
+
+High-Risk Customer
+
+Certificate Expiring
+
+Credit Limit Exceeded
+
+Missing Packaging Rules
+
+Shipment Delay
+
+---
+
+## SLA
+
+Customer master data changes shall be reflected across all connected modules within **5 seconds**.
+
+---
+
+## Recovery Procedure
+
+Recover customer configuration using Audit Logs, Version History and Event History.
+
+---
+
+# 36. Module Philosophy
+
+Customers are strategic business partners within Naswood OS.
+
+Each customer record defines not only commercial information but also production requirements, packaging standards, logistics rules and regulatory obligations.
+
+The Customers module serves as the single source of truth for customer-related data across the Manufacturing Operating System, ensuring consistency, traceability and personalized manufacturing throughout the entire customer lifecycle.
