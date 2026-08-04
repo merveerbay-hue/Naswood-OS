@@ -270,3 +270,116 @@ The Factory Flow supports:
 - Manufacturing_Process.md
 - Digital_Twin/Factory.md
 - Production Modules
+# Naswood Production Flow
+
+## End-to-End Manufacturing Lifecycle
+
+Customer Demand
+
+↓
+
+Sales Order
+
+↓
+
+Production Planning
+
+↓
+
+Material Planning (MRP)
+
+↓
+
+Raw Material Procurement
+
+↓
+
+Log Receiving
+
+↓
+
+Log Yard
+
+↓
+
+Log Inspection
+
+↓
+
+Log Classification
+
+↓
+
+Primary Breakdown (Sawmill)
+
+↓
+
+Prism Storage
+
+↓
+
+Dry Kiln
+
+↓
+
+Moisture Inspection
+
+↓
+
+Thermowood (Optional)
+
+↓
+
+Sorting & Grading
+
+↓
+
+Optimization
+
+↓
+
+Finger Joint (Optional)
+
+↓
+
+Lamella Production
+
+↓
+
+Panel Press (Optional)
+
+↓
+
+Calibration / Sanding
+
+↓
+
+Profiling (Optional)
+
+↓
+
+Surface Treatment (Optional)
+
+↓
+
+Final Quality Inspection
+
+↓
+
+Packaging
+
+↓
+
+Finished Goods Warehouse
+
+↓
+
+Loading
+
+↓
+
+Shipment
+
+↓
+
+Customer
