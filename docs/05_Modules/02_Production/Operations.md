@@ -2,150 +2,45 @@
 
 **Project:** Naswood OS
 
-**Document:** Operations Module
+**Document:** Manufacturing Operations
 
-**Version:** 1.0
+**Module Code:** MOD-PRO-OPS-001
 
-**Status:** Approved
+**Version:** 2.0
 
----
-
-# 1. Module Overview
-
-## Module Name
-
-Operations
-
-## Module Code
-
-MOD-OPS
-
-## Module Category
-
-Production
+**Status:** Enterprise
 
 ---
 
-## Description
+# 1. Purpose
 
-The Operations module manages every manufacturing operation executed within Naswood OS.
+The Operations module manages, executes and monitors every manufacturing operation throughout the production lifecycle.
 
-An Operation represents a single executable production step performed on one or more materials using assigned resources, machines, tools and recipes.
+It defines operational workflows, machine assignments, tooling, production parameters, execution status and operational traceability while enabling AI-assisted optimization and Digital Twin synchronization.
 
-Operations are the core execution units of the Manufacturing Operating System.
+The module serves as the Manufacturing Operations & Execution Intelligence Platform (MOEIP) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
-- Execute manufacturing processes
-- Maintain full production traceability
-- Record material transformations
-- Capture production data in real time
-- Integrate machines and operators
-- Enable AI-driven production optimization
+- Standardize manufacturing operations
+- Improve production execution
+- Reduce operational variability
+- Increase manufacturing efficiency
+- Ensure complete traceability
+- Support AI-assisted optimization
+- Synchronize Digital Twin
 
 ---
 
-# 3. Business Scope
-
-## Included Functions
-
-Operation Definition
-
-Operation Scheduling
-
-Operation Execution
-
-Operation Monitoring
-
-Operator Assignment
-
-Machine Assignment
-
-Tool Assignment
-
-Recipe Assignment
-
-Quality Checkpoints
-
-Operation Completion
-
-Operation History
-
----
-
-## Excluded Functions
-
-Production Planning
-
-Sales Orders
-
-Purchasing
-
-Accounting
-
----
-
-## Dependencies
-
-Production Orders
-
-Materials
-
-Recipes
-
-Machines
-
-Tooling
-
-Inventory
-
-Quality
-
-Maintenance
-
-Workflow
-
-Events
-
-Analytics
-
-AI
-
----
-
-# 4. User Roles
-
-Production Manager
-
-Production Planner
-
-Shift Supervisor
-
-Machine Operator
-
-Quality Engineer
-
-Maintenance Technician
-
-Administrator
-
-AI Agent
-
----
-
-# 5. Business Processes
+# 3. Operation Lifecycle
 
 Production Order
 
 ↓
 
-Operation Creation
-
-↓
-
-Material Reservation
+Operation Planning
 
 ↓
 
@@ -157,11 +52,11 @@ Tool Assignment
 
 ↓
 
-Recipe Assignment
+Operator Assignment
 
 ↓
 
-Operator Assignment
+Parameter Validation
 
 ↓
 
@@ -173,704 +68,241 @@ Quality Verification
 
 ↓
 
-Material Transformation
+Completion
 
 ↓
 
-Operation Completion
+Performance Analysis
 
 ---
 
-# 6. Screens
+# 4. Operation Types
 
-Operations Dashboard
-
-Operation Queue
-
-Operation Detail
-
-Execution Screen
-
-Machine Assignment
-
-Tool Assignment
-
-Recipe Assignment
-
-Operator Assignment
-
-Quality Check
-
-Operation Timeline
-
-Operation History
-
----
-
-# 7. User Actions
-
-Create
-
-Release
-
-Start
-
-Pause
-
-Resume
-
-Stop
-
-Complete
-
-Cancel
-
-Assign Machine
-
-Assign Tool
-
-Assign Recipe
-
-Assign Operator
-
-Record Production
-
-Record Scrap
-
-Record Downtime
-
-Record Notes
-
-Print Labels
-
----
-
-# 8. Data Model
-
-Primary Entity
-
-Operation
-
-Business Code
-
-OPR-000001
-
-Related Entities
-
-Production Order
-
-Material
-
-Machine
-
-Tool
-
-Recipe
-
-Operator
-
-Shift
-
-Quality Inspection
-
-Transformation
-
-Events
-
-Audit Logs
-
----
-
-# 9. Operation Types
-
-Receiving
-
-Sawing
-
-Sorting
-
-Kiln Drying
-
-Thermowood
-
-Planing
-
-Scanning
-
-Optimization
-
-Finger Joint
-
-Gluing
-
-Pressing
-
-Profiling
-
-Sanding
-
-Calibration
-
-Quality Inspection
-
-Packaging
-
-Storage
-
-Shipping
-
-Custom Operation
-
----
-
-# 10. Operation Templates
-
-Operation Templates provide standardized definitions for recurring manufacturing operations.
-
-Templates reduce manual configuration, improve consistency and ensure compliance with production standards.
-
-Each template may be assigned to multiple Products, Materials and Production Orders.
-
----
-
-## Standard Template Structure
-
-Operation Template Code
-
-Template Name
-
-Operation Type
-
-Description
-
-Applicable Material Types
-
-Applicable Product Families
-
-Default Machine Group
-
-Default Machine
-
-Default Tool Group
-
-Default Tool Assembly
-
-Default Recipe Type
-
-Default Recipe
-
-Quality Control Plan
-
-Required Operator Skills
-
-Required Certifications
-
-Required PPE
-
-Estimated Cycle Time
-
-Setup Time
-
-Expected Yield
-
-Maximum Scrap Rate
-
-Energy Target
-
-Required Input Materials
-
-Expected Output Materials
-
-Required Documents
-
-Safety Checklist
-
-Inspection Checklist
-
-Default Workflow
-
-Default Storage Function
-
-Active Status
-
-Revision
-
----
-
-## Standard Operation Templates
-
-### Log Receiving
-
-Truck Reception
-
-Log Measurement
-
-Log Classification
-
-Log Tagging
-
-Receiving Inspection
-
-Storage Assignment
-
----
-
-### Sawmill
+Log Breakdown
 
 Primary Sawing
 
 Prism Cutting
 
-Edge Trimming
+Optimization
 
-Optimization Cutting
+Sorting
 
-Material Registration
+Kiln Drying
 
----
+Planing
 
-### Kiln Drying
+Finger Joint
 
-Kiln Loading
+Lamination
 
-Recipe Selection
+Thermowood
 
-Drying Process
-
-Moisture Verification
-
-Kiln Unloading
-
-Storage Assignment
-
----
-
-### Thermowood
-
-Material Loading
-
-Recipe Selection
-
-Thermal Modification
-
-Cooling
-
-Final Moisture Verification
-
-Quality Inspection
-
-Warehouse Transfer
-
----
-
-### Planing
-
-Machine Setup
-
-Tool Verification
-
-Surface Planing
-
-Dimensional Verification
-
-Quality Inspection
-
----
-
-### Profiling
-
-Tool Assembly Verification
-
-Profile Machining
-
-Surface Inspection
-
-Dimensional Control
-
-Packaging Transfer
-
----
-
-### Finger Joint
-
-Defect Cutting
-
-Finger Milling
-
-Glue Application
-
-Pressing
-
-Curing
-
-Final Inspection
-
----
-
-### Massive Panel
-
-Lamella Selection
-
-Glue Application
-
-Panel Pressing
-
-Calibration
+Profiling
 
 Sanding
 
-Quality Inspection
-
----
-
-### CLT
-
-Layer Assembly
-
-Cross Layer Placement
-
-Pressing
-
-Panel Calibration
-
 CNC Processing
 
-Final Inspection
+Packaging
+
+Inspection
+
+Rework
 
 ---
 
-### Packaging
+# 5. Operation Master
 
-Package Creation
+Operation Code
 
-Label Printing
+Operation Name
 
-QR Verification
+Operation Type
 
-Wrapping
-
-Strapping
-
-Warehouse Transfer
-
----
-
-## Template Assignment Rules
-
-Templates may be assigned by:
-
-Product Family
-
-Material Type
-
-Machine Group
-
-Production Area
-
-Factory
-
-Organization
-
-Customer
-
----
-
-## Template Versioning
-
-Templates are version controlled.
-
-Only one version may be Active.
-
-Historical Production Orders always reference the version used during execution.
-
----
-
-## Business Rules
-
-### OPS-TMP-001
-
-Every Operation shall be created from an Operation Template unless manually authorized.
-
----
-
-### OPS-TMP-002
-
-Released Templates cannot be modified.
-
----
-
-### OPS-TMP-003
-
-Template revisions create new versions.
-
----
-
-### OPS-TMP-004
-
-Machine, Tool and Recipe compatibility shall be validated automatically.
-
----
-
-### OPS-TMP-005
-
-Operation Templates shall define mandatory Quality Checkpoints.
-
----
-
-### OPS-TMP-006
-
-Operation Templates shall define mandatory Safety Requirements.
-
----
-
-## AI Capabilities
-
-Automatic Template Selection
-
-Template Optimization
-
-Cycle Time Prediction
-
-Yield Prediction
-
-Energy Optimization
-
-Template Recommendation
-
-Operator Recommendation
-
-Machine Recommendation
-
-Quality Prediction
-
-Continuous Improvement Suggestions
-# 11. Operation States
-
-Planned
-
-Released
-
-Ready
-
-Running
-
-Paused
-
-Waiting
-
-Completed
-
-Cancelled
-
-Failed
-
----
-
-# 12. Material Flow
-
-Input Materials
-
-↓
-
-Transformation
-
-↓
-
-Output Materials
-
-↓
-
-Inventory
-
----
-
-# 13. Resource Assignment
+Production Line
 
 Machine
 
+Tool Assembly
+
 Operator
+
+Shift
+
+Estimated Duration
+
+Standard Cycle Time
+
+Target Output
+
+Priority
+
+Status
+
+---
+
+# 6. Machine Assignment
+
+Machine
+
+Alternative Machines
+
+Machine Capacity
+
+Setup Time
+
+Availability
+
+Maintenance Status
+
+OEE
+
+Energy Profile
+
+---
+
+# 7. Tool Assignment
 
 Tool Assembly
 
-Recipe
+Knife Set
 
-Production Area
+Tool Life
 
-Work Center
+Sharpening Status
 
----
+Tool Offset
 
-# 14. Quality Control
+Tool Parameters
 
-Incoming Verification
-
-Process Verification
-
-Dimensional Inspection
-
-Moisture Check
-
-Visual Inspection
-
-Final Approval
+Replacement Schedule
 
 ---
 
-# 15. Business Rules
+# 8. Process Parameters
 
-Every Operation belongs to one Production Order.
+Feed Speed
 
-Every Operation shall define an Operation Type.
+Spindle Speed
 
-Running Operations cannot change assigned Machines or Recipes.
+Pressure
 
-Completed Operations are immutable.
+Temperature
 
-Every Operation generates production history.
+Humidity
 
----
+Moisture Target
 
-# 16. Workflow
+Thermowood Recipe
 
-Planned
+Kiln Recipe
 
-↓
+Tolerance Limits
 
-Released
-
-↓
-
-Ready
-
-↓
-
-Running
-
-↓
-
-Completed
-
-↓
-
-Closed
+Quality Limits
 
 ---
 
-# 17. Events
+# 9. Operator Management
 
-OperationCreated
+Assigned Operator
 
-OperationReleased
+Skills
 
-OperationStarted
+Certification
 
-OperationPaused
+Training Status
 
-OperationResumed
+Shift
 
-OperationCompleted
+Performance
 
-OperationCancelled
-
-OperationFailed
-
-MaterialConsumed
-
-MaterialProduced
-
-TransformationCompleted
+Digital Signature
 
 ---
 
-# 18. Notifications
+# 10. Execution Monitoring
 
-Operation Ready
+Operation Status
 
-Operation Delayed
+Runtime
 
-Machine Unavailable
+Downtime
 
-Quality Hold
+Cycle Time
 
-Recipe Missing
+Output
 
-Material Shortage
+Yield
 
-Operation Completed
+Scrap
 
-AI Recommendation Available
+Rework
 
----
+Energy Consumption
 
-# 19. Permissions
-
-View
-
-Create
-
-Release
-
-Execute
-
-Pause
-
-Complete
-
-Cancel
-
-Assign Resources
-
-Export
-
-Print
+Machine Alarms
 
 ---
 
-# 20. Audit Log
+# 11. Quality Integration
 
-Operation Created
+In-Process Inspection
 
-Resource Assigned
+Measurement Results
 
-Recipe Changed
+Quality Status
 
-Machine Changed
+Defects
 
-Operation Started
+Moisture
 
-Operation Completed
+Color Classification
 
-Downtime Recorded
+Dimensional Accuracy
+
+Release Status
 
 ---
 
-# 21. Reports
+# 12. AI Capabilities
 
-Operation Performance
+Operation Optimization
 
-Cycle Time Report
+Machine Recommendation
 
-Machine Utilization
+Parameter Optimization
 
-Operator Productivity
+Bottleneck Detection
 
-Production Output
+Cycle Time Prediction
 
-Scrap Analysis
+Quality Prediction
 
-Downtime Analysis
+Operator Assistance
+
+Operation Copilot
+
+---
+
+# 13. Digital Twin Integration
 
 Operation Timeline
 
-Operation History
+Machine Visualization
 
-Transformation Report
+Operation Replay
+
+Production Flow
+
+Material Flow
+
+Execution Heat Map
 
 ---
 
-# 22. Dashboard Widgets
-
-Operation Queue
+# 14. Dashboard Widgets
 
 Running Operations
 
@@ -878,322 +310,252 @@ Completed Operations
 
 Delayed Operations
 
-Machine Status
+Machine Utilization
 
-Operator Status
+Operator Performance
 
-Current Production
+Operation Efficiency
 
-Current Scrap
-
-Current Downtime
-
-OEE
-
-Cycle Time
+Energy Usage
 
 AI Recommendations
 
 ---
 
-# 23. KPIs
+# 15. Reports
 
-Operation Completion Rate
+Operation Report
 
-Cycle Time
+Cycle Time Analysis
 
-OEE
+Machine Performance
 
-Machine Utilization
+Operator Performance
 
-Operator Productivity
+Yield Analysis
 
-Scrap Rate
+Scrap Analysis
 
-Downtime
+Execution Report
 
-Yield
-
-Right First Time
+AI Operations Report
 
 ---
 
-# 24. Mobile Support
-
-Operation Queue
-
-Start Operation
-
-Pause Operation
-
-Complete Operation
-
-QR Scan
-
-Barcode Scan
-
-Photo Upload
-
-Offline Mode
-
----
-
-# 25. AI Capabilities
-
-Production Optimization
-
-Cycle Time Prediction
-
-Scrap Prediction
-
-Downtime Prediction
-
-Operator Recommendation
-
-Machine Recommendation
-
-Recipe Optimization
-
-Quality Prediction
-
-Operation Risk Detection
-
-AI Production Copilot
-Operation Template Recommendation
-
-Automatic Operation Sequencing
-
-Resource Conflict Detection
-
-Real-Time Bottleneck Detection
-
-Production Flow Optimization
-
-Machine Load Balancing
-
-Operator Skill Matching
-
-Dynamic Recipe Recommendation
-
-Predictive Quality Control
-
-Predictive Scrap Analysis
-
-Energy Consumption Optimization
-
-Digital Twin Simulation
-
-Root Cause Analysis
-
-Autonomous Scheduling Suggestions
----
-
-# 26. API Resources
+# 16. API Resources
 
 GET /operations
 
 GET /operations/{id}
 
+GET /operations/status
+
+GET /operations/runtime
+
+GET /operations/parameters
+
 POST /operations
 
-PATCH /operations/{id}
+POST /operations/start
 
-GET /operations/{id}/timeline
+POST /operations/pause
 
-GET /operations/{id}/events
+POST /operations/complete
 
 ---
 
-# 27. Integrations
+# 17. Events
 
-Production Orders
+OperationCreated
 
-Materials
+OperationStarted
+
+OperationPaused
+
+OperationCompleted
+
+MachineAssigned
+
+OperatorAssigned
+
+QualityVerified
+
+AIRecommendationGenerated
+
+---
+
+# 18. Mobile
+
+Operation Dashboard
+
+QR Operation Lookup
+
+Operator Tasks
+
+Machine Status
+
+Quality Entry
+
+Offline Mode
+
+---
+
+# 19. Business Rules
+
+Every operation shall belong to a production order.
+
+Every operation shall be fully traceable.
+
+Machine and tool assignments shall be validated before execution.
+
+Quality checkpoints shall be completed before operation closure.
+
+Operational history shall remain immutable.
+
+AI recommendations shall not modify production parameters without authorization.
+
+---
+
+# 20. Future Extensions
+
+Adaptive Process Control
+
+Vision-Based Operation Verification
+
+Autonomous Machine Setup
+
+Collaborative Robotics
+
+Edge Manufacturing Intelligence
+
+Industry 5.0
+
+Digital Thread
+
+MCP Manufacturing Services
+
+---
+
+# 21. Architecture Review
+
+## Database Changes
+
+operations
+
+operation_steps
+
+operation_parameters
+
+operation_runtime
+
+operation_assignments
+
+operation_tools
+
+operation_quality
+
+operation_history
+
+operation_events
+
+operation_ai
+
+operation_replay
+
+operation_energy
+
+## Related Modules
+
+Production_Orders
+
+Finished_Goods
 
 Machines
 
-Recipes
+Runtime
+
+Parameters
+
+Tooling
+
+Tool_Assemblies
+
+Quality
+
+Process_Inspection
+
+Maintenance
 
 Inventory
 
 Warehouse
 
-Quality
+Energy
 
-Maintenance
-
-Workflow
-
-Events
-
-Analytics
-
-Digital Twin
+Scheduling
 
 AI
 
----
+Factory_Copilot
 
-# 28. Printing
+Digital_Twin
 
-Operation Sheet
+## Application Updates
 
-Traveler Card
+API_Contracts.md
 
-Operation Label
+Operation_Workflow.md
 
-QR Label
+Machine_Assignment.md
 
-Operator Instructions
+Events.md
 
-Quality Checklist
+Dashboard_Definitions.md
 
----
+Mobile_App.md
 
-# 29. Security
+Manufacturing_Playbooks.md
 
-Role-Based Access
+## Naswood-Specific Enhancements
 
-Operation Approval
+### Timber Manufacturing Operations
 
-Electronic Signature (Optional)
+- Log breakdown operations
+- Saw line operations
+- Prism optimization
+- Lumber sorting
+- Timber grading
 
-Audit Logging
+### Kiln & Thermowood Operations
 
-Immutable History
+- Kiln loading
+- Drying cycle execution
+- Thermowood treatment
+- Cooling operations
+- Recipe execution monitoring
 
----
+### Value-Added Manufacturing
 
-# 30. Error Handling
+- Planing
+- Finger Joint
+- Lamination
+- Profiling
+- CNC processing
+- Packaging
 
-Missing Material
+### AI Optimization
 
-Machine Unavailable
+- Cycle time optimization
+- Machine selection
+- Tool optimization
+- Bottleneck detection
+- Operator assistance
+- Parameter optimization
 
-Recipe Missing
+### Digital Twin
 
-Tool Missing
-
-Operation Already Running
-
-Invalid State Transition
-
----
-
-# 31. Performance Requirements
-
-Operation Start < 2 seconds
-
-Real-Time Updates < 1 second
-
-Support 100,000+ operations/day
-
-Offline buffering for shop floor terminals
-
----
-
-# 32. Future Enhancements
-
-Automatic PLC Integration
-
-Machine Vision Feedback
-
-Autonomous Production Cells
-
-Voice-Controlled Operation Execution
-
-AR Work Instructions
-
-Digital Work Instructions
-
-Collaborative Robots (Cobots)
-
----
-
-# 33. Acceptance Criteria
-
-✓ Operation created
-
-✓ Resources assigned
-
-✓ Execution tracked
-
-✓ Material transformation recorded
-
-✓ Events generated
-
-✓ Audit Logs generated
-
-✓ Mobile supported
-
-✓ AI integrated
-
----
-
-# 34. Related Documents
-
-Production Orders Module
-
-Materials Module
-
-Recipes Module
-
-Machines Module
-
-Tooling Module
-
-Quality Module
-
-Workflow
-
-Database Schema
-
-Analytics
-
----
-
-# 35. Operational Metrics
-
-Success Metrics
-
-- On-Time Completion
-- First Pass Yield
-- OEE
-- Operator Efficiency
-
-Failure Metrics
-
-- Scrap Rate
-- Downtime
-- Rework Rate
-
-Operational Risks
-
-- Machine Failure
-- Material Shortage
-- Recipe Mismatch
-
-Monitoring Alerts
-
-- Operation Delay
-- Excess Scrap
-- Machine Alarm
-- Quality Failure
-
-SLA
-
-Operation status updates shall be reflected in the system within 1 second.
-
-Recovery Procedure
-
-Recover operation state using Event History, Audit Logs and Production Timeline.
-
----
-
-# Module Philosophy
-
-Operations are the executable units of manufacturing within Naswood OS.
-
-Every transformation of a material is performed through an Operation, ensuring complete traceability of machines, operators, tools, recipes and quality inspections.
-
-The Operations module forms the execution engine of the Manufacturing Operating System by connecting planning with real-time shop floor activities.
+- Live operation visualization
+- Production replay
+- Machine timeline
+- Material flow visualization
+- Operation heat maps
