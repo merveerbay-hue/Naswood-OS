@@ -1,524 +1,279 @@
 # Business Rules
 
-**Project:** Naswood OS  
-**Document:** Business Rules  
-**Version:** 1.0  
-**Status:** Approved
+**Project:** Naswood OS
+
+**Document:** Business Rules
+
+**Code:** BUS-001
+
+**Version:** 1.0
 
 ---
 
-# Purpose
+# 1. Purpose
 
-This document defines the official business rules governing all operations within Naswood OS.
+This document defines the enterprise-wide business rules governing all business processes within Naswood OS.
 
-Business rules are independent of software implementation.
+These rules establish a common operational framework to ensure consistency, traceability, integrity and standardization across every module of the platform.
 
-Every module, API, AI agent and user interface shall comply with these rules.
-
-If software behavior conflicts with these rules, the business rules take precedence.
+Business Rules are technology-independent and remain valid regardless of software implementation.
 
 ---
 
-# Material Rules
+# 2. Objectives
 
-## BR-001
+The objectives of this document are to:
 
-Every physical object inside the factory shall have a unique Material identity.
-
-No anonymous material is permitted.
-
----
-
-## BR-002
-
-Material identity never changes.
-
-Dimensions, quality, moisture, status and location may change.
-
-The Material UUID remains permanent.
+- Standardize business operations
+- Protect data integrity
+- Ensure process consistency
+- Support end-to-end traceability
+- Enable automation
+- Support Artificial Intelligence
+- Support Digital Twin
+- Reduce operational risks
 
 ---
 
-## BR-003
+# 3. Scope
 
-Every material originates from exactly one Receiving Lot.
+These rules apply to every business capability including:
 
-Receiving Lot is the beginning of material genealogy.
-
----
-
-## BR-004
-
-A material may produce multiple child materials.
-
-Every parent-child relationship must remain traceable.
-
----
-
-## BR-005
-
-A material may participate in multiple Transformations during its lifecycle.
-
-Each Transformation shall be recorded independently.
-
----
-
-# Receiving Rules
-
-## BR-101
-
-Every incoming shipment shall create one Receiving Lot.
-
----
-
-## BR-102
-
-A Receiving Lot may contain multiple materials.
-
-Examples
-
-- Logs
-- Green Lumber
-- KD Lumber
-- Thermowood Lumber
-- Dry Lamellas
-
----
-
-## BR-103
-
-Supplier information shall be recorded before materials become available for production.
-
----
-
-# Production Rules
-
-## BR-201
-
-Production is represented by Transformations.
-
-Inventory movements alone do not represent production.
-
----
-
-## BR-202
-
-Every Transformation must have:
-
-- Input Materials
-- Output Materials
-- Machine
-- Operation
-- Operator
-- Timestamp
-
----
-
-## BR-203
-
-One Transformation may consume multiple input materials.
-
----
-
-## BR-204
-
-One Transformation may produce multiple output materials.
-
----
-
-## BR-205
-
-Every output material must preserve genealogy.
-
----
-
-## BR-206
-
-Routing is configurable.
-
-Production Planning may select different routes according to:
-
-- Species
-- Moisture
+- Sales
+- CRM
+- Production
+- Inventory
+- Warehouse
 - Quality
-- Dimensions
-- Customer requirements
-- Machine availability
+- Maintenance
+- Purchasing
+- Logistics
+- Finance
+- Analytics
+- AI
+- Digital Twin
 
 ---
 
-## BR-207
+# 4. Business Principles
 
-Length optimization may occur before or after drying.
+The platform operates according to the following principles.
 
-The production department determines the optimum sequence.
-
----
-
-## BR-208
-
-Multiple Production Orders may be processed within the same Production Batch when approved by planning rules.
-
-Complete traceability shall be preserved.
-
----
-
-# Thermowood Rules
-
-## BR-301
-
-Thermowood production accepts multiple input sources.
-
-Possible inputs
-
-- Purchased KD Lumber
-- Internally dried lumber
-- Purchased Dry Lamellas
+- Business before Technology
+- Standardization before Customization
+- Automation where Practical
+- One Source of Truth
+- End-to-End Traceability
+- Data Integrity
+- Process Transparency
+- Continuous Improvement
 
 ---
 
-## BR-302
+# 5. Master Data Rules
 
-Every Thermowood batch shall reference the executed recipe.
+Master Data shall be managed centrally.
 
----
+Every master record shall have:
 
-## BR-303
+- Unique Identifier
+- Status
+- Ownership
+- Version
+- Audit Information
 
-Thermowood products shall pass through the profiling process before becoming finished products.
-
----
-
-## BR-304
-
-Thermowood Lumber may be:
-
-- Sold
-- Profiled
-- Used in Panel Production
+Duplicate master records are not permitted.
 
 ---
 
-# Panel Production Rules
+# 6. Transaction Rules
 
-## BR-401
+Every transaction shall:
 
-Solid Panel production accepts multiple input material types.
+- Have a unique identifier
+- Record date and time
+- Record responsible user
+- Be fully auditable
+- Support historical tracking
 
-Examples
-
-- Purchased KD Lumber
-- Internal KD Lumber
-- Thermowood Lumber
-- Purchased Dry Lamellas
-- Profiled Lumber (where applicable)
+Transactions shall never overwrite historical business records.
 
 ---
 
-## BR-402
+# 7. Workflow Rules
 
-Defect-free lamellas are used for Solid Panels.
+Business processes shall:
 
----
-
-## BR-403
-
-Defective lamellas shall be evaluated for recovery before being classified as waste.
-
----
-
-## BR-404
-
-Finger Joint Panels are produced using:
-
-- Defect-free recovered segments
-- Short recoverable pieces
-- Planned Finger Joint production
+- Follow approved workflows
+- Support approval mechanisms
+- Record every status change
+- Be traceable
+- Generate business events when required
 
 ---
 
-## BR-405
+# 8. Approval Rules
 
-Recovered lamellas remain fully traceable.
+Approval workflows shall:
 
----
-
-# Inventory Rules
-
-## BR-501
-
-Inventory is calculated from material status and movements.
-
-No independent stock quantity shall exist.
+- Be role-based
+- Be configurable
+- Record approval history
+- Support multi-level approvals
+- Support delegation
 
 ---
 
-## BR-502
+# 9. Traceability Rules
 
-A material may exist in only one physical location at a time.
+Every business object shall be traceable.
 
----
+Examples include:
 
-## BR-503
+- Customer
+- Supplier
+- Material
+- Batch
+- Product
+- Production Order
+- Shipment
+- Invoice
 
-Every location change generates an Inventory Movement.
-
----
-
-## BR-504
-
-Reserved materials cannot be consumed by another Production Order unless the reservation is released.
-
----
-
-# Quality Rules
-
-## BR-601
-
-Materials requiring inspection cannot continue production until released.
+Traceability shall extend across the complete business lifecycle.
 
 ---
 
-## BR-602
+# 10. Inventory Rules
 
-Quality decisions shall be recorded permanently.
+Inventory shall always represent the physical state of the factory.
 
----
+Every inventory movement shall be recorded.
 
-## BR-603
+Negative inventory is not permitted unless explicitly configured.
 
-Quality history is immutable.
-
-Corrections create new records.
+Batch traceability shall be preserved.
 
 ---
 
-# Waste and Recovery Rules
+# 11. Manufacturing Rules
 
-## BR-701
+Manufacturing shall operate using:
 
-Recovery has priority over waste.
+- Approved BOM
+- Approved Routing
+- Approved Production Orders
 
----
-
-## BR-702
-
-Recovered material becomes a new production input while maintaining genealogy.
+Every production event shall be recorded.
 
 ---
 
-## BR-703
+# 12. Quality Rules
 
-Waste shall always be classified.
+Quality records shall:
 
-Examples
-
-- Bark
-- Wood Chips
-- Wet Sawdust
-- Dry Sawdust
-- Thermowood Sawdust
-- Packaging Waste
+- Be immutable
+- Be traceable
+- Reference affected products
+- Reference production batches
+- Support corrective actions
 
 ---
 
-## BR-704
+# 13. AI Rules
 
-Thermowood sawdust shall be reused as Thermowood kiln fuel.
+Artificial Intelligence shall:
 
-It shall not be transferred to pellet production.
-
----
-
-## BR-705
-
-Wet sawdust shall be dried before pellet production.
+- Use enterprise knowledge
+- Respect permissions
+- Explain recommendations
+- Never modify business data autonomously
+- Support human decision making
 
 ---
 
-## BR-706
+# 14. Digital Twin Rules
 
-Wood waste may be processed through crushing and grinding before pellet production.
+Every physical asset may have one digital representation.
 
----
+The Digital Twin shall synchronize using approved business events.
 
-# Packaging Rules
-
-## BR-801
-
-Every package receives a unique Package identity.
+Simulation shall never modify live business data.
 
 ---
 
-## BR-802
+# 15. Security Rules
 
-Package contents remain fully traceable.
+Every business operation shall:
 
----
-
-## BR-803
-
-One package may contain materials originating from multiple Transformations.
-
-Genealogy must remain complete.
+- Authenticate users
+- Authorize actions
+- Record audit information
+- Protect confidential information
 
 ---
 
-# Shipment Rules
+# 16. Audit Rules
 
-## BR-901
+Critical business activities shall record:
 
-Only approved packages may be shipped.
+- User
+- Timestamp
+- Previous Value
+- New Value
+- Reason
+- Source
 
----
-
-## BR-902
-
-Shipment history is permanent.
-
----
-
-## BR-903
-
-Delivered products remain traceable to their original Receiving Lot.
+Audit records shall not be deleted.
 
 ---
 
-# Security Rules
+# 17. Business Events
 
-## BR-1001
+Every significant business activity may generate a business event.
 
-Critical business actions require authorization.
+Examples include:
 
-Examples
+- Sales Order Created
+- Production Started
+- Batch Completed
+- Inventory Updated
+- Shipment Dispatched
+- Invoice Posted
 
-- Recipe approval
-- Production approval
-- Inventory adjustment
-- Shipment confirmation
-
----
-
-## BR-1002
-
-Every critical action generates an Audit Log.
+Business events synchronize the entire platform.
 
 ---
 
-# AI Rules
+# 18. Business KPIs
 
-## BR-1101
+The platform shall measure:
 
-AI may recommend decisions.
-
-AI shall not execute critical business actions without human approval.
-
----
-
-## BR-1102
-
-AI recommendations must be explainable and traceable.
+- Production
+- Quality
+- Inventory Accuracy
+- Delivery Performance
+- Machine Availability
+- Customer Satisfaction
+- Financial Performance
 
 ---
 
-## BR-1103
+# 19. Continuous Improvement
 
-AI models shall use approved business data only.
+Business rules shall be reviewed periodically.
 
----
+Changes shall be:
 
-# Data Rules
-
-## BR-1201
-
-Every business object has one authoritative owner.
-
----
-
-## BR-1202
-
-Duplicate master data is prohibited.
+- Documented
+- Approved
+- Version Controlled
+- Communicated
 
 ---
 
-## BR-1203
+# 20. Related Documents
 
-Business Codes are unique within their scope.
-
----
-
-## BR-1204
-
-UUID is the permanent system identifier.
-
----
-### WHS-001
-
-Every warehouse shall define one Warehouse Type.
-
----
-
-### WHS-002
-
-Every warehouse location shall define one Storage Function.
-
----
-
-### WHS-003
-
-Material types may only be stored in compatible warehouse types.
-
----
-
-### WHS-004
-
-Production Buffers shall only contain Work In Progress materials.
-
----
-
-### WHS-005
-
-Quality Hold locations may only contain materials with Quality Hold status.
-
----
-
-### WHS-006
-
-Rejected Material locations shall prevent shipment until disposition is completed.
-
----
-
-### WHS-007
-
-Finished Goods Warehouses may only contain Finished Materials and Packaged Products.
-
----
-
-### WHS-008
-
-Storage capacity shall be validated before inventory transactions are completed.
-
-# Global Rules
-
-- Every material is traceable.
-- Every Transformation is recorded.
-- Every production decision is auditable.
-- Recovery is part of manufacturing.
-- Waste is classified.
-- Material genealogy is never broken.
-- Software follows manufacturing.
-- Business rules override implementation details.
-- Documentation shall be updated before changing business behavior.
-
----
-
-# Rule Governance
-
-Every new business rule shall:
-
-- Receive a unique Rule ID.
-- Be documented before implementation.
-- Be approved by business stakeholders.
-- Be referenced by related modules and APIs.
-
-Business Rules are version-controlled and form the contractual behavior of Naswood OS.
+- Vision.md
+- Project_Principles.md
+- Architecture_Decisions.md
+- Glossary.md
