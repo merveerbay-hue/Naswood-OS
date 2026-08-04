@@ -1,299 +1,399 @@
-# Naswood OS
+# 🌲 Naswood OS
 
-> **A Next-Generation Manufacturing Operating System (MOS) for the Wood Industry**
+> **Enterprise Manufacturing Operating System for the Wood Industry**
 
----
+Naswood OS is a next-generation Manufacturing Operating System (MOS) designed specifically for industrial wood manufacturing.
 
-## Overview
+Rather than being a traditional ERP system, Naswood OS combines manufacturing execution, inventory, quality, maintenance, logistics, finance, Artificial Intelligence and Digital Twin into a single intelligent enterprise platform.
 
-Naswood OS is a Manufacturing Operating System (MOS) developed specifically for integrated wood manufacturing facilities.
-
-Unlike traditional ERP systems, Naswood OS manages the complete lifecycle of materials from raw log intake to finished products, providing full traceability, intelligent production routing, quality control, inventory management, and AI-assisted manufacturing decisions.
-
-The system is designed around **materials**, **operations**, and **traceability**, not only around products or stock.
+The project is built with a modular, API-first and event-driven architecture to support scalable manufacturing operations.
 
 ---
 
 # Vision
 
-Build the most comprehensive digital operating system for the wood manufacturing industry.
+To build the world's most comprehensive Manufacturing Operating System for the wood industry by integrating:
 
-Naswood OS aims to become the digital backbone of modern wood factories by combining:
+- ERP
+- MES
+- WMS
+- QMS
+- CMMS
+- CRM
+- Analytics
+- Artificial Intelligence
+- Digital Twin
 
-- Production Management
-- Material Traceability
-- Intelligent Routing
-- Quality Management
-- Inventory Management
-- Maintenance
-- AI Decision Support
-- Digital Twin Technologies
+into one unified platform.
 
-into a single integrated platform.
+---
+
+# Project Goals
+
+Naswood OS aims to provide:
+
+- End-to-end manufacturing management
+- Complete production traceability
+- AI-assisted decision support
+- Real-time factory visibility
+- Digital Twin capabilities
+- Enterprise-grade scalability
+- Modern API ecosystem
+- Long-term maintainability
 
 ---
 
 # Core Principles
 
-### Material First
+The entire platform is designed around the following principles.
 
-The system tracks materials, not only products.
-
-Every material entering the factory remains traceable until shipment.
-
----
-
-### Complete Traceability
-
-Every movement, transformation, split, merge and shipment is recorded.
-
-Nothing becomes invisible inside the factory.
-
----
-
-### Dynamic Production Routing
-
-Production is not linear.
-
-Materials may follow different production paths depending on production planning and quality decisions.
+- Modular Architecture
+- API First
+- Event-Driven Design
+- AI Native
+- Digital Twin Ready
+- Secure by Design
+- Cloud Ready
+- Enterprise Standards
+- Clean Architecture
+- Single Source of Truth
 
 ---
 
-### Recovery Over Waste
+# Platform Overview
 
-Production waste should be minimized.
+Naswood OS is organized into multiple logical layers.
 
-Recoverable materials are returned to production whenever possible.
+```text
+Business Layer
 
----
+↓
 
-### AI Assists — Humans Decide
+Manufacturing Layer
 
-Artificial Intelligence provides recommendations.
+↓
 
-Production decisions always belong to authorized personnel.
+System Layer
 
----
+↓
 
-### Digital Twin Ready
+Application Layer
 
-The architecture is designed for future Digital Twin implementation.
+↓
 
----
+Business Modules
 
-# Manufacturing Scope
+↓
 
-Naswood OS currently covers:
+Artificial Intelligence
 
-- Log Processing
-- Lumber Production
-- Kiln Drying
-- Thermowood Production
-- Profile Production
-- Solid Panel Production
-- Finger Joint Production
-- Pellet Production
-- Warehouse Management
-- Production Planning
-- Quality Management
-- Traceability
-- Recovery Management
+↓
 
-Future production lines:
+Digital Twin
 
-- CLT
-- Glulam
-- CNC Processing
-- Painting
-- Modular Building Systems
+↓
 
----
+Integration
 
-# Core Engines
+↓
 
-Naswood OS is built around independent production engines.
+Deployment
 
-## Material Engine
+↓
 
-Manages every physical material inside the factory.
+Testing
 
----
+↓
 
-## Routing Engine
+Documentation
 
-Controls all allowed production paths.
+↓
 
----
-
-## Production Engine
-
-Executes manufacturing operations.
-
----
-
-## Traceability Engine
-
-Provides complete genealogy from raw material to customer.
-
----
-
-## Inventory Engine
-
-Tracks warehouse movements and stock locations.
-
----
-
-## Quality Engine
-
-Manages inspections, grading and quality history.
-
----
-
-## Asset Engine
-
-Manages machines and production assets.
-
----
-
-## Tooling Engine
-
-Tracks cutters, tooling, recipes and maintenance.
-
----
-
-## Recovery Engine
-
-Manages by-products, recoverable materials and waste.
-
----
-
-## AI Engine
-
-Provides predictive analytics, optimization and intelligent recommendations.
+Reference
+```
 
 ---
 
 # Documentation Structure
 
 ```
-docs/
-
-01_Project/
-    Vision.md
-    Business_Rules.md
-    Modules.md
-
-02_Manufacturing/
-    Factory_Overview.md
-    Material_Catalog.md
-    Manufacturing_Process.md
-    Routing_Rules.md
-    Machine_Catalog.md
-    Tooling_and_Recipe_Management.md
-    Traceability_Model.md
-    Waste_Management.md
-    Quality_Standards.md
-    KPI_Definitions.md
-
-03_System/
-    Database.md
-    Data_Dictionary.md
-    Event_Catalog.md
-    Naming_Standards.md
-    Architecture.md
-    API.md
-
-04_UI/
-
-05_AI/
+00_Project_Governance
+01_Business
+02_Manufacturing
+03_System
+04_Application
+05_Modules
+06_AI
+07_Digital_Twin
+08_Integration
+09_Deployment
+10_Testing
+11_Documentation
+12_Reference
 ```
 
 ---
 
-# Current Development Phase
+# Folder Overview
 
-Current focus:
+## 00_Project_Governance
 
-- Manufacturing Knowledge Base
-- Material Modeling
-- Production Routing
-- Machine Modeling
-- Traceability Architecture
-- Naming Standards
-
-Software implementation will begin after the manufacturing model has been fully documented.
+Project vision, governance, roadmap, standards and strategic decisions.
 
 ---
 
-# Long-Term Goals
+## 01_Business
 
-- Complete Digital Factory
-- Real-Time Production Monitoring
-- AI-Assisted Planning
-- Full Material Genealogy
-- Predictive Maintenance
-- Digital Twin
+Business processes, workflows, business rules and KPIs.
+
+---
+
+## 02_Manufacturing
+
+Manufacturing concepts, production methods, terminology and industrial standards.
+
+---
+
+## 03_System
+
+Platform architecture, database, security, permissions, events and system services.
+
+---
+
+## 04_Application
+
+User interface, workflows, dashboards, navigation and mobile applications.
+
+---
+
+## 05_Modules
+
+Functional business modules including:
+
+- Manufacturing
+- Inventory
+- Quality
+- Maintenance
+- Machines
+- Tooling
+- Sales
+- Purchasing
+- Logistics
+- Finance
+- Analytics
+- Administration
+
+---
+
+## 06_AI
+
+Artificial Intelligence platform.
+
+Includes:
+
+- AI Architecture
+- AI Agents
+- Factory Copilot
+- Knowledge Base
+- Prompt Standards
+- AI Governance
+
+---
+
+## 07_Digital_Twin
+
+Digital representation of the factory.
+
+Includes:
+
+- Factory Model
+- Simulation
+- Visualization
+- Digital Product Passport
+
+---
+
+## 08_Integration
+
+Integration architecture.
+
+Includes:
+
+- APIs
+- Events
+- PLC & SCADA
+- External Systems
+- Integration Standards
+
+---
+
+## 09_Deployment
+
+Platform deployment and operations.
+
+Includes:
+
+- Infrastructure
+- Installation
+- DevOps
+- Monitoring
+- Backup
+
+---
+
+## 10_Testing
+
+Software quality assurance.
+
+Includes:
+
+- Testing Strategy
+- Functional Testing
+- API Testing
+- Performance Testing
+- AI Testing
+
+---
+
+## 11_Documentation
+
+Project documentation standards.
+
+Includes:
+
+- User Guide
+- Administrator Guide
+- Developer Guide
+- API Guide
+- Release Notes
+
+---
+
+## 12_Reference
+
+Reference materials used across the platform.
+
+Includes:
+
+- Standards
+- Data Dictionary
+- Formula Library
+- Best Practices
+- Glossary
+
+---
+
+# Platform Capabilities
+
+The platform currently covers:
+
+- Manufacturing Management
+- Inventory Management
+- Warehouse Management
+- Quality Management
+- Maintenance Management
+- Machine Management
+- Tool Management
+- Production Planning
+- Sales & CRM
+- Purchasing
+- Logistics
+- Finance
 - Business Intelligence
-- Mobile Factory Operations
-- Cloud Manufacturing Platform
+- Artificial Intelligence
+- Digital Twin
 
 ---
 
-# Technology Vision
+# Architecture Principles
 
-Frontend
+Every component developed within Naswood OS shall follow the same architectural principles.
 
-- React
-- Next.js
-- TypeScript
-
-Backend
-
-- FastAPI
-- Python
-
-Database
-
-- PostgreSQL
-
-Authentication
-
-- JWT
-- OAuth
-
-Storage
-
-- S3 Compatible Storage
-
-AI
-
-- OpenAI
-- Claude
-- Local AI Models
-
-Infrastructure
-
-- Docker
-- Kubernetes
-- Nginx
+- One Source of Truth
+- Modular Design
+- Reusable Components
+- Event-Driven Communication
+- Standardized APIs
+- Shared Data Models
+- Explainable AI
+- Continuous Documentation
 
 ---
 
-# Project Status
+# Documentation Standard
 
-Current Version
+Every document in this repository follows a common structure.
 
-**Naswood OS v0.1**
+1. Purpose
+2. Objectives
+3. Scope
+4. Principles
+5. Related Documents
 
-Status
+This ensures consistency and simplifies long-term maintenance.
 
-**Manufacturing Architecture & Documentation Phase**
+---
+
+# Development Workflow
+
+```
+Business Requirements
+
+↓
+
+Architecture Design
+
+↓
+
+Implementation
+
+↓
+
+Testing
+
+↓
+
+Documentation
+
+↓
+
+Release
+```
+
+---
+
+# Technology Philosophy
+
+Naswood OS is designed to remain technology-independent.
+
+The documentation defines architectural principles rather than implementation details, allowing different technologies and frameworks to be adopted over time without changing the core platform design.
+
+---
+
+# Repository Guidelines
+
+When contributing to this project:
+
+- Follow the documented architecture.
+- Reuse existing modules whenever possible.
+- Avoid duplicate functionality.
+- Keep documentation synchronized with development.
+- Maintain backward compatibility whenever feasible.
+
+---
+
+# Current Status
+
+**Version:** 1.0
+
+**Project Status:** In Development
+
+**Documentation Status:** Active
 
 ---
 
 # License
 
-Private Project
+Internal Project
 
-Copyright © Naswood
-All rights reserved.
+© Naswood
