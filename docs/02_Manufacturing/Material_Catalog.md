@@ -138,3 +138,46 @@ Her malzeme aşağıdaki bilgileri içerir.
 ---
 
 # 6. Temel Malzemeler
+# Tomruk
+
+Malzeme Tipi
+
+Hammadde
+
+Açıklama
+
+Fabrikaya giren ilk doğal hammaddedir.
+
+Girdi Kaynağı
+
+- Orman İşletmesi
+- İhale
+- Özel Tedarikçi
+
+Kullanılabilir Hatlar
+
+- Canter
+- Satış
+- Pelet
+
+Oluşturabileceği Ürünler
+
+- Prizma
+- Kereste
+
+Yan Ürünler
+
+- Kabuk
+- Talaş
+
+Satılabilir
+
+Evet
+
+Yarı Mamul
+
+Hayır
+
+İzlenebilirlik
+
+LOT Bazlı
