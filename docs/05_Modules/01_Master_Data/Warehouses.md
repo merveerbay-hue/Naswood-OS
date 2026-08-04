@@ -659,24 +659,211 @@ Warehouse Traceability Report
 
 # 19. Dashboard Widgets
 
+## Warehouse Overview
+
+Total Warehouses
+
+Active Warehouses
+
 Warehouse Capacity
+
+Warehouse Utilization
 
 Warehouse Occupancy
 
-Inventory by Warehouse
-
-Available Capacity
-
-Storage Heat Map
-
-Location Utilization
-
-Material Distribution
-
-Warehouse Alerts
+Storage Efficiency
 
 ---
 
+## Inventory Overview
+
+Total Inventory
+
+Inventory by Warehouse
+
+Inventory by Storage Function
+
+Inventory by Material Type
+
+Inventory Value
+
+Reserved Inventory
+
+Available Inventory
+
+Blocked Inventory
+
+---
+
+## Manufacturing Storage
+
+Receiving Yard Status
+
+Log Yard Capacity
+
+Prism Storage Status
+
+Green Lumber Inventory
+
+Kiln Buffer Status
+
+Kiln Output Inventory
+
+Thermowood Buffer
+
+Thermowood Storage
+
+Planer Buffer
+
+Profiling Buffer
+
+Packaging Area
+
+Finished Goods Warehouse
+
+---
+
+## Work In Progress
+
+WIP Inventory
+
+Production Buffers
+
+Waiting Materials
+
+Production Queue
+
+Reserved Materials
+
+Material Availability
+
+---
+
+## Quality Areas
+
+Quality Hold Inventory
+
+Rejected Materials
+
+Rework Inventory
+
+Incoming Inspection Queue
+
+Quality Release Queue
+
+---
+
+## Logistics
+
+Loading Queue
+
+Shipment Staging
+
+Container Loading Status
+
+Receiving Queue
+
+Warehouse Transfers
+
+Pending Shipments
+
+---
+
+## Capacity & Utilization
+
+Warehouse Occupancy %
+
+Storage Capacity %
+
+Available Capacity
+
+Capacity Trend
+
+Location Utilization
+
+Heat Map
+
+Warehouse Congestion
+
+---
+
+## Material Flow
+
+Material Movements
+
+Receiving Flow
+
+Production Flow
+
+Transfer Flow
+
+Shipping Flow
+
+Internal Movements
+
+Material Flow Timeline
+
+---
+
+## Equipment
+
+Forklift Status
+
+Forklift Utilization
+
+Warehouse Equipment Status
+
+Loading Dock Status
+
+Barcode Scanner Status
+
+QR Scanner Activity
+
+---
+
+## AI Insights
+
+Storage Optimization
+
+Warehouse Slotting Recommendation
+
+Material Relocation Recommendation
+
+Capacity Forecast
+
+Congestion Prediction
+
+Slow Moving Inventory
+
+Dead Stock Detection
+
+Warehouse Risk Analysis
+
+Operational Bottlenecks
+
+AI Warehouse Assistant
+
+---
+
+## Alerts
+
+Warehouse Full
+
+Capacity Warning
+
+Quality Hold Materials
+
+Rejected Material Alert
+
+Receiving Delays
+
+Shipment Delays
+
+Inventory Mismatch
+
+Location Conflict
+
+Critical Warehouse Alerts
 # 20. KPIs
 
 Warehouse Utilization
