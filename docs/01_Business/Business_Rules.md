@@ -452,6 +452,51 @@ Business Codes are unique within their scope.
 UUID is the permanent system identifier.
 
 ---
+### WHS-001
+
+Every warehouse shall define one Warehouse Type.
+
+---
+
+### WHS-002
+
+Every warehouse location shall define one Storage Function.
+
+---
+
+### WHS-003
+
+Material types may only be stored in compatible warehouse types.
+
+---
+
+### WHS-004
+
+Production Buffers shall only contain Work In Progress materials.
+
+---
+
+### WHS-005
+
+Quality Hold locations may only contain materials with Quality Hold status.
+
+---
+
+### WHS-006
+
+Rejected Material locations shall prevent shipment until disposition is completed.
+
+---
+
+### WHS-007
+
+Finished Goods Warehouses may only contain Finished Materials and Packaged Products.
+
+---
+
+### WHS-008
+
+Storage capacity shall be validated before inventory transactions are completed.
 
 # Global Rules
 
