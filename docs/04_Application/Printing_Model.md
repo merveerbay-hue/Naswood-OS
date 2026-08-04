@@ -4,91 +4,377 @@
 
 **Document:** Printing Model
 
-**Version:** 1.0
+**Version:** 2.0
 
 **Status:** Approved
 
 ---
 
-# Purpose
+# 1. Purpose
 
-This document defines the printing architecture used throughout Naswood OS.
+This document defines the centralized printing architecture used throughout Naswood OS.
 
-Printing covers labels, production documents, reports, technical documents and shipping documentation.
+The Printing Service is responsible for generating and printing labels, production documents, logistics documents, quality certificates and regulatory documents.
 
-Printing shall be standardized, traceable and fully integrated with manufacturing workflows.
-
----
-
-# Philosophy
-
-Printing is a controlled business process.
-
-Documents are generated from system data.
-
-Printing never creates business data.
-
-Every print action is traceable.
+Printing shall be event-driven, template-based and fully traceable.
 
 ---
 
-# Printing Categories
+# 2. Objectives
 
-Label Printing
-
-Document Printing
-
-Report Printing
-
-Technical Drawing Printing
-
-Certificate Printing
-
-Export Documentation
+- Centralize all printing operations
+- Standardize document formats
+- Automate printing workflows
+- Support industrial printers
+- Enable customer-specific documents
+- Support regulatory compliance
+- Integrate with AI verification
 
 ---
 
-# Printable Objects
+# 3. Printing Philosophy
 
-Material Labels
+Every printable object shall be generated from an approved template.
 
-Package Labels
+Printing shall never contain manually edited data.
 
-Product Labels
+All printed information shall originate from the system database.
 
-Warehouse Labels
+Every print action shall be recorded in the Audit Log.
 
-Location Labels
+Every reprint shall require authorization.
 
-Machine Labels
+---
 
-Tool Labels
+# 4. Printable Objects
 
-Knife Labels
+## Production
 
 Production Orders
 
+Operations
+
+Recipes
+
 Work Instructions
 
-Inspection Reports
+Setup Sheets
 
-Maintenance Work Orders
-
-Packing Lists
-
-Shipping Documents
-
-Invoices (ERP)
-
-Certificates
-
-Technical Drawings
-
-Reports
+Machine Instructions
 
 ---
 
-# Print Triggers
+## Materials
+
+Material Labels
+
+Transformation Labels
+
+Batch Labels
+
+Bundle Labels
+
+---
+
+## Inventory
+
+Warehouse Labels
+
+Rack Labels
+
+Shelf Labels
+
+Bin Labels
+
+Inventory Count Sheets
+
+Transfer Documents
+
+---
+
+## Packaging
+
+Package Labels
+
+Pallet Labels
+
+Crate Labels
+
+Container Labels
+
+Packing Lists
+
+---
+
+## Logistics
+
+Shipment Documents
+
+Delivery Notes
+
+Loading Lists
+
+Container Manifest
+
+Export Documents
+
+CMR
+
+Bill of Lading (Future)
+
+---
+
+## Quality
+
+Inspection Reports
+
+Quality Certificates
+
+CE Declaration
+
+FSC Certificate
+
+PEFC Certificate
+
+EPD Summary
+
+Test Reports
+
+Calibration Certificates
+
+---
+
+## Maintenance
+
+Work Orders
+
+Maintenance Checklists
+
+Inspection Sheets
+
+Calibration Reports
+
+---
+
+## Commercial
+
+Quotation
+
+Sales Order
+
+Purchase Order
+
+Invoice (ERP)
+
+Customer Labels
+
+Private Labels
+
+---
+
+# 5. Printing Events
+
+Print jobs are automatically generated after specific business events.
+
+## Receiving
+
+Receiving Completed
+
+↓
+
+Material Label
+
+---
+
+## Production
+
+Operation Completed
+
+↓
+
+Material Label
+
+↓
+
+Transformation Label
+
+---
+
+## Packaging
+
+Package Closed
+
+↓
+
+Package Label
+
+↓
+
+QR Label
+
+↓
+
+Packing List
+
+---
+
+## Finished Goods
+
+Finished Goods Released
+
+↓
+
+Finished Goods Label
+
+↓
+
+Certificate
+
+---
+
+## Shipping
+
+Shipment Approved
+
+↓
+
+Delivery Note
+
+↓
+
+Container Manifest
+
+↓
+
+Shipping Labels
+
+---
+
+## Quality
+
+Inspection Passed
+
+↓
+
+Quality Certificate
+
+---
+
+# 6. Print Job Structure
+
+Print Job ID
+
+Document Type
+
+Template
+
+Printer
+
+Requested By
+
+Generated Time
+
+Printed Time
+
+Copies
+
+Status
+
+Priority
+
+Related Object
+
+Business Code
+
+---
+
+# 7. Printer Types
+
+Industrial Label Printer
+
+Laser Printer
+
+A4 Office Printer
+
+Thermal Printer
+
+Portable Printer
+
+PDF Generator
+
+Cloud Print
+
+---
+
+## Supported Brands
+
+Zebra
+
+TSC
+
+Honeywell
+
+Brother
+
+Epson
+
+HP
+
+Canon
+
+---
+
+# 8. Printer Assignment
+
+Printers may be assigned to:
+
+Factory
+
+Warehouse
+
+Production Line
+
+Packaging Station
+
+Shipping Area
+
+Quality Laboratory
+
+Maintenance Workshop
+
+Office
+
+Mobile Device
+
+---
+
+# 9. Template Assignment
+
+Templates may be assigned by:
+
+Material Type
+
+Product Family
+
+Customer
+
+Supplier
+
+Warehouse
+
+Production Area
+
+Machine
+
+Country
+
+Language
+
+Export Type
+
+---
+
+# 10. Print Rules
 
 Automatic Printing
 
@@ -98,472 +384,560 @@ Scheduled Printing
 
 Batch Printing
 
-Reprint
+Mass Printing
+
+Conditional Printing
+
+Reprint Authorization
 
 ---
 
-# Automatic Printing
+# 11. Automatic Printing Rules
 
-The system shall automatically print after:
+Material Created
 
-Receiving Registration
+↓
 
-Material Registration
-
-Package Creation
-
-Production Order Release
-
-Shipment Creation
-
-Maintenance Work Order Creation
-
-Inspection Completion (Optional)
-
-Customer Shipment
+Print Material Label
 
 ---
 
-# Manual Printing
+Package Completed
 
-Authorized users may print:
+↓
 
-Any Label
+Print Package Label
 
-Any Report
+↓
 
-Technical Documents
-
-Production Orders
-
-Maintenance Documents
-
-Shipment Documents
+Print Packing List
 
 ---
 
-# Batch Printing
+Shipment Released
 
-Supports printing multiple labels or documents.
+↓
 
-Examples
-
-100 Material Labels
-
-50 Package Labels
-
-Daily Production Orders
-
-Weekly Inspection Reports
+Print Shipping Documents
 
 ---
 
-# Reprint Policy
+Quality Approved
 
-Reprinting is allowed.
+↓
 
-Reprinting never creates a new Business Code.
-
-Every reprint generates:
-
-Audit Log
-
-Business Event
-
-Print Counter Increment
+Print Certificate
 
 ---
 
-# Supported Printers
+Machine Maintenance Completed
 
-Industrial Label Printers
+↓
 
-- Zebra
-- Honeywell
-- TSC
-- Brother
-
-Office Printers
-
-- HP
-- Canon
-- Epson
-- Ricoh
-- Kyocera
-
-PDF Printers
-
-Cloud Printing
-
-Future Support
+Print Maintenance Report
 
 ---
 
-# Print Formats
+# 12. Print Queue
 
-PDF
+Queued
 
-ZPL
+Waiting
 
-EPL
+Printing
 
-PNG
-
-SVG
-
-HTML
-
----
-
-# Label Sizes
-
-50 × 30 mm
-
-75 × 50 mm
-
-100 × 100 mm
-
-100 × 150 mm
-
-A4
-
-A5
-
-A3
-
-Custom
-
----
-
-# Print Queue
-
-Every print request enters a managed queue.
-
-Queue States
-
-Pending
-
-Processing
-
-Printed
+Completed
 
 Failed
 
 Cancelled
 
----
+Retry
 
-# Print Job
-
-| Field | Type |
-|--------|------|
-| id | UUID |
-| document_type | VARCHAR(50) |
-| document_id | UUID |
-| printer_id | UUID |
-| requested_by | UUID |
-| print_status | VARCHAR(30) |
-| printed_at | TIMESTAMP |
+Archived
 
 ---
 
-# Printer
+# 13. Print Priorities
 
-| Field | Type |
-|--------|------|
-| id | UUID |
-| printer_name | VARCHAR(100) |
-| printer_type | VARCHAR(50) |
-| location | VARCHAR(100) |
-| connection_type | VARCHAR(30) |
-| active | BOOLEAN |
+Critical
 
-Connection Types
+High
 
-USB
+Normal
 
-Network
+Low
 
-Bluetooth
-
-Cloud
+Background
 
 ---
 
-# Print Templates
+# 14. Multi-Language Support
 
-Templates are version-controlled.
+Turkish
 
-Template Types
+English
 
-Material Label
+German
 
-Package Label
+French
 
-Shipment Label
+Spanish
 
-Production Order
+Arabic
 
-Inspection Report
+Russian
 
-Maintenance Work Order
-
-Certificate
-
-Packing List
+Additional languages may be configured.
 
 ---
 
-# Print Permissions
+# 15. Customer Specific Printing
 
-Permissions control:
+Each customer may define:
 
-Print
+Private Logo
 
-Batch Print
+Private Branding
 
-Reprint
+Language
 
-Delete Queue
+Document Layout
 
-Manage Printers
+Required Fields
 
-Manage Templates
+Label Size
 
----
+Packaging Labels
 
-# Print Validation
+Certificates
 
-Before printing:
-
-Entity Exists
-
-User Authorized
-
-Workflow State Valid
-
-Business Code Exists
-
-Template Exists
-
-Printer Available
+Export Documents
 
 ---
 
-# Printing Workflow
+# 16. Export Printing
 
-User Action
+Country of Origin
 
-↓
+CE
 
-Validate Permission
+FSC
 
-↓
+PEFC
 
-Generate Print Job
+EPD
 
-↓
+HS Code
 
-Assign Template
+Incoterms
 
-↓
+Importer
 
-Assign Printer
+Exporter
 
-↓
+Container Number
 
-Queue
+Shipment Number
 
-↓
-
-Print
-
-↓
-
-Generate Event
-
-↓
-
-Generate Audit Log
+Seal Number
 
 ---
 
-# Print History
+# 17. GS1 Support
 
-Every print operation stores:
+GS1-128
 
-User
+GS1 Digital Link
 
-Printer
+GTIN
 
-Template
+SSCC
 
-Timestamp
+Batch Number
 
-Copies
-
-Result
+Serial Number
 
 ---
 
-# Printer Assignment
+# 18. Digital Product Passport
 
-Examples
+Automatic DPP Document
 
-Receiving Area
+QR Link
 
-→ Zebra ZT411
+Carbon Footprint
 
-Warehouse
+Material Origin
 
-→ Honeywell PX940
+Production History
 
-Production
+Certificates
 
-→ Zebra ZD621
+Technical Datasheet
 
-Quality
-
-→ Brother QL Series
-
-Shipping
-
-→ Zebra ZT610
-
-Office
-
-→ HP LaserJet
+Installation Guide
 
 ---
 
-# Business Rules
+# 19. AI Printing
 
-### PRN-001
+Automatic Template Selection
 
-Every printed label shall reference a valid Business Code.
+Automatic Printer Selection
 
----
+Print Queue Optimization
 
-### PRN-002
+Layout Optimization
 
-Printing shall never modify business data.
+OCR Verification
 
----
+Vision-Based Print Verification
 
-### PRN-003
+Duplicate Print Detection
 
-Reprints require appropriate permissions.
+Missing Label Detection
 
----
+Print Quality Prediction
 
-### PRN-004
-
-Every print operation generates an Audit Log.
+AI Print Assistant
 
 ---
 
-### PRN-005
+# 20. Print Verification
 
-Every automatic print generates a Business Event.
+QR Verification
 
----
+Barcode Verification
 
-### PRN-006
+OCR Verification
 
-Templates are version-controlled.
+Vision Inspection
 
----
+Checksum Verification
 
-### PRN-007
+Label Position Verification
 
-Failed print jobs shall remain in the queue for retry.
-
----
-
-### PRN-008
-
-Print history shall never be deleted.
+Print Quality Verification
 
 ---
 
-### PRN-009
+# 21. Reprint Management
 
-Label content shall be generated from live system data.
+Reason Required
+
+Authorization Required
+
+History Recorded
+
+Version Stored
+
+Operator Recorded
+
+Timestamp Recorded
 
 ---
 
-### PRN-010
+# 22. Security
 
-Printing shall support multilingual templates.
+Role-Based Authorization
+
+Digital Signature
+
+Electronic Approval
+
+Secure PDF
+
+Watermark
+
+Encrypted Printing
+
+Audit Logging
 
 ---
 
-# Integration
+# 23. API Resources
 
-Printing integrates with:
+GET /printing/jobs
+
+GET /printing/templates
+
+GET /printing/printers
+
+POST /printing/print
+
+POST /printing/reprint
+
+POST /printing/cancel
+
+POST /printing/verify
+
+GET /printing/history
+
+---
+
+# 24. Integrations
 
 Barcode & QR Model
 
 Label Templates
 
-Production
+Packaging
+
+Warehouse
 
 Inventory
 
-Warehouse
+Production
 
 Quality
 
 Maintenance
 
-Sales
-
-Purchasing
-
 Logistics
 
-Workflow
+Customers
 
-Notifications
+ERP
 
-Events
+AI
 
-Audit Log
+Digital Twin
+
+---
+
+# 25. Reports
+
+Printing Activity Report
+
+Print Queue Report
+
+Printer Utilization Report
+
+Printing Errors Report
+
+Reprint History
+
+Template Usage
+
+Customer Printing Report
+
+Packaging Printing Report
+
+Quality Certificate Report
+
+Export Documentation Report
+
+---
+
+# 26. Dashboard Widgets
+
+Print Queue
+
+Printer Status
+
+Labels Printed Today
+
+Failed Prints
+
+Reprint Requests
+
+Printer Utilization
+
+Print Performance
+
+Template Usage
+
+AI Print Suggestions
+
+---
+
+# 27. Business Rules
+
+Every printed document shall originate from a template.
+
+Every print job shall be logged.
+
+Every reprint requires authorization.
+
+QR Codes are mandatory on traceable objects.
+
+Customer-specific templates override default templates.
+
+Failed print jobs shall automatically enter the retry queue.
+
+---
+
+# 28. Error Handling
+
+Printer Offline
+
+Paper Empty
+
+Ribbon Empty
+
+Communication Failure
+
+Template Missing
+
+QR Generation Failed
+
+Barcode Generation Failed
+
+Print Queue Failure
+
+---
+
+# 29. Performance Requirements
+
+Label Generation < 1 second
+
+Print Job Creation < 1 second
+
+Printer Response < 3 seconds
+
+Support 100 simultaneous printers
+
+Support 10,000 print jobs/day
+
+---
+
+# 30. Future Extensions
+
+RFID Printing
+
+NFC Labels
+
+Electronic Shelf Labels
+
+Cloud Printing
+
+Remote Printing
+
+Vision AI Closed-Loop Verification
+
+Autonomous Print Stations
+
+Blockchain Signed Documents
+
+Digital Watermark
+
+---
+
+# 31. Acceptance Criteria
+
+✓ Template selected automatically
+
+✓ Print job created
+
+✓ QR generated
+
+✓ Barcode generated
+
+✓ Printed successfully
+
+✓ Verification completed
+
+✓ Audit Log created
+
+✓ Reprint managed
+
+✓ AI supported
+
+---
+
+# 32. Related Documents
+
+Barcode_QR_Model
+
+Label_Templates
+
+Packaging Module
+
+Finished_Goods Module
+
+Warehouse Module
+
+API_Contracts
+
+Digital Product Passport
 
 Mobile Application
 
 ---
 
-# Future Extensions
+# 33. Operational Metrics
 
-The architecture supports:
+## Success Metrics
 
-Cloud Printing
+Print Success Rate
 
-RFID Encoding
+Print Queue Time
 
-NFC Tag Printing
+Printer Availability
 
-Automatic Printer Selection
+Label Accuracy
 
-Print Preview
-
-Digital Signatures
-
-Electronic Documents
-
-IoT Printer Monitoring
-
-Remote Printing
-
-Digital Product Passport Labels
+Document Accuracy
 
 ---
 
-# Printing Philosophy
+## Failure Metrics
 
-Printing transforms digital manufacturing information into standardized physical documents and labels.
+Failed Prints
 
-Every printed output is generated from trusted system data, follows approved templates and remains fully traceable throughout its lifecycle.
+Printer Downtime
 
-Reliable printing ensures consistency, compliance and complete traceability across all manufacturing operations.
+Template Errors
+
+Reprint Rate
+
+---
+
+## Operational Risks
+
+Wrong Template
+
+Wrong Printer
+
+Duplicate Labels
+
+Unreadable QR
+
+Missing Documents
+
+---
+
+## Monitoring Alerts
+
+Printer Offline
+
+Low Labels
+
+Ribbon Low
+
+High Print Queue
+
+Repeated Print Failures
+
+Failed Verification
+
+---
+
+## SLA
+
+Critical production labels shall be printed within **5 seconds** of the triggering event.
+
+---
+
+## Recovery Procedure
+
+Failed print jobs shall automatically retry up to three times. If unsuccessful, the job enters manual intervention mode while preserving the complete print history and audit trail.
+
+---
+
+# 34. Module Philosophy
+
+Printing is a centralized service within Naswood OS, responsible for converting digital manufacturing data into standardized physical documents and labels.
+
+The Printing Model guarantees consistency, traceability and regulatory compliance across production, quality, warehouse and logistics operations while supporting automation, AI verification and future Digital Product Passport requirements.
