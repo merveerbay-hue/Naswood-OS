@@ -1,259 +1,327 @@
 # Vision
 
-**Project:** Naswood OS  
-**Document:** Vision  
-**Version:** 1.0  
-**Status:** Approved
+**Project:** Naswood OS
+
+**Document:** Vision
+
+**Code:** GOV-001
+
+**Version:** 1.0
 
 ---
 
-# Vision Statement
+# 1. Executive Summary
 
-To build the world's most advanced Manufacturing Operating System for the wood industry by combining manufacturing expertise, complete traceability, artificial intelligence and digital transformation into a single integrated platform.
+Naswood OS is an enterprise Manufacturing Operating System (MOS) designed specifically for the wood manufacturing industry.
 
-Naswood OS is designed to become the digital operating system of modern wood manufacturing.
+The platform unifies business management, manufacturing operations, industrial automation, Artificial Intelligence and Digital Twin technologies into a single intelligent ecosystem.
 
----
+Rather than operating as isolated software modules, every capability within Naswood OS shares the same architecture, data model and operational principles.
 
-# Why Naswood OS Exists
-
-Traditional ERP systems are primarily designed to manage documents.
-
-Wood manufacturing is fundamentally different.
-
-Factories do not produce documents.
-
-Factories transform raw materials into valuable products through complex manufacturing processes.
-
-Naswood OS is built around this reality.
-
-The system focuses on:
-
-- Materials
-- Manufacturing
-- Machines
-- People
-- Processes
-- Knowledge
-
-instead of paperwork.
+The ultimate objective is to transform traditional factories into connected, intelligent and data-driven manufacturing enterprises.
 
 ---
 
-# Our Mission
+# 2. Why Naswood OS Exists
 
-To provide manufacturers with a single digital platform capable of managing every physical object, every production process and every business decision from log receiving to customer delivery.
+Modern manufacturing companies operate dozens of disconnected systems.
 
-Every material.
+ERP manages business.
 
-Every transformation.
+MES manages production.
 
-Every machine.
+WMS manages warehouses.
 
-Every decision.
+CMMS manages maintenance.
 
-Fully connected.
+CRM manages customers.
 
-Fully traceable.
+BI analyzes data.
 
----
+Machines operate independently.
 
-# Our Vision
+AI tools exist outside daily workflows.
 
-We envision a future where every wood factory operates through a real-time digital platform.
+This fragmentation creates duplicated data, disconnected processes and poor decision making.
 
-Every material has a digital identity.
+Naswood OS exists to eliminate these silos.
 
-Every production process is measurable.
-
-Every decision is supported by data.
-
-Every operation is traceable.
-
-Artificial Intelligence continuously improves manufacturing performance while people remain responsible for final decisions.
+Instead of multiple disconnected applications, the factory operates through one intelligent platform.
 
 ---
 
-# Strategic Objectives
+# 3. Vision Statement
 
-Naswood OS aims to become:
-
-- A Manufacturing Operating System (MOS)
-- A Digital Factory Platform
-- A Complete Traceability System
-- A Manufacturing Intelligence Platform
-- A Digital Twin Platform
-- An AI-Assisted Decision Support System
-
-The platform is built specifically for industrial wood manufacturing.
+To become the digital operating system of modern wood manufacturing by connecting every person, machine, process and decision into one intelligent platform.
 
 ---
 
-# Core Values
+# 4. Mission
 
-## Manufacturing First
-
-Manufacturing requirements always drive software design.
-
-Software adapts to the factory.
-
-The factory does not adapt to the software.
+To help manufacturers operate smarter, faster and more efficiently by combining manufacturing operations, enterprise management, Artificial Intelligence and Digital Twin technologies into a unified Manufacturing Operating System.
 
 ---
 
-## Traceability by Design
+# 5. What is Naswood OS?
 
-Every physical object is digitally traceable.
+Naswood OS is not an ERP.
 
-Nothing enters or leaves production without a digital history.
+It is not a MES.
 
----
+It is not a WMS.
 
-## Simplicity Through Engineering
+It is not a CRM.
 
-Complex manufacturing processes should appear simple to the user.
+It is not an AI platform.
 
-Complexity belongs inside the software, not inside the factory.
+It is not a Digital Twin platform.
 
----
+It is all of them working together.
 
-## Continuous Improvement
-
-Every production cycle generates knowledge.
-
-Every dataset improves future decisions.
-
-Every version improves the platform.
+Naswood OS is the operating system of the factory.
 
 ---
 
-## Open Architecture
+# 6. Platform Vision
 
-The platform is designed for long-term evolution.
+The platform integrates:
 
-It supports:
+• Enterprise Management
 
-- New products
-- New factories
-- New production lines
-- New technologies
-- New AI capabilities
+• Manufacturing Execution
 
-without redesigning the core system.
+• Inventory Management
 
----
+• Quality Management
 
-# Manufacturing Philosophy
+• Maintenance Management
 
-Wood is a living material.
+• Machine Management
 
-Every piece is unique.
+• Tool Management
 
-Manufacturing must adapt to natural variation.
+• Sales & CRM
 
-Naswood OS embraces this variability instead of forcing rigid production models.
+• Purchasing
 
-The platform supports flexible manufacturing while maintaining complete control and traceability.
+• Logistics
 
----
+• Finance
 
-# Artificial Intelligence Vision
+• Analytics
 
-Artificial Intelligence is a decision-support partner.
+• Artificial Intelligence
 
-AI assists with:
+• Digital Twin
 
-- Planning
-- Scheduling
-- Optimization
-- Quality
-- Maintenance
-- Inventory
-- Cost Analysis
-- Reporting
-
-AI never replaces human responsibility.
-
-People remain accountable for production.
+into one unified architecture.
 
 ---
 
-# Digital Factory Vision
+# 7. Vision Pillars
 
-The long-term objective is to create a complete Digital Twin of the factory.
+The platform is built on six strategic pillars.
 
-The digital factory mirrors:
+## People
 
-- Materials
-- Machines
-- Production
-- Inventory
-- Quality
-- Energy
-- Maintenance
-- Logistics
-
-in real time.
-
-This enables simulation, optimization and predictive decision making.
+Empower every employee with the right information at the right time.
 
 ---
 
-# Sustainability Vision
+## Processes
 
-Naswood OS supports sustainable manufacturing by improving:
-
-- Material Yield
-- Energy Efficiency
-- Waste Reduction
-- Recovery Rates
-- Carbon Tracking
-- Resource Utilization
-
-Sustainability is treated as a measurable production outcome.
+Standardize business and manufacturing processes across the organization.
 
 ---
 
-# Future Vision
+## Machines
 
-The architecture is designed to support future capabilities including:
-
-- Industry 4.0
-- Industry 5.0
-- Autonomous Planning
-- Machine Vision
-- Predictive Maintenance
-- Digital Product Passport
-- Carbon Accounting
-- Smart Supply Chain
-- AI Copilots
-- Autonomous Manufacturing Assistance
+Connect industrial equipment into one digital ecosystem.
 
 ---
 
-# Success Criteria
+## Data
 
-Naswood OS succeeds when:
-
-- Every material is traceable.
-- Every production process is measurable.
-- Every business decision is data-driven.
-- Every department works from the same information.
-- Factory performance continuously improves.
-- Artificial Intelligence becomes a trusted production assistant.
+Create a single source of truth for every business decision.
 
 ---
 
-# Vision Motto
+## Artificial Intelligence
 
-**From Log to Customer.  
-From Data to Intelligence.  
-From Factory to Digital Factory.**
+Provide intelligent recommendations instead of raw information.
 
 ---
 
-# Long-Term Goal
+## Digital Twin
 
-Naswood OS is not intended to become another ERP system.
+Create a real-time digital representation of the entire factory.
 
-Its purpose is to become the digital operating system of wood manufacturing, enabling factories to operate with greater visibility, higher efficiency, stronger traceability and continuous innovation.
+---
+
+# 8. Strategic Objectives
+
+The long-term objectives are:
+
+• Fully digital manufacturing
+
+• End-to-end traceability
+
+• Real-time decision support
+
+• Predictive operations
+
+• Autonomous workflows
+
+• Sustainable production
+
+• Enterprise scalability
+
+---
+
+# 9. Core Values
+
+Naswood OS is guided by the following values.
+
+Customer First
+
+Business Value
+
+Operational Excellence
+
+Innovation
+
+Simplicity
+
+Reliability
+
+Transparency
+
+Continuous Improvement
+
+Sustainability
+
+---
+
+# 10. Platform Principles
+
+Every component follows the same principles.
+
+• One Platform
+
+• One User Experience
+
+• One Data Model
+
+• One Source of Truth
+
+• API First
+
+• Event Driven
+
+• AI Native
+
+• Digital Twin Ready
+
+• Secure by Design
+
+• Documentation First
+
+---
+
+# 11. Long-Term Evolution
+
+The platform evolves through the following maturity stages.
+
+Traditional Factory
+
+↓
+
+Connected Factory
+
+↓
+
+Digital Factory
+
+↓
+
+Smart Factory
+
+↓
+
+Intelligent Factory
+
+↓
+
+Autonomous Factory
+
+---
+
+# 12. Success Indicators
+
+The platform succeeds when it enables:
+
+• Faster decision making
+
+• Higher manufacturing efficiency
+
+• Reduced operational costs
+
+• Better product quality
+
+• Complete traceability
+
+• Higher customer satisfaction
+
+• Enterprise-wide visibility
+
+---
+
+# 13. Future Vision
+
+Naswood OS is designed as a long-term platform.
+
+Future capabilities include:
+
+• Autonomous Scheduling
+
+• Predictive Manufacturing
+
+• AI-assisted Engineering
+
+• Autonomous Warehouses
+
+• Carbon Intelligence
+
+• Digital Product Passport
+
+• Self-Optimizing Production
+
+• Intelligent Supply Chain
+
+---
+
+# 14. Vision Manifesto
+
+Manufacturing software should not be fragmented.
+
+Factories should not rely on disconnected systems.
+
+Business, production, quality, maintenance, inventory and Artificial Intelligence should work as one.
+
+Every machine should have a digital identity.
+
+Every product should be traceable.
+
+Every decision should be data-driven.
+
+Every employee should have access to intelligent assistance.
+
+Naswood OS exists to make manufacturing connected, intelligent and future-ready.
+
+---
+
+# 15. Closing Statement
+
+Naswood OS is more than a software platform.
+
+It is the digital foundation for the next generation of manufacturing.
