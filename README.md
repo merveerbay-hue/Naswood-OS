@@ -1,252 +1,299 @@
-# 🌲 Naswood OS
+# Naswood OS
 
-Material enters.
-
-Everything is recorded.
-
-Nothing is lost.
-
-Everything is traceable.v> Modern ERP + MES + WMS platform for the wood manufacturing industry.
-
-
-![Status](https://img.shields.io/badge/Status-Development-orange)
-![Version](https://img.shields.io/badge/version-0.1-blue)
-![License](https://img.shields.io/badge/license-Private-red)
+> **A Next-Generation Manufacturing Operating System (MOS) for the Wood Industry**
 
 ---
 
-# 📖 About
+## Overview
 
-Naswood OS is a traceability-first manufacturing operating system developed specifically for industrial wood manufacturing.
+Naswood OS is a Manufacturing Operating System (MOS) developed specifically for integrated wood manufacturing facilities.
 
-Instead of focusing only on inventory, the system follows every piece of material from raw log reception to the finished product.
+Unlike traditional ERP systems, Naswood OS manages the complete lifecycle of materials from raw log intake to finished products, providing full traceability, intelligent production routing, quality control, inventory management, and AI-assisted manufacturing decisions.
 
-Every transformation, every inventory movement, every production step, every quality inspection and every material loss is digitally recorded.
-
-The goal is to create a complete Digital Twin of the factory.
+The system is designed around **materials**, **operations**, and **traceability**, not only around products or stock.
 
 ---
 
-# 🎯 Project Goals
+# Vision
 
-- Digital warehouse management
-- Real-time inventory tracking
-- Barcode & QR code system
-- Mobile stock counting
-- Production management
-- Purchasing
-- CRM
-- Quotation management
-- Shipment tracking
-- AI-assisted workflows
-- n8n automation integration
-- Business intelligence dashboards
+Build the most comprehensive digital operating system for the wood manufacturing industry.
+
+Naswood OS aims to become the digital backbone of modern wood factories by combining:
+
+- Production Management
+- Material Traceability
+- Intelligent Routing
+- Quality Management
+- Inventory Management
+- Maintenance
+- AI Decision Support
+- Digital Twin Technologies
+
+into a single integrated platform.
 
 ---
 
-# 🚀 MVP Scope
+# Core Principles
 
-The first production-ready version includes:
+### Material First
 
-- User Authentication
-- Role Management
+The system tracks materials, not only products.
+
+Every material entering the factory remains traceable until shipment.
+
+---
+
+### Complete Traceability
+
+Every movement, transformation, split, merge and shipment is recorded.
+
+Nothing becomes invisible inside the factory.
+
+---
+
+### Dynamic Production Routing
+
+Production is not linear.
+
+Materials may follow different production paths depending on production planning and quality decisions.
+
+---
+
+### Recovery Over Waste
+
+Production waste should be minimized.
+
+Recoverable materials are returned to production whenever possible.
+
+---
+
+### AI Assists — Humans Decide
+
+Artificial Intelligence provides recommendations.
+
+Production decisions always belong to authorized personnel.
+
+---
+
+### Digital Twin Ready
+
+The architecture is designed for future Digital Twin implementation.
+
+---
+
+# Manufacturing Scope
+
+Naswood OS currently covers:
+
+- Log Processing
+- Lumber Production
+- Kiln Drying
+- Thermowood Production
+- Profile Production
+- Solid Panel Production
+- Finger Joint Production
+- Pellet Production
 - Warehouse Management
-- Storage Locations
-- Product Catalog
-- Barcode / QR
-- Stock Management
-- Inventory Movements
-- Inventory Counting
-- Dashboard
+- Production Planning
+- Quality Management
+- Traceability
+- Recovery Management
 
-This version is intended to be deployed and used in the factory.
+Future production lines:
 
----
-
-# 🏭 Manufacturing Processes
-
-Future versions will support:
-
-```text
-Logs
-   ↓
-Sawmill
-   ↓
-Prism Lumber
-   ↓
-Kiln Drying
-   ↓
-Thermowood
-   ↓
-Planing
-   ↓
-Panel Production
-   ↓
-Finished Goods
-   ↓
-Shipping
-```
+- CLT
+- Glulam
+- CNC Processing
+- Painting
+- Modular Building Systems
 
 ---
 
-# 📦 Planned Modules
+# Core Engines
 
-| Module | Status |
-|---------|--------|
-| Authentication | 🚧 |
-| Warehouse | 🚧 |
-| Inventory | 🚧 |
-| Product Catalog | 🚧 |
-| Barcode | 🚧 |
-| Dashboard | 🚧 |
-| Purchasing | ⏳ |
-| CRM | ⏳ |
-| Production | ⏳ |
-| Shipment | ⏳ |
-| Quality | ⏳ |
-| Maintenance | ⏳ |
-| AI Assistant | 🔮 |
+Naswood OS is built around independent production engines.
+
+## Material Engine
+
+Manages every physical material inside the factory.
 
 ---
 
-# 🛠 Technology Stack
+## Routing Engine
 
-## Frontend
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- TanStack Query
-
-## Backend
-
-- NestJS
-- Prisma ORM
-- PostgreSQL
-- Redis
-- BullMQ
-
-## Infrastructure
-
-- Docker
-- Nginx
-- MinIO
+Controls all allowed production paths.
 
 ---
 
-# 📁 Repository Structure
+## Production Engine
+
+Executes manufacturing operations.
+
+---
+
+## Traceability Engine
+
+Provides complete genealogy from raw material to customer.
+
+---
+
+## Inventory Engine
+
+Tracks warehouse movements and stock locations.
+
+---
+
+## Quality Engine
+
+Manages inspections, grading and quality history.
+
+---
+
+## Asset Engine
+
+Manages machines and production assets.
+
+---
+
+## Tooling Engine
+
+Tracks cutters, tooling, recipes and maintenance.
+
+---
+
+## Recovery Engine
+
+Manages by-products, recoverable materials and waste.
+
+---
+
+## AI Engine
+
+Provides predictive analytics, optimization and intelligent recommendations.
+
+---
+
+# Documentation Structure
 
 ```
 docs/
-frontend/
-backend/
-database/
-assets/
+
+01_Project/
+    Vision.md
+    Business_Rules.md
+    Modules.md
+
+02_Manufacturing/
+    Factory_Overview.md
+    Material_Catalog.md
+    Manufacturing_Process.md
+    Routing_Rules.md
+    Machine_Catalog.md
+    Tooling_and_Recipe_Management.md
+    Traceability_Model.md
+    Waste_Management.md
+    Quality_Standards.md
+    KPI_Definitions.md
+
+03_System/
+    Database.md
+    Data_Dictionary.md
+    Event_Catalog.md
+    Naming_Standards.md
+    Architecture.md
+    API.md
+
+04_UI/
+
+05_AI/
 ```
 
 ---
 
-# 📚 Documentation
+# Current Development Phase
 
-Project documentation is stored inside the `/docs` folder.
+Current focus:
 
-- Vision
-- Business Rules
-- Database
-- API
-- UI
-- Development Rules
-- Roadmap
+- Manufacturing Knowledge Base
+- Material Modeling
+- Production Routing
+- Machine Modeling
+- Traceability Architecture
+- Naming Standards
 
----
-
-# 📅 Roadmap
-
-## Phase 1
-
-✅ Warehouse
-
-✅ Inventory
-
-✅ Barcode
-
-✅ Dashboard
+Software implementation will begin after the manufacturing model has been fully documented.
 
 ---
 
-## Phase 2
+# Long-Term Goals
 
-- Production Orders
-- Work Orders
-- Machine Tracking
-- Quality Control
-
----
-
-## Phase 3
-
-- CRM
-- Purchasing
-- Sales
-- Shipment
+- Complete Digital Factory
+- Real-Time Production Monitoring
+- AI-Assisted Planning
+- Full Material Genealogy
+- Predictive Maintenance
+- Digital Twin
+- Business Intelligence
+- Mobile Factory Operations
+- Cloud Manufacturing Platform
 
 ---
 
-## Phase 4
+# Technology Vision
 
-- AI Assistant
-- Predictive Planning
-- IoT Integration
-- PLC Integration
+Frontend
+
+- React
+- Next.js
+- TypeScript
+
+Backend
+
+- FastAPI
+- Python
+
+Database
+
+- PostgreSQL
+
+Authentication
+
+- JWT
+- OAuth
+
+Storage
+
+- S3 Compatible Storage
+
+AI
+
+- OpenAI
+- Claude
+- Local AI Models
+
+Infrastructure
+
+- Docker
+- Kubernetes
+- Nginx
 
 ---
 
-# 🔒 License
+# Project Status
 
-Private repository.
+Current Version
 
-Copyright © Naswood
-
-All Rights Reserved.
-
----
-
-# 👥 Development
-
-Owner
-
-Naswood
-
-Architecture
-
-Naswood OS Team
+**Naswood OS v0.1**
 
 Status
 
-Active Development 🚧
-Material Firstv
+**Manufacturing Architecture & Documentation Phase**
 
-↓
+---
 
-Transformation Tracking
+# License
 
-↓
+Private Project
 
-Full Traceability
-
-↓
-
-Yield Analysis
-
-↓
-
-Waste Analysis
-
-↓
-
-Digital Twin
-
-↓
-
-AI Ready
+Copyright © Naswood
+All rights reserved.
