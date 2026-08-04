@@ -335,7 +335,25 @@ Inventory Turnover
 Picking Time
 
 Receiving Time
+Manufacturing Storage Utilization
 
+Warehouse Occupancy Heat Map
+
+Production Buffer Status
+
+Quality Hold Inventory
+
+Finished Goods Capacity
+
+Kiln Buffer Status
+
+Thermowood Buffer Status
+
+By-Product Inventory
+
+Storage Function Distribution
+
+AI Warehouse Optimization
 ---
 
 # Quality Dashboard
