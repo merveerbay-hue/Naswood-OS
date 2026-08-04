@@ -3,21 +3,26 @@
 **Project:** Naswood OS
 **Document:** Master Data Schema
 **Database:** PostgreSQL
-**Version:** 1.0
+**Version:** 2.0
+**Status:** Approved
 
 ---
 
 # Purpose
 
-Master Data contains relatively static business entities shared across all modules.
+Master Data contains relatively static business information shared across all modules.
 
-Master Data should rarely change.
+Master Data is the foundation of every business process.
 
-Every transactional table references Master Data through UUID foreign keys.
+Changes are infrequent and controlled.
+
+Every transactional entity references Master Data through UUID foreign keys.
 
 ---
 
 # Entity List
+
+## Organization
 
 Company
 
@@ -31,7 +36,19 @@ Role
 
 Permission
 
+ApprovalLevel
+
+Shift
+
+ProductionCalendar
+
+---
+
+## Material
+
 MaterialType
+
+MaterialStatus
 
 WoodSpecies
 
@@ -39,23 +56,71 @@ QualityGrade
 
 DefectType
 
-TransformationType
-
 WasteType
+
+AttributeDefinition
 
 MeasurementType
 
+TransformationType
+
+ProductionStrategy
+
+---
+
+## Production
+
+RecipeType
+
+OperationType
+
+RoutingType
+
+MachineParameterType
+
+---
+
+## Machines
+
 MachineType
+
+MachineGroup
+
+EnergyType
+
+---
+
+## Tooling
 
 ToolType
 
-RecipeType
+ToolCategory
+
+KnifeType
+
+CutterHeadType
+
+---
+
+## Warehouse
 
 Warehouse
 
 WarehouseLocation
 
-Unit
+StorageZone
+
+PackageType
+
+ShipmentType
+
+---
+
+## Commercial
+
+CustomerType
+
+SupplierType
 
 Currency
 
@@ -63,13 +128,11 @@ Country
 
 Language
 
-Shift
+Unit
 
-ProductionCalendar
+GlueType
 
-PackageType
-
-ShipmentType
+GlueSupplier
 
 ---
 
@@ -89,10 +152,6 @@ ShipmentType
 | created_at | TIMESTAMP | |
 | updated_at | TIMESTAMP | |
 
-Indexes
-
-company.code
-
 ---
 
 # factory
@@ -107,18 +166,6 @@ company.code
 | address | TEXT |
 | timezone | VARCHAR(50) |
 | status | VARCHAR(20) |
-
-Relationships
-
-Company
-
-1
-
-↓
-
-N
-
-Factories
 
 ---
 
@@ -162,12 +209,12 @@ Factories
 |--------|------|
 | id | UUID |
 | module | VARCHAR(50) |
-| action | VARCHAR(30) |
-| scope | VARCHAR(50) |
+| action | VARCHAR(50) |
+| description | TEXT |
 
 ---
 
-# material_type
+# Material Types
 
 Examples
 
@@ -175,29 +222,75 @@ LOG
 
 PRISM
 
-LUMBER
+GREEN_LUMBER
 
-KD
+KD_LUMBER
 
-THERMO
+THERMOWOOD_LUMBER
 
 LAMELLA
+
+FJ_LAMELLA
 
 SOLID_PANEL
 
 FJ_PANEL
 
+PROFILE
+
+DECK
+
+CLADDING
+
 PELLET
+
+WOOD_CHIP
+
+SAWDUST
+
+BARK
+
+PACKAGING
 
 ---
 
-# wood_species
+# Material Status
+
+Available
+
+Reserved
+
+In Production
+
+Waiting Quality
+
+Approved
+
+Rejected
+
+Recovered
+
+Packaged
+
+Shipped
+
+Consumed
+
+Scrapped
+
+Archived
+
+---
+
+# Wood Species
 
 Examples
 
 Pine
 
 Spruce
+
+Fir
 
 Ash
 
@@ -211,17 +304,11 @@ Iroko
 
 Teak
 
+Accoya
+
 ---
 
-# quality_grade
-
-Examples
-
-H1
-
-H2
-
-H3
+# Quality Grades
 
 AA
 
@@ -235,25 +322,13 @@ BC
 
 CC
 
-RET
+Industrial
+
+Reject
 
 ---
 
-# defect_type
-
-Stores standardized defect codes.
-
-DF001
-
-DF002
-
-DF003
-
-...
-
----
-
-# transformation_type
+# Transformation Types
 
 Split
 
@@ -271,33 +346,295 @@ Shipment
 
 ---
 
-# measurement_type
+# Production Strategy
 
-Moisture
+MTS
 
-Thickness
+Make To Stock
 
-Width
+---
+
+MTO
+
+Make To Order
+
+---
+
+ATO
+
+Assemble To Order
+
+---
+
+ETO
+
+Engineer To Order
+
+---
+
+# Waste Types
+
+Sawdust
+
+Wet Sawdust
+
+Thermowood Sawdust
+
+Wood Chip
+
+Trim
+
+Bark
+
+Rejected Material
+
+Glue Waste
+
+Packaging Waste
+
+Other
+
+---
+
+# Attribute Definition
+
+Defines every dynamic material property.
+
+Examples
+
+Bottom Diameter
+
+Top Diameter
+
+Average Diameter
 
 Length
 
-Weight
+Width
+
+Thickness
+
+Moisture
 
 Density
+
+Weight
+
+Volume
+
+Color
+
+Surface Roughness
+
+Growth Ring
+
+Heartwood Ratio
+
+Sapwood Ratio
+
+Thermo Class
+
+Glue Batch
+
+Press Time
+
+Press Pressure
+
+---
+
+# Measurement Types
+
+## Geometry
+
+Length
+
+Width
+
+Thickness
+
+Bottom Diameter
+
+Top Diameter
+
+Average Diameter
+
+Cross Section
+
+---
+
+## Moisture
+
+Moisture
+
+---
+
+## Physical
+
+Weight
+
+Volume
+
+Density
+
+---
+
+## Surface
+
+Surface Roughness
+
+Brush Depth
+
+Color
+
+Gloss
+
+---
+
+## Process
 
 Temperature
 
 Pressure
 
-RPM
-
 Feed Speed
+
+RPM
 
 Glue Spread
 
+Press Time
+
+Humidity
+
 ---
 
-# unit
+## Machine
+
+Motor Current
+
+Voltage
+
+Power
+
+Air Pressure
+
+Hydraulic Pressure
+
+---
+
+## Quality
+
+Warp
+
+Twist
+
+Bow
+
+Cup
+
+Crack Width
+
+Straightness
+
+---
+
+## Energy
+
+Power Consumption
+
+Fuel Consumption
+
+Compressed Air Consumption
+
+Steam Consumption
+
+---
+
+# Machine Parameter Types
+
+Feed Speed
+
+RPM
+
+Pressure
+
+Temperature
+
+Humidity
+
+Motor Current
+
+Voltage
+
+Power
+
+Hydraulic Pressure
+
+Air Pressure
+
+Tool Offset
+
+Spindle Speed
+
+---
+
+# Recipe Types
+
+Drying
+
+Thermowood
+
+Profiling
+
+Finger Joint
+
+Panel Press
+
+Calibration
+
+Packaging
+
+---
+
+# Tool Types
+
+Circular Saw
+
+Band Saw
+
+Planer Knife
+
+Moulder Knife
+
+Finger Joint Cutter
+
+Router Bit
+
+Drill
+
+CNC Tool
+
+---
+
+# Energy Types
+
+Electricity
+
+Natural Gas
+
+Biomass
+
+Diesel
+
+LPG
+
+Compressed Air
+
+Steam
+
+---
+
+# Units
 
 mm
 
@@ -311,23 +648,25 @@ m³
 
 kg
 
+g
+
 piece
 
-hour
+liter
 
 minute
 
----
+hour
 
-# currency
+kWh
 
-TRY
+°C
 
-USD
+bar
 
-EUR
+rpm
 
-GBP
+%
 
 ---
 
@@ -336,8 +675,10 @@ GBP
 - UUID Primary Keys
 - Soft Delete
 - Audit Fields
+- Human Readable Business Codes
 - Company Scoped
 - Factory Scoped where applicable
-- Human-readable Codes
 - Unique Code Constraints
 - No Physical Deletes
+- Version Controlled Master Data
+- All Transactional Tables Reference Master Data via UUID
