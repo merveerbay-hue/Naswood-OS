@@ -335,6 +335,49 @@ OAuth 2.0
 
 OpenID Connect
 
+# 9A. Operational User Profile
+
+Every operational employee may define:
+
+Employee Skill Matrix
+
+Authorized Machines
+
+Authorized Operations
+
+Authorized Tool Groups
+
+Forklift License
+
+Crane License
+
+Electrical Authorization
+
+Welding Certification
+
+First Aid Certification
+
+Quality Authorization
+
+Maximum Approval Limit
+
+Default Shift
+
+Assigned Production Area
+
+Assigned Warehouse
+
+Assigned Mobile Device
+
+PPE Requirements
+
+Training Records
+
+Certification Expiration
+
+Performance Score
+
+Safety Score
 ---
 
 # 10. Authorization
