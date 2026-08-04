@@ -2,9 +2,9 @@
 
 **Project:** Naswood OS
 
-**Document:** Production Planning
+**Document:** Advanced Production Planning
 
-**Module Code:** MOD-PLAN-001
+**Module Code:** MOD-PRO-PLN-001
 
 **Version:** 2.0
 
@@ -14,520 +14,287 @@
 
 # 1. Purpose
 
-The Production Planning module is responsible for transforming customer demand, inventory requirements and forecast data into optimized production plans.
+The Production Planning module manages enterprise-wide production planning, finite capacity scheduling, material synchronization and manufacturing optimization.
 
-It coordinates manufacturing capacity, materials, work centers, machines, labor, drying schedules, Thermowood batches, packaging resources and shipment commitments.
+It transforms customer demand into optimized production schedules while balancing capacity, inventory, machine availability, energy usage and delivery commitments.
 
-Production Planning is the bridge between Sales, Purchasing and Production Execution.
+The module serves as the Advanced Production Planning & Scheduling Platform (APPS) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
-- Optimize production plans
-- Balance capacity
-- Minimize lead time
-- Reduce inventory
-- Improve on-time delivery
-- Optimize energy usage
+- Optimize production schedules
+- Maximize resource utilization
+- Minimize production delays
+- Balance machine workloads
+- Synchronize material flow
 - Support AI-assisted planning
-- Enable Digital Twin simulation
+- Synchronize Digital Twin
 
 ---
 
-# 3. Planning Levels
+# 3. Planning Lifecycle
 
-Strategic Planning
+Demand
 
-Sales & Operations Planning (S&OP)
+↓
 
-Master Production Schedule (MPS)
+Forecast
 
-Material Requirements Planning (MRP)
-
-Capacity Requirements Planning (CRP)
-
-Finite Capacity Scheduling (FCS)
-
-Daily Shop Floor Planning
-
-Real-Time Dynamic Rescheduling
-
----
-
-# 4. Planning Sources
+↓
 
 Sales Orders
 
-Customer Forecasts
+↓
 
-Dealer Forecasts
+MRP
 
-Minimum Stock Levels
+↓
 
-Seasonal Demand
+Capacity Planning
 
-Project Orders
+↓
 
-Export Commitments
+Finite Scheduling
 
-Internal Consumption
+↓
 
-Maintenance Shutdown Plans
+Production Orders
 
-AI Demand Forecast
+↓
 
----
+Operations
 
-# 5. Planning Horizons
+↓
 
-Today
+Execution
 
-Tomorrow
+↓
 
-Current Week
-
-Next Week
-
-Current Month
-
-Quarter
-
-Year
-
-Multi-Year Capacity Plan
+Performance Analysis
 
 ---
 
-# 6. Planning Dimensions
+# 4. Planning Levels
 
-Factory
+Strategic Planning
 
-Production Area
+Tactical Planning
 
-Production Line
+Master Production Schedule (MPS)
 
-Work Center
+Finite Capacity Scheduling
 
-Machine
+Daily Scheduling
 
-Shift
+Shift Scheduling
 
-Operator
+Machine Scheduling
 
-Warehouse
-
-Customer
-
-Country
-
-Product Family
-
-Species
-
-Thermowood Recipe
-
-Kiln Recipe
-
-Package Type
-
-Container Schedule
+Real-Time Rescheduling
 
 ---
 
-# 7. Capacity Planning
+# 5. Planning Objects
+
+Sales Orders
+
+Projects
+
+Production Orders
+
+Operations
+
+Batches
+
+Machines
+
+Production Lines
+
+Warehouses
+
+Materials
+
+Tools
+
+Operators
+
+Containers
+
+---
+
+# 6. Capacity Planning
 
 Machine Capacity
 
-Operator Capacity
+Line Capacity
 
-Shift Capacity
-
-Warehouse Capacity
+Labor Capacity
 
 Kiln Capacity
 
 Thermowood Capacity
 
-Finger Joint Capacity
-
-Profil Capacity
-
-Packaging Capacity
-
-Loading Capacity
-
-Container Capacity
-
-Forklift Capacity
+Warehouse Capacity
 
 Energy Capacity
 
----
-
-# 8. Material Planning
-
-Log Availability
-
-Prism Inventory
-
-Dry Lumber
-
-Thermowood Stock
-
-Glue Inventory
-
-Packaging Materials
-
-Consumables
-
-Safety Stock
-
-Alternative Materials
-
-Supplier Lead Time
+Shift Capacity
 
 ---
 
-# 9. Timber Yard Planning
+# 7. Scheduling
 
-Expected Log Arrivals
+Forward Scheduling
 
-Supplier Schedule
+Backward Scheduling
 
-Log Yard Capacity
+Finite Scheduling
 
-Species Distribution
+Infinite Scheduling
 
-Diameter Distribution
+Constraint-Based Scheduling
 
-Length Distribution
+Priority Scheduling
 
-Harvest Region Allocation
+Campaign Scheduling
 
-Log Rotation
-
-AI Log Allocation
+Dynamic Rescheduling
 
 ---
 
-# 10. Kiln Planning
+# 8. Constraints
 
-Kiln Schedule
-
-Drying Recipes
-
-Kiln Occupancy
-
-Loading Schedule
-
-Expected Completion
-
-Drying Curve
-
-Energy Consumption
-
-Batch Planning
-
-Moisture Targets
-
-AI Drying Optimization
-
----
-
-# 11. Thermowood Planning
-
-Thermowood Batch Schedule
-
-Recipe Allocation
-
-Kiln Assignment
-
-Expected Finish
-
-Cooling Capacity
-
-Batch Sequencing
-
-Energy Planning
-
-Color Consistency Planning
-
-AI Recipe Optimization
-
----
-
-# 12. Routing Planning
-
-Preferred Routing
-
-Alternative Routing
-
-Emergency Routing
-
-Dynamic Routing
-
-Customer Specific Routing
-
-AI Routing Recommendation
-
----
-
-# 13. Machine Planning
-
-Preferred Machine
-
-Alternative Machine
-
-Maintenance Calendar
-
-Expected Downtime
+Machine Availability
 
 Tool Availability
 
-Machine Health
-
-AI Machine Recommendation
-
----
-
-# 14. Workforce Planning
-
-Shift Planning
-
-Operator Assignment
-
-Skill Matrix
-
-Certification Validation
-
-Leave Calendar
-
-Overtime Planning
-
-AI Workforce Balancing
-
----
-
-# 15. Packaging Planning
-
-Package Capacity
-
-Bundle Planning
-
-Pallet Planning
-
-Container Planning
-
-Label Capacity
-
-Packaging Material Planning
-
-Customer Packaging Rules
-
-Export Packaging
-
----
-
-# 16. Logistics Planning
-
-Shipment Planning
-
-Container Planning
-
-Truck Planning
-
-Carrier Planning
-
-Dock Planning
-
-Route Planning
-
-ETA Planning
-
-Export Schedule
-
----
-
-# 17. Sustainability Planning
-
-Energy Budget
-
-Carbon Budget
-
-Waste Forecast
-
-Pellet Production
-
-Recycling Capacity
-
-FSC Compliance
-
-PEFC Compliance
-
-ESG Targets
-
----
-
-# 18. Digital Twin Planning
-
-Factory Simulation
-
-Material Flow Simulation
-
-Production Simulation
-
-Warehouse Simulation
-
-Container Loading Simulation
-
-Energy Simulation
-
-What-if Analysis
-
-Bottleneck Simulation
-
----
-
-# 19. AI Capabilities
-
-AI Demand Forecast
-
-AI Sales Forecast
-
-AI Production Planning
-
-AI Capacity Optimization
-
-AI Material Allocation
-
-AI Machine Selection
-
-AI Operator Recommendation
-
-AI Shift Optimization
-
-AI Thermowood Optimization
-
-AI Kiln Optimization
-
-AI Inventory Forecast
-
-AI Packaging Optimization
-
-AI Shipment Optimization
-
-AI Carbon Optimization
-
-AI Energy Optimization
-
-AI What-if Simulation
-
-AI Scenario Comparison
-
-AI Bottleneck Prediction
-
-AI Delay Prediction
-
-AI Production Copilot
-
----
-
-# 20. Dashboard Widgets
-
-Production Calendar
-
-Capacity Heat Map
-
-Machine Load
-
-Kiln Occupancy
-
-Thermowood Queue
+Operator Availability
 
 Material Availability
 
-Warehouse Occupancy
+Maintenance Windows
 
-Packaging Capacity
+Energy Limits
 
-Shipment Calendar
+Warehouse Capacity
 
-Container Schedule
+Delivery Deadlines
 
-Energy Consumption
-
-Carbon Emissions
-
-Planning Conflicts
-
-Critical Orders
-
-Late Orders
-
-AI Planning Suggestions
-
-Digital Twin Simulation
+Customer Priorities
 
 ---
 
-# 21. Reports
+# 9. Material Synchronization
 
-Master Production Schedule
+Timber Supply
 
-Daily Production Plan
+Prism Inventory
 
-Weekly Capacity Plan
+Kiln Queue
 
-Monthly Capacity Plan
+Thermowood Queue
 
-MRP Report
+WIP
 
-CRP Report
+Finished Goods
 
-Machine Utilization
+Packaging
 
-Operator Utilization
+Shipment Readiness
 
-Kiln Plan
+---
 
-Thermowood Plan
+# 10. AI Capabilities
 
-Material Shortage
+Production Optimization
 
-Production Forecast
+Schedule Optimization
 
-Planning Accuracy
+Capacity Prediction
 
-Planning KPI
+Delay Prediction
 
-Container Schedule
+Bottleneck Detection
 
-Energy Forecast
+Demand Forecasting
 
-Carbon Forecast
+Scenario Planning
+
+Planning Copilot
+
+---
+
+# 11. Digital Twin Integration
+
+Production Timeline
+
+Factory Schedule
+
+Machine Timeline
+
+Capacity Heat Map
+
+Material Flow
+
+Schedule Replay
+
+Scenario Simulation
+
+---
+
+# 12. Dashboard Widgets
+
+Production Schedule
+
+Capacity Utilization
+
+Machine Loading
+
+Bottlenecks
+
+Material Availability
+
+Delivery Performance
+
+Schedule Stability
+
+AI Recommendations
+
+---
+
+# 13. Reports
+
+Production Plan
+
+Capacity Report
+
+Machine Load Report
+
+Material Requirement Report
+
+Delay Analysis
+
+Schedule Performance
+
+Planning KPI Report
 
 AI Planning Report
 
 ---
 
-# 22. API Resources
+# 14. API Resources
 
 GET /production-planning
 
-GET /production-planning/calendar
+GET /production-planning/schedule
 
 GET /production-planning/capacity
 
-GET /production-planning/conflicts
+GET /production-planning/machines
 
 GET /production-planning/materials
-
-GET /production-planning/thermowood
-
-GET /production-planning/kilns
-
-GET /production-planning/simulation
 
 POST /production-planning/generate
 
@@ -539,92 +306,196 @@ POST /production-planning/simulate
 
 ---
 
-# 23. Events
+# 15. Events
 
 ProductionPlanCreated
 
-ProductionPlanUpdated
+ScheduleGenerated
 
-ProductionPlanApproved
-
-ProductionPlanReleased
-
-ProductionPlanOptimized
+ScheduleOptimized
 
 CapacityExceeded
 
-MaterialShortageDetected
+DelayDetected
 
-KilnScheduled
+RescheduleTriggered
 
-ThermowoodBatchScheduled
-
-MachineAllocated
-
-ShipmentPlanned
+AIRecommendationGenerated
 
 SimulationCompleted
 
-AIPlanningCompleted
+---
+
+# 16. Mobile
+
+Production Schedule
+
+Machine Schedule
+
+Capacity View
+
+Alerts
+
+Approvals
+
+Offline Snapshot
 
 ---
 
-# 24. Mobile
+# 17. Business Rules
 
-Planning Calendar
+Every production order shall originate from an approved production plan.
 
-Capacity Overview
+Finite capacity scheduling shall respect machine and labor constraints.
 
-Material Alerts
+Planning changes shall be version-controlled.
 
-Machine Availability
+Rescheduling shall preserve completed operations.
 
-Approval Tasks
+Critical planning changes shall generate notifications.
 
-AI Planning Assistant
-
----
-
-# 25. Business Rules
-
-Production Plans require approved demand sources.
-
-Material availability shall be validated before release.
-
-Finite Capacity Scheduling shall prevent overloading resources.
-
-Kiln planning shall consider moisture targets and recipe compatibility.
-
-Thermowood batches shall be grouped by compatible recipes.
-
-Packaging capacity shall be validated before shipment planning.
-
-Export production shall reserve container capacity.
-
-All planning changes shall generate Events and Audit Logs.
+AI-generated plans shall require approval when defined by policy.
 
 ---
 
-# 26. Future Extensions
+# 18. Future Extensions
 
-Advanced APS
+Autonomous Scheduling
 
-Constraint-Based Scheduling
+Reinforcement Learning Optimization
 
-Autonomous Planning
+Multi-Plant Planning
+
+Global Supply Network Planning
+
+Digital Planning Twin
 
 Industry 5.0
 
-Collaborative Planning
+Digital Thread
 
-Supplier Portal Integration
+MCP Planning Agents
 
-Dealer Forecast Portal
+---
 
-AI Negotiation Agent
+# 19. Architecture Review
 
-Carbon Neutral Planning
+## Database Changes
 
-Autonomous Factory Scheduling
+production_plans
 
-MCP AI Planning Agents
+planning_versions
+
+planning_constraints
+
+planning_capacity
+
+planning_schedules
+
+planning_simulations
+
+planning_ai
+
+planning_events
+
+planning_history
+
+planning_priorities
+
+planning_kpis
+
+## Related Modules
+
+Sales_Orders
+
+Forecasts
+
+MRP
+
+Production_Orders
+
+Operations
+
+Finished_Goods
+
+Inventory
+
+Warehouse
+
+Machines
+
+Runtime
+
+Maintenance
+
+Tooling
+
+Energy
+
+Shipment
+
+Export
+
+Analytics
+
+AI
+
+Digital_Twin
+
+## Application Updates
+
+API_Contracts.md
+
+Planning_Engine.md
+
+Scheduling_Rules.md
+
+Capacity_Model.md
+
+Events.md
+
+Dashboard_Definitions.md
+
+Mobile_App.md
+
+## Naswood-Specific Enhancements
+
+### Timber Manufacturing Planning
+
+- Log allocation planning
+- Prism production planning
+- Lumber flow optimization
+- Timber yield planning
+- Material genealogy planning
+
+### Kiln & Thermowood Planning
+
+- Kiln loading optimization
+- Drying campaign planning
+- Thermowood recipe grouping
+- Cooling sequence planning
+- Energy-aware scheduling
+
+### Production Optimization
+
+- Machine balancing
+- Tool availability planning
+- Setup minimization
+- Shift optimization
+- Bottleneck elimination
+
+### AI Optimization
+
+- Dynamic rescheduling
+- Capacity prediction
+- Delay prediction
+- Planning recommendations
+- Scenario optimization
+
+### Digital Twin
+
+- Live planning visualization
+- Factory timeline
+- Capacity heat maps
+- Material flow replay
+- Schedule simulations
