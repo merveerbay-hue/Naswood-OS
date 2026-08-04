@@ -1,4 +1,4 @@
-# TASK-009 Inventory Counting
+# TASK-024 Inventory Counting
 
 **Sprint:** Sprint_01_Inventory
 
