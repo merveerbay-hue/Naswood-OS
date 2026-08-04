@@ -633,21 +633,171 @@ Offline Support
 
 # 22. AI Capabilities
 
-Warehouse Optimization
+The Warehouses module supports Artificial Intelligence to optimize storage utilization, inventory accuracy and warehouse operations.
 
-Location Recommendation
+## Storage Optimization
 
-Space Utilization Analysis
+Warehouse Slotting Optimization
 
-Capacity Forecast
+Dynamic Storage Location Recommendation
 
-Material Placement Recommendation
+Automatic Warehouse Balancing
 
-Warehouse Traffic Analysis
+Storage Consolidation Suggestions
 
-AI Warehouse Assistant
+Overflow Storage Recommendations
 
 ---
+
+## Material Flow Optimization
+
+Material Flow Analysis
+
+Production Buffer Optimization
+
+Shortest Travel Path Recommendation
+
+Warehouse Traffic Optimization
+
+Forklift Route Optimization
+
+Loading Sequence Optimization
+
+---
+
+## Capacity Management
+
+Warehouse Capacity Forecast
+
+Storage Occupancy Prediction
+
+Seasonal Capacity Planning
+
+Automatic Overflow Detection
+
+Warehouse Expansion Recommendation
+
+---
+
+## Inventory Intelligence
+
+Inventory Anomaly Detection
+
+Slow Moving Inventory Detection
+
+Dead Stock Identification
+
+Fast Moving Material Analysis
+
+Cycle Count Optimization
+
+Inventory Accuracy Prediction
+
+---
+
+## Production Support
+
+Production Buffer Recommendations
+
+WIP Optimization
+
+Material Availability Prediction
+
+Just-in-Time Material Staging
+
+Automatic Material Reservation Suggestions
+
+---
+
+## Logistics Optimization
+
+Shipment Preparation Optimization
+
+Container Loading Optimization
+
+Loading Dock Scheduling
+
+Vehicle Loading Recommendation
+
+Export Staging Optimization
+
+---
+
+## Risk Analysis
+
+Storage Risk Detection
+
+Fire Risk Zones
+
+Moisture Risk Analysis
+
+Material Damage Prediction
+
+Warehouse Congestion Detection
+
+Temperature Monitoring Analysis
+
+---
+
+## Sustainability
+
+Warehouse Energy Optimization
+
+Forklift Energy Analysis
+
+Warehouse Lighting Optimization
+
+Carbon Footprint Estimation
+
+Storage Efficiency Analysis
+
+---
+
+## Digital Twin Integration
+
+Digital Twin Warehouse Analysis
+
+Real-Time Warehouse Visualization
+
+Warehouse Heat Map Analysis
+
+Live Occupancy Monitoring
+
+AI Warehouse Simulation
+
+---
+
+## Decision Support
+
+Warehouse KPI Analysis
+
+Operational Bottleneck Detection
+
+Warehouse Performance Benchmarking
+
+Resource Allocation Recommendation
+
+Operational Cost Optimization
+
+---
+
+## AI Assistant Features
+
+Warehouse Copilot
+
+Natural Language Warehouse Search
+
+Warehouse Question Answering
+
+AI Inventory Assistant
+
+AI Receiving Assistant
+
+AI Shipping Assistant
+
+Warehouse Incident Explanation
+
+Operational Recommendation Engine
 
 # 23. API Resources
 
