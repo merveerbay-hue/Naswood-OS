@@ -1,0 +1,497 @@
+# Database Schema — Materials
+
+**Project:** Naswood OS
+**Document:** Materials Schema
+**Database:** PostgreSQL
+**Version:** 1.0
+
+---
+
+# Purpose
+
+The Materials domain manages every physical material that enters, exists within, or leaves the factory.
+
+Materials remain traceable throughout their entire lifecycle.
+
+This schema supports:
+
+- Receiving
+- Storage
+- Production
+- Transformation
+- Quality
+- Traceability
+- Recovery
+- Waste
+- Packaging
+- Shipment
+
+---
+
+# Entity List
+
+ReceivingLot
+
+Material
+
+MaterialCode
+
+MaterialDimension
+
+MaterialStatus
+
+MaterialLocation
+
+MaterialSpecies
+
+MaterialGrade
+
+MaterialMoisture
+
+MaterialTransformation
+
+TransformationInput
+
+TransformationOutput
+
+MaterialMeasurement
+
+MaterialAttachment
+
+MaterialReservation
+
+MaterialHistory
+
+MaterialRelationship
+
+MaterialRecovery
+
+WasteRecord
+
+MaterialCost
+
+MaterialTag
+
+---
+
+# receiving_lot
+
+Represents the first grouped material accepted into the factory.
+
+Examples
+
+- Truck Logs
+- Imported Lumber
+- Kiln Dried Lumber
+- Dry Lamellas
+- Purchased Thermowood
+
+| Field | Type | Constraint |
+|--------|------|------------|
+| id | UUID | PK |
+| code | VARCHAR(30) | UNIQUE |
+| supplier_id | UUID | FK |
+| factory_id | UUID | FK |
+| arrival_date | TIMESTAMP | NOT NULL |
+| vehicle_plate | VARCHAR(30) | |
+| driver_name | VARCHAR(150) | |
+| delivery_note | VARCHAR(100) | |
+| invoice_number | VARCHAR(100) | |
+| species_id | UUID | FK |
+| total_volume | NUMERIC(12,3) | |
+| total_weight | NUMERIC(12,3) | |
+| notes | TEXT | |
+
+---
+
+# material
+
+Represents every physical material.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| code | VARCHAR(40) UNIQUE |
+| receiving_lot_id | UUID FK |
+| transformation_id | UUID FK |
+| material_type_id | UUID FK |
+| species_id | UUID FK |
+| quality_grade_id | UUID FK |
+| warehouse_location_id | UUID FK |
+| current_status_id | UUID FK |
+| parent_material_id | UUID FK |
+| current_package_id | UUID FK |
+| moisture | NUMERIC(5,2) |
+| volume | NUMERIC(12,4) |
+| weight | NUMERIC(12,4) |
+| length | NUMERIC(12,2) |
+| width | NUMERIC(12,2) |
+| thickness | NUMERIC(12,2) |
+| barcode | VARCHAR(100) |
+| qr_code | VARCHAR(255) |
+| created_at | TIMESTAMP |
+
+---
+
+# material_status
+
+Examples
+
+Available
+
+Reserved
+
+In Production
+
+Waiting Quality
+
+Approved
+
+Rejected
+
+Recovered
+
+Packaged
+
+Shipped
+
+Consumed
+
+Scrapped
+
+---
+
+# material_location
+
+Tracks current location.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| warehouse_id | UUID FK |
+| warehouse_location_id | UUID FK |
+| updated_at | TIMESTAMP |
+
+---
+
+# transformation
+
+Represents one production process.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| code | VARCHAR(40) |
+| work_order_id | UUID FK |
+| operation_id | UUID FK |
+| machine_id | UUID FK |
+| recipe_id | UUID FK |
+| operator_id | UUID FK |
+| shift_id | UUID FK |
+| transformation_type_id | UUID FK |
+| start_time | TIMESTAMP |
+| end_time | TIMESTAMP |
+| duration_minutes | INTEGER |
+| status | VARCHAR(20) |
+
+---
+
+# transformation_input
+
+Input materials.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| transformation_id | UUID FK |
+| material_id | UUID FK |
+| quantity | NUMERIC(12,3) |
+
+---
+
+# transformation_output
+
+Output materials.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| transformation_id | UUID FK |
+| material_id | UUID FK |
+| quantity | NUMERIC(12,3) |
+
+---
+
+# material_measurement
+
+Stores all measurements.
+
+Examples
+
+Moisture
+
+Thickness
+
+Width
+
+Length
+
+Density
+
+Weight
+
+Temperature
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| transformation_id | UUID FK |
+| measurement_type_id | UUID FK |
+| value | NUMERIC(12,4) |
+| tolerance | NUMERIC(12,4) |
+| device | VARCHAR(100) |
+| operator_id | UUID FK |
+| measured_at | TIMESTAMP |
+
+---
+
+# material_relationship
+
+Maintains genealogy.
+
+Relationship Types
+
+Parent
+
+Child
+
+Split
+
+Merge
+
+Recovery
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| parent_material_id | UUID FK |
+| child_material_id | UUID FK |
+| transformation_id | UUID FK |
+| relationship_type | VARCHAR(30) |
+
+---
+
+# material_recovery
+
+Recovered material.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| source_material_id | UUID FK |
+| recovered_material_id | UUID FK |
+| transformation_id | UUID FK |
+| recovery_type | VARCHAR(30) |
+| quantity | NUMERIC(12,3) |
+
+---
+
+# waste_record
+
+Generated waste.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| transformation_id | UUID FK |
+| waste_type_id | UUID FK |
+| quantity | NUMERIC(12,3) |
+| recoverable | BOOLEAN |
+| destination | VARCHAR(100) |
+| cost | NUMERIC(12,2) |
+
+Examples
+
+Sawdust
+
+Bark
+
+Trim
+
+Reject
+
+Thermowood Sawdust
+
+---
+
+# material_cost
+
+Stores material cost evolution.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| material_cost | NUMERIC(12,2) |
+| labor_cost | NUMERIC(12,2) |
+| energy_cost | NUMERIC(12,2) |
+| glue_cost | NUMERIC(12,2) |
+| maintenance_cost | NUMERIC(12,2) |
+| waste_cost | NUMERIC(12,2) |
+| total_cost | NUMERIC(12,2) |
+| calculated_at | TIMESTAMP |
+
+---
+
+# material_attachment
+
+Stores file references.
+
+Examples
+
+Photo
+
+Certificate
+
+DXF
+
+Inspection Image
+
+PDF
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| file_type | VARCHAR(30) |
+| file_name | VARCHAR(255) |
+| storage_url | TEXT |
+
+---
+
+# material_reservation
+
+Reserves materials for production.
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| production_order_id | UUID FK |
+| reserved_quantity | NUMERIC(12,3) |
+| reserved_at | TIMESTAMP |
+
+---
+
+# material_history
+
+Timeline of material lifecycle.
+
+Examples
+
+Received
+
+Moved
+
+Produced
+
+Recovered
+
+Measured
+
+Approved
+
+Packed
+
+Shipped
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| event_id | UUID FK |
+| timestamp | TIMESTAMP |
+
+---
+
+# material_tag
+
+Additional metadata.
+
+Examples
+
+FSC
+
+PEFC
+
+CE
+
+Custom Project
+
+Export
+
+| Field | Type |
+|--------|------|
+| id | UUID |
+| material_id | UUID FK |
+| tag | VARCHAR(100) |
+
+---
+
+# Relationships
+
+Receiving Lot
+
+1 → N Material
+
+Material
+
+1 → N Measurements
+
+Material
+
+1 → N Costs
+
+Material
+
+1 → N Attachments
+
+Material
+
+1 → N Reservations
+
+Material
+
+1 → N History
+
+Transformation
+
+1 → N Inputs
+
+Transformation
+
+1 → N Outputs
+
+Transformation
+
+1 → N Waste Records
+
+Transformation
+
+1 → N Measurements
+
+---
+
+# General Rules
+
+- Every physical material has one UUID.
+- Every transformation generates new material records when physical identity changes.
+- Materials are never physically deleted.
+- Traceability is maintained through Material Relationships.
+- Cost is accumulated through transformations.
+- Measurements are immutable.
+- Waste is always classified.
+- Recovery remains traceable.
+- Every material movement generates an event.
