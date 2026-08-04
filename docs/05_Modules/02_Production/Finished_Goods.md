@@ -4,7 +4,7 @@
 
 **Document:** Finished Goods Module
 
-**Version:** 1.0
+**Version:** 2.0
 
 **Status:** Approved
 
@@ -28,26 +28,29 @@ Production
 
 ## Description
 
-The Finished Goods module manages all production outputs that have successfully completed manufacturing, quality approval and packaging processes.
+The Finished Goods module manages every manufactured product that has successfully completed production, quality approval and packaging.
 
-Finished Goods are ready for storage, shipment and customer delivery while maintaining complete traceability throughout their lifecycle.
+Finished Goods are uniquely identified, fully traceable and ready for storage, shipment and customer delivery.
+
+Every Finished Good maintains complete genealogy from raw log to customer.
 
 ---
 
-## Objectives
+# 2. Objectives
 
 - Manage finished products
-- Support shipment readiness
-- Maintain complete traceability
-- Standardize packaging
-- Enable Digital Product Passport
-- Improve warehouse visibility
+- Complete production lifecycle
+- Maintain genealogy
+- Support warehouse management
+- Support shipment
+- Support Digital Product Passport
+- Support AI optimization
 
 ---
 
-# 2. Business Scope
+# 3. Business Scope
 
-## Included Functions
+## Included
 
 Finished Goods Registration
 
@@ -55,27 +58,33 @@ Production Completion
 
 Quality Release
 
-Packaging
+Packaging Assignment
 
-Label Generation
+Package Verification
 
-QR / Barcode Assignment
-
-Storage Assignment
+Warehouse Assignment
 
 Shipment Preparation
 
-Digital Product Passport
+Customer Reservation
 
 Certificate Management
 
+Digital Product Passport
+
+Carbon Footprint
+
+Genealogy
+
+Export Preparation
+
 ---
 
-## Excluded Functions
-
-Sales Orders
+## Excluded
 
 Production Planning
+
+Sales Orders
 
 Purchasing
 
@@ -83,31 +92,7 @@ Accounting
 
 ---
 
-## Dependencies
-
-Production
-
-Inventory
-
-Warehouse
-
-Packaging
-
-Quality
-
-Logistics
-
-Customers
-
-Analytics
-
-Workflow
-
-AI
-
----
-
-# 3. User Roles
+# 4. User Roles
 
 Production Manager
 
@@ -117,7 +102,9 @@ Warehouse Operator
 
 Quality Engineer
 
-Logistics Manager
+Packaging Operator
+
+Logistics Coordinator
 
 Sales
 
@@ -127,29 +114,29 @@ AI Agent
 
 ---
 
-# 4. Business Processes
+# 5. Business Process
 
 Production Complete
 
 ↓
 
-Quality Approval
+Quality Released
 
 ↓
 
-Packaging
+Finished Good Created
 
 ↓
 
-Label Printing
+Package Assignment
 
 ↓
 
-Warehouse Assignment
+Warehouse Storage
 
 ↓
 
-Shipment Ready
+Customer Reservation
 
 ↓
 
@@ -157,11 +144,15 @@ Shipment
 
 ↓
 
-Delivered
+Delivery
+
+↓
+
+Archive
 
 ---
 
-# 5. Screens
+# 6. Screens
 
 Finished Goods Dashboard
 
@@ -169,45 +160,59 @@ Finished Goods List
 
 Finished Goods Detail
 
-Package Detail
+Genealogy View
 
-Shipment Preparation
+Material Tree
 
-Storage Locations
+Package Assignment
+
+Warehouse Location
 
 Certificates
 
 Digital Product Passport
 
-Finished Goods History
+Shipment Status
+
+History Timeline
+
+Customer Reservation
+
+Export Information
 
 ---
 
-# 6. User Actions
+# 7. User Actions
 
-Register Finished Goods
+Create
 
 Approve
 
-Package
+Reserve
 
-Print Label
+Assign Package
+
+Assign Warehouse
 
 Generate QR
 
 Generate Barcode
 
-Assign Warehouse
+Generate DPP
+
+Print Labels
+
+Print Certificates
 
 Prepare Shipment
 
-Export
-
 Archive
+
+Export
 
 ---
 
-# 7. Data Model
+# 8. Data Model
 
 Primary Entity
 
@@ -217,13 +222,25 @@ Business Code
 
 FG-000001
 
+---
+
 Related Entities
 
 Material
 
 Product
 
+Production Order
+
+Operation
+
+Recipe
+
 Package
+
+Pallet
+
+Container
 
 Warehouse
 
@@ -233,13 +250,19 @@ Customer
 
 Certificates
 
-Production Order
+Quality
 
-Quality Inspection
+Transformation
+
+Genealogy
+
+Digital Product Passport
+
+Audit Log
 
 ---
 
-# 8. Finished Goods Types
+# 9. Finished Goods Types
 
 Thermowood
 
@@ -249,67 +272,151 @@ Cladding
 
 Massive Panel
 
-CLT Panel
-
-Glulam Beam
-
 Finger Joint
 
-Profile
+CLT
 
-Custom Product
+Glulam
 
----
+Profiles
 
-# 9. Standard Fields
+Custom Products
 
-Finished Goods Code
-
-Product Code
-
-Material Code
-
-Package Code
-
-Production Order
-
-Species
-
-Dimensions
-
-Quantity
-
-Volume
-
-Weight
-
-Grade
-
-Moisture
-
-Warehouse
-
-Storage Location
-
-Production Date
-
-Packaging Date
-
-Shipment Status
-
-Certificate Status
-
-Revision
+OEM Products
 
 ---
 
-# 10. Lifecycle
+# 10. Finished Goods Structure
 
-Production Complete
+Finished Good
 
 ↓
 
-Quality Approved
+Package
+
+↓
+
+Pallet
+
+↓
+
+Container
+
+↓
+
+Shipment
+
+↓
+
+Customer
+
+---
+
+# 11. Product Identity
+
+Every Finished Good contains
+
+Business Code
+
+Serial Number
+
+QR
+
+Barcode
+
+GS1 Digital Link
+
+Digital Product Passport
+
+Carbon ID
+
+Production History
+
+---
+
+# 12. Material Genealogy
+
+Every Finished Good stores
+
+Original Log
+
+Prism
+
+Drying Batch
+
+Thermowood Batch
+
+Operations
+
+Machines
+
+Operators
+
+Recipes
+
+Quality Results
+
+Packages
+
+Shipment
+
+Customer
+
+Genealogy is immutable.
+
+---
+
+# 13. Package Relationships
+
+One Finished Good
+
+↓
+
+One Package
+
+↓
+
+One Pallet
+
+↓
+
+One Container
+
+↓
+
+One Shipment
+
+Package hierarchy shall always be maintained.
+
+---
+
+# 14. Customer Assignment
+
+Reserved Customer
+
+Reserved Order
+
+Delivery Address
+
+Export Destination
+
+Private Label
+
+Customer Packaging Rules
+
+Language
+
+Certificates
+
+---
+
+# 15. Lifecycle
+
+Created
+
+↓
+
+Quality Released
 
 ↓
 
@@ -325,7 +432,11 @@ Reserved
 
 ↓
 
-Shipment Ready
+Allocated
+
+↓
+
+Loaded
 
 ↓
 
@@ -341,51 +452,51 @@ Archived
 
 ---
 
-# 11. Business Rules
+# 16. State Model
 
-Finished Goods require successful Quality Approval.
+Draft
 
-Finished Goods cannot be shipped without Packaging.
+Released
 
-Every Finished Good shall have a unique QR Code.
+Stored
 
-Every Finished Good shall belong to exactly one Package.
+Reserved
 
-Shipment requires warehouse confirmation.
+Allocated
 
----
+Shipment Ready
 
-# 12. Workflow
+Loaded
 
-Production Completion
+Delivered
 
-↓
-
-Quality Approval
-
-↓
-
-Packaging
-
-↓
-
-Storage
-
-↓
-
-Shipment
-
-↓
-
-Customer
+Archived
 
 ---
 
-# 13. Events
+# 17. Business Rules
+
+Finished Goods require Quality Release.
+
+Finished Goods require Package Assignment.
+
+Every Finished Good shall have a QR Code.
+
+Every Finished Good shall have a Business Code.
+
+Finished Goods cannot be modified after shipment.
+
+Finished Goods preserve genealogy forever.
+
+Export products require Digital Product Passport.
+
+---
+
+# 18. Events
 
 FinishedGoodsCreated
 
-FinishedGoodsApproved
+FinishedGoodsReleased
 
 FinishedGoodsPackaged
 
@@ -393,131 +504,299 @@ FinishedGoodsStored
 
 FinishedGoodsReserved
 
+FinishedGoodsAllocated
+
+FinishedGoodsLoaded
+
 FinishedGoodsShipped
 
 FinishedGoodsDelivered
 
+FinishedGoodsArchived
+
 ---
 
-# 14. Notifications
-
-Finished Goods Ready
+# 19. Notifications
 
 Shipment Ready
 
-Storage Assigned
-
-Quality Approval Completed
-
-Package Completed
+Package Missing
 
 Certificate Missing
 
+Warehouse Assigned
+
+Customer Reserved
+
+Export Ready
+
+DPP Generated
+
 ---
 
-# 15. Permissions
+# 20. Permissions
 
 View
 
 Create
 
-Approve
+Release
+
+Reserve
 
 Package
 
-Print Labels
+Ship
 
 Export
 
-Ship
-
 Archive
+
+Generate QR
+
+Generate DPP
 
 ---
 
-# 16. Audit Log
+# 21. Audit Log
 
-Finished Goods Created
+Created
 
-Package Assigned
+Released
+
+Reserved
+
+Package Changed
 
 Warehouse Changed
 
-Shipment Completed
+Shipment Assigned
 
-Label Printed
+Delivered
 
 Certificate Generated
 
+QR Generated
+
 ---
 
-# 17. Reports
+# 22. Reports
 
 Finished Goods Inventory
 
 Finished Goods Aging
 
-Shipment Ready Report
+Inventory Value
 
-Package Report
+Warehouse Distribution
 
-Customer Delivery Report
+Shipment Readiness
 
-Finished Goods Traceability
+Customer Reservation
 
-Finished Goods Certificates
+Package Traceability
 
-Finished Goods by Species
+Genealogy Report
 
-Finished Goods by Product
+Transformation Report
+
+Finished Goods History
+
+Export Readiness
+
+Certificates
+
+Carbon Footprint
+
+Digital Product Passport
+
+Production Yield
+
+Finished Goods KPI
 
 ---
 
-# 18. Dashboard Widgets
+# 23. Dashboard Widgets
 
 Finished Goods Inventory
 
-Shipment Ready
+Ready For Shipment
 
-Reserved Finished Goods
+Reserved Goods
 
-Finished Goods by Warehouse
+Warehouse Occupancy
 
-Finished Goods by Product
-
-Packaging Status
-
-Certificate Status
+Package Status
 
 Shipment Queue
 
-Storage Utilization
+Export Queue
 
-Finished Goods Aging
+Certificates
 
-AI Shipment Recommendations
+Customer Reservations
+
+Genealogy Explorer
+
+Material Flow
+
+Production Today
+
+Carbon Footprint
+
+Digital Product Passport Status
+
+AI Recommendations
 
 ---
 
-# 19. KPIs
+# 24. KPIs
 
 Finished Goods Inventory
 
 Shipment Readiness
 
-Packaging Efficiency
+Inventory Turnover
 
-Warehouse Turnover
+Storage Time
 
-Delivery Readiness
+Reservation Accuracy
 
-Average Storage Time
+Packaging Accuracy
+
+Export Readiness
+
+Delivery Performance
 
 Inventory Accuracy
 
+Carbon Emissions
+
 ---
 
-# 20. Mobile Support
+# 25. AI Capabilities
+
+Demand Forecast
+
+Shipment Priority Recommendation
+
+Warehouse Slot Recommendation
+
+Package Optimization
+
+Inventory Optimization
+
+Customer Allocation
+
+Delivery Prediction
+
+Export Readiness
+
+Carbon Optimization
+
+Genealogy Analysis
+
+Quality Prediction
+
+Damage Risk Prediction
+
+Digital Product Passport Validation
+
+AI Warehouse Assistant
+
+AI Shipment Assistant
+
+AI Finished Goods Copilot
+
+---
+
+# 26. API Resources
+
+GET /finished-goods
+
+GET /finished-goods/{id}
+
+GET /finished-goods/search
+
+POST /finished-goods
+
+PATCH /finished-goods/{id}
+
+GET /finished-goods/{id}/genealogy
+
+GET /finished-goods/{id}/package
+
+GET /finished-goods/{id}/shipment
+
+GET /finished-goods/{id}/dpp
+
+GET /finished-goods/{id}/history
+
+---
+
+# 27. Integrations
+
+Production
+
+Operations
+
+Materials
+
+Products
+
+Warehouse
+
+Inventory
+
+Packaging
+
+Logistics
+
+Customers
+
+Quality
+
+Printing
+
+Barcode
+
+QR
+
+Digital Product Passport
+
+Analytics
+
+AI
+
+Digital Twin
+
+---
+
+# 28. Printing
+
+Finished Goods Label
+
+Customer Label
+
+Package Label
+
+Pallet Label
+
+QR Label
+
+Barcode Label
+
+Packing List
+
+Certificates
+
+DPP
+
+---
+
+# 29. Mobile
+
+Search
 
 QR Scan
 
@@ -527,252 +806,216 @@ Package Verification
 
 Shipment Verification
 
-Warehouse Lookup
+Warehouse Transfer
 
-Finished Goods Search
+Photo Capture
 
-Offline Verification
-
----
-
-# 21. AI Capabilities
-
-Shipment Optimization
-
-Warehouse Slotting Recommendation
-
-Package Optimization
-
-Loading Recommendation
-
-Demand Prediction
-
-Inventory Optimization
-
-Delivery Priority Recommendation
-
-Digital Product Passport Validation
-
-Customer-specific Packaging Recommendation
-
-AI Finished Goods Assistant
+Offline Mode
 
 ---
 
-# 22. API Resources
+# 30. Security
 
-GET /finished-goods
-
-GET /finished-goods/{id}
-
-POST /finished-goods
-
-PATCH /finished-goods/{id}
-
-GET /finished-goods/search
-
-GET /finished-goods/{id}/package
-
-GET /finished-goods/{id}/shipment
-
----
-
-# 23. Integrations
-
-Production
-
-Inventory
-
-Warehouse
-
-Packaging
-
-Quality
-
-Logistics
-
-Sales
-
-Customers
-
-Analytics
-
-Digital Twin
-
-AI
-
----
-
-# 24. Printing
-
-Finished Goods Label
-
-Package Label
-
-QR Label
-
-Barcode Label
-
-Packing List
-
-Certificate of Quality
-
-Certificate of Origin
-
-Digital Product Passport
-
----
-
-# 25. Security
-
-Role-Based Access
+Role Based Access
 
 Shipment Authorization
 
-Certificate Protection
+Immutable Genealogy
+
+Digital Signature
 
 Audit Logging
 
-Immutable Traceability
+Certificate Protection
+
+DPP Protection
 
 ---
 
-# 26. Error Handling
-
-Missing Quality Approval
+# 31. Error Handling
 
 Missing Package
 
-Invalid Warehouse
+Missing Certificate
 
 Shipment Blocked
 
-Duplicate QR Code
+Duplicate QR
 
-Certificate Missing
+Duplicate Business Code
+
+Warehouse Missing
+
+Invalid State
 
 ---
 
-# 27. Performance Requirements
+# 32. Performance Requirements
 
-Finished Goods Search < 2 seconds
+Search < 2 seconds
 
-Shipment Preparation < 3 seconds
+QR Lookup < 1 second
 
 Support 10,000,000+ Finished Goods
 
-Bulk Shipment Processing
+Real-Time Synchronization
 
 ---
 
-# 28. Future Enhancements
+# 33. Future Extensions
 
-RFID Tracking
+RFID
 
-IoT Warehouse Monitoring
+NFC
 
-Customer Portal Tracking
+Vision AI
 
 Blockchain Traceability
 
-Digital Product Passport (EU)
+Autonomous Warehouse
 
-Carbon Footprint Reporting
+IoT Sensors
 
-Automated Warehouse Systems
+Digital Twin
+
+Carbon Passport
+
+EU DPP
+
+Smart Packaging
 
 ---
 
-# 29. Acceptance Criteria
+# 34. Acceptance Criteria
 
-✓ Finished Goods registered
+✓ Finished Good created
 
-✓ Quality approved
-
-✓ Packaged
+✓ Package assigned
 
 ✓ QR generated
 
-✓ Warehouse assigned
+✓ DPP generated
 
 ✓ Shipment ready
 
-✓ Events generated
-
-✓ Audit Logs generated
+✓ Genealogy complete
 
 ✓ AI integrated
 
+✓ Audit Log generated
+
 ---
 
-# 30. Related Documents
+# 35. Related Documents
 
-Materials Module
+Materials
 
-Products Module
+Products
 
-Inventory Module
+Packaging
 
-Warehouse Module
+Warehouse
 
-Packaging Module
+Inventory
 
-Quality Module
+Logistics
 
-Logistics Module
+Production Orders
 
-Customers Module
+Operations
 
-Database Schema
+Barcode & QR
 
-Workflow
+Label Templates
+
+Printing Model
+
+Digital Product Passport
 
 Analytics
 
 ---
 
-# 31. Operational Metrics
+# 36. Operational Metrics
 
-Success Metrics
+## Success Metrics
 
-- Shipment readiness
-- Storage accuracy
-- Packaging completion
-- Delivery preparation time
+Inventory Accuracy
 
-Failure Metrics
+Shipment Readiness
 
-- Shipment delays
-- Missing certificates
-- Packaging errors
+Storage Efficiency
 
-Operational Risks
+Reservation Accuracy
 
-- Wrong shipment
-- Missing traceability
-- Incorrect labeling
+Package Verification
 
-Monitoring Alerts
-
-- Shipment delayed
-- Certificate missing
-- Warehouse mismatch
-- Package incomplete
-
-SLA
-
-Finished Goods available for shipment within 30 minutes after Quality Release.
-
-Recovery Procedure
-
-Recover Finished Goods status using Event History, Audit Logs and Package History.
+Export Compliance
 
 ---
 
-# Module Philosophy
+## Failure Metrics
 
-Finished Goods represent the final manufacturing output delivered to customers.
+Shipment Delay
 
-Each Finished Good preserves complete traceability from raw material to shipment through immutable business identifiers, production history, quality records, packaging information and Digital Product Passport data.
+Missing Package
 
-The Finished Goods module ensures operational readiness, regulatory compliance and customer confidence while serving as the final controlled stage of the manufacturing lifecycle.
+Missing Certificate
+
+Inventory Errors
+
+Package Damage
+
+---
+
+## Operational Risks
+
+Wrong Shipment
+
+Wrong Customer
+
+Package Damage
+
+Inventory Loss
+
+Missing DPP
+
+---
+
+## Monitoring Alerts
+
+High Inventory
+
+Long Storage Time
+
+Package Missing
+
+Shipment Delay
+
+Certificate Expiring
+
+Export Missing Documents
+
+Warehouse Congestion
+
+---
+
+## SLA
+
+Finished Goods shall become available for shipment within 30 minutes after Quality Release and Packaging completion.
+
+---
+
+## Recovery Procedure
+
+Recover Finished Goods state using Event History, Package History, Audit Logs, Genealogy Records and Digital Product Passport history.
+
+---
+
+# 37. Module Philosophy
+
+Finished Goods represent the final digital and physical outcome of manufacturing within Naswood OS.
+
+Every Finished Good carries its complete production history, genealogy, quality records, packaging information, logistics relationships and Digital Product Passport.
+
+The Finished Goods module serves as the bridge between manufacturing, warehousing and logistics, ensuring complete traceability, regulatory compliance and customer confidence across the entire Manufacturing Operating System.
