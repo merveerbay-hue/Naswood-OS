@@ -2,161 +2,49 @@
 
 **Project:** Naswood OS
 
-**Document:** Packaging Module
+**Document:** Smart Packaging
 
-**Version:** 1.0
+**Module Code:** MOD-PRO-PKG-001
 
-**Status:** Approved
+**Version:** 2.0
 
----
-
-# 1. Module Overview
-
-## Module Name
-
-Packaging
-
-## Module Code
-
-MOD-PKG
-
-## Module Category
-
-Production
+**Status:** Enterprise
 
 ---
 
-## Description
+# 1. Purpose
 
-The Packaging module manages the complete packaging lifecycle of finished products within Naswood OS.
+The Packaging module manages product packaging, labeling, palletization, shipment preparation and delivery readiness across the manufacturing lifecycle.
 
-Packaging is the final production operation before products are transferred to Finished Goods inventory and prepared for shipment.
+It ensures products are packaged according to customer requirements, regulatory standards and logistics constraints while maintaining complete traceability and Digital Product Passport integration.
 
-The module ensures standardized packaging, customer-specific packaging requirements, full traceability, Digital Product Passport generation and logistics readiness.
+The module serves as the Smart Packaging & Delivery Readiness Platform (SPDRP) of Naswood OS.
 
 ---
 
 # 2. Objectives
 
 - Standardize packaging operations
-- Ensure shipment readiness
-- Maintain complete traceability
-- Generate package identities
-- Support customer-specific packaging
-- Optimize logistics
-- Enable Digital Product Passport
+- Protect finished products
+- Optimize pallet utilization
+- Improve shipment readiness
+- Ensure product traceability
+- Support AI-assisted packaging optimization
+- Synchronize Digital Twin
 
 ---
 
-# 3. Business Scope
-
-## Included Functions
-
-Package Creation
-
-Package Configuration
-
-Bundle Creation
-
-Pallet Creation
-
-Container Preparation
-
-Label Generation
-
-QR Generation
-
-Barcode Generation
-
-Package Inspection
-
-Package Verification
-
-Shipment Preparation
-
-Package History
-
-Package Genealogy
-
-Package Certification
-
-Digital Product Passport
-
----
-
-## Excluded Functions
-
-Shipment Planning
-
-Transportation
-
-Customer Billing
-
-Accounting
-
----
-
-## Dependencies
+# 3. Packaging Lifecycle
 
 Finished Goods
 
-Materials
+↓
 
-Products
-
-Warehouse
-
-Inventory
-
-Production Orders
-
-Operations
-
-Quality
-
-Logistics
-
-Customers
-
-Workflow
-
-Events
-
-Notifications
-
-Analytics
-
-AI
-
----
-
-# 4. User Roles
-
-Packaging Operator
-
-Packaging Supervisor
-
-Warehouse Operator
-
-Logistics Coordinator
-
-Quality Engineer
-
-Production Manager
-
-Administrator
-
-AI Agent
-
----
-
-# 5. Business Processes
-
-Finished Goods Approved
+Packaging Planning
 
 ↓
 
-Package Selection
+Material Verification
 
 ↓
 
@@ -164,19 +52,7 @@ Package Assembly
 
 ↓
 
-Bundle Creation
-
-↓
-
-Pallet Creation
-
-↓
-
 Label Generation
-
-↓
-
-QR Generation
 
 ↓
 
@@ -184,111 +60,23 @@ Quality Verification
 
 ↓
 
-Warehouse Assignment
+Palletization
 
 ↓
 
-Shipment Ready
+Warehouse Allocation
 
----
-
-# 6. Screens
-
-Packaging Dashboard
-
-Packaging Queue
-
-Package Builder
-
-Bundle Builder
-
-Pallet Builder
-
-Container Builder
-
-Package Detail
-
-Package Genealogy
-
-Label Printing
-
-Customer Packaging Rules
-
-Package History
+↓
 
 Shipment Preparation
 
----
+↓
 
-# 7. User Actions
-
-Create Package
-
-Edit Package
-
-Close Package
-
-Merge Packages
-
-Split Package
-
-Generate Labels
-
-Generate QR
-
-Generate Barcode
-
-Assign Warehouse
-
-Assign Shipment
-
-Verify Package
-
-Print Documents
-
-Export
-
-Archive
+Delivery Ready
 
 ---
 
-# 8. Data Model
-
-Primary Entity
-
-Package
-
-Business Code
-
-PKG-000001
-
-Related Entities
-
-Finished Goods
-
-Materials
-
-Products
-
-Warehouse
-
-Shipment
-
-Container
-
-Customer
-
-Certificates
-
-Labels
-
-Digital Product Passport
-
-Audit Logs
-
----
-
-# 9. Package Types
+# 4. Packaging Types
 
 Bundle
 
@@ -296,786 +84,435 @@ Pallet
 
 Crate
 
-Box
-
-Carton
-
-Container
+Wooden Box
 
 Export Package
 
-Domestic Package
+Shrink Wrap
+
+Protective Film
+
+Custom Package
 
 Mixed Package
 
-Customer Specific Package
-
-Sample Package
-
-Return Package
+Container Package
 
 ---
 
-# 10. Packaging Templates
+# 5. Packaging Master
 
-Each package shall be created from a Packaging Template.
-
-Template includes:
+Package ID
 
 Package Type
 
-Package Dimensions
+Package Specification
 
-Maximum Weight
+Customer Requirement
 
-Maximum Volume
+Dimensions
 
-Maximum Pieces
+Weight
 
-Wrapping Method
+Maximum Load
 
-Strapping Method
+Stacking Limit
 
-Corner Protection
+Protection Level
+
+Export Compliance
+
+Status
+
+---
+
+# 6. Packaging Materials
+
+Pallet
+
+Straps
 
 Stretch Film
 
 Shrink Film
 
-Pallet Type
+Protective Foam
 
-Label Template
+Corner Protectors
 
-QR Template
+Labels
 
-Barcode Template
+RFID Tags
 
-Required Documents
-
-Required Certificates
-
-Customer Rules
-
-Export Rules
-
----
-
-## Standard Packaging Templates
-
-### Thermowood Bundle
-
-### Decking Bundle
-
-### Cladding Bundle
-
-### Massive Panel Package
-
-### CLT Package
-
-### Glulam Package
-
-### Finger Joint Package
-
-### Export Pallet
-
-### Domestic Pallet
-
-### Container Load
-
----
-
-# 11. Customer Packaging Rules
-
-Each customer may define:
-
-Preferred Package Type
-
-Maximum Bundle Weight
-
-Preferred Pallet
-
-Preferred Label Language
-
-Logo Placement
-
-Private Label
-
-Export Documentation
-
-Package Markings
-
-Container Loading Rules
-
-Stacking Rules
+QR Codes
 
 Moisture Protection
 
-Edge Protection
-
-Barcode Standard
-
-QR Standard
+Export Markings
 
 ---
 
-# 12. Package Lifecycle
+# 7. Product Assignment
 
-Draft
+Finished Goods
 
-↓
+Batch
 
-Assembling
+Production Order
 
-↓
+Package Quantity
 
-Verified
+Product Orientation
 
-↓
+Mixed Products
 
-Packed
+Reserved Quantity
 
-↓
-
-Labeled
-
-↓
-
-Stored
-
-↓
-
-Reserved
-
-↓
-
-Loaded
-
-↓
-
-Shipped
-
-↓
-
-Delivered
-
-↓
-
-Archived
+Package Status
 
 ---
 
-# 13. State Model
+# 8. Labeling
 
-Draft
+Barcode
 
-In Progress
+QR Code
 
-Awaiting Inspection
+RFID
 
-Approved
+Package Label
 
-Stored
+Customer Label
 
-Reserved
+Export Label
 
-Loaded
+FSC Label
 
-Shipped
+CE Label
 
-Delivered
+Digital Product Passport QR
 
-Archived
-
----
-
-# 14. Business Rules
-
-Every Package shall have a unique Business Code.
-
-Every Package shall contain one or more Finished Goods.
-
-Every Package shall have one QR Code.
-
-Every Package shall have one Label.
-
-Customer-specific packaging rules override default templates.
-
-Export Packages require mandatory certificates.
-
-Packages cannot be modified after shipment.
+Handling Instructions
 
 ---
 
-# 15. Events
+# 9. Palletization
+
+Pallet Number
+
+Pallet Type
+
+Load Distribution
+
+Stacking Pattern
+
+Weight Distribution
+
+Height Limit
+
+Forklift Access
+
+Container Compatibility
+
+---
+
+# 10. Shipment Readiness
+
+Packaging Approval
+
+Quality Approval
+
+Certificate Verification
+
+Export Documentation
+
+Container Assignment
+
+Loading Sequence
+
+Shipment Status
+
+Customer Release
+
+---
+
+# 11. AI Capabilities
+
+Packaging Optimization
+
+Pallet Optimization
+
+Container Optimization
+
+Damage Risk Prediction
+
+Shipment Recommendation
+
+Label Validation
+
+Packaging Copilot
+
+---
+
+# 12. Digital Twin Integration
+
+Package Visualization
+
+Pallet Layout
+
+Warehouse Position
+
+Container Visualization
+
+Loading Simulation
+
+Shipment Timeline
+
+---
+
+# 13. Dashboard Widgets
+
+Packaging Queue
+
+Ready Packages
+
+Packaging Efficiency
+
+Pallet Utilization
+
+Container Readiness
+
+Damage Risk
+
+Shipment Readiness
+
+AI Recommendations
+
+---
+
+# 14. Reports
+
+Packaging Report
+
+Packaging Material Usage
+
+Pallet Utilization Report
+
+Shipment Readiness Report
+
+Container Packing Report
+
+Packaging Quality Report
+
+Export Packaging Report
+
+AI Packaging Report
+
+---
+
+# 15. API Resources
+
+GET /packaging
+
+GET /packaging/{id}
+
+GET /packaging/pallets
+
+GET /packaging/labels
+
+GET /packaging/readiness
+
+POST /packaging
+
+POST /packaging/label
+
+POST /packaging/approve
+
+POST /packaging/palletize
+
+---
+
+# 16. Events
 
 PackageCreated
 
 PackageUpdated
 
-PackageVerified
+LabelGenerated
 
-PackageClosed
+PackagingApproved
 
-PackageStored
+PalletCreated
 
-PackageReserved
+ShipmentPrepared
 
-PackageLoaded
+PackageReleased
 
-PackageShipped
-
-PackageDelivered
-
-LabelPrinted
-
-QRCodeGenerated
-
-DigitalPassportGenerated
+DigitalPassportLinked
 
 ---
 
-# 16. Notifications
+# 17. Mobile
 
-Package Ready
+QR Package Lookup
 
-Inspection Required
+Package Scanner
 
-Missing Certificate
+Packaging Checklist
 
-Missing Label
+Photo Capture
 
-Shipment Ready
+Shipment Status
 
-Package Damaged
-
-Customer Packaging Exception
+Offline Mode
 
 ---
 
-# 17. Permissions
+# 18. Business Rules
 
-View
+Every package shall have a unique identifier.
 
-Create
+Every finished product shall be assigned to a package before shipment.
 
-Update
+Package labels shall include complete traceability information.
 
-Verify
+Packaging shall comply with customer and export requirements.
 
-Close
-
-Print
-
-Generate QR
-
-Generate Labels
-
-Assign Shipment
-
-Export
-
-Archive
+Digital Product Passports shall remain linked to package identifiers.
 
 ---
 
-# 18. Audit Log
+# 19. Future Extensions
 
-Package Created
+Smart Packaging Sensors
 
-Package Updated
+IoT Shock Monitoring
 
-Items Added
+Temperature Monitoring
 
-Items Removed
+Reusable Packaging
 
-Label Printed
+Circular Packaging
 
-QR Generated
+Industry 5.0
 
-Inspection Completed
+Digital Thread
 
-Shipment Assigned
-
-Package Closed
+MCP Packaging Services
 
 ---
 
-# 19. Reports
+# 20. Architecture Review
 
-Packaging Performance Report
+## Database Changes
 
-Package History
+packages
 
-Package Traceability Report
+package_items
 
-Package Inventory Report
+package_labels
 
-Bundle Report
+package_materials
 
-Pallet Report
+package_history
 
-Container Report
+package_approvals
 
-Export Packaging Report
+pallets
 
-Domestic Packaging Report
+pallet_layouts
 
-Customer Packaging Report
+package_ai
 
-Packaging Material Consumption
+package_readiness
 
-Packaging Cost Analysis
+container_assignments
 
-Packaging Quality Report
+## Related Modules
 
-Package Damage Report
-
-Shipment Packaging Report
-
-Packaging Productivity Report
-
-Packaging KPI Report
-
-Packaging Audit Report
-
-Digital Product Passport Report
-
-Carbon Footprint by Package
-
----
-
-# 20. Dashboard Widgets
-
-Packaging Queue
-
-Packages Created Today
-
-Open Packages
-
-Shipment Ready Packages
-
-Packaging Performance
-
-Packaging Productivity
-
-Packaging Material Usage
-
-Packaging Cost
-
-Packaging Defects
-
-Package Verification Queue
-
-Customer Packaging Exceptions
-
-Export Package Status
-
-Package Heat Map
-
-Digital Product Passport Status
-
-AI Packaging Recommendations
-
----
-
-# 21. KPIs
-
-Packages per Hour
-
-Packaging Cycle Time
-
-Packaging Accuracy
-
-Packaging Cost
-
-Packaging Material Consumption
-
-Packaging Productivity
-
-Package Damage Rate
-
-Shipment Readiness
-
-Export Readiness
-
-Customer Compliance
-
----
-
-# 22. AI Capabilities
-
-Automatic Packaging Template Selection
-
-Customer-Specific Packaging Recommendation
-
-Bundle Optimization
-
-Pallet Optimization
-
-Container Loading Optimization
-
-Package Weight Optimization
-
-Package Dimension Optimization
-
-Packaging Material Optimization
-
-Packaging Cost Optimization
-
-Packaging Damage Prediction
-
-Packaging Quality Prediction
-
-Packaging Defect Detection
-
-Vision AI Package Inspection
-
-Automatic QR Verification
-
-Label Verification
-
-Shipment Optimization
-
-Warehouse Slot Recommendation
-
-Digital Product Passport Generation
-
-Carbon Footprint Estimation
-
-Packaging Sustainability Analysis
-
-AI Packaging Copilot
-
----
-
-# 23. API Resources
-
-GET /packages
-
-GET /packages/{id}
-
-POST /packages
-
-PATCH /packages/{id}
-
-GET /packages/{id}/labels
-
-GET /packages/{id}/history
-
-GET /packages/{id}/genealogy
-
-GET /packages/{id}/dpp
-
----
-
-# 24. Integrations
-
-Production
-
-Finished Goods
-
-Inventory
+Finished_Goods
 
 Warehouse
 
-Logistics
+Shipment
 
-Shipping
+Loading
+
+Containers
+
+Export
+
+Orders
 
 Customers
 
+Inventory
+
 Quality
 
-Barcode
-
-QR
-
-RFID
-
-IoT
-
-Vision AI
-
-Digital Twin
-
-Digital Product Passport
+Digital_Product_Passport
 
 Analytics
 
 AI
 
----
+Digital_Twin
 
-# 25. Printing
+## Application Updates
 
-Package Label
+API_Contracts.md
 
-Bundle Label
+Packaging_Workflow.md
 
-Pallet Label
+Labeling_Standards.md
 
-QR Label
+Events.md
 
-Barcode Label
+Dashboard_Definitions.md
 
-Packing List
+Mobile_App.md
 
-Container Manifest
+Export_Packaging.md
 
-Certificate of Quality
+## Naswood-Specific Enhancements
 
-Certificate of Origin
+### Timber Packaging
 
-CE Declaration
+- Thermowood packaging
+- Solid panel packaging
+- Timber bundle management
+- Moisture protection
+- Surface protection
+- Export packaging standards
 
-FSC Certificate
+### Logistics Intelligence
 
-PEFC Certificate
+- Pallet optimization
+- Container optimization
+- Loading sequence
+- Shipment readiness
+- Warehouse routing
 
-EPD Document
+### Product Traceability
 
-Digital Product Passport
+- Package genealogy
+- QR traceability
+- RFID support
+- Batch linkage
+- Digital Product Passport
 
----
+### AI Optimization
 
-# 26. Mobile
+- Packaging optimization
+- Damage risk prediction
+- Material optimization
+- Container loading optimization
+- Shipment recommendations
 
-Package Creation
+### Digital Twin
 
-QR Scan
-
-Barcode Scan
-
-Package Verification
-
-Photo Capture
-
-Damage Reporting
-
-Shipment Verification
-
-Offline Support
-
-Push Notifications
-
----
-
-# 27. Security
-
-Role-Based Access
-
-Electronic Signature
-
-Immutable Package History
-
-Audit Logging
-
-Digital Product Passport Protection
-
-Customer Data Protection
-
----
-
-# 28. Error Handling
-
-Duplicate Package Code
-
-Missing Finished Goods
-
-Missing Label
-
-Missing QR
-
-Missing Certificate
-
-Weight Limit Exceeded
-
-Volume Limit Exceeded
-
-Customer Rule Violation
-
-Shipment Already Closed
-
----
-
-# 29. Performance Requirements
-
-Package Creation < 2 seconds
-
-QR Generation < 1 second
-
-Label Printing < 2 seconds
-
-Support 5,000,000+ Packages
-
-Real-Time Warehouse Synchronization
-
----
-
-# 30. Future Extensions
-
-RFID Smart Packaging
-
-IoT Smart Pallets
-
-Digital Seal
-
-Autonomous Packaging Line
-
-Robotic Palletizing
-
-Vision AI Quality Control
-
-Blockchain Traceability
-
-EU Digital Product Passport
-
-GS1 Digital Link
-
-Returnable Packaging Management
-
-Reusable Pallet Tracking
-
----
-
-# 31. Acceptance Criteria
-
-✓ Package created
-
-✓ Finished Goods assigned
-
-✓ Customer rules applied
-
-✓ Labels printed
-
-✓ QR generated
-
-✓ Certificates attached
-
-✓ Digital Product Passport generated
-
-✓ Shipment ready
-
-✓ Events generated
-
-✓ Audit Logs generated
-
-✓ AI integrated
-
----
-
-# 32. Related Documents
-
-Finished Goods Module
-
-Operations Module
-
-Warehouse Module
-
-Inventory Module
-
-Customers Module
-
-Logistics Module
-
-Barcode_QR_Model
-
-Label_Templates
-
-Printing_Model
-
-Digital Product Passport
-
-Database Schema
-
-Workflow
-
-Analytics
-
----
-
-# 33. Operational Metrics
-
-## Success Metrics
-
-Packaging Accuracy
-
-Shipment Readiness
-
-Packaging Productivity
-
-Package Verification Rate
-
-Customer Packaging Compliance
-
-Export Compliance
-
----
-
-## Failure Metrics
-
-Packaging Errors
-
-Damaged Packages
-
-Missing Labels
-
-Missing Certificates
-
-Wrong Customer Packaging
-
----
-
-## Operational Risks
-
-Incorrect Packaging
-
-Incorrect Label
-
-Shipment Delay
-
-Certificate Missing
-
-Export Non-Compliance
-
-Package Damage
-
----
-
-## Monitoring Alerts
-
-High Packaging Queue
-
-Packaging Station Downtime
-
-Missing Labels
-
-Missing QR
-
-Package Damage Detected
-
-Customer Packaging Exception
-
-Export Documentation Missing
-
----
-
-## SLA
-
-Packaging shall be completed within 15 minutes after Finished Goods approval.
-
----
-
-## Recovery Procedure
-
-Restore package status using Audit Logs, Event History, Package Genealogy and Finished Goods relationships.
-
----
-
-# 34. Module Philosophy
-
-Packaging is the final manufacturing operation and the first logistics operation within Naswood OS.
-
-Every package becomes a digitally traceable logistics unit with its own identity, genealogy, labels, certifications and Digital Product Passport.
-
-The Packaging module bridges Production, Warehouse and Logistics while ensuring customer-specific packaging standards, regulatory compliance and complete end-to-end traceability across the Manufacturing Operating System.
+- Live package visualization
+- Pallet layouts
+- Warehouse visualization
+- Container loading simulation
+- Shipment replay
