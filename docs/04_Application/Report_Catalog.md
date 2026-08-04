@@ -4,53 +4,75 @@
 
 **Document:** Report Catalog
 
-**Version:** 1.0
+**Version:** 2.0
 
 **Status:** Approved
 
 ---
 
-# Purpose
+# 1. Purpose
 
-This document defines all standard reports available within Naswood OS.
+This document defines all reports available throughout Naswood OS.
 
-Reports provide printable, exportable and auditable business information for operational, managerial and regulatory purposes.
+Reports provide operational, analytical, financial and strategic insights for every business function.
 
-Reports are generated from operational and analytical data without modifying business records.
-
----
-
-# Philosophy
-
-Reports present trusted business information.
-
-Reports are generated from live or historical data.
-
-Reports are version-controlled.
-
-Generated reports may be archived for legal and operational purposes.
+Reports may be viewed through dashboards, exported or scheduled for automatic delivery.
 
 ---
 
-# Report Categories
+# 2. Report Architecture
 
-Executive
+Raw Data
+
+↓
+
+Business Rules
+
+↓
+
+Calculations
+
+↓
+
+Analytics
+
+↓
+
+Reports
+
+↓
+
+Dashboards
+
+↓
+
+AI Insights
+
+↓
+
+Export
+
+---
+
+# 3. Report Categories
+
+Master Data
 
 Production
-
-Materials
 
 Inventory
 
 Warehouse
 
+Materials
+
 Quality
 
-Maintenance
+Packaging
 
-Machines
+Finished Goods
 
-Tooling
+Logistics
 
 Sales
 
@@ -58,442 +80,573 @@ Purchasing
 
 Finance
 
-Logistics
+Maintenance
 
-Engineering
+Energy
 
 Sustainability
 
+AI
+
+Digital Twin
+
+Executive
+
+Audit
+
 Security
 
-AI
+System
 
 ---
 
-# Executive Reports
+# 4. Executive Reports
 
-Daily Executive Summary
+CEO Executive Dashboard
 
-Weekly Factory Performance
+Factory Performance Summary
 
-Monthly Production Summary
+Daily Production Summary
 
-Monthly Financial Summary
+Weekly Operations Report
+
+Monthly Management Report
+
+Quarterly Business Review
+
+Annual Manufacturing Report
 
 Executive KPI Report
 
-Operational Risk Report
-
-AI Executive Summary
-
----
-
-# Production Reports
-
-Production Order Summary
-
-Production History
-
-Production by Machine
-
-Production by Shift
-
-Production by Operator
-
-Production by Product
-
-Production by Species
-
-Production by Material Type
-
-Production Efficiency
-
-Production Downtime
-
-Setup Time Analysis
+Profitability Summary
 
 Capacity Utilization
 
-Bottleneck Analysis
+Carbon Footprint Summary
 
-Production Timeline
+Digital Product Passport Summary
 
 ---
 
-# Material Reports
+# 5. Production Reports
 
-Material Genealogy
+Production Orders
+
+Production Schedule
+
+Production Progress
+
+Operation Performance
+
+Operation History
+
+Cycle Time
+
+Setup Time
+
+Downtime
+
+Production Yield
+
+Production Efficiency
+
+Shift Performance
+
+Machine Utilization
+
+Operator Productivity
+
+Work Center Performance
+
+Routing Performance
+
+Recipe Usage
+
+Production Bottlenecks
+
+Production Cost
+
+Scrap Analysis
+
+Rework Analysis
+
+Production Genealogy
+
+---
+
+# 6. Material Reports
+
+Material Inventory
 
 Material Lifecycle
 
-Material History
+Material Genealogy
 
 Material Consumption
 
 Material Yield
 
-Recovery Analysis
-
-Species Performance
-
-Material Traceability
+Material Transformation
 
 Material Aging
 
-Material Movement History
+Material Availability
 
----
-
-# Inventory Reports
-
-Current Inventory
-
-Inventory Valuation
-
-Inventory Aging
-
-Inventory Accuracy
-
-Inventory Movement
-
-Inventory Turnover
-
-Reserved Inventory
-
-Cycle Count Results
-
-Warehouse Occupancy
-
-Slow Moving Inventory
-
----
-
-# Warehouse Reports
-
-Receiving Summary
-
-Warehouse Transfers
-
-Warehouse Utilization
-
-Location Occupancy
-
-Package Inventory
-
-Picking Performance
-
-Loading Performance
-
----
-
-# Quality Reports
-
-Inspection Results
-
-Quality Trends
-
-Rejected Materials
-
-Non-Conformance Report
-
-Customer Complaints
-
-Root Cause Analysis
+Species Analysis
 
 Moisture Analysis
 
-Dimensional Accuracy
+Dimension Analysis
 
-SPC Report
+Grade Analysis
 
-First Pass Yield
+Material Cost
 
----
+Material Loss
 
-# Maintenance Reports
-
-Preventive Maintenance
-
-Corrective Maintenance
-
-Machine Downtime
-
-Maintenance Cost
-
-MTBF
-
-MTTR
-
-Spare Parts Consumption
-
-Machine Failure Analysis
-
-Maintenance Schedule
+Material Movements
 
 ---
 
-# Machine Reports
+# 7. Warehouse Reports
 
-Machine Utilization
+Warehouse Capacity
 
-Machine Runtime
+Warehouse Occupancy
 
-Machine Alarms
+Warehouse Utilization
 
-Energy Consumption
+Storage Heat Map
 
-Machine Performance
+Storage Turnover
 
-Idle Time
+Location Utilization
 
-Operating Hours
+Inventory Accuracy
 
-Machine History
+Warehouse Productivity
 
----
+Warehouse Traffic
 
-# Tooling Reports
+Warehouse Transfer
 
-Tool Inventory
+Warehouse Cost
 
-Tool Life
-
-Knife Sharpening History
-
-Tool Configuration
-
-Tool Usage
-
-Tool Replacement
-
-Tool Cost
-
-Profile Library
+Warehouse Audit
 
 ---
 
-# Sales Reports
+# 8. Inventory Reports
 
-Quotation Summary
+Inventory Balance
 
-Quotation Conversion
-
-Sales Orders
-
-Order Fulfillment
-
-Customer Sales
-
-Dealer Performance
-
-Sales by Region
-
-Sales by Product
-
-Customer Profitability
-
-Backlog Report
-
----
-
-# Purchasing Reports
-
-Purchase Requests
-
-Purchase Orders
-
-Supplier Performance
-
-Supplier Lead Time
-
-Material Procurement
-
-Purchase Cost Analysis
-
-Open Purchase Orders
-
-Supplier Scorecard
-
----
-
-# Finance Reports
-
-Manufacturing Cost
-
-Cost by Product
-
-Cost by Material
+Inventory Aging
 
 Inventory Valuation
 
-Budget Performance
+Inventory Turnover
 
-Cost Variance
+Cycle Count
 
-Profitability
+ABC Analysis
 
-Cost Center Summary
+Slow Moving Inventory
 
-Energy Cost
+Dead Stock
+
+Reserved Inventory
+
+Blocked Inventory
+
+Safety Stock
+
+Stock Accuracy
 
 ---
-Warehouse Capacity Report
 
-Storage Function Report
+# 9. Quality Reports
 
-Manufacturing Buffer Report
+Incoming Inspection
 
-WIP Inventory Report
+In-Process Inspection
 
-Quality Hold Inventory Report
+Final Inspection
 
-Finished Goods Report
+NCR Report
 
-Warehouse Occupancy Report
+CAPA Report
 
-Warehouse Heat Map Report
+SPC Analysis
 
-Warehouse Utilization Trend
+Quality Trends
 
-Storage Turnover Report
+Quality Cost
 
-# Logistics Reports
+Quality Yield
 
-Shipment Summary
+Customer Complaints
+
+Supplier Quality
+
+Quality Certificates
+
+---
+
+# 10. Packaging Reports
+
+Packaging Performance
+
+Packaging Productivity
+
+Packaging Cost
+
+Packaging Material Usage
+
+Package Traceability
+
+Package History
+
+Package Verification
+
+Pallet Report
+
+Container Report
+
+Packaging Damage
+
+Packaging Compliance
+
+---
+
+# 11. Finished Goods Reports
+
+Finished Goods Inventory
+
+Shipment Readiness
+
+Finished Goods Aging
+
+Finished Goods History
+
+Finished Goods Genealogy
+
+Finished Goods Value
+
+Finished Goods Turnover
+
+Finished Goods by Customer
+
+Finished Goods by Product
+
+---
+
+# 12. Logistics Reports
+
+Shipment Performance
+
+Shipment Status
 
 Delivery Performance
 
-Loading Performance
+On-Time Delivery
 
 Container Utilization
 
 Vehicle Utilization
 
-Freight Cost
+Carrier Performance
 
-Transfer History
+Route Analysis
 
-Delivery Accuracy
+Dock Utilization
 
-Export Shipments
+Transportation Cost
 
----
+Export Performance
 
-# Engineering Reports
-
-Recipe Versions
-
-Routing Changes
-
-Engineering Changes
-
-BOM Comparison
-
-Drawing Revisions
-
-Machine Parameter History
-
-Tool Library
+Transfer Orders
 
 ---
 
-# Sustainability Reports
+# 13. Sales Reports
 
-Energy Consumption
+Quotation Performance
 
-Carbon Emissions
+Sales Orders
 
-Waste Analysis
+Sales by Customer
 
-Recycling Performance
+Sales by Product
 
-Biomass Utilization
+Sales by Region
+
+Sales Forecast
+
+Dealer Performance
+
+Customer Profitability
+
+Win/Loss Analysis
+
+Pipeline Report
+
+Backlog Report
+
+---
+
+# 14. Purchasing Reports
+
+Purchase Orders
+
+Supplier Performance
+
+Supplier Quality
+
+Lead Time
+
+Purchase Cost
+
+Material Cost
+
+Supplier Risk
+
+Purchase Forecast
+
+Open Purchase Orders
+
+Contract Status
+
+---
+
+# 15. Finance Reports
+
+Revenue
+
+Cost Analysis
+
+Gross Margin
+
+Contribution Margin
+
+Cash Flow
+
+Accounts Receivable
+
+Accounts Payable
+
+Budget vs Actual
+
+Cost Centers
+
+Production Cost
+
+Product Cost
+
+Profitability
+
+---
+
+# 16. Maintenance Reports
+
+Maintenance Schedule
+
+Maintenance History
+
+Breakdowns
+
+MTBF
+
+MTTR
+
+Maintenance Cost
+
+Spare Parts
+
+Calibration Status
+
+Machine Availability
+
+Predictive Maintenance
+
+---
+
+# 17. Energy Reports
+
+Electricity Consumption
+
+Natural Gas Consumption
+
+Compressed Air Usage
 
 Water Consumption
 
-Environmental KPI Summary
+Machine Energy Usage
+
+Production Energy Cost
+
+Energy per m³
+
+Energy Efficiency
+
+Peak Demand
+
+Carbon Emissions
 
 ---
 
-# Security Reports
+# 18. Sustainability Reports
 
-User Activity
+Carbon Footprint
 
-Login History
+FSC Compliance
 
-Permission Changes
+PEFC Compliance
 
-Audit Log Summary
+EPD Summary
 
-API Usage
+Waste Analysis
 
-Security Events
+Recycling Report
 
-Failed Login Attempts
+Pellet Production
+
+Wood Waste Analysis
+
+Environmental KPIs
+
+ESG Report
 
 ---
 
-# AI Reports
+# 19. AI Reports
 
-AI Recommendation History
+Demand Forecast
 
-Accepted Recommendations
+Production Forecast
 
-Prediction Accuracy
+Inventory Forecast
 
-AI Usage Statistics
+Maintenance Prediction
 
-Prompt History
+Quality Prediction
 
-AI Cost Analysis
+AI Recommendations
+
+Anomaly Detection
+
+Root Cause Analysis
 
 AI Performance
 
-Knowledge Source Usage
+AI Usage Statistics
 
 ---
 
-# Standard Report Features
+# 20. Digital Twin Reports
 
-Filtering
+Machine Status
 
-Sorting
+Production Simulation
 
-Grouping
+Material Flow
 
-Drill-Down
+Live Factory Status
 
-Drill-Through
+Factory Heat Map
 
-Scheduled Generation
+Warehouse Heat Map
 
-Export
+Digital Twin KPI
 
-Archive
-
-Digital Signature (Future)
+Simulation Results
 
 ---
 
-# Supported Export Formats
+# 21. Audit Reports
+
+Audit Trail
+
+User Activity
+
+Role Changes
+
+Data Changes
+
+Configuration Changes
+
+Workflow History
+
+Print History
+
+API Activity
+
+---
+
+# 22. Security Reports
+
+Login History
+
+Failed Logins
+
+Permission Audit
+
+MFA Usage
+
+Session Activity
+
+Security Events
+
+Access Violations
+
+API Security
+
+---
+
+# 23. System Reports
+
+System Health
+
+Database Performance
+
+API Performance
+
+Storage Usage
+
+Queue Status
+
+Background Jobs
+
+Event Processing
+
+Notification Status
+
+---
+
+# 24. Report Outputs
+
+Interactive Dashboard
+
+Table
+
+Chart
+
+Pivot
 
 PDF
 
-Excel (XLSX)
+Excel
 
 CSV
 
 JSON
 
-XML
+API
 
-HTML
-
-Power BI Dataset
+Power BI
 
 ---
 
-# Report Scheduling
+# 25. Scheduling
 
 On Demand
 
@@ -509,519 +662,122 @@ Quarterly
 
 Yearly
 
+Event Triggered
+
 ---
 
-# Report Distribution
+# 26. Delivery Channels
 
 Email
 
-In-App
+Mobile
 
-Shared Folder
+Teams
 
-Cloud Storage
+Slack
 
-API
+Customer Portal
+
+Dealer Portal
+
+REST API
 
 Webhook
 
----
+FTP
 
-# Report Security
-
-Reports follow Role-Based Access Control.
-
-Users may only access reports permitted by their assigned roles.
-
-Sensitive financial reports require explicit authorization.
+Shared Folder
 
 ---
 
-# Report Metadata
+# 27. Report Security
 
-Every generated report stores:
+Role Based Access
+
+Department Access
+
+Organization Access
+
+Factory Access
+
+Data Masking
+
+Watermark
+
+Digital Signature
+
+Export Restrictions
+
+---
+
+# 28. AI Features
+
+Natural Language Search
+
+AI Summary
+
+Trend Detection
+
+Automatic KPI Analysis
+
+Root Cause Detection
+
+Forecast Generation
+
+Smart Alerts
+
+Narrative Reports
+
+Anomaly Detection
+
+Report Recommendations
+
+---
+
+# 29. Report Metadata
+
+Report ID
 
 Report Name
 
+Category
+
+Owner
+
+Department
+
 Version
 
-Generated By
+Status
 
-Generated Date
+Frequency
 
-Filters Applied
+Security Level
 
-Export Format
-
-Execution Time
+Output Format
 
 ---
 
-# Business Rules
+# 30. Related Documents
 
-### REP-001
+Dashboard Definitions
 
-All reports shall be generated from authoritative system data.
+Analytics Database
 
----
+API Contracts
 
-### REP-002
+Printing Model
 
-Reports shall never modify business records.
+Security Model
 
----
+AI Module
 
-### REP-003
-
-Generated reports shall include metadata.
+Digital Twin
 
 ---
 
-### REP-004
+# 31. Module Philosophy
 
-Scheduled reports shall execute automatically.
+Reports transform operational data into actionable business intelligence.
 
----
-
-### REP-005
-
-Reports shall respect Role-Based Access Control.
-
----
-
-### REP-006
-
-Historical reports shall remain reproducible.
-
----
-
-### REP-007
-
-Exported reports shall preserve formatting and data integrity.
-
----
-
-### REP-008
-
-Report templates are version-controlled.
-
----
-
-### REP-009
-
-Large reports shall support asynchronous generation.
-
----
-
-### REP-010
-
-Report execution shall generate Audit Logs.
-
----
-
-# Integration
-
-Reports integrate with:
-
-Analytics
-
-Dashboard
-
-Production
-
-Inventory
-
-Warehouse
-
-Quality
-
-Maintenance
-
-Machines
-
-Tooling
-
-Sales
-
-Purchasing
-
-Finance
-
-Logistics
-
-Workflow
-
-Events
-
-Audit Log
-
-AI
-
----
----
-
-# Naswood Specialized Reports
-
-The following reports are specifically designed for timber manufacturing, thermowood production and advanced material traceability.
-
-These reports extend the standard ERP reporting capabilities and provide complete operational visibility across the manufacturing lifecycle.
-
----
-
-## Timber Recovery Report
-
-Purpose
-
-Analyze raw log utilization and production efficiency.
-
-Contents
-
-- Incoming Log Volume (m³)
-- Log Species Distribution
-- Log Diameter Classes
-- Prism Yield
-- Lumber Yield
-- Panel Yield
-- Recovery Rate (%)
-- Waste Volume
-- Sawdust Production
-- Wood Chip Production
-- Pellet Raw Material
-- Recovery by Species
-- Recovery by Supplier
-- Recovery Trend
-
-KPIs
-
-- Recovery %
-- Waste %
-- Yield %
-- By-product Ratio
-
----
-
-## Thermowood Batch Report
-
-Purpose
-
-Analyze every Thermowood treatment batch.
-
-Contents
-
-- Batch Number
-- Kiln Number
-- Recipe Name
-- Wood Species
-- Material Volume
-- Material Quantity
-- Start Time
-- Finish Time
-- Process Duration
-- Maximum Temperature
-- Temperature Curve
-- Humidity Curve
-- Fan Runtime
-- Energy Consumption
-- Operator
-- Batch Status
-- Final Quality Result
-
-KPIs
-
-- Average Cycle Time
-- Energy per m³
-- Batch Success Rate
-- Reject Rate
-
----
-
-## Kiln Drying Report
-
-Purpose
-
-Analyze kiln drying performance.
-
-Contents
-
-- Kiln Number
-- Drying Recipe
-- Moisture Before Drying
-- Moisture After Drying
-- Drying Time
-- Energy Consumption
-- Drying Curve
-- Temperature Curve
-- Relative Humidity
-- Fan Runtime
-- Alarm History
-
-KPIs
-
-- Moisture Accuracy
-- Average Drying Time
-- Energy Consumption
-- Drying Efficiency
-
----
-
-## Material Genealogy Report
-
-Purpose
-
-Display the complete history of a selected material.
-
-Contents
-
-- Material Code
-- Parent Material
-- Child Materials
-- Transformation History
-- Production Orders
-- Machines Used
-- Tools Used
-- Operators
-- Recipes
-- Quality Inspections
-- Inventory Movements
-- Warehouse Locations
-- Package Information
-- Shipment Information
-- Customer Information
-
-KPIs
-
-- Total Processing Time
-- Total Value Added
-- Material Yield
-- Complete Traceability
-
----
-
-## Transformation History Report
-
-Purpose
-
-Analyze all material transformations.
-
-Contents
-
-- Source Material
-- Result Material
-- Transformation Type
-- Machine
-- Tool
-- Recipe
-- Operator
-- Production Order
-- Timestamp
-- Quality Status
-
-KPIs
-
-- Transformation Success Rate
-- Average Transformation Time
-- Yield by Operation
-
----
-
-## Machine Productivity Report
-
-Purpose
-
-Evaluate machine performance.
-
-Contents
-
-- Machine Runtime
-- Downtime
-- Idle Time
-- Setup Time
-- Production Quantity
-- Energy Consumption
-- Tool Changes
-- Alarm Count
-- OEE
-
-KPIs
-
-- OEE
-- Availability
-- Performance
-- Quality
-- MTBF
-- MTTR
-
----
-
-## Tool Performance Report
-
-Purpose
-
-Monitor tooling efficiency.
-
-Contents
-
-- Tool Life
-- Knife Life
-- Sharpening Count
-- Total Production
-- Material Processed
-- Profile Produced
-- Replacement History
-- Failure History
-
-KPIs
-
-- Tool Life
-- Cost per m³
-- Sharpening Frequency
-- Replacement Rate
-
----
-
-## Production Timeline Report
-
-Purpose
-
-Visualize the complete production timeline.
-
-Contents
-
-- Production Order
-- Planned Start
-- Actual Start
-- Planned Finish
-- Actual Finish
-- Waiting Time
-- Processing Time
-- Downtime
-- Quality Time
-- Packaging Time
-- Shipment Time
-
-KPIs
-
-- Lead Time
-- Processing Time
-- Waiting Time
-- On-Time Completion
-
----
-
-## Factory Digital Twin Snapshot Report
-
-Purpose
-
-Capture the operational state of the factory at a specific moment.
-
-Contents
-
-- Active Machines
-- Running Production Orders
-- WIP Materials
-- Warehouse Occupancy
-- Active Operators
-- Energy Consumption
-- Tool Status
-- Maintenance Status
-- Active Shipments
-- Critical Alarms
-
-KPIs
-
-- Factory Utilization
-- OEE
-- WIP Level
-- Energy Efficiency
-
----
-
-## Sustainability Report
-
-Purpose
-
-Measure environmental performance.
-
-Contents
-
-- Energy Consumption
-- Biomass Utilization
-- Waste Recovery
-- Carbon Emissions
-- Water Consumption
-- Pellet Production
-- Recycled Material
-- Renewable Energy Usage
-
-KPIs
-
-- Carbon per m³
-- Waste Recovery %
-- Biomass Utilization %
-- Energy per m³
-
----
-
-## Executive Factory Summary
-
-Purpose
-
-Provide a complete executive overview of factory performance.
-
-Contents
-
-- Daily Production
-- Monthly Production
-- Revenue
-- Manufacturing Cost
-- Inventory Value
-- OEE
-- Waste
-- Yield
-- Delivery Performance
-- Active Orders
-- Delayed Orders
-- AI Recommendations
-- Critical Risks
-
-KPIs
-
-- Revenue
-- Gross Margin
-- OEE
-- Inventory Turnover
-- On-Time Delivery
-- Recovery Rate
-# Future Extensions
-
-The architecture supports:
-
-Power BI Publishing
-
-Interactive Reports
-
-Self-Service Reporting
-
-Embedded Analytics
-
-Digital Product Passport Reports
-
-Regulatory Compliance Reports
-
-Customer Portal Reporting
-
-Supplier Portal Reporting
-
-AI Generated Reports
-
-Natural Language Reporting
-
----
-
-# Report Philosophy
-
-Reports transform operational and analytical data into structured business documents.
-
-Every report is traceable, reproducible and generated from trusted manufacturing data.
-
-Reports support operational excellence, management decision-making, customer communication and regulatory compliance.
+Naswood OS provides a unified reporting platform that supports operational control, strategic decision-making and continuous improvement across every stage of the manufacturing lifecycle.
