@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Presentation\Naswood.Modules.Platform.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Infrastructure\Naswood.Modules.Platform.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Business\Naswood.Modules.Business.Presentation\Naswood.Modules.Business.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Business\Naswood.Modules.Business.Infrastructure\Naswood.Modules.Business.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Naswood.Modules.Business.Application\Naswood.Modules.Business.Application.csproj" />
+    <ProjectReference Include="..\Naswood.Modules.Business.Contracts\Naswood.Modules.Business.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Naswood.BuildingBlocks.AspNetCore\Naswood.BuildingBlocks.AspNetCore.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>
