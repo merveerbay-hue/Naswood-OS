@@ -62,6 +62,8 @@ export const navigationTree: NavItem[] = [
       { id: 'production-machines', label: 'Machine', path: '/production/machines' },
       { id: 'production-work-centers', label: 'Work Centers', path: '/production/work-centers' },
       { id: 'production-production-lines', label: 'Production Lines', path: '/production/production-lines' },
+      { id: 'production-shifts', label: 'Shifts', path: '/production/shifts' },
+      { id: 'production-calendars', label: 'Calendars', path: '/production/calendars' },
     ],
   },
   { id: 'quality', label: 'Quality', path: '/quality', icon: 'BadgeCheck' },

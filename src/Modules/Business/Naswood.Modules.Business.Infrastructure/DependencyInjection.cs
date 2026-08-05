@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddScoped<Naswood.Modules.Business.Application.Production.IMachineRepository, Naswood.Modules.Business.Infrastructure.Production.MachineRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.IWorkCenterRepository, Naswood.Modules.Business.Infrastructure.Production.WorkCenterRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionLineRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionLineRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IShiftRepository, Naswood.Modules.Business.Infrastructure.Production.ShiftRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.ICalendarRepository, Naswood.Modules.Business.Infrastructure.Production.CalendarRepository>();
         return services;
     }
 }
