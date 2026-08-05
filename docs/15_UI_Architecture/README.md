@@ -60,12 +60,18 @@ Source Code
 | [01_Information_Architecture.md](01_Information_Architecture.md) | Global Module → Workspace model |
 | [02_Navigation_Map.md](02_Navigation_Map.md) | Product navigation tree (workspaces, not entity CRUD lists) |
 | [03_Screen_to_Task_Mapping.md](03_Screen_to_Task_Mapping.md) | How TASKs attach under screens |
-| [Production/](Production/) | **Exemplar** — full Production IA |
+| [Production/](Production/) | Workspace IA exemplar |
 | [Inventory/](Inventory/) | Workspace + screen-family map |
 | [Quality/](Quality/) | Workspace + NCR family map |
 | [Maintenance/](Maintenance/) | Workspace + Asset family map |
 | [Purchasing/](Purchasing/) | Workspace map |
 | [Sales/](Sales/) | Workspace map |
+
+### Screen Architecture library (PRD / QLT / MNT / …)
+
+Named enterprise screens with purpose, components, filters, actions:
+
+→ **[`docs/15_UI/`](../15_UI/)** (Production PRD-001…029 fully started; other modules inventoried)
 
 ---
 

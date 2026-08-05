@@ -1,132 +1,156 @@
 # Product Navigation Map
 
-**Status:** Active (target IA)  
-**Note:** Current React `nav-config.ts` is a **transitional** flat entity list. This document is the **target** product navigation. Implementation must converge here; do not treat the current CRUD menu as final IA.
+**Status:** Active (target IA — Opcenter / SAP / D365 class)  
+**Note:** Current React `nav-config.ts` is a **transitional** flat entity list. Converge to this map.
 
 ---
 
-## Shell
-
-- Global search  
-- Company / Plant context  
-- Notifications  
-- Theme  
-- User / session  
-
----
-
-## Target module navigation (workspaces first)
-
-### Production
+## Production
 
 ```text
 Production
 ├── Dashboard
 ├── Planning
-│     ├── Production Calendar
-│     ├── Capacity Planning
-│     └── Shift Planning
-├── Execution
 │     ├── Production Orders
 │     ├── Work Orders
-│     ├── Dispatch Board
-│     ├── Operator Terminal
-│     └── Machine Terminal
+│     ├── Scheduling
+│     ├── Capacity Planning
+│     └── Dispatch List
+├── Execution
+│     ├── Operator Panel
+│     ├── Machine Panel
+│     ├── Material Consumption
+│     ├── Production Confirmation
+│     ├── WIP Tracking
+│     ├── Packaging
+│     ├── Finished Goods
+│     ├── Scrap
+│     └── Rework
 ├── Master Data
 │     ├── BOM
 │     ├── Routing
 │     ├── Operations
+│     ├── Machines
 │     ├── Work Centers
 │     ├── Production Lines
-│     ├── Machines
-│     ├── Tooling
-│     └── Production Parameters
-├── Monitoring
-│     ├── WIP
-│     ├── Confirmations
-│     ├── Scrap / Rework
-│     └── Packaging / Finished Goods
-└── Reports
-      └── Production Reports / Analytics
+│     ├── Shifts
+│     └── Calendars
+├── Reports
+├── Analytics
+└── Settings
 ```
 
-### Inventory
+Screen PRDs: `docs/15_UI/Production/`
 
-```text
-Inventory
-├── Overview
-├── Operations (Receipts, Issues, Transfers)
-├── Stock (Balances, Batches, Locations)
-├── Counts & Adjustments
-├── Master Data (Materials, Warehouses, Locations)
-└── Reports
-```
+---
 
-### Purchasing
-
-```text
-Purchasing
-├── Dashboard
-├── Sourcing (PR, RFQ, Quotations)
-├── Orders
-├── Inbound (GR against PO, Returns)
-├── Master Data (Suppliers)
-└── Reports
-```
-
-### Sales
-
-```text
-Sales
-├── Dashboard
-├── Pipeline (Leads, Opportunities)
-├── Orders & Quotations
-├── Fulfillment (Shipments, Deliveries)
-├── Master Data (Customers)
-└── Reports
-```
-
-### Quality
+## Quality
 
 ```text
 Quality
 ├── Dashboard
-├── Operations
-│     ├── Inspection Queue
-│     ├── Incoming / In-Process / Final
-│     └── Non-Conformance (NCR → CAPA)
-├── Plans & Specs
-├── Laboratory
-└── Reports / Traceability
+├── Inspection Plans
+├── Incoming Inspection
+├── In Process Inspection
+├── Final Inspection
+├── Non Conformance
+├── CAPA
+├── Certificates
+├── Traceability
+├── Reports
+└── Analytics
 ```
 
-### Maintenance
+Index: `docs/15_UI/Quality/`
+
+---
+
+## Maintenance
 
 ```text
 Maintenance
 ├── Dashboard
-├── Assets (Explorer, Hierarchy, Detail)
-├── Work Management (Requests, Orders)
-├── Planning (Preventive calendar)
+├── Assets
+├── Asset Tree
+├── Work Requests
+├── Work Orders
+├── Preventive
+├── Corrective
+├── Downtime
 ├── Spare Parts
-└── Reports / OEE
+├── OEE
+├── Reports
+└── Analytics
 ```
+
+Index: `docs/15_UI/Maintenance/`
+
+---
+
+## Inventory
+
+```text
+Inventory
+├── Dashboard
+├── Products
+├── Materials
+├── Warehouses
+├── Locations
+├── Lots
+├── Serials
+├── Goods Receipt
+├── Goods Issue
+├── Transfer
+├── Cycle Count
+├── Physical Inventory
+├── Reports
+└── Analytics
+```
+
+Index: `docs/15_UI/Inventory/`
+
+---
+
+## Sales
+
+```text
+Sales
+├── Dashboard
+├── CRM (Lead, Opportunity)
+├── Quotation
+├── Order
+├── Shipment
+├── Invoice
+├── Reports
+└── Analytics
+```
+
+Index: `docs/15_UI/Sales/`
+
+---
+
+## Purchasing
+
+```text
+Purchasing
+├── Dashboard
+├── Purchase Request
+├── RFQ
+├── Quotation Comparison
+├── Purchase Order
+├── Receiving
+├── Supplier
+├── Reports
+└── Analytics
+```
+
+Index: `docs/15_UI/Purchasing/`
 
 ---
 
 ## Transition rule for current code
 
-Until workspaces are implemented:
-
-1. Keep existing routes working.  
-2. Group new nav items under workspace labels (not flat TASK lists).  
-3. Prefer deep links: List → Detail → Actions over one mega CRUD form.  
-4. Do not add another generic `ResourcePage` as the “finished” shape for a capability that UI Architecture defines as a family.
-
----
-
-## Related
-
-- Current impl nav: `apps/web/src/navigation/nav-config.ts`  
-- DS Navigation: `docs/13_Design/00_Platform/Design_System/03_Layout/Navigation.md`  
-- Screen names: `docs/04_Application/Screen_Catalog.md`
+1. Keep existing routes until replaced.  
+2. Regroup navigation under **workspaces**, not TASK numbers.  
+3. Replace generic ResourcePage with List/Detail/Terminal screens from `docs/15_UI`.  
+4. Never add a new entity as “one CRUD page = done”.

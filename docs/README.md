@@ -33,6 +33,7 @@ The platform combines ERP, MES, WMS, QMS, CMMS, CRM, Analytics, AI and Digital T
 13_Design
 14_Implementation
 15_UI_Architecture
+15_UI
 16_Design_System
 17_User_Flows
 ```
@@ -58,19 +59,23 @@ The platform combines ERP, MES, WMS, QMS, CMMS, CRM, Analytics, AI and Digital T
 | 12_Reference | Standards and reference materials |
 | 13_Design | Design specifications (APIs, entities, UX specs) |
 | 14_Implementation | Implementation TASKs (work packages — lowest planning unit) |
-| 15_UI_Architecture | Product UI IA — Module → Workspace → Screen family (above TASKs) |
+| 15_UI_Architecture | Module → Workspace IA (above TASKs) |
+| 15_UI | **Screen Architecture** — PRD/QLT/MNT/INV… screen specs (enterprise UX) |
 | 16_Design_System | Index to canonical Design System under `13_Design` |
 | 17_User_Flows | Index to canonical UI Flows under `04_Application` |
 
 ### Product UI authority order
 
 ```text
-Constitution → Architecture → Domain → UI Architecture (15)
+Constitution → Architecture → Domain
+    → UI Architecture (15_UI_Architecture) — workspaces
+    → Screen Architecture (15_UI) — named screens (PRD-001…)
     → Design (13) → User Flows (17) → Design System (16)
     → Implementation TASK (14) → Code
 ```
 
-A TASK never defines module navigation or screen architecture by itself. See `15_UI_Architecture/00_Governing_Principles.md`.
+A TASK never defines module navigation or screen architecture by itself.  
+See `15_UI_Architecture/00_Governing_Principles.md` and `15_UI/Production/`.
 
 ---
 

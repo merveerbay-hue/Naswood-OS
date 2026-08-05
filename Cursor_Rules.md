@@ -57,8 +57,9 @@ Follow Constitution authority. For UI work, use this order:
 
 ```text
 Constitution → Architecture → Business Domain
-    → UI Architecture (docs/15_UI_Architecture)
-    → Screen / Design specs (docs/13_Design)
+    → UI Architecture (docs/15_UI_Architecture) — Module / Workspace
+    → Screen Architecture (docs/15_UI) — PRD-001, QLT-008, … named screens
+    → Design specs (docs/13_Design)
     → User Flows (docs/17_User_Flows → 04_Application/UI_Flows.md)
     → Navigation
     → Design System (docs/16_Design_System → 13_Design/.../Design_System)
@@ -70,10 +71,9 @@ Constitution → Architecture → Business Domain
 
 - An Implementation **TASK is a work package**, not a product screen and not a module.
 - **Forbidden default:** `TASK-XXX → one Library/Create/Edit/Delete ResourcePage` as the finished product shape.
-- Before coding business UI, identify **Module → Workspace → Screen family → user jobs**, then map the TASK as a **slice**.
-- Production exemplar: `docs/15_UI_Architecture/Production/` (BOM, Production Order, Workspaces).
-- Quality / Maintenance exemplars: NCR and Asset families under `docs/15_UI_Architecture/Quality/` and `.../Maintenance/`.
-- Current flat CRUD nav/pages are **technical MVP debt**; converge toward workspace navigation in `15_UI_Architecture/02_Navigation_Map.md`.
+- Before coding business UI, open the **screen PRD** (e.g. `docs/15_UI/Production/Screens/PRD-011_Production_Order_Detail.md`) and implement its components/actions (or a declared MVP subset).
+- Production has ~29 indexed screens (target 35–40); Quality ~20; Maintenance ~25; Inventory ~30.
+- Current flat CRUD nav/pages are **technical MVP debt**; converge toward `15_UI_Architecture/02_Navigation_Map.md` + `15_UI/`.
 
 ---
 
