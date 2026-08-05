@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Presentation\Naswood.Modules.Platform.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Infrastructure\Naswood.Modules.Platform.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

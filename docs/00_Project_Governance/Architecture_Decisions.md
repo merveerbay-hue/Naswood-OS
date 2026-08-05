@@ -432,3 +432,34 @@ completed as additive Product-level decisions without changing the freeze.
 `AI/NOS_CONSTITUTION/03_PLATFORM.md`,
 `docs/13_Design/01_Product_Management/Product_Management_Architecture.md`,
 `docs/13_Design/02_Inventory/Inventory_Canonicalization_Candidate.md`
+
+---
+
+## ADR-014 — Platform Kernel Solution Structure
+
+**Status:** Approved
+
+**Context:** Phase 0 resolved technology baseline and module ownership. Source
+code requires a durable solution shape before Sprint 00 features land.
+
+**Decision:** NOS backend source begins as a modular .NET 8 solution:
+
+- `BuildingBlocks` for shared kernel abstractions
+- `Modules/{BoundedContext}` with Domain, Application, Infrastructure,
+  Presentation and Contracts projects
+- `Hosts/Naswood.Api` as the composition root
+
+The first vertical slice is Platform Health Check. Business modules remain
+blocked until their Phase 0 gates close.
+
+**Rationale:** This matches Constitution folder standards, Clean Architecture
+dependency rules and ADR-003 technology baseline without inventing unresolved
+business rules.
+
+**Consequences:** Authentication and subsequent Platform tasks reuse
+BuildingBlocks contracts. Inventory and other business modules are not
+scaffolded until Canonicalization/ownership gates allow.
+
+**Related Documents:**
+`docs/13_Design/00_Platform/Platform_Engineering_Foundation.md`,
+`src/README.md`
