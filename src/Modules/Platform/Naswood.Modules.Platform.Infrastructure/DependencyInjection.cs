@@ -59,6 +59,8 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddScoped<IPermissionCatalogRepository, PermissionCatalogRepository>();
         services.AddScoped<IRoleCatalogRepository, RoleCatalogRepository>();
+        services.AddScoped<IRoleManagementRepository, RoleCatalogRepository>();
+        services.AddScoped<RoleLifecycleService>();
         services.AddScoped<IAuthorizationHistoryRepository, AuthorizationHistoryRepository>();
         services.AddSingleton<IPermissionCache, MemoryPermissionCache>();
         services.AddScoped<IAuthorizationEngine, AuthorizationEngine>();

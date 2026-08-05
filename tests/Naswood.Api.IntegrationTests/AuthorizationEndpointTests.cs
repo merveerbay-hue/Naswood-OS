@@ -85,6 +85,8 @@ public class AuthorizationEndpointTests
 
         var roles = await client.GetAsync("/api/v1/roles");
         Assert.Equal(HttpStatusCode.OK, roles.StatusCode);
+        using var rolesDoc = await JsonDocument.ParseAsync(await roles.Content.ReadAsStreamAsync());
+        Assert.True(rolesDoc.RootElement.GetProperty("data").GetProperty("totalCount").GetInt32() > 0);
 
         var menu = await client.GetAsync("/api/v1/authorization/menu");
         Assert.Equal(HttpStatusCode.OK, menu.StatusCode);

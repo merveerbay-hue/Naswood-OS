@@ -168,6 +168,12 @@ public sealed class PlatformDbContext : DbContext
             entity.Property(x => x.Code).HasMaxLength(100).IsRequired();
             entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(1000);
+            entity.Property(x => x.CompanyCode).HasMaxLength(20);
+            entity.Property(x => x.PlantCode).HasMaxLength(20);
+            entity.Property(x => x.DepartmentCode).HasMaxLength(30);
+            entity.Property(x => x.Category).HasMaxLength(100);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
             entity.Ignore(x => x.DomainEvents);
             entity.Ignore(x => x.PermissionCodes);
             entity.Property<List<string>>("_permissionCodes")
