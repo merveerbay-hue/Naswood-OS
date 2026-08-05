@@ -159,6 +159,14 @@ public sealed class PlatformDbContext : DbContext
             entity.Property(x => x.Action).HasMaxLength(100).IsRequired();
             entity.Property(x => x.Field).HasMaxLength(100);
             entity.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Category).HasMaxLength(100);
+            entity.Property(x => x.Description).HasMaxLength(1000);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Ignore(x => x.DependsOn);
+            entity.Property<List<string>>("_dependsOn")
+                .HasField("_dependsOn")
+                .HasColumnName("depends_on")
+                .HasColumnType("text[]");
         });
 
         modelBuilder.Entity<RoleDefinition>(entity =>

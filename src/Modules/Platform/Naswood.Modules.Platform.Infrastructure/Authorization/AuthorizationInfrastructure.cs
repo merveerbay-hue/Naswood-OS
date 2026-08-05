@@ -7,7 +7,7 @@ using Naswood.Modules.Platform.Infrastructure.Persistence;
 
 namespace Naswood.Modules.Platform.Infrastructure.Authorization;
 
-public sealed class PermissionCatalogRepository : IPermissionCatalogRepository
+public sealed class PermissionCatalogRepository : IPermissionCatalogRepository, IPermissionManagementRepository
 {
     private readonly PlatformDbContext _db;
 
@@ -16,7 +16,7 @@ public sealed class PermissionCatalogRepository : IPermissionCatalogRepository
     public async Task<IReadOnlyList<PermissionDefinition>> GetAllActiveAsync(
         CancellationToken cancellationToken = default) =>
         await _db.Permissions.AsNoTracking()
-            .Where(p => p.IsActive)
+            .Where(p => p.IsActive && !p.IsDeleted)
             .OrderBy(p => p.Code)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -28,6 +28,83 @@ public sealed class PermissionCatalogRepository : IPermissionCatalogRepository
         IEnumerable<PermissionDefinition> permissions,
         CancellationToken cancellationToken = default) =>
         await _db.Permissions.AddRangeAsync(permissions, cancellationToken).ConfigureAwait(false);
+
+    public Task<PermissionDefinition?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Permissions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task<PermissionDefinition?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var normalized = code.Trim();
+        return _db.Permissions.FirstOrDefaultAsync(x => x.Code == normalized, cancellationToken);
+    }
+
+    public Task<bool> CodeExistsAsync(
+        string code,
+        Guid? excludingId,
+        CancellationToken cancellationToken = default)
+    {
+        var normalized = code.Trim();
+        return _db.Permissions.AnyAsync(
+            x => !x.IsDeleted &&
+                 x.Code == normalized &&
+                 (!excludingId.HasValue || x.Id != excludingId.Value),
+            cancellationToken);
+    }
+
+    public async Task AddAsync(PermissionDefinition permission, CancellationToken cancellationToken = default) =>
+        await _db.Permissions.AddAsync(permission, cancellationToken).ConfigureAwait(false);
+
+    public async Task<(IReadOnlyList<PermissionDefinition> Items, int TotalCount)> SearchAsync(
+        PermissionSearchCriteria criteria,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Permissions.AsNoTracking().Where(x => !x.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(criteria.Code))
+        {
+            var value = criteria.Code.Trim();
+            query = query.Where(x => EF.Functions.ILike(x.Code, $"%{value}%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Module))
+        {
+            var value = criteria.Module.Trim();
+            query = query.Where(x => EF.Functions.ILike(x.Module, value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Feature))
+        {
+            var value = criteria.Feature.Trim();
+            query = query.Where(x => x.Entity != null && EF.Functions.ILike(x.Entity, $"%{value}%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Action))
+        {
+            var value = criteria.Action.Trim();
+            query = query.Where(x => EF.Functions.ILike(x.Action, value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Category))
+        {
+            var value = criteria.Category.Trim();
+            query = query.Where(x => x.Category != null && EF.Functions.ILike(x.Category, $"%{value}%"));
+        }
+
+        if (criteria.IsActive is not null)
+        {
+            query = query.Where(x => x.IsActive == criteria.IsActive);
+        }
+
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        var items = await query
+            .OrderBy(x => x.Code)
+            .Skip((criteria.Page - 1) * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return (items, total);
+    }
 }
 
 public sealed class RoleCatalogRepository : IRoleCatalogRepository, IRoleManagementRepository

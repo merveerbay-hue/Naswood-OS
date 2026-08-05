@@ -15,15 +15,6 @@ public sealed class AuthorizationController : ControllerBase
 
     public AuthorizationController(IDispatcher dispatcher) => _dispatcher = dispatcher;
 
-    [HttpGet("api/v1/permissions")]
-    [RequirePermission("Authorization.View")]
-    public async Task<IActionResult> GetPermissions(CancellationToken cancellationToken)
-    {
-        var result = await _dispatcher.QueryAsync(new GetPermissionsQuery(), cancellationToken)
-            .ConfigureAwait(false);
-        return result.ToActionResult(this);
-    }
-
     [HttpGet("api/v1/me/permissions")]
     public async Task<IActionResult> GetMyPermissions(CancellationToken cancellationToken)
     {
