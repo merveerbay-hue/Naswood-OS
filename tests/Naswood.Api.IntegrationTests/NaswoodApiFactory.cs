@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Naswood.Modules.Platform.Application.Authentication;
@@ -9,6 +11,7 @@ using Naswood.Modules.Platform.Application.Settings;
 using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Domain.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
+using Naswood.Modules.Business.Infrastructure.Persistence;
 
 namespace Naswood.Api.IntegrationTests;
 
@@ -57,8 +60,12 @@ public sealed class NaswoodApiFactory : WebApplicationFactory<Program>
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PlatformDbContext>();
+        var businessDb = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
         await db.Database.EnsureDeletedAsync();
         await db.Database.EnsureCreatedAsync();
+        // Second DbContext on same database: EnsureCreated is a no-op if DB exists.
+        var businessCreator = businessDb.Database.GetService<IRelationalDatabaseCreator>();
+        await businessCreator.CreateTablesAsync();
 
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         var users = scope.ServiceProvider.GetRequiredService<IAuthUserRepository>();
