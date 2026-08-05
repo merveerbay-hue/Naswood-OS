@@ -1,8 +1,8 @@
-# TASK-032 — Purchase Return
+# TASK-033 — Supplier Invoice
 
 **Module:** Purchasing
 
-**Category:** Transaction
+**Category:** Financial Transaction
 
 **Version:** 1.0
 
@@ -12,71 +12,80 @@
 
 # Purpose
 
-The Purchase Return transaction manages the return of materials, products or services received from suppliers that do not meet purchasing, quality or operational requirements.
+The Supplier Invoice represents the financial document issued by a supplier for delivered materials, services or subcontracted work.
 
-Purchase Returns ensure that rejected materials are removed from inventory, suppliers are notified, financial corrections are initiated and complete traceability is maintained throughout the procurement lifecycle.
+Supplier Invoices validate procurement transactions through Three-Way Matching with the Purchase Order and Goods Receipt before being transferred to the Finance module for payment processing.
 
-Purchase Returns are directly linked to Goods Receipts and Purchase Orders.
+Supplier Invoice management ensures procurement accuracy, financial compliance and complete auditability.
 
 ---
 
 # Objectives
 
-- Standardize Supplier Returns
-- Improve Supplier Quality
-- Protect Inventory Accuracy
-- Support Financial Corrections
-- Maintain Complete Traceability
-- Support Regulatory Compliance
-- Improve Supplier Performance
+- Standardize Supplier Invoice Processing
+- Support Three-Way Matching
+- Improve Financial Accuracy
+- Prevent Duplicate Payments
+- Maintain Procurement Traceability
+- Integrate Purchasing with Finance
+- Support AI-Based Invoice Validation
 
 ---
 
 # Scope
 
-Purchase Return supports
+Supplier Invoice supports
 
-- Damaged Materials
-- Quality Rejections
-- Incorrect Deliveries
-- Excess Deliveries
-- Wrong Materials
-- Supplier Recall
-- Warranty Returns
-- Service Returns
-- Return to Supplier (RTS)
+- Material Invoices
+- Service Invoices
+- Credit Notes
+- Debit Notes
+- Partial Invoices
+- Multiple Goods Receipts
+- Multiple Purchase Orders
+- Tax Validation
+- Invoice Approval
+- Finance Integration
 
-Purchase Return does NOT
+Supplier Invoice does NOT
 
-- Modify Purchase Orders
-- Reverse Supplier Payments
-- Create Inventory Adjustments
-- Process Credit Notes
+- Execute Payments
+- Manage General Ledger
+- Process Bank Transactions
+- Maintain Accounts Payable
 
-These processes are handled by Inventory and Finance modules.
+These processes belong to the Finance module.
 
 ---
 
 # Business Rules
 
-- Every Purchase Return references a Goods Receipt.
-- Every Purchase Return references a Supplier.
-- One Goods Receipt may have multiple Purchase Returns.
-- Return quantity cannot exceed received quantity.
-- Posted Purchase Returns are immutable.
-- Financial correction requires Supplier Credit Note.
-- All return transactions are fully auditable.
+- Every Supplier Invoice belongs to one supplier.
+- Every invoice references at least one Purchase Order.
+- Every invoice references one or more Goods Receipts.
+- Duplicate supplier invoice numbers are not permitted.
+- Approved invoices become read-only.
+- Financial posting occurs only after successful validation.
+- Every invoice is permanently auditable.
 
 ---
 
-# Purchase Return Lifecycle
+# Supplier Invoice Lifecycle
 
 ```
 Draft
 
 ↓
 
-Submitted
+Imported / Entered
+
+↓
+
+Validation
+
+↓
+
+Three-Way Matching
 
 ↓
 
@@ -84,23 +93,15 @@ Approval
 
 ↓
 
-Supplier Notification
+Posted
 
 ↓
 
-Return Shipment
+Transferred to Finance
 
 ↓
 
-Supplier Confirmation
-
-↓
-
-Credit Note
-
-↓
-
-Completed
+Payment
 
 ↓
 
@@ -115,180 +116,216 @@ Approval_Workflow.md
 
 ---
 
-# Return Types
+# Invoice Types
 
 | Type | Description |
 |-------|-------------|
-| Damaged Material | Physical damage |
-| Quality Rejection | Failed inspection |
-| Incorrect Material | Wrong item delivered |
-| Excess Delivery | Over-delivered quantity |
-| Supplier Recall | Supplier initiated recall |
-| Warranty Return | Warranty replacement |
-| Service Return | Rejected service |
-| Administrative Return | Documentation error |
+| Material Invoice | Inventory purchases |
+| Service Invoice | External services |
+| Advance Invoice | Prepayment |
+| Partial Invoice | Partial delivery billing |
+| Final Invoice | Final settlement |
+| Credit Note | Supplier credit |
+| Debit Note | Supplier debit |
 
 ---
 
-# Purchase Return Header
+# Invoice Header
 
-Each Purchase Return contains
+Each Supplier Invoice contains
 
-- Return Number
-- Purchase Order
-- Goods Receipt
+- Invoice Number
 - Supplier
+- Purchase Order
 - Company
 - Plant
-- Warehouse
-- Return Date
-- Return Type
+- Currency
+- Invoice Date
+- Due Date
+- Payment Terms
+- Tax Information
+- Total Amount
 - Status
-- Responsible User
 
 ---
 
-# Purchase Return Lines
+# Invoice Lines
 
-Each return line contains
+Each invoice line contains
 
-- Material
-- Batch
-- Serial Number (Optional)
-- Returned Quantity
-- Unit
-- Return Reason
-- Warehouse
-- Storage Location
-- Remarks
+- Material / Service
+- Purchase Order Line
+- Goods Receipt Reference
+- Quantity
+- Unit Price
+- Discount
+- Tax
+- Line Total
+- Currency
+- Cost Center (Optional)
 
 Reference
+
+Currency.md
 
 Measurement_System.md
 
 ---
 
-# Return Workflow
+# Three-Way Matching
+
+Supplier Invoice validation requires
 
 ```
+Purchase Order
+
+↓
+
 Goods Receipt
 
 ↓
 
-Quality Inspection
-
-↓
-
-Return Decision
-
-↓
-
-Create Purchase Return
-
-↓
-
-Approval
-
-↓
-
-Supplier Notification
-
-↓
-
-Return Shipment
-
-↓
-
-Inventory Updated
-
-↓
-
-Credit Note
+Supplier Invoice
 ```
 
----
+The system compares
 
-# Return Reasons
+- Supplier
+- Material
+- Quantity
+- Unit Price
+- Currency
+- Tax
+- Purchase Order Status
+- Goods Receipt Status
 
-Supports configurable reason codes
-
-- Damaged
-- Incorrect Quantity
-- Incorrect Material
-- Quality Failure
-- Expired Material
-- Packaging Damage
-- Transportation Damage
-- Supplier Recall
-- Warranty Issue
-- Administrative Error
+Only successful matches may proceed automatically.
 
 ---
 
-# Quality Integration
+# Matching Results
 
-Purchase Returns may originate from
+Possible outcomes
 
-- Incoming Inspection
-- Laboratory Test
-- Production Rejection
-- Supplier Audit
-- Customer Complaint
+| Result | Description |
+|---------|-------------|
+| Full Match | Automatic approval |
+| Partial Match | Manual review |
+| Quantity Mismatch | Approval required |
+| Price Mismatch | Approval required |
+| Duplicate Invoice | Rejected |
+| Missing Goods Receipt | Blocked |
 
-Rejected materials remain blocked until the return process is completed.
+---
+
+# Partial Invoice
+
+Supports
+
+```
+Purchase Order
+
+100 Units
+
+↓
+
+Goods Receipt
+
+40 Units
+
+↓
+
+Invoice
+
+40 Units
+
+↓
+
+Remaining Balance
+
+60 Units
+```
+
+Multiple invoices may be linked to a single Purchase Order.
+
+---
+
+# Credit Notes
+
+Supports
+
+- Purchase Return Credit
+- Price Correction
+- Commercial Discount
+- Warranty Credit
+- Supplier Compensation
+
+Credit Notes are linked to
+
+- Purchase Return
+- Purchase Order
+- Original Invoice
 
 Reference
 
-06_Quality
+TASK-032_Purchase_Return.md
 
 ---
 
-# Inventory Integration
+# Tax Validation
+
+Supports
+
+- VAT
+- Withholding Tax
+- Tax Exemption
+- Reverse Charge
+- Multi-Tax Scenarios
+
+Tax calculation follows company configuration.
+
+---
+
+# Currency Handling
+
+Supports
+
+- Local Currency
+- Supplier Currency
+- Exchange Rate
+- Invoice Currency
+- Accounting Currency
+
+Exchange rates follow platform currency rules.
+
+Reference
+
+Currency.md
+
+---
+
+# Finance Integration
 
 After approval
 
 ```
-Purchase Return
+Supplier Invoice
 
 ↓
 
-Inventory Return Transaction
+Accounts Payable
 
 ↓
 
-Inventory Reduced
+General Ledger
 
 ↓
 
-Warehouse Updated
-```
-
-Inventory updates are executed by the Inventory module.
-
-Reference
-
-02_Inventory
-
----
-
-# Financial Integration
-
-Purchase Return triggers
-
-```
-Purchase Return
+Payment Schedule
 
 ↓
 
-Supplier Credit Note
-
-↓
-
-Accounts Payable Adjustment
-
-↓
-
-Financial Reconciliation
+Payment Processing
 ```
 
 Reference
@@ -297,85 +334,68 @@ Reference
 
 ---
 
-# Supplier Notification
+# Purchasing Integration
 
-The system may notify suppliers by
-
-- Email
-- Supplier Portal
-- API Integration
-- EDI (Future)
-
-Notification includes
-
-- Return Number
-- Material
-- Quantity
-- Return Reason
-- Supporting Documents
-
----
-
-# Supplier Credit Note
-
-Supports
-
-- Full Credit
-- Partial Credit
-- Replacement Material
-- Financial Refund
-
-Credit Note is linked to
-
-- Purchase Order
-- Goods Receipt
-- Purchase Return
-
----
-
-# Replacement Process
-
-Optional workflow
+Workflow
 
 ```
-Purchase Return
+Purchase Request
 
 ↓
 
-Supplier Replacement
+Purchase Order
 
 ↓
 
-New Goods Receipt
+Goods Receipt
 
 ↓
 
-Inventory Updated
+Supplier Invoice
+
+↓
+
+Finance
 ```
-
----
-
-# Batch Handling
-
-Batch-controlled materials require
-
-- Batch Validation
-- Batch Traceability
-- Supplier Batch Reference
 
 Reference
 
-TASK-020_Batch.md
+Purchasing_Architecture.md
 
 ---
 
-# Serial Number Handling
+# Inventory Integration
 
-Serialized materials require
+Invoice validation verifies
 
-- Serial Validation
-- Warranty Validation
-- Ownership Verification
+- Goods Receipt Posted
+- Received Quantity
+- Purchase Order Completion
+- Material Acceptance
+
+Inventory balances are not modified.
+
+Reference
+
+02_Inventory
+
+---
+
+# AI Integration
+
+AI assists with
+
+- Duplicate Invoice Detection
+- Fraud Detection
+- Price Anomaly Detection
+- OCR Invoice Reading
+- Matching Suggestions
+- Payment Prediction
+- Invoice Risk Analysis
+
+Reference
+
+AI_Copilot.md
 
 ---
 
@@ -383,12 +403,13 @@ Serialized materials require
 
 Supports
 
-- Photos
-- Quality Reports
-- Inspection Reports
-- Supplier Correspondence
-- Credit Notes
-- Shipping Documents
+- PDF Invoice
+- XML e-Invoice
+- Credit Note
+- Delivery Documents
+- Contracts
+- Purchase Order
+- Goods Receipt
 
 Reference
 
@@ -399,27 +420,19 @@ File_Storage.md
 # Mobile Workflow
 
 ```
-Scan Material
+View Invoice
 
 ↓
 
-Select Return Reason
+Review Matching
 
 ↓
 
-Capture Photos
+Approve
 
 ↓
 
-Submit Return
-
-↓
-
-Manager Approval
-
-↓
-
-Return Shipment
+Finance Transfer
 ```
 
 Reference
@@ -432,14 +445,14 @@ Purchasing_Mobile.md
 
 The system validates
 
+- Supplier exists.
+- Purchase Order exists.
 - Goods Receipt exists.
-- Supplier matches Goods Receipt.
-- Returned quantity ≤ received quantity.
-- Material exists.
-- Warehouse exists.
-- Return reason is mandatory.
-- Batch requirement.
-- Serial requirement.
+- Invoice number is unique.
+- Currency is valid.
+- Tax is valid.
+- Invoice amount is positive.
+- Three-Way Matching completed.
 - Required approvals completed.
 
 Reference
@@ -450,14 +463,14 @@ Validation_Rules.md
 
 # Dashboard
 
-Purchase Return contributes to
+Supplier Invoice contributes to
 
-- Open Returns
-- Supplier Return Rate
-- Quality Rejections
-- Return Value
-- Pending Credit Notes
-- Supplier Performance
+- Pending Invoices
+- Invoice Approval Queue
+- Three-Way Match Rate
+- Accounts Payable
+- Invoice Aging
+- Payment Forecast
 
 Reference
 
@@ -469,12 +482,12 @@ TASK-034_Purchasing_Dashboard.md
 
 Included in
 
-- Purchase Return Report
-- Supplier Return Analysis
-- Return Reason Analysis
-- Supplier Quality Report
-- Credit Note Report
-- Procurement KPI Report
+- Supplier Invoice Report
+- Invoice Aging Report
+- Three-Way Matching Report
+- Invoice Approval Report
+- Accounts Payable Report
+- Procurement Cost Report
 
 Reference
 
@@ -487,23 +500,23 @@ TASK-035_Purchasing_Reports.md
 Primary endpoints
 
 ```
-GET /purchase-returns
+GET /supplier-invoices
 
-GET /purchase-returns/{id}
+GET /supplier-invoices/{id}
 
-POST /purchase-returns
+POST /supplier-invoices
 
-PUT /purchase-returns/{id}
+PUT /supplier-invoices/{id}
 
-POST /purchase-returns/{id}/submit
+POST /supplier-invoices/{id}/validate
 
-POST /purchase-returns/{id}/approve
+POST /supplier-invoices/{id}/approve
 
-POST /purchase-returns/{id}/ship
+POST /supplier-invoices/{id}/post
 
-POST /purchase-returns/{id}/close
+POST /supplier-invoices/{id}/cancel
 
-GET /purchase-returns/{id}/history
+GET /supplier-invoices/{id}/matching
 ```
 
 Reference
@@ -516,12 +529,13 @@ Purchasing_API.md
 
 Publishing
 
-- PurchaseReturnCreated
-- PurchaseReturnSubmitted
-- PurchaseReturnApproved
-- PurchaseReturnShipped
-- PurchaseReturnCompleted
-- SupplierCreditRequested
+- SupplierInvoiceCreated
+- SupplierInvoiceValidated
+- SupplierInvoiceMatched
+- SupplierInvoiceApproved
+- SupplierInvoicePosted
+- SupplierInvoiceTransferredToFinance
+- SupplierInvoiceCancelled
 
 Reference
 
@@ -535,12 +549,12 @@ Integration_Events.md
 
 Supports
 
-- Purchase Return Created
+- Invoice Received
+- Matching Failed
 - Approval Required
-- Supplier Notified
-- Credit Note Received
-- Replacement Shipment
-- Return Completed
+- Invoice Approved
+- Finance Transfer Completed
+- Duplicate Invoice Warning
 
 Reference
 
@@ -552,12 +566,13 @@ Notification_System.md
 
 Typical permissions
 
-- View Purchase Return
-- Create Purchase Return
-- Approve Purchase Return
-- Ship Return
-- Close Return
-- View Financial Impact
+- View Supplier Invoice
+- Create Supplier Invoice
+- Validate Invoice
+- Approve Invoice
+- Post Invoice
+- Cancel Invoice
+- View Financial Information
 
 Reference
 
@@ -569,11 +584,12 @@ Permission_Model.md
 
 The following actions are audited
 
-- Purchase Return Created
-- Return Reason Changed
+- Invoice Created
+- Invoice Imported
+- Validation Completed
+- Matching Result
 - Approval Decision
-- Shipment Confirmed
-- Credit Note Linked
+- Finance Transfer
 - Attachment Added
 - User Actions
 
@@ -587,11 +603,11 @@ Audit_Log.md
 
 The system shall
 
-- Create returns in less than 2 seconds.
-- Support bulk return processing.
-- Synchronize Inventory immediately.
-- Support concurrent warehouse users.
-- Cache supplier and purchase history.
+- Validate invoices in less than 2 seconds.
+- Support bulk invoice imports.
+- Execute Three-Way Matching in real time.
+- Cache Purchase Orders and Goods Receipts.
+- Support concurrent finance users.
 
 Reference
 
@@ -605,11 +621,11 @@ Concurrency.md
 
 # Security
 
-Purchase Return follows
+Supplier Invoice follows
 
 - Role-Based Authorization
 - Purchasing Authorization
-- Warehouse Authorization
+- Finance Authorization
 - Secure API Access
 - Complete Audit Logging
 
@@ -621,31 +637,14 @@ Permission_Model.md
 
 ---
 
-# AI Integration
-
-AI may assist with
-
-- Return Trend Analysis
-- Supplier Quality Prediction
-- Root Cause Analysis
-- Fraud Detection
-- Return Cost Analysis
-- Supplier Risk Scoring
-
-Reference
-
-AI_Copilot.md
-
----
-
 # Naswood Implementation
 
-Typical return scenarios
+Typical invoice scenarios
 
-## Damaged Timber
+## Raw Timber Procurement
 
 ```
-Supplier Delivery
+Purchase Order
 
 ↓
 
@@ -653,98 +652,94 @@ Goods Receipt
 
 ↓
 
-Quality Inspection
+Supplier Invoice
 
 ↓
 
-Purchase Return
+Three-Way Matching
 
 ↓
 
-Supplier Replacement
+Finance
 ```
 
 ---
 
-## Chemical Quality Failure
+## Thermowood Chemicals
 
 ```
-Incoming Inspection
+Supplier Delivery
 
 ↓
 
-Laboratory Failure
+Batch Receiving
 
 ↓
 
-Purchase Return
+Invoice
 
 ↓
 
-Credit Note
-
-↓
-
-Replacement Shipment
+Payment Approval
 ```
 
 ---
 
-## Wrong Material Delivery
+## Machinery Purchase
 
 ```
-Supplier Shipment
+Capital Purchase Order
 
 ↓
 
-Warehouse Receiving
+Equipment Delivery
 
 ↓
 
-Material Mismatch
+Supplier Invoice
 
 ↓
 
-Purchase Return
+Asset Registration
 
 ↓
 
-Correct Delivery
+Finance
 ```
 
 ---
 
-## Machine Spare Part Warranty
+## Packaging Materials
 
 ```
-Maintenance
+Blanket Purchase Order
 
 ↓
 
-Fault Detection
+Weekly Deliveries
 
 ↓
 
-Warranty Return
+Monthly Supplier Invoice
 
 ↓
 
-Supplier Replacement
+Three-Way Matching
 ```
 
 ---
 
 # Acceptance Criteria
 
-The Purchase Return module shall
+The Supplier Invoice module shall
 
-- Support configurable return reasons.
-- Integrate with Goods Receipt and Purchase Orders.
-- Support supplier credit notes.
-- Support batch and serial-controlled materials.
-- Integrate with Inventory, Quality and Finance.
-- Maintain complete audit and traceability.
-- Publish procurement events.
+- Support multiple invoice types.
+- Perform configurable Three-Way Matching.
+- Prevent duplicate invoices.
+- Support multi-currency and tax validation.
+- Integrate with Purchasing, Inventory and Finance.
+- Support attachments and OCR-ready invoice processing.
+- Publish procurement and finance events.
 - Follow all shared platform standards.
 
 ---
@@ -769,7 +764,7 @@ TASK-030_Purchase_Order.md
 
 TASK-031_Goods_Receipt_PO.md
 
-TASK-033_Supplier_Invoice.md
+TASK-032_Purchase_Return.md
 
 TASK-034_Purchasing_Dashboard.md
 
@@ -781,11 +776,9 @@ Permission_Model.md
 
 Validation_Rules.md
 
+Currency.md
+
 Measurement_System.md
-
-Barcode_Strategy.md
-
-QRCode_Strategy.md
 
 Performance.md
 
