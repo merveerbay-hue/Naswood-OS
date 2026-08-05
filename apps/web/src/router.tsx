@@ -8,6 +8,7 @@ import {
 import type { QueryClient } from '@tanstack/react-query';
 import { AuthenticatedLayout } from './layouts/AuthenticatedLayout';
 import { DashboardPage } from './pages/DashboardPage';
+import { FilesPage } from './pages/FilesPage';
 import { LoginPage } from './pages/LoginPage';
 import { ModulePlaceholderPage } from './pages/ModulePlaceholderPage';
 import { isAuthenticated } from './auth/session';
@@ -49,7 +50,15 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
-const modulePaths = collectNavPaths().filter((path) => path !== '/');
+const filesRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/administration/files',
+  component: FilesPage,
+});
+
+const modulePaths = collectNavPaths().filter(
+  (path) => path !== '/' && path !== '/administration/files',
+);
 
 const moduleRoutes = modulePaths.map((path) =>
   createRoute({
@@ -61,7 +70,7 @@ const moduleRoutes = modulePaths.map((path) =>
 
 export const routeTree = rootRoute.addChildren([
   loginRoute,
-  authenticatedRoute.addChildren([dashboardRoute, ...moduleRoutes]),
+  authenticatedRoute.addChildren([dashboardRoute, filesRoute, ...moduleRoutes]),
 ]);
 
 export function createAppRouter(queryClient: QueryClient) {

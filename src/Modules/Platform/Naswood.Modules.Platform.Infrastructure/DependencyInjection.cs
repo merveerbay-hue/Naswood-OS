@@ -14,12 +14,14 @@ using Microsoft.IdentityModel.Tokens;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Application.Audit;
+using Naswood.Modules.Platform.Application.Files;
 using Naswood.Modules.Platform.Application.Health;
 using Naswood.Modules.Platform.Application.Settings;
 using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Infrastructure.Audit;
 using Naswood.Modules.Platform.Infrastructure.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Authorization;
+using Naswood.Modules.Platform.Infrastructure.Files;
 using Naswood.Modules.Platform.Infrastructure.Health;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
 using Naswood.Modules.Platform.Infrastructure.Settings;
@@ -35,6 +37,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
+        services.Configure<FileUploadOptions>(configuration.GetSection(FileUploadOptions.SectionName));
 
         var connectionString = configuration.GetConnectionString("Platform")
             ?? throw new InvalidOperationException("Connection string 'Platform' is required.");
@@ -52,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<IAuditWriter, AuditLogRepository>();
         services.AddScoped<IAuditQueryRepository, AuditLogRepository>();
         services.AddScoped<ISettingRepository, SettingRepository>();
+        services.AddScoped<IFileRepository, FileRepository>();
+        services.AddSingleton<IVirusScanner, NoOpVirusScanner>();
         services.AddScoped<UserLifecycleService>();
         services.AddScoped<IPlatformUnitOfWork, PlatformUnitOfWork>();
         services.AddScoped<IOutboxWriter, EfOutboxWriter>();
