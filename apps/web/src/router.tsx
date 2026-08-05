@@ -6,31 +6,19 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import type { QueryClient } from '@tanstack/react-query';
-import { FoundationHomePage } from './pages/FoundationHomePage';
+import { AuthenticatedLayout } from './layouts/AuthenticatedLayout';
+import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { ModulePlaceholderPage } from './pages/ModulePlaceholderPage';
 import { isAuthenticated } from './auth/session';
+import { collectNavPaths } from './navigation/nav-config';
 
 export interface RouterContext {
   queryClient: QueryClient;
 }
 
 const rootRoute = createRootRouteWithContext<RouterContext>()({
-  component: () => (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--text-primary)]">
-      <Outlet />
-    </div>
-  ),
-});
-
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  beforeLoad: () => {
-    if (!isAuthenticated()) {
-      throw redirect({ to: '/login' });
-    }
-  },
-  component: FoundationHomePage,
+  component: () => <Outlet />,
 });
 
 const loginRoute = createRoute({
@@ -44,7 +32,37 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
-export const routeTree = rootRoute.addChildren([indexRoute, loginRoute]);
+const authenticatedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'authenticated',
+  beforeLoad: () => {
+    if (!isAuthenticated()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: AuthenticatedLayout,
+});
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/',
+  component: DashboardPage,
+});
+
+const modulePaths = collectNavPaths().filter((path) => path !== '/');
+
+const moduleRoutes = modulePaths.map((path) =>
+  createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path,
+    component: ModulePlaceholderPage,
+  }),
+);
+
+export const routeTree = rootRoute.addChildren([
+  loginRoute,
+  authenticatedRoute.addChildren([dashboardRoute, ...moduleRoutes]),
+]);
 
 export function createAppRouter(queryClient: QueryClient) {
   return createRouter({
