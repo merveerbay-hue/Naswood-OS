@@ -80,8 +80,9 @@ Every inventory-controlled material contains operational inventory settings.
 ## Inventory Managed
 
 Material can exist only when the referenced Product has Inventory Capability
-`Enabled`. This is validated by Inventory and is not an independently editable
-Material flag.
+`OPTIONAL` or `ENABLED`. `OPTIONAL` requires explicit transaction selection.
+This is validated by Inventory and is not an independently editable Material
+flag.
 
 ---
 

@@ -77,11 +77,12 @@ Every Material references:
 - Product ID
 - Released Product Revision ID
 
-The referenced Product must have Inventory Capability `Enabled`.
+The referenced Product must have Inventory Capability `OPTIONAL` or `ENABLED`.
+`OPTIONAL` requires explicit use by the posting transaction.
 
-For Goods Receipt, Purchasing Capability must permit purchasing.
+For Goods Receipt, Purchasing Capability must be `OPTIONAL` or `ENABLED`.
 
-For Production Output, Production Capability must be `Output Only` or `Both`.
+For Production Output, Production Capability must be `OUTPUT_ONLY` or `BOTH`.
 
 Inventory stores the references used at creation. It does not copy Product
 attributes as an independently editable master.

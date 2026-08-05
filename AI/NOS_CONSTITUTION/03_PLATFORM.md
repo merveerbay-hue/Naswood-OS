@@ -254,6 +254,43 @@ Product may participate in:
 Production capability distinguishes consumption-only, output-only and
 bidirectional participation.
 
+Inventory, Purchasing, Sales, Quality, Maintenance and Planning capability
+modes are:
+
+- DISABLED
+- OPTIONAL
+- ENABLED
+
+Production capability modes are:
+
+- NONE
+- CONSUMPTION_ONLY
+- OUTPUT_ONLY
+- BOTH
+
+Capabilities are enum-based domain values. Canonical boolean capability fields
+are prohibited.
+
+Approved Product Type defaults:
+
+| Product Type | Inventory | Purchasing | Sales | Production | Quality | Planning |
+|---|---|---|---|---|---|---|
+| Raw Material | ENABLED | ENABLED | DISABLED | CONSUMPTION_ONLY | ENABLED | ENABLED |
+| Semi Finished | ENABLED | OPTIONAL | DISABLED | BOTH | ENABLED | ENABLED |
+| Finished Good | ENABLED | OPTIONAL | ENABLED | OUTPUT_ONLY | ENABLED | ENABLED |
+| Consumable | ENABLED | ENABLED | DISABLED | CONSUMPTION_ONLY | OPTIONAL | DISABLED |
+| Packaging | ENABLED | ENABLED | OPTIONAL | CONSUMPTION_ONLY | OPTIONAL | ENABLED |
+| Spare Part | ENABLED | ENABLED | OPTIONAL | NONE | OPTIONAL | DISABLED |
+| Tool | OPTIONAL | ENABLED | DISABLED | NONE | OPTIONAL | DISABLED |
+| Service | DISABLED | ENABLED | ENABLED | NONE | DISABLED | DISABLED |
+
+Maintenance defaults are not defined by this table and shall not be invented.
+Every released Product must carry an explicit Maintenance capability mode until
+a complete default matrix is approved.
+
+Product-level overrides are permitted only through a new version, validation,
+impact analysis, authorization, workflow approval and audit.
+
 Product creation or release never creates Material or Inventory automatically.
 Inventory creates physical Material only from an authorized posted physical
 transaction.

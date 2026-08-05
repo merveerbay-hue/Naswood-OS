@@ -396,6 +396,12 @@ Every Product belongs to one Product Family.
 Every Product revision shall have one Product Type and one versioned capability
 set.
 
+Capabilities are enum-based domain values. Boolean capability fields are
+prohibited.
+
+Product Type defaults follow
+`docs/13_Design/01_Product_Management/Product_Type_and_Capabilities.md`.
+
 Released Products cannot be deleted.
 
 Archived Products remain searchable.

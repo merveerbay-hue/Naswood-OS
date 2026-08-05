@@ -121,13 +121,14 @@ the approved decision.
 
 The accountable business owner must still approve:
 
-1. Planning policies and delivery-commitment authority
-2. Costing and valuation methods
-3. Approval matrices and segregation of duties
-4. Quality classifications and mappings
-5. Recipe and batch taxonomy
-6. Finance posting/reversal rules
-7. Retention, RPO and RTO requirements
+1. Maintenance capability defaults by Product Type
+2. Planning policies and delivery-commitment authority
+3. Costing and valuation methods
+4. Approval matrices and segregation of duties
+5. Quality classifications and mappings
+6. Recipe and batch taxonomy
+7. Finance posting/reversal rules
+8. Retention, RPO and RTO requirements
 
 Architecture shall present options and consequences. It shall not invent these
 rules.

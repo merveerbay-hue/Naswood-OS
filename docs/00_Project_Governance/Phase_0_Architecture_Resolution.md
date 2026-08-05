@@ -163,7 +163,7 @@ teams:
 | Product-to-Material transition | No automatic creation; Inventory creates Material only from posted physical transactions | Approved |
 | Material ownership | Inventory owns Material Master and physical identity; Manufacturing owns genealogy | Approved |
 | BOM ownership | Manufacturing Production Master owns BOM | Approved |
-| Product capability model | Product Type supplies defaults; versioned capabilities govern module eligibility | Approved |
+| Product capability model | Enum modes and approved Product Type defaults govern module eligibility; Maintenance defaults remain explicit | Approved |
 | Planning scope | Demand, MRP, capacity and scheduling boundaries | Pending |
 | Finance event policy | Events Finance may publish without becoming an operational source | Pending |
 | Negative inventory | Prohibited without exceptions; shortages are represented separately | Approved |

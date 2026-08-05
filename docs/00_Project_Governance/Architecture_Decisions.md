@@ -339,10 +339,14 @@ as goods receipt, production output or approved opening balance.
 capabilities express allowed module participation without duplicating Product
 masters or fabricating physical stock.
 
-**Consequences:** Production capability is directional (`None`,
-`ConsumptionOnly`, `OutputOnly`, `Both`). Purchasing distinguishes Disabled,
-Optional and Enabled. Product Type provides defaults; Product capability
-overrides are validated, versioned and audited.
+**Consequences:** Inventory, Purchasing, Sales, Quality, Maintenance and
+Planning use `DISABLED`, `OPTIONAL` and `ENABLED`. Production uses `NONE`,
+`CONSUMPTION_ONLY`, `OUTPUT_ONLY` and `BOTH`. Canonical boolean capability
+fields are prohibited. Product Type provides approved defaults; Product
+capability overrides are validated, versioned and audited.
+
+Maintenance defaults absent from the approved matrix remain an explicit
+Product-level decision and shall not be inferred.
 
 **Related Documents:**
 `docs/13_Design/05_Production/BOM_Architecture.md`,

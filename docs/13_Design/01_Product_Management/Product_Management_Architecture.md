@@ -325,8 +325,7 @@ Released revision history is immutable.
 
 # Pending Business Decisions
 
-- Product-type taxonomy
-- Capability defaults for Product Types not explicitly approved
+- Maintenance capability defaults by Product Type
 - Required approval chain
 - Revision-effectivity rules
 - Product substitution rules

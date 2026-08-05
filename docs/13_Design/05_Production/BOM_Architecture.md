@@ -163,12 +163,12 @@ ownership merely because the names are similar.
 
 Output Product:
 
-- must have Production Capability `Output Only` or `Both`
+- must have Production Capability `OUTPUT_ONLY` or `BOTH`
 - must reference a released Product revision
 
 Component Product:
 
-- must have Production Capability `Consumption Only` or `Both`
+- must have Production Capability `CONSUMPTION_ONLY` or `BOTH`
 - must reference a released Product revision
 
 Service components and non-stock costs require separately approved BOM-line

@@ -511,8 +511,8 @@ The system validates
 - BOM Number is unique.
 - Output Product revision exists and is released.
 - Component Product revisions exist and are released.
-- Output Product has Production Capability `Output Only` or `Both`.
-- Component Products have Production Capability `Consumption Only` or `Both`.
+- Output Product has Production Capability `OUTPUT_ONLY` or `BOTH`.
+- Component Products have Production Capability `CONSUMPTION_ONLY` or `BOTH`.
 - Component Quantity > 0.
 - Unit is valid.
 - Effective Dates are valid.

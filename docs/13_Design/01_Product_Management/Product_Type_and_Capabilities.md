@@ -72,78 +72,77 @@ Capabilities are domain values, not UI-only flags.
 
 # Capability Values
 
-## Inventory Capability
+## Standard Capability Mode
 
-- Disabled
-- Enabled
+Inventory, Purchasing, Sales, Quality, Maintenance and Planning use:
 
-Enabled means the Product may participate in Inventory processes. It does not
-create stock, Material, warehouse assignment or opening balance.
+- `DISABLED`
+- `OPTIONAL`
+- `ENABLED`
 
-## Production Capability
+Semantics:
 
-- None
-- Consumption Only
-- Output Only
-- Both
+- `DISABLED`: The module shall reject use of the Product.
+- `OPTIONAL`: Participation is permitted but is not required or the default
+  process; the calling transaction must select it explicitly.
+- `ENABLED`: Participation is an approved standard process.
 
-Production Enabled is a derived summary:
+Inventory `OPTIONAL` or `ENABLED` never creates stock, Material, warehouse
+assignment or opening balance.
 
+## Production Capability Mode
+
+- `NONE`
+- `CONSUMPTION_ONLY`
+- `OUTPUT_ONLY`
+- `BOTH`
+
+The directional enum is authoritative. No independent `ProductionEnabled`
+boolean exists.
+
+## Canonical Representation
+
+```yaml
+capabilities:
+  inventory:
+    mode: ENABLED
+  production:
+    mode: BOTH
+  purchasing:
+    mode: OPTIONAL
+  sales:
+    mode: ENABLED
+  quality:
+    mode: ENABLED
+  maintenance:
+    mode: DISABLED
+  planning:
+    mode: ENABLED
 ```
-Production Enabled = Production Capability != None
-```
 
-The directional value is authoritative because a boolean cannot distinguish
-raw-material consumption from producible output.
-
-## Purchasing Capability
-
-- Disabled
-- Optional
-- Enabled
-
-Optional means purchasing is permitted but is not the default supply strategy.
-Enabled means purchasing is an approved standard process. Neither value creates
-a supplier, purchase request or purchase order.
-
-## Sales Capability
-
-- Disabled
-- Enabled
-
-## Quality Capability
-
-- Disabled
-- Enabled
-
-## Maintenance Capability
-
-- Disabled
-- Enabled
-
-## Planning Capability
-
-- Disabled
-- Enabled
+Booleans are not canonical capability fields.
 
 ---
 
-# Approved Default Examples
+# Approved Product Type Defaults
 
-These defaults implement the approved examples. Product-level overrides remain
-subject to validation and authorization.
+| Product Type | Inventory | Purchasing | Sales | Production | Quality | Planning |
+|---|---|---|---|---|---|---|
+| Raw Material | ENABLED | ENABLED | DISABLED | CONSUMPTION_ONLY | ENABLED | ENABLED |
+| Semi Finished | ENABLED | OPTIONAL | DISABLED | BOTH | ENABLED | ENABLED |
+| Finished Good | ENABLED | OPTIONAL | ENABLED | OUTPUT_ONLY | ENABLED | ENABLED |
+| Consumable | ENABLED | ENABLED | DISABLED | CONSUMPTION_ONLY | OPTIONAL | DISABLED |
+| Packaging | ENABLED | ENABLED | OPTIONAL | CONSUMPTION_ONLY | OPTIONAL | ENABLED |
+| Spare Part | ENABLED | ENABLED | OPTIONAL | NONE | OPTIONAL | DISABLED |
+| Tool | OPTIONAL | ENABLED | DISABLED | NONE | OPTIONAL | DISABLED |
+| Service | DISABLED | ENABLED | ENABLED | NONE | DISABLED | DISABLED |
 
-| Product Type | Inventory | Production | Purchasing | Sales |
-|---|---|---|---|---|
-| Finished Good | Enabled | Output Only | Optional | Enabled |
-| Raw Material | Enabled | Consumption Only | Enabled | Disabled |
-| Service | Disabled | None | Enabled | Enabled |
+Maintenance defaults were not included in the approved matrix. Spare Part and
+Tool are explicitly used by Maintenance/Tooling, but the capability mode for
+every Product Type shall remain an explicit Product-level decision until a
+complete Maintenance default matrix is approved.
 
-Quality, Maintenance and Planning defaults for these types, and all defaults
-for Semi Finished, Consumable, Packaging, Tool and Spare Part, require separate
-business approval.
-
-No unspecified default may be invented by implementation.
+Implementation shall not invent missing Maintenance defaults.
 
 ---
 
@@ -169,17 +168,17 @@ Changing capabilities of a released Product creates a new Product revision.
 
 At minimum:
 
-- Inventory-disabled Products cannot be used in Inventory transactions.
-- Production `Consumption Only` Products cannot be production outputs.
-- Production `Output Only` Products cannot be consumed as BOM components.
-- Production `None` Products cannot be used in production execution.
-- Purchasing-disabled Products cannot be placed on purchase documents.
-- Sales-disabled Products cannot be placed on quotations or sales orders.
-- Quality-disabled Products cannot silently bypass a quality requirement
+- Inventory `DISABLED` Products cannot be used in Inventory transactions.
+- Production `CONSUMPTION_ONLY` Products cannot be production outputs.
+- Production `OUTPUT_ONLY` Products cannot be consumed as BOM components.
+- Production `NONE` Products cannot be used in production execution.
+- Purchasing `DISABLED` Products cannot be placed on purchase documents.
+- Sales `DISABLED` Products cannot be placed on quotations or sales orders.
+- Quality `DISABLED` Products cannot silently bypass a quality requirement
   imposed by another approved rule.
-- Maintenance-disabled Products cannot be registered as maintenance-managed
+- Maintenance `DISABLED` Products cannot be registered as maintenance-managed
   spare parts or tools.
-- Planning-disabled Products cannot independently generate planning demand.
+- Planning `DISABLED` Products cannot independently generate planning demand.
 
 Capabilities authorize participation; they do not guarantee that all other
 business validations pass.
@@ -240,6 +239,22 @@ instances for component Product references.
 
 ---
 
+# Future Manufacturing Extensions
+
+The capability model permits future participation but does not encode every
+manufacturing scenario.
+
+- Co-Product and By-Product require Manufacturing-owned BOM output roles.
+- Rework requires Production execution and Manufacturing genealogy rules.
+- Phantom BOM requires a Manufacturing BOM type and explosion behavior.
+- Outsourcing and Subcontracting require sourcing and execution strategies
+  across Manufacturing, Purchasing and Production.
+
+These capabilities shall be added through their owning domain models rather
+than by overloading Product capability enums.
+
+---
+
 # Module Enforcement
 
 | Module | Required check |
@@ -282,8 +297,9 @@ Canonical entities:
 - Approval metadata
 - Audit metadata
 
-Capabilities are stored as controlled values. Derived boolean fields may be
-exposed for UI convenience but are not independent sources of truth.
+Capabilities are stored and exchanged as controlled enum values. Boolean
+capability fields are prohibited because they cannot preserve `OPTIONAL` or
+directional Production semantics.
 
 ---
 
@@ -331,12 +347,12 @@ AI may recommend capabilities but cannot activate or approve them.
 
 - One Product Master supports all approved Product Types.
 - Product capabilities are explicit and versioned.
-- Production direction is not reduced to a boolean.
+- No capability is reduced to a canonical boolean.
 - Product Type supplies defaults without hiding Product-level configuration.
 - No Product action automatically creates Material or stock.
 - Every module enforces its capability server-side.
 - Unsupported combinations are rejected.
-- Unknown defaults remain blocked rather than invented.
+- Missing Maintenance defaults remain blocked rather than invented.
 - Capability changes are authorized, approved and audited.
 
 ---

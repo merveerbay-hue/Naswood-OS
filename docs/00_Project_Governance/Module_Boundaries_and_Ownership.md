@@ -188,8 +188,8 @@ quantity, unit and operation context. They do not own Product or Material.
 # 7. Approval Gate
 
 Planning remains blocked until its Proposed domain scope and pending business
-policies are Approved. Product Type capability defaults beyond the approved
-examples require documented business approval.
+policies are Approved. Maintenance capability defaults by Product Type require
+documented business approval; no default may be inferred.
 
 ---
 
