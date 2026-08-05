@@ -3360,12 +3360,13 @@ Before generating code for any TASK, every AI must read and comply with:
 12. Implementation Task (last)
 
 **Never generate a screen directly from a TASK.**  
+**Do not create new TASK files** — `docs/14_Implementation` is frozen.  
 **Always reconstruct the complete module first** (navigation, roles, workflows,
-dashboards, workspace hierarchy, page hierarchy), then implement only the
-requested TASK slice.
+dashboards, workspace hierarchy, page hierarchy), then deliver the workspace /
+screen / flow slice.
 
-TASK documents are work packages only. They never define product, UI,
-workflow, navigation, or business architecture.
+Delivery chain: Module → Workspace → Navigation → Screens → Components →
+User Flow → Frontend. See `docs/PRODUCT_LAYERS.md`.
 
 Only after understanding these documents may implementation begin.
 
@@ -3842,7 +3843,7 @@ Before implementing any feature, verify:
 
 ✓ Tests planned
 
-✓ TASK opened last — only as a work-package slice, not as product definition
+✓ Product layers consulted (15_UI*, 16–20) — not a new TASK file
 
 Only after every item is satisfied may implementation begin.
 
