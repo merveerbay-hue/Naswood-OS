@@ -22,15 +22,17 @@ entries and shall never be edited directly.
 
 Inventory owns:
 
+- Material Master and physical Material identity
 - Inventory transaction
 - Ledger entry
 - Stock balance projection
 - Availability projection
 - Inventory posting and reversal
 
-Source modules own their business documents. Purchasing owns purchase receipts,
-Production owns production confirmations, Sales/Logistics own fulfilment
-requests and Maintenance owns spare-part demand.
+Source modules own their business documents. Product Management owns Product
+definitions, Purchasing owns purchase receipts, Production owns production
+confirmations, Sales/Logistics own fulfilment requests and Maintenance owns
+spare-part demand.
 
 ---
 

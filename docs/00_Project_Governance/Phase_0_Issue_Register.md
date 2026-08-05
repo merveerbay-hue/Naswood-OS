@@ -36,9 +36,9 @@ the approved decision.
 | ID | Issue | Resolution | Status |
 |---|---|---|---|
 | P0-001 | Constitution/Architecture authority conflict | Constitution declared highest authority in ADR-001 | Decision Approved |
-| P0-002 | Production and Manufacturing overlap | Manufacturing owns resources, Material and genealogy; Production owns execution | Decision Approved |
+| P0-002 | Production and Manufacturing overlap | Manufacturing owns Production Master and genealogy; Production owns execution | Decision Approved |
 | P0-003 | Sales, CRM and Customer ownership overlap | Sales owns Customer/commercial transactions; CRM owns pre-sale relationships | Decision Approved |
-| P0-004 | Product, Material and genealogy ownership missing | Product Management owns Product; Manufacturing owns Material/genealogy | Decision Approved |
+| P0-004 | Product, Material and genealogy ownership missing | Product Management owns Product; Inventory owns Material; Manufacturing owns genealogy | Decision Approved |
 | P0-005 | Planning module lacks complete architecture/design/tasks | Architecture created; domain decisions and implementation tasks remain | Blocked |
 | P0-006 | Reference Data standard empty | Standard completed | Closed |
 | P0-007 | Transaction standard empty | Standard completed | Closed |
@@ -88,7 +88,7 @@ the approved decision.
 | P0-037 | Workflow Engine Domain, API and persistence model | Closed |
 | P0-038 | Inventory Ledger/Stock Movement canonical design | Closed |
 | P0-039 | Reservation canonical design | Closed |
-| P0-040 | Product-to-Material transition rules | Blocked |
+| P0-040 | Product-to-Material transition rules | Closed |
 | P0-041 | Finance double-entry, posting, reversal and period-lock rules | Blocked |
 | P0-042 | Log Yard specification | Blocked |
 | P0-043 | Thermowood Certificate specification | Blocked |
@@ -121,14 +121,13 @@ the approved decision.
 
 The accountable business owner must still approve:
 
-1. Product-to-Material transition and BOM ownership
-2. Planning policies and delivery-commitment authority
-3. Costing and valuation methods
-4. Approval matrices and segregation of duties
-5. Quality classifications and mappings
-6. Recipe and batch taxonomy
-7. Finance posting/reversal rules
-8. Retention, RPO and RTO requirements
+1. Planning policies and delivery-commitment authority
+2. Costing and valuation methods
+3. Approval matrices and segregation of duties
+4. Quality classifications and mappings
+5. Recipe and batch taxonomy
+6. Finance posting/reversal rules
+7. Retention, RPO and RTO requirements
 
 Architecture shall present options and consequences. It shall not invent these
 rules.

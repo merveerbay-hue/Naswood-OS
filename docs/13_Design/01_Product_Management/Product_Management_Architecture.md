@@ -29,6 +29,7 @@ Product Management owns:
 - Product name and description
 - Product classification
 - Product type
+- Product capability set
 - Product revision
 - Technical and commercial classification attributes
 - Lifecycle and release status
@@ -81,13 +82,13 @@ Product:
 Material:
 
 - Is a physical traceable instance.
-- Is owned by Manufacturing.
-- Has quantity and location managed by Inventory.
+- Is owned by Inventory.
+- Has identity, quantity and location managed by Inventory.
 - Participates in transformation and genealogy.
 
-The exact command and rules that create or associate Material from a released
-Product revision remain pending. This architecture does not invent that
-business transition.
+Product creation or release never creates Material automatically. Inventory
+creates Material only when an authorized physical transaction is posted, such
+as goods receipt, production output or approved opening balance.
 
 ---
 
@@ -193,8 +194,8 @@ but it does not calculate or own transaction prices.
 
 Manufacturing owns:
 
-- Physical Material
 - Material genealogy
+- BOM
 - Machine and process capability
 - Work center, production line and tooling
 - Process parameters
@@ -203,7 +204,8 @@ Manufacturing owns:
 Product Management provides the released Product revision. Manufacturing shall
 not modify Product definitions.
 
-BOM ownership remains pending and shall not be inferred from this relationship.
+BOM lines reference released Product revisions, quantity, unit and operation
+context. Physical Material selection occurs during execution through Inventory.
 
 ---
 
@@ -311,21 +313,20 @@ Released revision history is immutable.
 - Product has one authoritative owner.
 - Sales does not own or mutate Product definitions.
 - Product and physical Material remain distinct.
+- Product creation never creates Material or stock automatically.
 - Published revisions are immutable.
 - Historical transactions retain their Product revision.
 - Consumers use versioned contracts and identifiers.
 - Product APIs never expose database entities.
 - Product lifecycle actions are authorized, workflow-controlled and audited.
-- BOM ownership and Product-to-Material transition remain blocked until
-  separately approved.
+- BOM remains owned by Manufacturing and references Product contracts.
 
 ---
 
 # Pending Business Decisions
 
-- Product-to-Material creation and association rules
-- BOM ownership
 - Product-type taxonomy
+- Capability defaults for Product Types not explicitly approved
 - Required approval chain
 - Revision-effectivity rules
 - Product substitution rules
@@ -341,3 +342,5 @@ Released revision history is immutable.
 - `../99_Shared/Reference_Data.md`
 - `../99_Shared/Versioning.md`
 - `../00_Platform/Workflow_Engine.md`
+- `Product_Type_and_Capabilities.md`
+- `../05_Production/BOM_Architecture.md`

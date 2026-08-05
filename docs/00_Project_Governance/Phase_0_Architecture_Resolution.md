@@ -157,11 +157,13 @@ teams:
 
 | Decision | Required outcome | Status |
 |---|---|---|
-| Production versus Manufacturing | Manufacturing owns resources, Material and genealogy; Production owns execution | Approved |
+| Production versus Manufacturing | Manufacturing owns Production Master and genealogy; Production owns execution | Approved |
 | Sales versus CRM | Sales owns Customer and commercial transactions; CRM owns pre-sale relationships | Approved |
 | Product ownership | Product Management owns Product definitions and revisions | Approved |
-| Product-to-Material transition | Creation and linkage rules for physical Material instances | Pending |
-| Material ownership | Manufacturing owns physical identity and genealogy | Approved |
+| Product-to-Material transition | No automatic creation; Inventory creates Material only from posted physical transactions | Approved |
+| Material ownership | Inventory owns Material Master and physical identity; Manufacturing owns genealogy | Approved |
+| BOM ownership | Manufacturing Production Master owns BOM | Approved |
+| Product capability model | Product Type supplies defaults; versioned capabilities govern module eligibility | Approved |
 | Planning scope | Demand, MRP, capacity and scheduling boundaries | Pending |
 | Finance event policy | Events Finance may publish without becoming an operational source | Pending |
 | Negative inventory | Prohibited without exceptions; shortages are represented separately | Approved |

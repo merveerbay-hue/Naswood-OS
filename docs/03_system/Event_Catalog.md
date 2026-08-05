@@ -495,7 +495,9 @@ Every event belongs to the permanent manufacturing history.
 
 # 20. Event Consumers
 
-Material Engine
+Product Management Engine
+
+Inventory Material Engine
 
 Inventory Engine
 
@@ -504,6 +506,8 @@ Production Engine
 Routing Engine
 
 Traceability Engine
+
+Manufacturing Genealogy Engine
 
 Quality Engine
 

@@ -41,13 +41,13 @@ approval before implementation.
 | Module | Owns | Does not own | Status |
 |---|---|---|---|
 | Platform | Identity, permissions, configuration, audit, notifications, numbering, localization, observability | Commercial or operational business entities | Approved |
-| Product Management | Product definitions, product revisions, classifications and product lifecycle | Physical Material, sales transactions, production execution and inventory balance | Approved |
-| Inventory | Warehouses, locations, stock ledger, availability, reservations, inventory movements | Material definition, purchase orders, sales orders, production orders | Approved |
+| Product Management | Product definitions, Product Types, capabilities, revisions, classifications and product lifecycle | Physical Material, sales transactions, production execution and inventory balance | Approved |
+| Inventory | Material Master, physical Material instances, warehouses, locations, stock ledger, availability, reservations and inventory movements | Product definition, purchase orders, sales orders, production orders | Approved |
 | Purchasing | Suppliers, purchase requests, RFQs, supplier quotations, purchase orders, purchase returns, supplier invoices | Inventory balances, quality decisions, financial postings | Approved |
 | Sales | Customer commercial master, quotations, sales orders and commercial commitments | Product definition, physical material, production execution, inventory balance, financial posting | Approved |
 | CRM | Leads, opportunities, activities, interactions and relationship history | Customer legal/commercial master, quotations and sales orders | Approved |
 | Planning | Demand plans, MRP results, capacity plans, schedules and recommendations | Source sales orders, inventory balances, machine master, production execution | Proposed |
-| Manufacturing | Physical Material, material genealogy, machine, work center, production line, tooling, process capability and process parameters | Production-order execution and inventory balance | Approved |
+| Manufacturing | BOM, routing, operation definitions, material genealogy, machine, work center, production line, tooling, process capability and process parameters | Product definition, physical Material identity, production-order execution and inventory balance | Approved |
 | Production | Production orders, work orders, operations, confirmations, WIP, scrap and rework | Resource master, stock ledger and quality disposition | Approved |
 | Quality | Inspection plans, inspections, holds, nonconformance, CAPA and certificates | Inventory quantity, supplier master and production execution | Approved |
 | Maintenance | Asset maintenance lifecycle, work requests, maintenance orders, plans, downtime and failure history | Machine capability master and spare-part inventory balance | Approved |
@@ -80,9 +80,9 @@ approval before implementation.
 | Machine and production capability | Manufacturing | Planning, Production, Maintenance, IoT, Digital Twin | Approved |
 | Employee | HR | Platform identity link, Planning, Production, Maintenance | Approved |
 | Product | Product Management | Sales, Planning, Manufacturing, Production, Quality, Finance | Approved |
-| Physical Material | Manufacturing | Purchasing, Inventory, Production, Quality, Logistics | Approved |
+| Physical Material and Material Master | Inventory | Purchasing, Manufacturing, Production, Quality, Logistics | Approved |
 | Material genealogy | Manufacturing | Production, Inventory, Quality, Logistics, Digital Twin | Approved |
-| BOM | Manufacturing or Planning | Sales, Planning, Production, Costing | Pending |
+| BOM | Manufacturing | Product Management, Planning, Production, Inventory, Costing | Approved |
 | Routing | Manufacturing | Planning, Production, Quality | Approved |
 | Production order | Production | Planning, Inventory, Quality, Finance | Approved |
 | Quality hold/disposition | Quality | Inventory, Production, Purchasing, Logistics | Approved |
@@ -144,8 +144,8 @@ propagated through versioned events.
 
 ## 6.1 Production and Manufacturing
 
-Manufacturing owns reusable resources, physical Material, material genealogy
-and process definitions;
+Manufacturing owns BOM, routing, operation definitions, reusable resources,
+material genealogy and process definitions;
 Production owns execution instances.
 
 ## 6.2 Sales and CRM
@@ -159,30 +159,37 @@ discount, delivery commitment and customer-specific commercial conditions.
 
 ## 6.3 Material
 
-Material is the physical traceable instance owned by Manufacturing. Inventory
-owns its quantity, location, reservation and stock status without owning or
-mutating Material identity or genealogy.
+Material Master and physical Material identity are owned by Inventory.
+Inventory also owns quantity, location, reservation and stock status.
+
+Manufacturing owns transformation genealogy and references Inventory Material
+identifiers without mutating Inventory persistence directly.
 
 ## 6.4 Product
 
 Product Management owns Product identity, definition, classification, revision
-history and lifecycle.
+history, Product Type, capabilities and lifecycle.
 
 Sales references released Product identifiers and manages customer-specific
 commercial terms without modifying Product definitions.
 
-Manufacturing and Production consume released Product revisions. The exact
-Product-to-Material transition and BOM ownership remain pending business
-decisions.
+Manufacturing and Production consume released Product revisions.
+
+Product creation or release never creates Material automatically. Physical
+Material is created by Inventory only when an authorized physical transaction
+is posted, such as goods receipt, production output or approved opening
+balance.
+
+Manufacturing owns BOM. BOM lines reference released Product revisions,
+quantity, unit and operation context. They do not own Product or Material.
 
 ---
 
 # 7. Approval Gate
 
-No implementation may create BOM persistence or Product-to-Material commands
-until the corresponding Pending decisions are Approved. Planning remains
-blocked until its Proposed domain scope and pending business policies are
-Approved.
+Planning remains blocked until its Proposed domain scope and pending business
+policies are Approved. Product Type capability defaults beyond the approved
+examples require documented business approval.
 
 ---
 

@@ -253,10 +253,11 @@ logic from bounded contexts.
 **Context:** Production overlaps Manufacturing; Sales overlaps CRM. Existing
 documents do not provide one approved ownership model.
 
-**Decision:** Manufacturing owns physical Material, genealogy, reusable
-resources and process definitions. Production owns production execution. Sales
-owns Customer, Quotation and Sales Order. CRM owns Lead, Opportunity,
-activities, interactions and relationship history.
+**Decision:** Manufacturing owns Production Master, genealogy, reusable
+resources and process definitions. Production owns production execution.
+Inventory owns Material Master and physical Material identity. Sales owns
+Customer, Quotation and Sales Order. CRM owns Lead, Opportunity, activities,
+interactions and relationship history.
 
 **Rationale:** The accountable business owner approved the recommended
 boundaries during Phase 0.
@@ -301,16 +302,48 @@ planning input and costing reference. The proposed Sales ownership was not
 approved.
 
 **Decision:** Product Management owns Product identity, definitions,
-classifications, revisions and lifecycle. Sales and operational modules consume
-released Product contracts.
+Product Types, capabilities, classifications, revisions and lifecycle. Sales
+and operational modules consume released Product contracts.
 
 **Rationale:** The accountable business owner approved Product Management as a
 dedicated module during Phase 0.
 
 **Consequences:** Sales shall not own or mutate Product definitions. Product
 Management shall not own physical Material, inventory or production execution.
-BOM ownership and Product-to-Material transition rules remain blocked until
-separately Approved.
+Product creation does not create Material or stock.
 
 **Related Documents:** `Module_Boundaries_and_Ownership.md`,
 `Phase_0_Issue_Register.md`
+
+---
+
+## ADR-011 — BOM and Product Capability Model
+
+**Status:** Approved
+
+**Context:** BOM ownership and the relationship between Product definitions and
+physical Material were unresolved. A single boolean Production flag cannot
+represent consumption-only behavior.
+
+**Decision:** Manufacturing Production Master owns BOM. BOM references released
+Product revisions, quantity, unit and operation context without owning Product
+or Material. Product Management owns Product Type and versioned capabilities:
+Inventory, Production Mode, Purchasing Mode, Sales, Quality, Maintenance and
+Planning.
+
+Product creation or release never creates Material automatically. Inventory
+creates physical Material only through an authorized posted transaction such
+as goods receipt, production output or approved opening balance.
+
+**Rationale:** BOM answers how a Product is manufactured. Product Type and
+capabilities express allowed module participation without duplicating Product
+masters or fabricating physical stock.
+
+**Consequences:** Production capability is directional (`None`,
+`ConsumptionOnly`, `OutputOnly`, `Both`). Purchasing distinguishes Disabled,
+Optional and Enabled. Product Type provides defaults; Product capability
+overrides are validated, versioned and audited.
+
+**Related Documents:**
+`docs/13_Design/05_Production/BOM_Architecture.md`,
+`docs/13_Design/01_Product_Management/Product_Type_and_Capabilities.md`

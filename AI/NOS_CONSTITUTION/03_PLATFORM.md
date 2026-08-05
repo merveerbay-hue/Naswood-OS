@@ -224,9 +224,42 @@ Material
 
 ↓
 
+Inventory
+
+BOM
+
+↓
+
 Manufacturing
 
 Ownership defines responsibility.
+
+---
+
+## Product Capability Model
+
+Every Product has one Product Type and a versioned capability set.
+
+Product Type provides defaults. Product capabilities determine whether the
+Product may participate in:
+
+- Inventory
+- Production
+- Purchasing
+- Sales
+- Quality
+- Maintenance
+- Planning
+
+Production capability distinguishes consumption-only, output-only and
+bidirectional participation.
+
+Product creation or release never creates Material or Inventory automatically.
+Inventory creates physical Material only from an authorized posted physical
+transaction.
+
+BOM is owned by Manufacturing Production Master. BOM references Product,
+quantity, unit and operation context without owning Product or Material.
 
 ---
 
