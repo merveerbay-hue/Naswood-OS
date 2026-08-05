@@ -448,7 +448,10 @@ Every transaction must be auditable.
 
 ## Stock Integrity
 
-Negative inventory should be prohibited unless explicitly configured.
+Negative inventory is prohibited without exception.
+
+Shortages shall be represented as demand, backorder or planning exceptions,
+never as negative physical stock.
 
 Every movement requires:
 
