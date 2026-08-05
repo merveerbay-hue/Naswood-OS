@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Domain.Authentication;
 using Naswood.Modules.Platform.Domain.Authorization;
+using Naswood.Modules.Platform.Domain.Organization;
 
 namespace Naswood.Modules.Platform.Infrastructure.Persistence;
 
@@ -25,6 +27,16 @@ public sealed class PlatformDbContext : DbContext
 
     public DbSet<AuthorizationHistoryEntry> AuthorizationHistory => Set<AuthorizationHistoryEntry>();
 
+    public DbSet<CompanyReference> Companies => Set<CompanyReference>();
+
+    public DbSet<PlantReference> Plants => Set<PlantReference>();
+
+    public DbSet<DepartmentReference> Departments => Set<DepartmentReference>();
+
+    public DbSet<PositionReference> Positions => Set<PositionReference>();
+
+    public DbSet<UserHistoryEntry> UserHistory => Set<UserHistoryEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("platform");
@@ -37,8 +49,33 @@ public sealed class PlatformDbContext : DbContext
             entity.HasIndex(x => x.Username).IsUnique();
             entity.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Email).HasMaxLength(320);
+            entity.HasIndex(x => x.Email)
+                .IsUnique()
+                .HasFilter("\"Email\" IS NOT NULL AND \"IsDeleted\" = FALSE");
             entity.Property(x => x.PasswordHash).HasMaxLength(200).IsRequired();
             entity.Property(x => x.LockReason).HasMaxLength(500);
+            entity.Property(x => x.EmployeeNumber).HasMaxLength(30);
+            entity.HasIndex(x => x.EmployeeNumber)
+                .IsUnique()
+                .HasFilter("\"EmployeeNumber\" IS NOT NULL AND \"IsDeleted\" = FALSE");
+            entity.Property(x => x.FirstName).HasMaxLength(100);
+            entity.Property(x => x.LastName).HasMaxLength(100);
+            entity.Property(x => x.Phone).HasMaxLength(50);
+            entity.Property(x => x.MobilePhone).HasMaxLength(50);
+            entity.Property(x => x.AvatarUrl).HasMaxLength(500);
+            entity.Property(x => x.DepartmentCode).HasMaxLength(30);
+            entity.Property(x => x.PositionCode).HasMaxLength(30);
+            entity.Property(x => x.CostCenter).HasMaxLength(50);
+            entity.Property(x => x.EmploymentType).HasMaxLength(50);
+            entity.Property(x => x.EmployeeCategory).HasMaxLength(50);
+            entity.Property(x => x.Language).HasMaxLength(10);
+            entity.Property(x => x.TimeZone).HasMaxLength(50);
+            entity.Property(x => x.DateFormat).HasMaxLength(30);
+            entity.Property(x => x.NumberFormat).HasMaxLength(30);
+            entity.Property(x => x.Currency).HasMaxLength(10);
+            entity.Property(x => x.Theme).HasMaxLength(30);
+            entity.Property(x => x.DeleteReason).HasMaxLength(500);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
             entity.Ignore(x => x.DomainEvents);
             entity.Ignore(x => x.CompanyIds);
             entity.Ignore(x => x.PlantIds);
@@ -150,6 +187,57 @@ public sealed class PlatformDbContext : DbContext
             entity.Property(x => x.PlantId).HasMaxLength(64);
             entity.Property(x => x.ResourceOwnerId).HasMaxLength(64);
             entity.Property(x => x.Field).HasMaxLength(100);
+            entity.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => x.OccurredAt);
+        });
+
+        modelBuilder.Entity<CompanyReference>(entity =>
+        {
+            entity.ToTable("org_companies");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(20).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            entity.Ignore(x => x.DomainEvents);
+        });
+
+        modelBuilder.Entity<PlantReference>(entity =>
+        {
+            entity.ToTable("org_plants");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(20).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.CompanyCode).HasMaxLength(20).IsRequired();
+            entity.Ignore(x => x.DomainEvents);
+        });
+
+        modelBuilder.Entity<DepartmentReference>(entity =>
+        {
+            entity.ToTable("org_departments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(20).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            entity.Ignore(x => x.DomainEvents);
+        });
+
+        modelBuilder.Entity<PositionReference>(entity =>
+        {
+            entity.ToTable("org_positions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(20).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Title).HasMaxLength(100).IsRequired();
+            entity.Ignore(x => x.DomainEvents);
+        });
+
+        modelBuilder.Entity<UserHistoryEntry>(entity =>
+        {
+            entity.ToTable("user_history");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Action).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Details).HasMaxLength(1000);
             entity.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
             entity.HasIndex(x => x.OccurredAt);
         });

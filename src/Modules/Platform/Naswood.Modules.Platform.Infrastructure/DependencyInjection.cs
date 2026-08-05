@@ -14,10 +14,12 @@ using Microsoft.IdentityModel.Tokens;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Application.Health;
+using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Infrastructure.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Authorization;
 using Naswood.Modules.Platform.Infrastructure.Health;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
+using Naswood.Modules.Platform.Infrastructure.Users;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Naswood.Modules.Platform.Infrastructure;
@@ -40,6 +42,10 @@ public static class DependencyInjection
         services.AddScoped<IAuthUserRepository, AuthUserRepository>();
         services.AddScoped<IAuthSessionRepository, AuthSessionRepository>();
         services.AddScoped<ILoginHistoryRepository, LoginHistoryRepository>();
+        services.AddScoped<IUserManagementRepository, UserManagementRepository>();
+        services.AddScoped<IOrganizationReferenceRepository, OrganizationReferenceRepository>();
+        services.AddScoped<IUserHistoryRepository, UserHistoryRepository>();
+        services.AddScoped<UserLifecycleService>();
         services.AddScoped<IPlatformUnitOfWork, PlatformUnitOfWork>();
         services.AddScoped<IOutboxWriter, EfOutboxWriter>();
         services.AddScoped<IAuthRequestContext, HttpAuthRequestContext>();
@@ -53,6 +59,7 @@ public static class DependencyInjection
             ?? "Production";
         if (!string.Equals(environment, "Testing", StringComparison.OrdinalIgnoreCase))
         {
+            services.AddHostedService<OrganizationBootstrapHostedService>();
             services.AddHostedService<AuthorizationBootstrapHostedService>();
         }
 
