@@ -11,6 +11,7 @@ using Naswood.Modules.Business.Application;
 using Naswood.Modules.Business.Infrastructure;
 using Naswood.Modules.Business.Presentation;
 using Naswood.Modules.Business.Infrastructure.Persistence;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,21 +49,17 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
     {
         var script = businessDb.Database.GenerateCreateScript();
-        foreach (var statement in script.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (var statement in SplitPostgresStatements(script))
         {
-            if (string.IsNullOrWhiteSpace(statement))
-            {
-                continue;
-            }
-
             try
             {
                 await businessDb.Database.ExecuteSqlRawAsync(statement).ConfigureAwait(false);
             }
             catch (Exception statementEx) when (
-                statementEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+                statementEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+                || statementEx.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
             {
-                // Table/index already provisioned.
+                // Table/index/schema already provisioned.
             }
         }
     }
@@ -74,5 +71,45 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static IEnumerable<string> SplitPostgresStatements(string script)
+{
+    var statements = new List<string>();
+    var buffer = new StringBuilder();
+    var inDollar = false;
+
+    for (var i = 0; i < script.Length; i++)
+    {
+        if (script[i] == '$' && i + 3 < script.Length && script.AsSpan(i, 4).SequenceEqual("$EF$".AsSpan()))
+        {
+            inDollar = !inDollar;
+            buffer.Append("$EF$");
+            i += 3;
+            continue;
+        }
+
+        if (script[i] == ';' && !inDollar)
+        {
+            var statement = buffer.ToString().Trim();
+            if (statement.Length > 0)
+            {
+                statements.Add(statement);
+            }
+
+            buffer.Clear();
+            continue;
+        }
+
+        buffer.Append(script[i]);
+    }
+
+    var tail = buffer.ToString().Trim();
+    if (tail.Length > 0)
+    {
+        statements.Add(tail);
+    }
+
+    return statements;
+}
 
 public partial class Program;
