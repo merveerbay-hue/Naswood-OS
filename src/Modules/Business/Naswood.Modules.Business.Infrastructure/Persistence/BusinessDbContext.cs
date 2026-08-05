@@ -41,6 +41,18 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Production.ProductionLine> ProductionLines => Set<Naswood.Modules.Business.Domain.Production.ProductionLine>();
     public DbSet<Naswood.Modules.Business.Domain.Production.Shift> Shifts => Set<Naswood.Modules.Business.Domain.Production.Shift>();
     public DbSet<Naswood.Modules.Business.Domain.Production.Calendar> Calendars => Set<Naswood.Modules.Business.Domain.Production.Calendar>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Tooling> Toolings => Set<Naswood.Modules.Business.Domain.Production.Tooling>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Operation> Operations => Set<Naswood.Modules.Business.Domain.Production.Operation>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.ProductionParameter> ProductionParameters => Set<Naswood.Modules.Business.Domain.Production.ProductionParameter>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.ProductionOrder> ProductionOrders => Set<Naswood.Modules.Business.Domain.Production.ProductionOrder>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.WorkOrder> WorkOrders => Set<Naswood.Modules.Business.Domain.Production.WorkOrder>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.MaterialConsumption> MaterialConsumptions => Set<Naswood.Modules.Business.Domain.Production.MaterialConsumption>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.ProductionConfirmation> ProductionConfirmations => Set<Naswood.Modules.Business.Domain.Production.ProductionConfirmation>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Wip> Wips => Set<Naswood.Modules.Business.Domain.Production.Wip>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Packaging> Packagings => Set<Naswood.Modules.Business.Domain.Production.Packaging>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.FinishedGood> FinishedGoods => Set<Naswood.Modules.Business.Domain.Production.FinishedGood>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Scrap> Scraps => Set<Naswood.Modules.Business.Domain.Production.Scrap>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Rework> Reworks => Set<Naswood.Modules.Business.Domain.Production.Rework>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -513,6 +525,174 @@ public sealed class BusinessDbContext : DbContext
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Calendar>(entity =>
         {
             entity.ToTable("business_production_calendar");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Tooling>(entity =>
+        {
+            entity.ToTable("business_production_tooling");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Operation>(entity =>
+        {
+            entity.ToTable("business_production_operation");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionParameter>(entity =>
+        {
+            entity.ToTable("business_production_productionparameter");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionOrder>(entity =>
+        {
+            entity.ToTable("business_production_productionorder");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.WorkOrder>(entity =>
+        {
+            entity.ToTable("business_production_workorder");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.MaterialConsumption>(entity =>
+        {
+            entity.ToTable("business_production_materialconsumption");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionConfirmation>(entity =>
+        {
+            entity.ToTable("business_production_productionconfirmation");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Wip>(entity =>
+        {
+            entity.ToTable("business_production_wip");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Packaging>(entity =>
+        {
+            entity.ToTable("business_production_packaging");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.FinishedGood>(entity =>
+        {
+            entity.ToTable("business_production_finishedgood");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Scrap>(entity =>
+        {
+            entity.ToTable("business_production_scrap");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Rework>(entity =>
+        {
+            entity.ToTable("business_production_rework");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
             entity.Property(x => x.PlantId).HasMaxLength(20);
