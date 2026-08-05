@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Naswood.Modules.Platform.Application.Authentication;
+using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Domain.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
 
@@ -25,6 +26,7 @@ public sealed class NaswoodApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.UseSetting("ConnectionStrings:Platform", TestConnectionString);
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -58,7 +60,14 @@ public sealed class NaswoodApiFactory : WebApplicationFactory<Program>
 
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         var users = scope.ServiceProvider.GetRequiredService<IAuthUserRepository>();
+        var permissions = scope.ServiceProvider.GetRequiredService<IPermissionCatalogRepository>();
+        var roles = scope.ServiceProvider.GetRequiredService<IRoleCatalogRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
+
+        var catalog = AuthorizationCatalogSeed.CreatePermissions();
+        await permissions.AddRangeAsync(catalog);
+        await roles.AddAsync(AuthorizationCatalogSeed.CreateAdministratorRole(catalog));
+        await roles.AddAsync(AuthorizationCatalogSeed.CreateReadOnlyRole());
 
         var admin = AuthUser.Create(
             "admin",

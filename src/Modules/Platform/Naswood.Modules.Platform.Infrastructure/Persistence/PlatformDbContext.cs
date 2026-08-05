@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Naswood.Modules.Platform.Domain.Authentication;
+using Naswood.Modules.Platform.Domain.Authorization;
 
 namespace Naswood.Modules.Platform.Infrastructure.Persistence;
 
@@ -17,6 +18,12 @@ public sealed class PlatformDbContext : DbContext
     public DbSet<LoginHistoryEntry> LoginHistory => Set<LoginHistoryEntry>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+    public DbSet<PermissionDefinition> Permissions => Set<PermissionDefinition>();
+
+    public DbSet<RoleDefinition> Roles => Set<RoleDefinition>();
+
+    public DbSet<AuthorizationHistoryEntry> AuthorizationHistory => Set<AuthorizationHistoryEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -102,6 +109,49 @@ public sealed class PlatformDbContext : DbContext
             entity.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
             entity.Property(x => x.Source).HasMaxLength(100).IsRequired();
             entity.HasIndex(x => x.ProcessedAt);
+        });
+
+        modelBuilder.Entity<PermissionDefinition>(entity =>
+        {
+            entity.ToTable("permissions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(200).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Module).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Entity).HasMaxLength(100);
+            entity.Property(x => x.Action).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Field).HasMaxLength(100);
+            entity.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
+        });
+
+        modelBuilder.Entity<RoleDefinition>(entity =>
+        {
+            entity.ToTable("roles");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(100).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            entity.Ignore(x => x.DomainEvents);
+            entity.Ignore(x => x.PermissionCodes);
+            entity.Property<List<string>>("_permissionCodes")
+                .HasField("_permissionCodes")
+                .HasColumnName("permission_codes")
+                .HasColumnType("text[]");
+        });
+
+        modelBuilder.Entity<AuthorizationHistoryEntry>(entity =>
+        {
+            entity.ToTable("authorization_history");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Permission).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Reason).HasMaxLength(500);
+            entity.Property(x => x.DenialCode).HasMaxLength(50);
+            entity.Property(x => x.CompanyId).HasMaxLength(64);
+            entity.Property(x => x.PlantId).HasMaxLength(64);
+            entity.Property(x => x.ResourceOwnerId).HasMaxLength(64);
+            entity.Property(x => x.Field).HasMaxLength(100);
+            entity.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => x.OccurredAt);
         });
     }
 }

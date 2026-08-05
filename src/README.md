@@ -50,13 +50,16 @@ Implemented:
 
 - BuildingBlocks foundation
 - Platform Health Check vertical slice (`GET /health`, `/health/live`, `/health/ready`)
-- Platform Authentication (TASK-001):
-  - `POST /api/v1/auth/login|logout|refresh|revoke`
-  - `GET /api/v1/auth/me|session`
-  - JWT + refresh rotation, lockout, login history, outbox events
+- Platform Authentication (TASK-001)
+- Platform Authorization (TASK-002):
+  - RBAC evaluation engine + company/plant checks
+  - `GET /api/v1/permissions|roles`
+  - `GET /api/v1/me/permissions`
+  - `POST /api/v1/authorization/check`
+  - `GET /api/v1/authorization/modules|menu`
+  - `RequirePermission` handler
 
 Next (requires explicit approval):
 
-- TASK-000 Login UI and/or TASK-002 Authorization
-- User / Role / Permission management
+- TASK-000 Login UI, TASK-003 User Management, TASK-004 Role Management, TASK-005 Permission Management
 - React application shell

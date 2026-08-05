@@ -12,10 +12,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Naswood.Modules.Platform.Application.Authentication;
+using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Application.Health;
 using Naswood.Modules.Platform.Infrastructure.Authentication;
+using Naswood.Modules.Platform.Infrastructure.Authorization;
 using Naswood.Modules.Platform.Infrastructure.Health;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Naswood.Modules.Platform.Infrastructure;
 
@@ -44,6 +47,24 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddHostedService<AuthBootstrapHostedService>();
+
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? "Production";
+        if (!string.Equals(environment, "Testing", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHostedService<AuthorizationBootstrapHostedService>();
+        }
+
+        services.AddMemoryCache();
+        services.AddScoped<IPermissionCatalogRepository, PermissionCatalogRepository>();
+        services.AddScoped<IRoleCatalogRepository, RoleCatalogRepository>();
+        services.AddScoped<IAuthorizationHistoryRepository, AuthorizationHistoryRepository>();
+        services.AddSingleton<IPermissionCache, MemoryPermissionCache>();
+        services.AddScoped<IAuthorizationEngine, AuthorizationEngine>();
+        services.AddScoped<IEffectivePermissionService, EffectivePermissionService>();
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationPolicyProvider, DynamicPermissionPolicyProvider>();
 
         services.AddSingleton<IPlatformRuntimeInfo, PlatformRuntimeInfo>();
         services.AddScoped<IHealthComponentProbe, ApplicationHealthProbe>();
