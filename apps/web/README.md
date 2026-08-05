@@ -1,6 +1,6 @@
 # Naswood OS Web
 
-Platform frontend foundation (`apps/web`).
+Platform frontend (`apps/web`).
 
 ## Stack
 
@@ -20,7 +20,11 @@ pnpm --filter @naswood/web dev
 pnpm --filter @naswood/web build
 ```
 
-## Notes
+## Auth (TASK-000)
 
-- No business pages yet (Login/Dashboard/modules come after foundation).
-- API proxy targets `http://localhost:5080` for `/api` and `/health`.
+- `/login` — Login form (username, password, company, plant, remember me)
+- `/` — Authenticated shell (requires session)
+- Tokens stored in `sessionStorage` (or `localStorage` when Remember me is on)
+- API via Vite proxy → `http://localhost:5080` (`/api`, `/health`)
+
+Dev credentials (bootstrap): `admin` / `Naswood!Admin1`

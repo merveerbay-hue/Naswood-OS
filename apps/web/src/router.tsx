@@ -3,9 +3,12 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  redirect,
 } from '@tanstack/react-router';
 import type { QueryClient } from '@tanstack/react-query';
 import { FoundationHomePage } from './pages/FoundationHomePage';
+import { LoginPage } from './pages/LoginPage';
+import { isAuthenticated } from './auth/session';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -22,10 +25,26 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  beforeLoad: () => {
+    if (!isAuthenticated()) {
+      throw redirect({ to: '/login' });
+    }
+  },
   component: FoundationHomePage,
 });
 
-export const routeTree = rootRoute.addChildren([indexRoute]);
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  beforeLoad: () => {
+    if (isAuthenticated()) {
+      throw redirect({ to: '/' });
+    }
+  },
+  component: LoginPage,
+});
+
+export const routeTree = rootRoute.addChildren([indexRoute, loginRoute]);
 
 export function createAppRouter(queryClient: QueryClient) {
   return createRouter({
