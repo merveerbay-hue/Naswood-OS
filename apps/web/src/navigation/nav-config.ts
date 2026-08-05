@@ -12,19 +12,45 @@ export const navigationTree: NavItem[] = [
   {
     id: 'inventory',
     label: 'Inventory',
-    path: '/inventory',
+    path: '/inventory/dashboard',
     icon: 'Package',
     children: [
-      { id: 'inventory-materials', label: 'Material', path: '/inventory/materials' },
-      { id: 'inventory-warehouses', label: 'Warehouse', path: '/inventory/warehouses' },
-      { id: 'inventory-locations', label: 'Location', path: '/inventory/locations' },
-      { id: 'inventory-balances', label: 'Inventory', path: '/inventory/balances' },
-      { id: 'inventory-batches', label: 'Batch', path: '/inventory/batches' },
-      { id: 'inventory-goods-receipts', label: 'Goods Receipt', path: '/inventory/goods-receipts' },
-      { id: 'inventory-goods-issues', label: 'Goods Issue', path: '/inventory/goods-issues' },
-      { id: 'inventory-transfers', label: 'Stock Transfer', path: '/inventory/transfers' },
-      { id: 'inventory-counts', label: 'Inventory Count', path: '/inventory/counts' },
-      { id: 'inventory-adjustments', label: 'Inventory Adjustment', path: '/inventory/adjustments' },
+      { id: 'inventory-dashboard', label: 'Dashboard', path: '/inventory/dashboard' },
+      {
+        id: 'inventory-operations',
+        label: 'Operations',
+        children: [
+          { id: 'inventory-goods-receipts', label: 'Goods Receipt', path: '/inventory/operations/goods-receipts' },
+          { id: 'inventory-goods-issues', label: 'Goods Issue', path: '/inventory/operations/goods-issues' },
+          { id: 'inventory-transfers', label: 'Transfer', path: '/inventory/operations/transfers' },
+        ],
+      },
+      {
+        id: 'inventory-stock',
+        label: 'Stock',
+        children: [
+          { id: 'inventory-balances', label: 'Stock Balance', path: '/inventory/stock/balances' },
+          { id: 'inventory-lots', label: 'Lots', path: '/inventory/stock/lots' },
+        ],
+      },
+      {
+        id: 'inventory-counts-ws',
+        label: 'Counts & Adjustments',
+        children: [
+          { id: 'inventory-counts', label: 'Cycle Count', path: '/inventory/counts/cycle-counts' },
+          { id: 'inventory-adjustments', label: 'Adjustment', path: '/inventory/counts/adjustments' },
+        ],
+      },
+      {
+        id: 'inventory-master-data',
+        label: 'Master Data',
+        children: [
+          { id: 'inventory-materials', label: 'Materials', path: '/inventory/master-data/materials' },
+          { id: 'inventory-warehouses', label: 'Warehouses', path: '/inventory/master-data/warehouses' },
+          { id: 'inventory-locations', label: 'Locations', path: '/inventory/master-data/locations' },
+        ],
+      },
+      { id: 'inventory-reports', label: 'Reports', path: '/inventory/reports' },
     ],
   },
   {

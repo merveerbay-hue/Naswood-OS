@@ -4,7 +4,7 @@
 
 **Document:** Cursor Rules
 
-**Version:** 1.0
+**Version:** 1.2
 
 ---
 
@@ -13,6 +13,48 @@
 These rules define how Cursor AI shall operate while developing Naswood OS.
 
 The objective is to ensure consistency, maintainability and enterprise-grade software quality across the entire project.
+
+---
+
+# AI Execution Constitution (read first — mandatory)
+
+**Canonical:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
+**Product stack:** [`docs/PRODUCT_LAYERS.md`](docs/PRODUCT_LAYERS.md)
+
+`docs/14_Implementation` is **FROZEN** — no new TASK files.  
+Delivery driver is the product layer, not Architecture → TASK → TASK.
+
+### Absolute rules
+
+1. **Never generate a screen from a TASK** (or TASK habit).
+2. **Always reconstruct the complete module first.**
+3. Deliver **Module → Workspace → Navigation → Screens → Components → User Flow → Frontend.**
+4. Prefer prompts like **“Maintenance Workspace’i oluştur”**, not **“TASK-078’i yap”**.
+
+### Mandatory read order before product UI / FE work
+
+```text
+1. AI Execution Constitution
+2. Foundation / Engineering / Platform
+3. Module Architecture · Workflow · API · Dashboard · Mobile
+4. UI Architecture          docs/15_UI_Architecture/
+5. Navigation               docs/19_Navigation/
+6. Screen Architecture      docs/15_UI/
+7. User Flows               docs/17_User_Flows/
+8. Component Library        docs/18_Component_Library/
+9. Design System            docs/16_Design_System/
+10. Frontend Architecture   docs/20_Frontend_Architecture/
+```
+
+### Forbidden default
+
+```text
+TASK-078 → Asset CRUD
+next TASK → another ResourcePage
+new file under 14_Implementation/
+```
+
+If product docs are missing, **author the product layer** (screen/flow/nav) — do not invent a TASK.
 
 ---
 
@@ -48,6 +90,30 @@ Every new feature shall include:
 - API Changes
 - Database Changes
 - Related Documents
+
+---
+
+# Product UI Hierarchy (mandatory)
+
+```text
+AI Execution Constitution → Constitution → Architecture → Domain
+    → Module Design (Architecture / Workflow / API / Dashboard / Mobile)
+    → UI Architecture (15_UI_Architecture)
+    → Navigation (19_Navigation)
+    → Screen Architecture (15_UI)
+    → User Flows (17_User_Flows)
+    → Component Library (18) → Design System (16)
+    → Frontend Architecture (20)
+    → Source Code
+
+14_Implementation = FROZEN (historical only)
+```
+
+### Critical rules
+
+- Open work with **workspace / screen / flow**, never with a new TASK file.
+- Before coding business UI, open the **screen PRD** and compose from Component Library.
+- Current flat CRUD nav/pages are **technical MVP debt**; converge to `19_Navigation` + `15_UI`.
 
 ---
 

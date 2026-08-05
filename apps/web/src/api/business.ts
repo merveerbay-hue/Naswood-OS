@@ -22,6 +22,10 @@ export async function deleteResource(route: string, id: string): Promise<null> {
   return apiRequest<null>(`/api/v1/${route}/${id}`, { method: 'DELETE', auth: true });
 }
 
+export async function getResource<T>(route: string, id: string): Promise<T> {
+  return apiRequest<T>(`/api/v1/${route}/${id}`, { method: 'GET', auth: true });
+}
+
 export async function getDashboard<T>(route: string): Promise<T> {
   return apiRequest<T>(`/api/v1/${route}`, { method: 'GET', auth: true });
 }

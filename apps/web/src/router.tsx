@@ -13,16 +13,24 @@ import { ModulePlaceholderPage } from './pages/ModulePlaceholderPage';
 import { isAuthenticated } from './auth/session';
 import { collectNavPaths } from './navigation/nav-config';
 import { FilesPage } from './pages/FilesPage';
-import { MaterialPage } from './pages/business/MaterialPage';
-import { WarehousePage } from './pages/business/WarehousePage';
-import { LocationPage } from './pages/business/LocationPage';
-import { InventoryBalancePage } from './pages/business/InventoryBalancePage';
-import { BatchPage } from './pages/business/BatchPage';
-import { GoodsReceiptPage } from './pages/business/GoodsReceiptPage';
-import { GoodsIssuePage } from './pages/business/GoodsIssuePage';
-import { StockTransferPage } from './pages/business/StockTransferPage';
-import { InventoryCountPage } from './pages/business/InventoryCountPage';
-import { InventoryAdjustmentPage } from './pages/business/InventoryAdjustmentPage';
+import { InventoryWorkspaceLayout } from './modules/inventory/InventoryWorkspaceLayout';
+import { InventoryDashboardPage } from './modules/inventory/overview/InventoryDashboardPage';
+import {
+  AdjustmentListPage,
+  CycleCountListPage,
+  GoodsIssueListPage,
+  GoodsReceiptDetailPage,
+  GoodsReceiptListPage,
+  InventoryReportsPage,
+  LocationListPage,
+  LotListPage,
+  MaterialDetailPage,
+  MaterialListPage,
+  StockBalancePage,
+  TransferListPage,
+  WarehouseDetailPage,
+  WarehouseListPage,
+} from './modules/inventory/screens';
 import { SupplierPage } from './pages/business/SupplierPage';
 import { PurchaseRequestPage } from './pages/business/PurchaseRequestPage';
 import { RfqPage } from './pages/business/RfqPage';
@@ -102,16 +110,117 @@ const filesRoute = createRoute({
   component: FilesPage,
 });
 
-const route_0 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/materials', component: MaterialPage });
-const route_1 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/warehouses', component: WarehousePage });
-const route_2 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/locations', component: LocationPage });
-const route_3 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/balances', component: InventoryBalancePage });
-const route_4 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/batches', component: BatchPage });
-const route_5 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/goods-receipts', component: GoodsReceiptPage });
-const route_6 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/goods-issues', component: GoodsIssuePage });
-const route_7 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/transfers', component: StockTransferPage });
-const route_8 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/counts', component: InventoryCountPage });
-const route_9 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/inventory/adjustments', component: InventoryAdjustmentPage });
+const inventoryRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/inventory',
+  component: InventoryWorkspaceLayout,
+});
+
+const inventoryIndexRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/inventory/dashboard' });
+  },
+});
+
+const invDashboardRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'dashboard',
+  component: InventoryDashboardPage,
+});
+const invMaterialsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/materials',
+  component: MaterialListPage,
+});
+const invMaterialDetailRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/materials/$id',
+  component: MaterialDetailPage,
+});
+const invWarehousesRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/warehouses',
+  component: WarehouseListPage,
+});
+const invWarehouseDetailRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/warehouses/$id',
+  component: WarehouseDetailPage,
+});
+const invLocationsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/locations',
+  component: LocationListPage,
+});
+const invBalancesRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/balances',
+  component: StockBalancePage,
+});
+const invLotsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/lots',
+  component: LotListPage,
+});
+const invReceiptsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/goods-receipts',
+  component: GoodsReceiptListPage,
+});
+const invReceiptDetailRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/goods-receipts/$id',
+  component: GoodsReceiptDetailPage,
+});
+const invIssuesRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/goods-issues',
+  component: GoodsIssueListPage,
+});
+const invTransfersRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/transfers',
+  component: TransferListPage,
+});
+const invCountsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'counts/cycle-counts',
+  component: CycleCountListPage,
+});
+const invAdjustmentsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'counts/adjustments',
+  component: AdjustmentListPage,
+});
+const invReportsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'reports',
+  component: InventoryReportsPage,
+});
+
+const legacyInventoryRedirects = [
+  ['/inventory/materials', '/inventory/master-data/materials'],
+  ['/inventory/warehouses', '/inventory/master-data/warehouses'],
+  ['/inventory/locations', '/inventory/master-data/locations'],
+  ['/inventory/balances', '/inventory/stock/balances'],
+  ['/inventory/batches', '/inventory/stock/lots'],
+  ['/inventory/goods-receipts', '/inventory/operations/goods-receipts'],
+  ['/inventory/goods-issues', '/inventory/operations/goods-issues'],
+  ['/inventory/transfers', '/inventory/operations/transfers'],
+  ['/inventory/counts', '/inventory/counts/cycle-counts'],
+  ['/inventory/adjustments', '/inventory/counts/adjustments'],
+].map(([from, to]) =>
+  createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: from,
+    beforeLoad: () => {
+      throw redirect({ to });
+    },
+  }),
+);
+
 const route_10 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/suppliers', component: SupplierPage });
 const route_11 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/purchase-requests', component: PurchaseRequestPage });
 const route_12 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/rfqs', component: RfqPage });
@@ -153,7 +262,73 @@ const route_47 = createRoute({ getParentRoute: () => authenticatedRoute, path: '
 const route_48 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/reworks', component: ReworkPage });
 const route_49 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/dashboard', component: ProductionDashboardPage });
 
-const implemented = new Set(['/', '/administration/files', '/inventory/materials', '/inventory/warehouses', '/inventory/locations', '/inventory/balances', '/inventory/batches', '/inventory/goods-receipts', '/inventory/goods-issues', '/inventory/transfers', '/inventory/counts', '/inventory/adjustments', '/purchasing/suppliers', '/purchasing/purchase-requests', '/purchasing/rfqs', '/purchasing/supplier-quotations', '/purchasing/purchase-orders', '/purchasing/purchase-goods-receipts', '/purchasing/purchase-returns', '/purchasing/supplier-invoices', '/purchasing/dashboard', '/purchasing/reports', '/sales/customers', '/sales/leads', '/sales/opportunities', '/sales/quotations', '/sales/sales-orders', '/sales/shipments', '/sales/deliveries', '/sales/customer-invoices', '/sales/dashboard', '/sales/reports', '/production/boms', '/production/routings', '/production/machines', '/production/work-centers', '/production/production-lines', '/production/shifts', '/production/calendars', '/production/toolings', '/production/operations', '/production/production-parameters', '/production/production-orders', '/production/work-orders', '/production/material-consumptions', '/production/production-confirmations', '/production/wips', '/production/packagings', '/production/finished-goods', '/production/scraps', '/production/reworks', '/production/dashboard']);
+const implemented = new Set([
+  '/',
+  '/administration/files',
+  '/inventory',
+  '/inventory/dashboard',
+  '/inventory/master-data/materials',
+  '/inventory/master-data/warehouses',
+  '/inventory/master-data/locations',
+  '/inventory/stock/balances',
+  '/inventory/stock/lots',
+  '/inventory/operations/goods-receipts',
+  '/inventory/operations/goods-issues',
+  '/inventory/operations/transfers',
+  '/inventory/counts/cycle-counts',
+  '/inventory/counts/adjustments',
+  '/inventory/reports',
+  '/inventory/materials',
+  '/inventory/warehouses',
+  '/inventory/locations',
+  '/inventory/balances',
+  '/inventory/batches',
+  '/inventory/goods-receipts',
+  '/inventory/goods-issues',
+  '/inventory/transfers',
+  '/inventory/counts',
+  '/inventory/adjustments',
+  '/purchasing/suppliers',
+  '/purchasing/purchase-requests',
+  '/purchasing/rfqs',
+  '/purchasing/supplier-quotations',
+  '/purchasing/purchase-orders',
+  '/purchasing/purchase-goods-receipts',
+  '/purchasing/purchase-returns',
+  '/purchasing/supplier-invoices',
+  '/purchasing/dashboard',
+  '/purchasing/reports',
+  '/sales/customers',
+  '/sales/leads',
+  '/sales/opportunities',
+  '/sales/quotations',
+  '/sales/sales-orders',
+  '/sales/shipments',
+  '/sales/deliveries',
+  '/sales/customer-invoices',
+  '/sales/dashboard',
+  '/sales/reports',
+  '/production/boms',
+  '/production/routings',
+  '/production/machines',
+  '/production/work-centers',
+  '/production/production-lines',
+  '/production/shifts',
+  '/production/calendars',
+  '/production/toolings',
+  '/production/operations',
+  '/production/production-parameters',
+  '/production/production-orders',
+  '/production/work-orders',
+  '/production/material-consumptions',
+  '/production/production-confirmations',
+  '/production/wips',
+  '/production/packagings',
+  '/production/finished-goods',
+  '/production/scraps',
+  '/production/reworks',
+  '/production/dashboard',
+]);
 const modulePaths = collectNavPaths().filter((path) => !implemented.has(path));
 const moduleRoutes = modulePaths.map((path) =>
   createRoute({ getParentRoute: () => authenticatedRoute, path, component: ModulePlaceholderPage }),
@@ -164,16 +339,25 @@ export const routeTree = rootRoute.addChildren([
   authenticatedRoute.addChildren([
     dashboardRoute,
     filesRoute,
-    route_0,
-    route_1,
-    route_2,
-    route_3,
-    route_4,
-    route_5,
-    route_6,
-    route_7,
-    route_8,
-    route_9,
+    inventoryRoute.addChildren([
+      inventoryIndexRoute,
+      invDashboardRoute,
+      invMaterialsRoute,
+      invMaterialDetailRoute,
+      invWarehousesRoute,
+      invWarehouseDetailRoute,
+      invLocationsRoute,
+      invBalancesRoute,
+      invLotsRoute,
+      invReceiptsRoute,
+      invReceiptDetailRoute,
+      invIssuesRoute,
+      invTransfersRoute,
+      invCountsRoute,
+      invAdjustmentsRoute,
+      invReportsRoute,
+    ]),
+    ...legacyInventoryRedirects,
     route_10,
     route_11,
     route_12,
