@@ -54,11 +54,14 @@ appsettings.*.local.json
 .env
 .env.*
 
-# Node (frontend later)
+# Node / frontend
 node_modules/
 dist/
 .turbo/
 .next/
+*.tsbuildinfo
+apps/web/dist/
+App_Data/
 
 # Cursor / tooling
 *.DotSettings.user

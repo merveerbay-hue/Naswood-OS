@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+@import '../../../packages/ui/src/styles/tokens.css';
+
+@theme {
+  --color-naswood-primary: var(--color-primary);
+  --color-naswood-secondary: var(--color-secondary);
+  --color-naswood-success: var(--color-success);
+  --color-naswood-warning: var(--color-warning);
+  --color-naswood-danger: var(--color-danger);
+  --color-naswood-info: var(--color-info);
+  --font-sans: var(--font-sans);
+}

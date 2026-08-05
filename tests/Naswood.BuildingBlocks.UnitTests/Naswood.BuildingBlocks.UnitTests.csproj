@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BuildingBlocks\Naswood.BuildingBlocks.Domain\Naswood.BuildingBlocks.Domain.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\Naswood.BuildingBlocks.Application\Naswood.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\Naswood.BuildingBlocks.Infrastructure\Naswood.BuildingBlocks.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
