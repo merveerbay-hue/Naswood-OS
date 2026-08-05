@@ -16,7 +16,7 @@ This document defines how one canonical Product Master controls Product
 participation across NOS modules without creating duplicate Product, Material
 or inventory models.
 
-Product Type supplies defaults. A versioned capability set records the
+Product Type supplies defaults. A versioned Capability Profile records the
 effective behavior of each Product.
 
 ---
@@ -160,7 +160,63 @@ permits them. Overrides require:
 - Required workflow approval
 - Audit
 
-Changing capabilities of a released Product creates a new Product revision.
+Changing capabilities creates a new Capability Profile revision. It does not
+rewrite the Product or an existing profile. A separate Product revision is
+required only when the Product definition itself changes.
+
+Capabilities are not stored as columns on `Product`. They are owned by a
+separate versioned `ProductCapabilityProfile` aggregate.
+
+---
+
+# Capability Profile
+
+Aggregate Root: `ProductCapabilityProfile`
+
+Contains:
+
+- Capability Profile ID
+- Product ID
+- Product Revision ID
+- Profile Revision
+- Inventory Mode
+- Purchasing Mode
+- Sales Mode
+- Production Mode
+- Quality Mode
+- Maintenance Mode
+- Planning Mode
+- Effective From
+- Effective To
+- Status
+- Change Reason
+- Approved By and At
+- Activated By and At
+- Superseded By Profile ID
+- Version
+- Audit metadata
+
+`Product` stores `CurrentCapabilityProfileId` as a convenience pointer. The
+profile remains the authoritative behavior contract.
+
+Capability Profile lifecycle:
+
+```
+DRAFT → UNDER_REVIEW → APPROVED → ACTIVE → SUPERSEDED → RETIRED
+```
+
+- Draft may be edited.
+- Under Review is locked for workflow review.
+- Approved is not effective until activated.
+- Active may govern new business transactions during its effective period.
+- Superseded remains immutable and historically resolvable.
+- Retired cannot govern new transactions.
+
+Only one profile may be Active for a Product revision and effective instant.
+Effective periods shall not overlap.
+
+Activating, superseding or correcting a profile never rewrites an earlier
+profile.
 
 ---
 
@@ -278,28 +334,26 @@ Canonical entities:
 
 - `ProductType`
 - `ProductCapabilityPolicy`
-- `ProductCapabilitySet`
-- `ProductCapabilityOverride`
+- `ProductCapabilityProfile`
+- `ProductCapabilityProfileHistory`
 
-`ProductCapabilitySet` contains:
+Canonical tables:
+
+- `product_capability_profiles`
+- `product_capability_profile_history`
+
+The Product aggregate stores the active profile pointer. Business transactions
+store both:
 
 - Product Revision ID
-- Product Type Code
-- Inventory Capability
-- Production Capability
-- Purchasing Capability
-- Sales Capability
-- Quality Capability
-- Maintenance Capability
-- Planning Capability
-- Effective From and To
-- Version
-- Approval metadata
-- Audit metadata
+- Capability Profile ID
 
 Capabilities are stored and exchanged as controlled enum values. Boolean
 capability fields are prohibited because they cannot preserve `OPTIONAL` or
 directional Production semantics.
+
+Historical transactions never resolve capabilities through the Product's
+current profile pointer. They use their pinned Capability Profile ID.
 
 ---
 
@@ -308,13 +362,17 @@ directional Production semantics.
 ```
 GET  /api/v1/product-types
 GET  /api/v1/product-types/{code}/capability-defaults
-GET  /api/v1/products/{id}/capabilities
-POST /api/v1/products/{id}/capability-revisions
-POST /api/v1/products/{id}/capability-revisions/{revisionId}/submit
-POST /api/v1/products/{id}/capability-revisions/{revisionId}/approve
+GET  /api/v1/products/{id}/capability-profiles
+GET  /api/v1/product-capability-profiles/{profileId}
+POST /api/v1/products/{id}/capability-profiles
+POST /api/v1/product-capability-profiles/{profileId}/submit
+POST /api/v1/product-capability-profiles/{profileId}/approve
+POST /api/v1/product-capability-profiles/{profileId}/activate
+POST /api/v1/product-capability-profiles/{profileId}/supersede
 ```
 
-Responses identify the Product revision and capability-set version.
+Responses identify Product Revision ID, Capability Profile ID and Profile
+Revision.
 
 ---
 
@@ -323,11 +381,16 @@ Responses identify the Product revision and capability-set version.
 - ProductTypeCreated
 - ProductTypeDeprecated
 - ProductCapabilityDefaultsChanged
-- ProductCapabilitiesProposed
-- ProductCapabilitiesApproved
-- ProductCapabilitiesActivated
+- ProductCapabilityProfileCreated
+- ProductCapabilityProfileApproved
+- ProductCapabilityProfileActivated
+- ProductCapabilityProfileSuperseded
 
 Consumers refresh projections idempotently.
+
+Planning may create a new plan version, Manufacturing may validate new
+definitions, and Sales/Purchasing may refresh eligibility projections after
+activation. Existing transactions retain their pinned profile.
 
 ---
 
@@ -347,6 +410,10 @@ AI may recommend capabilities but cannot activate or approve them.
 
 - One Product Master supports all approved Product Types.
 - Product capabilities are explicit and versioned.
+- Capability behavior is stored in a separate ProductCapabilityProfile.
+- Product columns do not duplicate capability modes.
+- Historical transactions pin Capability Profile ID.
+- Activation and supersession publish canonical events.
 - No capability is reduced to a canonical boolean.
 - Product Type supplies defaults without hiding Product-level configuration.
 - No Product action automatically creates Material or stock.

@@ -33,9 +33,9 @@ Product Management owns the single Product Master used throughout Naswood.
 Products may represent Raw Material, Semi Finished, Finished Good, Consumable,
 Packaging, Service, Tool or Spare Part.
 
-Each Product revision has an approved Product Type and versioned capability
-set controlling its eligibility for Inventory, Production, Purchasing, Sales,
-Quality, Maintenance and Planning.
+Each Product revision has an approved Product Type and separate versioned
+Capability Profile controlling its eligibility for Inventory, Production,
+Purchasing, Sales, Quality, Maintenance and Planning.
 
 ---
 
@@ -297,19 +297,7 @@ Product Family
 
 Product Type
 
-Inventory Capability
-
-Production Capability
-
-Purchasing Capability
-
-Sales Capability
-
-Quality Capability
-
-Maintenance Capability
-
-Planning Capability
+Current Capability Profile ID
 
 Species
 
@@ -393,8 +381,8 @@ Every Product shall have a unique Business Code.
 
 Every Product belongs to one Product Family.
 
-Every Product revision shall have one Product Type and one versioned capability
-set.
+Every Product revision shall have one Product Type and one Active versioned
+Capability Profile for an effective instant.
 
 Capabilities are enum-based domain values. Boolean capability fields are
 prohibited.
@@ -455,7 +443,13 @@ ProductArchived
 
 ProductRevisionCreated
 
-ProductCapabilitiesApproved
+ProductCapabilityProfileCreated
+
+ProductCapabilityProfileApproved
+
+ProductCapabilityProfileActivated
+
+ProductCapabilityProfileSuperseded
 
 ProductTypeChanged
 

@@ -70,6 +70,7 @@ Contains:
 - BOM ID
 - BOM Number
 - Output Product ID and Revision ID
+- Output Capability Profile ID
 - BOM Type
 - Company and plant applicability
 - Base quantity and unit
@@ -91,6 +92,7 @@ Each BOM line contains:
 
 - Line ID and sequence
 - Component Product ID and Revision ID
+- Component Capability Profile ID
 - Quantity
 - Unit
 - Component role
@@ -103,6 +105,10 @@ Each BOM line contains:
 
 A BOM line references Product Master. It never references a specific physical
 Material, batch, serial number or inventory row.
+
+Released BOM revisions pin the capability profiles validated at release.
+Creating a new Product capability profile does not rewrite an existing BOM
+revision.
 
 Physical Material is selected and allocated by Inventory during authorized
 production execution.
@@ -233,8 +239,12 @@ physical Material automatically.
 Production Order references:
 
 - Output Product revision
+- Output Capability Profile ID
 - Released BOM revision
 - Released routing revision
+
+Component requirements retain the Component Capability Profile IDs pinned by
+the released BOM revision.
 
 Production creates execution requirements from the immutable referenced
 revision. It does not modify BOM.

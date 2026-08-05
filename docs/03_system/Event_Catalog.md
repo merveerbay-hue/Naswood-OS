@@ -69,27 +69,53 @@ Event Type
 
 Event Version
 
-Timestamp
-
-User ID
-
-Machine ID
-
-Work Order
-
-Material ID
-
-Parent Material ID
-
-Operation
-
-Payload
+Occurred At
 
 Correlation ID
 
-Factory ID
+Causation ID
 
-Comments
+Source Module
+
+Tenant ID
+
+Actor
+
+Subject
+
+Payload
+
+Domain-specific identifiers such as Machine, Work Order, Material, Operation or
+Factory belong in Subject, Context or the versioned Payload. They are not
+universal top-level fields.
+
+---
+
+# 3A. Product Management Events
+
+## ProductCapabilityProfileCreated
+
+Published when a new draft profile revision is created.
+
+## ProductCapabilityProfileApproved
+
+Published after an authorized workflow approves a profile.
+
+## ProductCapabilityProfileActivated
+
+Published when a profile becomes effective for new business transactions.
+
+Consumers may refresh eligibility projections. Existing transactions retain
+their pinned Capability Profile ID.
+
+## ProductCapabilityProfileSuperseded
+
+Published when a new Active profile replaces an earlier profile.
+
+The superseded profile remains immutable and historically resolvable.
+
+All profile events contain Product ID, Product Revision ID, Capability Profile
+ID, Profile Revision and effective-period metadata.
 
 ---
 

@@ -68,6 +68,10 @@ Planning consumes versioned contracts or projections from:
 
 Inputs retain source identifiers, source versions and effective timestamps.
 
+Every Product-dependent input retains Product Revision ID and Capability
+Profile ID. A completed Planning run never reinterprets historical inputs using
+the Product's current profile.
+
 ---
 
 # Outputs
@@ -122,6 +126,7 @@ Contains:
 - Company and plant scope
 - Horizon
 - Input snapshot
+- Product Revision and Capability Profile references
 - Algorithm version
 - Configuration version
 - Status

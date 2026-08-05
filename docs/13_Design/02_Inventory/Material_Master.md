@@ -76,6 +76,7 @@ Every Material references:
 
 - Product ID
 - Released Product Revision ID
+- Capability Profile ID
 
 The referenced Product must have Inventory Capability `OPTIONAL` or `ENABLED`.
 `OPTIONAL` requires explicit use by the posting transaction.
@@ -86,6 +87,9 @@ For Production Output, Production Capability must be `OUTPUT_ONLY` or `BOTH`.
 
 Inventory stores the references used at creation. It does not copy Product
 attributes as an independently editable master.
+
+Later profile activation does not rewrite existing Material identity or the
+historical transaction that created it.
 
 ---
 
@@ -98,6 +102,7 @@ Contains:
 - Material ID
 - Immutable Material Code
 - Product ID and Revision ID
+- Capability Profile ID
 - Material state
 - Batch or serial reference where applicable
 - Quantity and unit where the identity represents a quantified unit

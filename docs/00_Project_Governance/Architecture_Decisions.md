@@ -331,6 +331,11 @@ or Material. Product Management owns Product Type and versioned capabilities:
 Inventory, Production Mode, Purchasing Mode, Sales, Quality, Maintenance and
 Planning.
 
+Capabilities are persisted in a separate versioned
+`ProductCapabilityProfile`, not as Product columns. Product retains only its
+current profile pointer. Transactions pin Product Revision ID and Capability
+Profile ID.
+
 Product creation or release never creates Material automatically. Inventory
 creates physical Material only through an authorized posted transaction such
 as goods receipt, production output or approved opening balance.
@@ -350,4 +355,39 @@ Product-level decision and shall not be inferred.
 
 **Related Documents:**
 `docs/13_Design/05_Production/BOM_Architecture.md`,
+`docs/13_Design/01_Product_Management/Product_Type_and_Capabilities.md`
+
+---
+
+## ADR-012 — Stable Product Domain Contract
+
+**Status:** Approved
+
+**Context:** Product, Material, Inventory and capability responsibilities are
+now separated and downstream modules require a durable contract.
+
+**Decision:** The following are stable invariants:
+
+- Product is a business definition owned by Product Management.
+- Material is physical identity owned by Inventory.
+- Inventory owns physical quantity and stock state.
+- Capability controls behavior but creates no physical record.
+- Capability values are enums stored in versioned profiles.
+- Capability changes require approval and audit.
+- Production mode is limited to `NONE`, `CONSUMPTION_ONLY`, `OUTPUT_ONLY` and
+  `BOTH`.
+- Advanced manufacturing scenarios are modeled in BOM, output-role, execution
+  and genealogy domains rather than Product capability modes.
+
+**Rationale:** Stabilizing these boundaries allows Inventory, Manufacturing,
+Planning, Sales and Purchasing to depend on Product contracts without sharing
+internal models.
+
+**Consequences:** A change to these invariants is a breaking architecture
+change requiring an approved ADR, versioned contracts, compatibility analysis
+and migration strategy. Open policies such as Maintenance defaults may be
+completed without changing the stable contract.
+
+**Related Documents:**
+`docs/13_Design/01_Product_Management/Product_Management_Architecture.md`,
 `docs/13_Design/01_Product_Management/Product_Type_and_Capabilities.md`

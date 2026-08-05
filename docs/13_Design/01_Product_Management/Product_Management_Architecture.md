@@ -29,7 +29,7 @@ Product Management owns:
 - Product name and description
 - Product classification
 - Product type
-- Product capability set
+- Product capability profile
 - Product revision
 - Technical and commercial classification attributes
 - Lifecycle and release status
@@ -105,6 +105,7 @@ Contains:
 - Classification references
 - Current lifecycle status
 - Active revision
+- Current Capability Profile ID
 - Revision history
 - Substitution relationships
 - Document references
@@ -215,6 +216,8 @@ Canonical tables:
 
 - `products`
 - `product_revisions`
+- `product_capability_profiles`
+- `product_capability_profile_history`
 - `product_classifications`
 - `product_classification_assignments`
 - `product_substitutions`
@@ -236,6 +239,7 @@ GET /api/v1/products
 GET /api/v1/products/{id}
 GET /api/v1/products/{id}/revisions
 GET /api/v1/products/{id}/released-revision
+GET /api/v1/products/{id}/capability-profiles
 ```
 
 Commands:
@@ -265,6 +269,10 @@ APIs expose Product contracts and DTOs, never persistence entities.
 - ProductDeprecated
 - ProductRetired
 - ProductClassificationChanged
+
+Capability profile events are defined by
+`Product_Type_and_Capabilities.md` and are published independently from Product
+definition revision events.
 
 Events identify the Product and revision. They do not include sales pricing,
 inventory balance or physical genealogy.
@@ -316,6 +324,7 @@ Released revision history is immutable.
 - Product creation never creates Material or stock automatically.
 - Published revisions are immutable.
 - Historical transactions retain their Product revision.
+- Historical transactions retain their Capability Profile ID.
 - Consumers use versioned contracts and identifiers.
 - Product APIs never expose database entities.
 - Product lifecycle actions are authorized, workflow-controlled and audited.

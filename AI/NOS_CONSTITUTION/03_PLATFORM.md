@@ -238,7 +238,7 @@ Ownership defines responsibility.
 
 ## Product Capability Model
 
-Every Product has one Product Type and a versioned capability set.
+Every Product has one Product Type and a versioned Capability Profile.
 
 Product Type provides defaults. Product capabilities determine whether the
 Product may participate in:
@@ -291,12 +291,64 @@ a complete default matrix is approved.
 Product-level overrides are permitted only through a new version, validation,
 impact analysis, authorization, workflow approval and audit.
 
+Capabilities are stored in a separate versioned `ProductCapabilityProfile`,
+never as capability columns on Product.
+
+Product stores `CurrentCapabilityProfileId`. Every profile records Product ID,
+Product Revision ID, Profile Revision, capability modes, effective period,
+status, approval and audit metadata.
+
+Profile lifecycle:
+
+```
+DRAFT → UNDER_REVIEW → APPROVED → ACTIVE → SUPERSEDED → RETIRED
+```
+
+Only one profile may be Active for a Product revision and effective instant.
+Profiles are immutable after activation.
+
+Every business transaction that relies on Product behavior stores both:
+
+- Product Revision ID
+- Capability Profile ID
+
+Historical transactions never resolve behavior from the Product's current
+profile.
+
+Canonical events:
+
+- ProductCapabilityProfileCreated
+- ProductCapabilityProfileApproved
+- ProductCapabilityProfileActivated
+- ProductCapabilityProfileSuperseded
+
 Product creation or release never creates Material or Inventory automatically.
 Inventory creates physical Material only from an authorized posted physical
 transaction.
 
 BOM is owned by Manufacturing Production Master. BOM references Product,
 quantity, unit and operation context without owning Product or Material.
+
+---
+
+## Stable Product Domain Invariants
+
+The following invariants are stable platform contracts:
+
+- Product is a business definition.
+- Material is a physical identity.
+- Inventory represents physical quantity and stock state.
+- Capability defines permitted behavior and creates no physical record.
+- Capability values are enum-based.
+- Capability changes require versioning, approval and audit.
+- Production mode is limited to `NONE`, `CONSUMPTION_ONLY`, `OUTPUT_ONLY` and
+  `BOTH`.
+- Co-Product, By-Product, Rework, Phantom BOM, Outsourcing and Subcontracting
+  are modeled by their owning Manufacturing, Production, Purchasing and
+  genealogy models, not by adding Product capability modes.
+
+Changes to these invariants require an approved architecture decision, contract
+versioning, compatibility analysis and migration strategy.
 
 ---
 
