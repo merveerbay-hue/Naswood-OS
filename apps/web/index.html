@@ -11,6 +11,19 @@
       rel="stylesheet"
     />
     <title>Naswood OS</title>
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('naswood.theme') || 'system';
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
