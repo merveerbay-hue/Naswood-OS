@@ -13,14 +13,16 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
-using Naswood.Modules.Platform.Application.Health;
 using Naswood.Modules.Platform.Application.Audit;
+using Naswood.Modules.Platform.Application.Health;
+using Naswood.Modules.Platform.Application.Settings;
 using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Infrastructure.Audit;
 using Naswood.Modules.Platform.Infrastructure.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Authorization;
 using Naswood.Modules.Platform.Infrastructure.Health;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
+using Naswood.Modules.Platform.Infrastructure.Settings;
 using Naswood.Modules.Platform.Infrastructure.Users;
 using Microsoft.AspNetCore.Authorization;
 
@@ -49,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IUserHistoryRepository, UserHistoryRepository>();
         services.AddScoped<IAuditWriter, AuditLogRepository>();
         services.AddScoped<IAuditQueryRepository, AuditLogRepository>();
+        services.AddScoped<ISettingRepository, SettingRepository>();
         services.AddScoped<UserLifecycleService>();
         services.AddScoped<IPlatformUnitOfWork, PlatformUnitOfWork>();
         services.AddScoped<IOutboxWriter, EfOutboxWriter>();
@@ -59,6 +62,7 @@ public static class DependencyInjection
         services.AddHostedService<AuthBootstrapHostedService>();
         services.AddHostedService<OrganizationBootstrapHostedService>();
         services.AddHostedService<AuthorizationBootstrapHostedService>();
+        services.AddHostedService<SettingsBootstrapHostedService>();
 
         services.AddMemoryCache();
         services.AddScoped<IPermissionCatalogRepository, PermissionCatalogRepository>();

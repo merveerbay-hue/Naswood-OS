@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
+using Naswood.Modules.Platform.Application.Settings;
 using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Domain.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Persistence;
@@ -64,6 +65,7 @@ public sealed class NaswoodApiFactory : WebApplicationFactory<Program>
         var permissions = scope.ServiceProvider.GetRequiredService<IPermissionCatalogRepository>();
         var roles = scope.ServiceProvider.GetRequiredService<IRoleCatalogRepository>();
         var organization = scope.ServiceProvider.GetRequiredService<IOrganizationReferenceRepository>();
+        var settings = scope.ServiceProvider.GetRequiredService<ISettingRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
 
         await organization.SeedAsync(
@@ -71,6 +73,11 @@ public sealed class NaswoodApiFactory : WebApplicationFactory<Program>
             OrganizationCatalogSeed.CreatePlants(),
             OrganizationCatalogSeed.CreateDepartments(),
             OrganizationCatalogSeed.CreatePositions());
+
+        foreach (var setting in SettingsCatalogSeed.CreateDefaults())
+        {
+            await settings.AddAsync(setting);
+        }
 
         var catalog = AuthorizationCatalogSeed.CreatePermissions();
         await permissions.AddRangeAsync(catalog);

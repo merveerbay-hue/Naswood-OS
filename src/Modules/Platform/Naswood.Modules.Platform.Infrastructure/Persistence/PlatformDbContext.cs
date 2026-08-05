@@ -40,6 +40,9 @@ public sealed class PlatformDbContext : DbContext
     public DbSet<Naswood.Modules.Platform.Domain.Audit.AuditLogEntry> AuditLogs =>
         Set<Naswood.Modules.Platform.Domain.Audit.AuditLogEntry>();
 
+    public DbSet<Naswood.Modules.Platform.Domain.Settings.SettingEntry> Settings =>
+        Set<Naswood.Modules.Platform.Domain.Settings.SettingEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("platform");
@@ -283,6 +286,25 @@ public sealed class PlatformDbContext : DbContext
             entity.HasIndex(x => x.EntityId);
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.Module);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Platform.Domain.Settings.SettingEntry>(entity =>
+        {
+            entity.ToTable("settings");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Category).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Key).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(1000);
+            entity.Property(x => x.Value).HasColumnType("text").IsRequired();
+            entity.Property(x => x.DefaultValue).HasColumnType("text").IsRequired();
+            entity.Property(x => x.DataType).HasConversion<string>().HasMaxLength(30);
+            entity.Property(x => x.Scope).HasConversion<string>().HasMaxLength(30);
+            entity.Property(x => x.CompanyId).HasMaxLength(20);
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Property(x => x.ValidationRule).HasMaxLength(500);
+            entity.Ignore(x => x.DomainEvents);
+            entity.HasIndex(x => new { x.Key, x.Scope, x.CompanyId, x.PlantId, x.UserId });
         });
     }
 }
