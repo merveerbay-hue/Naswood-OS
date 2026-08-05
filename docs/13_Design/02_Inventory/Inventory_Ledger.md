@@ -140,7 +140,8 @@ Posting performs one local Inventory transaction:
 2. Authorize actor and scope.
 3. Validate dimensions and reference-data values.
 4. Lock or version-check affected stock keys.
-5. Apply negative-stock and status policies.
+5. Reject the transaction if any resulting On Hand quantity would be negative,
+   then apply inventory-status rules.
 6. Create immutable ledger entries.
 7. Update balance and availability projections.
 8. Append outbox events.
@@ -203,6 +204,9 @@ that observes a stale projection version is re-evaluated or rejected.
 Inventory shall not rely on application-process locks. Where contention is
 high, narrowly scoped PostgreSQL locking may protect the stock key inside the
 local transaction.
+
+Negative On Hand is prohibited without configuration exceptions. Shortage is
+represented as demand or planning state, not as an Inventory balance.
 
 ---
 
@@ -298,6 +302,7 @@ history.
 - Every stock change has an immutable ledger transaction.
 - Balances can be rebuilt from ledger entries.
 - Direct balance editing is impossible.
+- No posted stock key can have negative On Hand.
 - Duplicate source requests do not create duplicate entries.
 - Transfers balance inside one Inventory transaction.
 - Posted transactions are corrected only by reversal or compensating process.
@@ -311,5 +316,6 @@ history.
 - `Inventory_Architecture.md`
 - `TASK-019_Inventory.md`
 - `Reservation.md`
+- `../99_Shared/Negative_Stock.md`
 - `../99_Shared/Transactions.md`
 - `../../00_Project_Governance/Phase_0_Canonical_Contracts.md`

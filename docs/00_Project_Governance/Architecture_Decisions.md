@@ -248,17 +248,66 @@ logic from bounded contexts.
 
 ## ADR-008 — Production, Manufacturing and CRM Boundaries
 
-**Status:** Proposed
+**Status:** Approved
 
 **Context:** Production overlaps Manufacturing; Sales overlaps CRM. Existing
 documents do not provide one approved ownership model.
 
-**Decision:** Proposed boundaries and alternatives are recorded in
-`Module_Boundaries_and_Ownership.md`.
+**Decision:** Manufacturing owns physical Material, genealogy, reusable
+resources and process definitions. Production owns production execution. Sales
+owns Customer, Quotation and Sales Order. CRM owns Lead, Opportunity,
+activities, interactions and relationship history.
 
-**Rationale:** These are business-domain decisions and shall not be invented.
+**Rationale:** The accountable business owner approved the recommended
+boundaries during Phase 0.
 
-**Consequences:** Affected persistence and implementation remain blocked until
-the proposal is Approved or replaced.
+**Consequences:** Module designs and implementation tasks shall align to these
+owners. Existing duplicate customer, material, genealogy, resource and
+execution models must become owned models or read-only projections.
 
 **Related Documents:** `Module_Boundaries_and_Ownership.md`
+
+---
+
+## ADR-009 — Negative Inventory Policy
+
+**Status:** Approved
+
+**Context:** Documents conflict between prohibiting negative inventory and
+allowing policy-based exceptions.
+
+**Decision:** Posted physical inventory shall never become negative. No
+company, plant, warehouse, location, material or user override is permitted.
+Unfulfilled demand is represented as shortage, backorder, planning exception
+or failed posting, never as negative stock.
+
+**Rationale:** This preserves physical truth, auditability, costing integrity
+and deterministic availability.
+
+**Consequences:** Inventory posting rejects any transaction that would produce
+a negative On Hand quantity. Configuration cannot weaken this invariant.
+
+**Related Documents:** `docs/13_Design/99_Shared/Negative_Stock.md`,
+`docs/13_Design/02_Inventory/Inventory_Ledger.md`
+
+---
+
+## ADR-010 — Product Ownership Deferred
+
+**Status:** Proposed
+
+**Context:** Product is used as a commercial catalog, technical definition,
+planning input and costing reference. The proposed Sales ownership was not
+approved.
+
+**Decision:** Product ownership and the Product-to-Material transition remain
+undecided.
+
+**Rationale:** Architecture shall not infer the missing business boundary.
+
+**Consequences:** Product and BOM persistence, Product lifecycle changes and
+Product-to-Material commands remain blocked until an accountable decision is
+Approved.
+
+**Related Documents:** `Module_Boundaries_and_Ownership.md`,
+`Phase_0_Issue_Register.md`

@@ -36,9 +36,9 @@ the approved decision.
 | ID | Issue | Resolution | Status |
 |---|---|---|---|
 | P0-001 | Constitution/Architecture authority conflict | Constitution declared highest authority in ADR-001 | Decision Approved |
-| P0-002 | Production and Manufacturing overlap | Boundary proposal recorded; business approval required | Blocked |
-| P0-003 | Sales, CRM and Customer ownership overlap | Boundary proposal recorded; business approval required | Blocked |
-| P0-004 | Product, Material and genealogy ownership missing | Ownership decision required | Blocked |
+| P0-002 | Production and Manufacturing overlap | Manufacturing owns resources, Material and genealogy; Production owns execution | Decision Approved |
+| P0-003 | Sales, CRM and Customer ownership overlap | Sales owns Customer/commercial transactions; CRM owns pre-sale relationships | Decision Approved |
+| P0-004 | Product, Material and genealogy ownership missing | Material/genealogy approved for Manufacturing; Product remains undecided | Blocked |
 | P0-005 | Planning module lacks complete architecture/design/tasks | Architecture created; domain decisions and implementation tasks remain | Blocked |
 | P0-006 | Reference Data standard empty | Standard completed | Closed |
 | P0-007 | Transaction standard empty | Standard completed | Closed |
@@ -52,7 +52,7 @@ the approved decision.
 | P0-015 | Event names and payloads drift by module | Canonical event schema approved; event catalog alignment required | Decision Approved |
 | P0-016 | RBAC versus RBAC+ABAC conflict | Hybrid RBAC+policy/ABAC approved | Decision Approved |
 | P0-017 | Finance posting and reversal rules incomplete | Domain rules require Finance approval | Blocked |
-| P0-018 | Negative inventory absolute versus configurable | Business policy decision required | Blocked |
+| P0-018 | Negative inventory absolute versus configurable | Negative On Hand prohibited without exceptions by ADR-009 | Decision Approved |
 | P0-019 | Audit retention conflicts | Compliance retention decision required | Blocked |
 | P0-020 | Platform specs Draft while implementation tasks assume approval | Complete and approve Platform designs before implementation | Open |
 
@@ -119,18 +119,16 @@ the approved decision.
 
 # 7. Business Decision Queue
 
-The accountable business owner must approve:
+The accountable business owner must still approve:
 
-1. Production versus Manufacturing boundary
-2. Sales versus CRM boundary
-3. Product, Material, genealogy and BOM ownership
-4. Negative inventory exception policy
-5. Costing and valuation methods
-6. Approval matrices and segregation of duties
-7. Quality classifications and mappings
-8. Recipe and batch taxonomy
-9. Finance posting/reversal rules
-10. Retention, RPO and RTO requirements
+1. Product ownership, Product-to-Material transition and BOM ownership
+2. Planning policies and delivery-commitment authority
+3. Costing and valuation methods
+4. Approval matrices and segregation of duties
+5. Quality classifications and mappings
+6. Recipe and batch taxonomy
+7. Finance posting/reversal rules
+8. Retention, RPO and RTO requirements
 
 Architecture shall present options and consequences. It shall not invent these
 rules.

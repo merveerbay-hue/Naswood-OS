@@ -157,19 +157,19 @@ teams:
 
 | Decision | Required outcome | Status |
 |---|---|---|
-| Production versus Manufacturing | Exact ownership of orders, operations, resources and genealogy | Pending |
-| Sales versus CRM | Exact ownership of customer, lead, opportunity and commercial lifecycle | Pending |
+| Production versus Manufacturing | Manufacturing owns resources, Material and genealogy; Production owns execution | Approved |
+| Sales versus CRM | Sales owns Customer and commercial transactions; CRM owns pre-sale relationships | Approved |
 | Product ownership | Owning module and Product-to-Material transition | Pending |
-| Material ownership | Owning module for physical identity and genealogy | Pending |
+| Material ownership | Manufacturing owns physical identity and genealogy | Approved |
 | Planning scope | Demand, MRP, capacity and scheduling boundaries | Pending |
 | Finance event policy | Events Finance may publish without becoming an operational source | Pending |
-| Negative inventory | Whether exceptions exist and at what configuration scope | Pending |
+| Negative inventory | Prohibited without exceptions; shortages are represented separately | Approved |
 | Costing policy | Permitted valuation and production-costing methods | Pending |
 | Approval matrices | Roles, thresholds, escalation and segregation of duties | Pending |
 
-The recommended options and consequences are maintained in
-`Module_Boundaries_and_Ownership.md`. Pending decisions are implementation
-stop conditions for the affected capabilities.
+Approved boundaries and remaining options are maintained in
+`Module_Boundaries_and_Ownership.md`. Pending decisions are implementation stop
+conditions for the affected capabilities.
 
 ---
 

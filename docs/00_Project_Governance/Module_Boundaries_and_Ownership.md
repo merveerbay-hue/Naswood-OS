@@ -8,7 +8,7 @@
 
 **Version:** 1.0
 
-**Status:** Proposed
+**Status:** Active
 
 ---
 
@@ -43,11 +43,11 @@ approval before implementation.
 | Platform | Identity, permissions, configuration, audit, notifications, numbering, localization, observability | Commercial or operational business entities | Approved |
 | Inventory | Warehouses, locations, stock ledger, availability, reservations, inventory movements | Material definition, purchase orders, sales orders, production orders | Approved |
 | Purchasing | Suppliers, purchase requests, RFQs, supplier quotations, purchase orders, purchase returns, supplier invoices | Inventory balances, quality decisions, financial postings | Approved |
-| Sales | Customer commercial master, quotations, sales orders and commercial commitments | Physical material, production execution, inventory balance, financial posting | Proposed |
-| CRM | Leads, opportunities, activities, interactions and relationship history | Customer legal/commercial master, quotations and sales orders | Proposed |
+| Sales | Customer commercial master, quotations, sales orders and commercial commitments | Physical material, production execution, inventory balance, financial posting | Approved |
+| CRM | Leads, opportunities, activities, interactions and relationship history | Customer legal/commercial master, quotations and sales orders | Approved |
 | Planning | Demand plans, MRP results, capacity plans, schedules and recommendations | Source sales orders, inventory balances, machine master, production execution | Proposed |
-| Manufacturing | Machine, work center, production line, tooling, process capability and process parameters | Production-order execution and inventory balance | Proposed |
-| Production | Production orders, work orders, operations, confirmations, WIP, scrap and rework | Resource master, stock ledger and quality disposition | Proposed |
+| Manufacturing | Physical Material, material genealogy, machine, work center, production line, tooling, process capability and process parameters | Production-order execution and inventory balance | Approved |
+| Production | Production orders, work orders, operations, confirmations, WIP, scrap and rework | Resource master, stock ledger and quality disposition | Approved |
 | Quality | Inspection plans, inspections, holds, nonconformance, CAPA and certificates | Inventory quantity, supplier master and production execution | Approved |
 | Maintenance | Asset maintenance lifecycle, work requests, maintenance orders, plans, downtime and failure history | Machine capability master and spare-part inventory balance | Approved |
 | Logistics | Picking, loading, shipment, transport, delivery, proof of delivery and export execution | Warehouse master, stock ledger and sales-order commercial terms | Approved |
@@ -70,20 +70,20 @@ approval before implementation.
 | User identity and session | Platform | All modules | Approved |
 | Role, permission and policy | Platform | All modules | Approved |
 | Company, plant and organization structure | Platform | All modules | Approved |
-| Customer | Sales | CRM, Planning, Logistics, Finance, Analytics | Proposed |
-| Lead and opportunity | CRM | Sales, Analytics, AI Copilot | Proposed |
+| Customer | Sales | CRM, Planning, Logistics, Finance, Analytics | Approved |
+| Lead and opportunity | CRM | Sales, Analytics, AI Copilot | Approved |
 | Supplier | Purchasing | Quality, Inventory, Finance, Maintenance | Approved |
 | Warehouse and location | Inventory | Purchasing, Sales, Production, Logistics | Approved |
 | Inventory ledger and balance projection | Inventory | All operational modules | Approved |
 | Reservation | Inventory | Sales, Planning, Production, Maintenance | Approved |
-| Machine and production capability | Manufacturing | Planning, Production, Maintenance, IoT, Digital Twin | Proposed |
+| Machine and production capability | Manufacturing | Planning, Production, Maintenance, IoT, Digital Twin | Approved |
 | Employee | HR | Platform identity link, Planning, Production, Maintenance | Approved |
 | Product | Undecided | Sales, Planning, Production, Quality, Finance | Pending |
-| Physical Material | Undecided | Purchasing, Inventory, Production, Quality, Traceability | Pending |
-| Material genealogy | Undecided | Production, Inventory, Quality, Logistics, Digital Twin | Pending |
+| Physical Material | Manufacturing | Purchasing, Inventory, Production, Quality, Logistics | Approved |
+| Material genealogy | Manufacturing | Production, Inventory, Quality, Logistics, Digital Twin | Approved |
 | BOM | Manufacturing or Planning | Sales, Planning, Production, Costing | Pending |
-| Routing | Manufacturing | Planning, Production, Quality | Proposed |
-| Production order | Production | Planning, Inventory, Quality, Finance | Proposed |
+| Routing | Manufacturing | Planning, Production, Quality | Approved |
+| Production order | Production | Planning, Inventory, Quality, Finance | Approved |
 | Quality hold/disposition | Quality | Inventory, Production, Purchasing, Logistics | Approved |
 | Shipment and delivery | Logistics | Sales, Inventory, Finance, CRM | Approved |
 | Business document file | Document Management | All modules | Approved |
@@ -139,42 +139,37 @@ propagated through versioned events.
 
 ---
 
-# 6. Pending Decision Options
+# 6. Approved Business Boundaries
 
 ## 6.1 Production and Manufacturing
 
-**Recommended:** Manufacturing owns reusable resources and process definitions;
+Manufacturing owns reusable resources, physical Material, material genealogy
+and process definitions;
 Production owns execution instances.
-
-Alternative: merge both into one Manufacturing module. This reduces boundary
-complexity but weakens independent replacement of planning/resource definition
-and shop-floor execution.
 
 ## 6.2 Sales and CRM
 
-**Recommended:** Sales owns Customer, Quotation and Sales Order; CRM owns
+Sales owns Customer, Quotation and Sales Order; CRM owns
 pre-sale relationship and interaction data.
 
-Alternative: CRM owns Customer. This requires Sales to depend on CRM for every
-commercial transaction and conflicts with the existing constitutional
-Customer-to-Sales ownership statement.
+## 6.3 Material
 
-## 6.3 Product and Material
+Material is the physical traceable instance owned by Manufacturing. Inventory
+owns its quantity, location, reservation and stock status without owning or
+mutating Material identity or genealogy.
 
-**Recommended:** Product is the commercial/design definition; Material is the
-physical traceable instance. The Product owner and Material owner require
-business approval.
+## 6.4 Product — Pending
 
-A production completion may create Material instances referencing the approved
-Product revision. It shall not convert or mutate a Product record.
+Product ownership is not approved. No module may create Product persistence or
+define the Product-to-Material transition until this decision is resolved.
 
 ---
 
 # 7. Approval Gate
 
-No implementation may create Product, Material, genealogy, BOM, Production or
-CRM persistence until the corresponding Pending or Proposed ownership entries
-are Approved.
+No implementation may create Product or BOM persistence until the corresponding
+Pending ownership entries are Approved. Planning remains blocked until its
+Proposed domain scope and pending business policies are Approved.
 
 ---
 
