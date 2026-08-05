@@ -43,7 +43,7 @@ approval before implementation.
 | Platform | Identity, permissions, configuration, audit, notifications, numbering, localization, observability | Commercial or operational business entities | Approved |
 | Inventory | Warehouses, locations, stock ledger, availability, reservations, inventory movements | Material definition, purchase orders, sales orders, production orders | Approved |
 | Purchasing | Suppliers, purchase requests, RFQs, supplier quotations, purchase orders, purchase returns, supplier invoices | Inventory balances, quality decisions, financial postings | Approved |
-| Sales | Customer commercial master, quotations, sales orders and commercial commitments | Physical material, production execution, inventory balance, financial posting | Approved |
+| Sales | Customer commercial master, quotations, sales orders and commercial commitments | Product definition, physical material, production execution, inventory balance, financial posting | Approved |
 | CRM | Leads, opportunities, activities, interactions and relationship history | Customer legal/commercial master, quotations and sales orders | Approved |
 | Planning | Demand plans, MRP results, capacity plans, schedules and recommendations | Source sales orders, inventory balances, machine master, production execution | Proposed |
 | Manufacturing | Physical Material, material genealogy, machine, work center, production line, tooling, process capability and process parameters | Production-order execution and inventory balance | Approved |
@@ -151,6 +151,10 @@ Production owns execution instances.
 
 Sales owns Customer, Quotation and Sales Order; CRM owns
 pre-sale relationship and interaction data.
+
+Sales does not own Product definition. It references the authoritative Product
+identifier and manages only sales-specific terms such as quotation price,
+discount, delivery commitment and customer-specific commercial conditions.
 
 ## 6.3 Material
 
