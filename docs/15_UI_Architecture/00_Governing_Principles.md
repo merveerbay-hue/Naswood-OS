@@ -5,20 +5,19 @@
 
 ---
 
-## 1. TASK is not the product
+## 1. TASK is not the product — and TASK production is frozen
 
-An Implementation TASK (`TASK-046`, `TASK-070`, …) is a **development work package**.
+`docs/14_Implementation` is **FROZEN**. Do not add new TASK files.
 
-It is **not**:
+Historical Implementation TASKs were work packages only. They are **not**:
 
 - a module
 - a workspace
 - a screen architecture
 - a user journey
 
-It **is**:
-
-- a bounded unit of delivery that implements part of an already defined screen family, API, or workflow.
+Delivery now answers **“NOS nasıl çalışır?”** via product layers
+(`PRODUCT_LAYERS.md`), not via new TASK ids.
 
 ---
 
@@ -44,9 +43,10 @@ For every capability (example: BOM, Non-Conformance, Asset):
 4. **Screen families** — List, Detail, Create, Revision, Compare, Import, History, …
 5. **Components & panes** — What appears on each screen?
 6. **Workflows** — Draft → Approve → Release → …  
-7. **Implementation TASKs** — Which work packages deliver which slices?
+7. **Navigation / Flows / Components** — `19` · `17` · `18`  
+8. **Frontend slice** — Implement the workspace/screens (never a new TASK file)
 
-If step 7 is attempted before steps 1–6, stop and return to UI Architecture.
+If frontend is attempted before steps 1–7, stop and return to product layers.
 
 ---
 

@@ -5,7 +5,7 @@
 #
 # Document      : AI Execution Constitution
 # Part          : 00 — Execution Authority
-# Version       : 1.0.0
+# Version       : 1.1.0
 # Status        : Official
 # Owner         : Naswood Technology
 #
@@ -23,73 +23,76 @@
 
 # 1. Purpose
 
-Architecture and Design documents already exist in this repository.
+Architecture, Module Design (Workflow / API / Dashboard / Mobile), and domain
+documents already exist in this repository.
 
-What has been missing is not more product documentation.
+What has been missing is not more Implementation TASKs.
 
-What has been missing is an **execution constitution**: a protocol that
-teaches AI which document has which authority, and forbids TASK documents
-from becoming the de-facto product definition.
+What has been missing is the **product layer** — and an execution constitution
+that forces AI to drive from that layer instead of from TASK files.
 
 Without this protocol, even excellent Architecture and Design documents
 remain in the shadow of TASK files.
+
+**`docs/14_Implementation` is FROZEN.** Do not add new TASK files.
+Delivery is driven by Module → Workspace → Navigation → Screens → Components
+→ User Flow → Frontend. See `docs/PRODUCT_LAYERS.md`.
 
 ---
 
 # 2. Absolute Rules
 
-## Rule A — TASK is only a work package
+## Rule A — Implementation TASK layer is frozen
 
-TASK documents (`TASK-046`, `TASK-070`, `TASK-078`, …) are **implementation
-work packages**.
+`docs/14_Implementation` is **frozen**.
 
-A TASK may define:
+- Do **not** create new `TASK-*.md` files.
+- Do **not** plan delivery as Architecture → TASK → TASK → TASK.
+- Existing TASK files are historical archives only.
 
-- Delivery objective
-- Scope boundary for one increment
-- Dependencies
-- Acceptance criteria
-- References to higher documents
+Prefer prompts and PR titles like:
 
-A TASK may **never** define:
+```text
+Build Maintenance Workspace
+Implement Production Orders (PRD-010 / PRD-011)
+Author Quality NCR screen family
+```
 
-- Product architecture
-- Business architecture
-- Module architecture
-- UI architecture
-- Navigation
-- Workflow
-- User roles
-- Workspace hierarchy
-- Page hierarchy
-- Dashboard model
-- Mobile model
-- Screen family shape (List / Detail / Terminal / …)
+Not:
 
-If a TASK appears to define any of the above, treat that content as a
-**draft hint at best**, not as authority. Reconstruct from higher documents.
+```text
+Implement TASK-078
+Do TASK-056
+```
 
-## Rule B — Never generate a screen directly from a TASK
+Historical TASK documents never define product, UI, workflow, navigation, or
+business architecture. If they appear to, treat that as a draft hint at best.
+
+## Rule B — Never generate a screen from a TASK (or TASK habit)
 
 ```text
 FORBIDDEN:
   TASK-078 → Asset CRUD screen
   TASK-046 → BOM ResourcePage
-  TASK-070 → NCR create/edit page
+  “next TASK” → another ResourcePage
 ```
 
 ```text
-REQUIRED:
-  Reconstruct Maintenance (or Production / Quality / …) module
-    → Infer navigation, roles, workflows, dashboards, workspace & page hierarchy
-    → Locate the screen family / PRD that the TASK slices
-    → Implement only that TASK slice inside the reconstructed module
+REQUIRED delivery chain:
+  Architecture
+    → Module
+    → Workspace
+    → Navigation
+    → Screens (15_UI)
+    → Components (18)
+    → User Flow (17)
+    → Frontend (20 + apps/web)
 ```
 
 ## Rule C — Reconstruct the complete module first
 
-Before implementing any business TASK, the AI must reconstruct the target
-module in working memory (and, when docs are incomplete, stop and report gaps).
+Before implementing any business UI or API surface, reconstruct the target
+module (and, when docs are incomplete, stop and report gaps).
 
 Reconstruction must include:
 
@@ -102,38 +105,29 @@ Reconstruction must include:
 7. Mobile surfaces where applicable
 8. API / event boundaries
 9. Relationships to sibling modules
+10. Navigation + permissions (`docs/19_Navigation`)
 
-Only after reconstruction may the AI implement the requested TASK slice.
+Only after reconstruction may the AI implement the requested **workspace /
+screen / flow** slice.
 
 ### Exemplar — Maintenance
 
-Do **not** treat `TASK-078` as “an Asset CRUD screen”.
+Prompt: **“Maintenance Workspace’i oluştur”** — not “TASK-078’i yap”.
 
-First reconstruct Maintenance as a CMMS module:
+Reconstruct Maintenance as a CMMS module:
 
-- Asset
-- Work Request
-- Work Order
-- Preventive
-- Corrective
-- Downtime
-- Spare Parts
-- Dashboard
-- Reports
+- Asset, Work Request, Work Order, Preventive, Corrective, Downtime,
+  Spare Parts, Dashboard, Reports
 
-Infer how those objects relate, which roles act on them, which workspaces
-group them, and which screens exist. Then implement only the TASK slice
-(for example: Asset List columns + Asset Detail header pane) against that
-model.
+Then implement dashboard + list + detail + filters + actions + panels + flows
+from `15_UI/Maintenance` and `17_User_Flows/Maintenance_Flow.md`.
 
 ### Exemplar — Production
 
-Do **not** treat `TASK-056` as “a Production Order CRUD page”.
+Prompt: **“Production Planning Workspace”** — not “TASK-056 CRUD”.
 
-First reconstruct Production Planning + Execution (orders, WOs, scheduling,
-dispatch, operator/machine panels, consumption, confirmation, WIP, scrap,
-genealogy, dashboards). Then implement the TASK against the named screen
-PRDs under `docs/15_UI/Production/`.
+Reconstruct Planning + Execution; implement against `15_UI/Production` PRDs
+and `17_User_Flows/Production_Flow.md`.
 
 ---
 
@@ -152,33 +146,33 @@ L3  Engineering Rules / Standards
 L4  Platform Rules
 L5  Business Domain                    (docs/01_Business, docs/05_Modules, …)
 L6  Module Design pack (per module)
-      Architecture
-      Workflow
-      API
-      Dashboard
-      Mobile
+      Architecture · Workflow · API · Dashboard · Mobile
 L7  UI Architecture                    (docs/15_UI_Architecture)
-L8  Screen Architecture                (docs/15_UI — PRD / QLT / MNT / INV …)
-L9  Design System / User Flows         (docs/16_*, docs/17_*, docs/13_Design UX)
-L10 Implementation TASK                (docs/14_Implementation — lowest planning unit)
-L11 Source Code
-L12 Tests / Deployment
+L8  Screen Architecture                (docs/15_UI)
+L9  Navigation                         (docs/19_Navigation)
+L10 User Flows                         (docs/17_User_Flows)
+L11 Component Library                  (docs/18_Component_Library)
+L12 Design System                      (docs/16_Design_System → 13_Design DS)
+L13 Frontend Architecture              (docs/20_Frontend_Architecture)
+L14 Source Code
+L15 Tests / Deployment
+
+FROZEN (not a delivery driver):
+      docs/14_Implementation (historical TASK archives only)
 ```
 
 ### Conflict examples
 
 | Conflict | Winner |
 |----------|--------|
-| TASK says CRUD; Screen Architecture says List + Detail + Terminal | Screen Architecture |
-| TASK invents a nav item; UI Architecture omits it | UI Architecture |
+| Historical TASK says CRUD; Screen Architecture says List + Detail + Terminal | Screen Architecture |
+| Code invents a nav item; Navigation layer omits it | `19_Navigation` / UI Architecture |
 | Code already has ResourcePage; Architecture requires workspaces | Architecture (code is debt) |
-| Chat / prior agent habit says “one page per TASK” | This Execution Constitution |
+| Habit says “one page per TASK” | This Execution Constitution |
 
 ---
 
-# 4. Mandatory Read Order (before any TASK)
-
-Before writing code for a TASK, read and comply in this order:
+# 4. Mandatory Read Order (before product UI / FE work)
 
 ```text
 1. AI Execution Constitution          (this document)
@@ -191,9 +185,13 @@ Before writing code for a TASK, read and comply in this order:
 8. Module API
 9. Module Dashboard
 10. Module Mobile
-11. Module UI Architecture / Navigation Map
-12. Relevant Screen Architecture (PRD / QLT / MNT / …)
-13. THEN the TASK document
+11. UI Architecture (workspaces)
+12. Navigation (docs/19_Navigation)
+13. Screen Architecture (PRD / QLT / MNT / …)
+14. User Flows (docs/17_User_Flows)
+15. Component Library + Design System
+16. Frontend Architecture (docs/20_Frontend_Architecture)
+17. Historical TASK only if tracing old acceptance — never as product definition
 ```
 
 ### Path map (Production example)
@@ -201,44 +199,41 @@ Before writing code for a TASK, read and comply in this order:
 | Step | Typical path |
 |------|----------------|
 | Constitution | `AI/NOS_CONSTITUTION/01_FOUNDATION.md` … `03_PLATFORM.md` |
-| Module Architecture | `docs/13_Design/05_Production/Production_Architecture.md` |
-| Module Workflow | `docs/13_Design/05_Production/Production_Workflow.md` |
-| Module API | `docs/13_Design/05_Production/Production_API.md` |
-| Module Dashboard | `docs/13_Design/05_Production/Production_Dashboard.md` |
-| Module Mobile | `docs/13_Design/05_Production/Production_Mobile.md` |
-| UI Architecture | `docs/15_UI_Architecture/` |
-| Screen Architecture | `docs/15_UI/Production/Screens/` |
-| Domain module notes | `docs/05_Modules/02_Production/` |
-| TASK | `docs/13_Design/05_Production/TASK-0XX_*.md` or `docs/14_Implementation/...` |
+| Module Design pack | `docs/13_Design/05_Production/Production_{Architecture,Workflow,API,Dashboard,Mobile}.md` |
+| UI Architecture | `docs/15_UI_Architecture/Production/` |
+| Navigation | `docs/19_Navigation/` |
+| Screens | `docs/15_UI/Production/Screens/` |
+| Flows | `docs/17_User_Flows/Production_Flow.md` |
+| Components / DS | `docs/18_Component_Library/` · `docs/16_Design_System/` |
+| Frontend Arch | `docs/20_Frontend_Architecture/` |
 
-Other modules follow the same pattern under their Design folder
-(Quality, Maintenance, Inventory, Sales, Purchasing, …).
-
-If a required document is missing or empty:
+If a required product document is missing:
 
 1. **Stop** coding the product surface.
 2. Report the gap.
-3. Prefer authoring / completing the higher document over inventing UI from the TASK.
-4. A temporary technical spike is allowed only when explicitly labeled as debt and must not be presented as the product shape.
+3. **Author the product layer** (screen PRD, flow, navigation) — do not invent a TASK file.
+4. A temporary technical spike is allowed only when explicitly labeled as debt.
 
 ---
 
 # 5. Module Reconstruction Protocol
 
-For every TASK targeting a business capability, produce (mentally or in the
-PR description) this reconstruction before code:
+Before code, produce this reconstruction (PR description is fine):
 
 ```text
 Module:              <name>
 Purpose:             <one paragraph>
 Primary roles:       <planner / operator / supervisor / …>
 Workspaces:          <list>
+Navigation entries:  <from 19_Navigation>
 Screen families:     <List / Detail / Create / Terminal / Dashboard / …>
 Key workflows:       <states and transitions>
+User flows:          <17_User_Flows link>
 Dashboards:          <operational views>
+Components used:     <18_Component_Library>
 Mobile:              <if applicable>
 Sibling links:       <Inventory / Quality / Maintenance / …>
-TASK slice:          <exactly what this TASK delivers inside the above>
+Delivery slice:      <workspace / screens / flow in this change>
 Out of scope:        <what must NOT be invented as “done”>
 ```
 
@@ -250,23 +245,21 @@ incomplete — do not invent a CRUD screen to fill the void.
 # 6. Implementation Shape Rules
 
 1. Prefer named screens from Screen Architecture over generic `ResourcePage`.
-2. Prefer workspace navigation from `docs/15_UI_Architecture/02_Navigation_Map.md`
-   over flat “one menu item per entity” lists.
-3. Prefer workflow actions (Release, Confirm, Scrap, Approve, …) over bare
-   Create / Edit / Delete as the product story.
+2. Prefer workspace navigation from `docs/19_Navigation` + `15_UI_Architecture`.
+3. Prefer workflow actions (Release, Confirm, Scrap, Approve, …) over bare CRUD.
 4. Existing flat CRUD is **technical MVP debt**, not the target architecture.
-5. When a TASK’s acceptance criteria conflict with Screen Architecture, update
-   the TASK mapping or escalate — do not silently shrink the product to CRUD.
+5. Compose screens from `18_Component_Library` + Design System tokens.
+6. Do not add files under `14_Implementation`.
 
 ---
 
 # 7. Forbidden Patterns
 
+- Creating new TASK documents
 - `TASK-XXX → one Library/Create/Edit/Delete page` as finished product
-- Inventing navigation solely from TASK titles
-- Skipping Module Workflow / Dashboard / Mobile because “this TASK is only API”
-  when the TASK touches UI or operator experience
-- Treating `docs/14_Implementation` as higher than `docs/15_UI*`
+- Inventing navigation solely from TASK titles or entity lists
+- Skipping Module Workflow / Dashboard / Mobile when building operator UX
+- Treating `docs/14_Implementation` as higher than `docs/15_UI*` / `19` / `17`
 - Using prior sprint velocity (many CRUD modules) as precedent for product shape
 - Claiming “done” when only entity CRUD exists but screen family is defined
 
@@ -274,18 +267,17 @@ incomplete — do not invent a CRUD screen to fill the void.
 
 # 8. Required Output Discipline
 
-When an AI starts a TASK-bearing change, the first substantive artifact must
-show module reconstruction (section 5), not a generated React CRUD page.
+The first substantive artifact must show module reconstruction (section 5),
+not a generated React CRUD page.
 
 Pull requests and commit messages for business UI should name:
 
 - Module
 - Workspace
 - Screen ID (e.g. `PRD-011`, `MNT-003`)
-- TASK ID as the delivery slice
+- Flow (optional)
 
-Never title work as “Add Asset CRUD” when the authority is Asset screen family
-inside Maintenance.
+Never title work as “Add Asset CRUD” or “TASK-078”.
 
 ---
 
@@ -298,8 +290,8 @@ inside Maintenance.
 | `02_ENGINEERING.md` | Engineering philosophy, SDLC, Clean/Hexagonal/DDD |
 | `03_PLATFORM.md` | Platform capabilities (workflow, identity, files, …) |
 
-`Cursor_Rules.md` at repository root must point here and must not weaken
-these rules.
+Product layer map: `docs/PRODUCT_LAYERS.md`  
+`Cursor_Rules.md` must point here and must not weaken these rules.
 
 ---
 
@@ -308,12 +300,13 @@ these rules.
 NOS will not become an enterprise manufacturing OS by completing TASKs as
 isolated CRUD screens.
 
-NOS becomes that platform when every TASK is executed **inside** a
-reconstructed module — with navigation, roles, workflows, dashboards, and
-page hierarchy already inferred from higher authority.
+NOS becomes that platform when delivery answers **“NOS nasıl çalışır?”**
+through Module, Workspace, Navigation, Screens, Components, and User Flows —
+then Frontend.
 
 **Never generate a screen directly from a TASK.**  
+**Do not create new TASKs.**  
 **Always reconstruct the complete module first.**  
-**Only then implement the requested TASK.**
+**Deliver workspaces and screens, not work-package IDs.**
 
 This is the execution constitution.

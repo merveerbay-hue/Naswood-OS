@@ -1,102 +1,73 @@
-# Screen → TASK Mapping Rules
+# Screen → Historical TASK Mapping (Archive)
 
-**Status:** Active
+**Status:** Archive / migration aid  
+**Note:** `docs/14_Implementation` is **FROZEN**. Do not create new TASK files.
 
 ---
 
 ## Rule
 
-Implementation TASKs **reference** screens defined in UI Architecture / Screen Catalog / Design.
-
-They do **not** invent navigation or replace IA.
+Product delivery is driven by:
 
 ```text
-UI Architecture (screen family)
-        ↓
-Design specs (13_Design / domain design TASK docs)
-        ↓
-Implementation TASK (14_Implementation)  ← delivery slice
-        ↓
-Code
+UI Architecture → Navigation → Screen Architecture → User Flow → Frontend
 ```
+
+Historical Implementation TASKs may still be referenced to understand what an
+old sprint intended. They do **not** invent navigation and do **not** authorize
+new CRUD screens.
 
 ---
 
-## Mapping card template
+## If you find a TASK-* file
 
-Every Implementation TASK that touches UI must declare:
-
-```markdown
-## UI Architecture Mapping
-
-- Module:
-- Workspace:
-- Capability:
-- Screens in scope: (e.g. BOM List, BOM Detail — Create)
-- Screens deferred: (e.g. Compare, Import, Export)
-- Primary user jobs:
-- Related UI Architecture doc:
-```
+1. Map it to Module / Workspace / Screen IDs in `15_UI`
+2. Implement the **screen / workspace**, naming those IDs in the PR
+3. Do not write a successor TASK document
 
 ---
 
-## Examples
+## Examples (historical)
 
-### TASK-046 — BOM
+### TASK-046 — BOM → screens
 
 | Field | Value |
 |-------|--------|
 | Module | Production |
 | Workspace | Master Data |
-| Capability | BOM |
-| Screens in scope (MVP OK) | BOM List, BOM Detail (header), Create BOM |
-| Deferred | Revision compare, Import, Export, multi-level explosion UI |
+| Screens | PRD-002 BOM List, PRD-003 BOM Detail (+ create action) |
 | IA doc | `15_UI_Architecture/Production/BOM.md` |
 
-### TASK-056 — Production Order
+### TASK-056 — Production Order → screens
 
 | Field | Value |
 |-------|--------|
 | Module | Production |
-| Workspace | Execution |
-| Capability | Production Order |
-| Screens in scope (MVP OK) | Order List, Order Detail, Create Order |
-| Deferred | Dispatch Board, Operator Terminal, scheduling Gantt |
-| IA doc | `15_UI_Architecture/Production/Production_Order.md` |
+| Workspace | Planning |
+| Screens | PRD-010 List, PRD-011 Detail |
+| Flow | `17_User_Flows/Production_Flow.md` |
 
-### TASK-070 — Non-Conformance
+### TASK-078 era — Asset → screens
 
 | Field | Value |
 |-------|--------|
-| Module | Quality |
-| Workspace | Operations |
-| Capability | Non-Conformance |
-| Screens in scope | NCR List, NCR Detail, workflow actions |
-| Deferred | Full CAPA studio, advanced RCA tools |
-| IA doc | `15_UI_Architecture/Quality/README.md` |
+| Module | Maintenance |
+| Workspace | Assets |
+| Screens | MNT Asset Explorer / Detail family (`15_UI/Maintenance`) |
+| Flow | `17_User_Flows/Maintenance_Flow.md` |
 
 ---
 
-## Re-baselining existing MVP code
+## Mapping card (for PRs — not for new TASK files)
 
-Sprint 01–05 delivered many **generic ResourcePage** UIs. That code is a **technical MVP**, not the product IA.
+```markdown
+## Product Mapping
 
-Re-baseline plan:
-
-1. Keep APIs where domain-correct.  
-2. Replace flat nav with workspace nav per `02_Navigation_Map.md`.  
-3. Promote each capability from ResourcePage → List + Detail (+ actions) per module IA.  
-4. Open Implementation TASKs only against named screens.
-
----
-
-## Definition of Done (UI TASK)
-
-A UI-facing TASK is not done when “CRUD works”.
-
-It is done when:
-
-- mapped screens exist or are explicitly deferred  
-- navigation lands in the correct workspace  
-- primary user job can be completed without inventing screens at runtime  
-- Screen Catalog / UI Architecture links are updated if new screens were added
+- Module:
+- Workspace:
+- Screens in scope:
+- Screens deferred:
+- User flow:
+- Navigation entries:
+- Components:
+```

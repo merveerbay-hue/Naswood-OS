@@ -1,41 +1,80 @@
 # 14 — Implementation
 
-**Role:** Executable work packages (TASK-*)  
-**Authority:** Lowest planning layer — below UI Architecture and Design
-
-**AI must read first:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](../../AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+**Status: FROZEN**  
+**Role:** Historical work packages (TASK-*) only  
+**Authority:** Lowest planning layer — superseded as the *driver* of delivery
 
 ---
 
-## Rule
+## Freeze policy (effective now)
 
 ```text
-Constitution + Module Design (Architecture / Workflow / API / Dashboard / Mobile)
-            ↓
-UI Architecture / Screen Architecture / Flows
-            ↓
-    Implementation TASK   ← this folder
-            ↓
-         Source Code
+✔ No new TASK-*.md files
+✔ No new sprint TASK catalogs as the product roadmap
+✔ Existing TASK files remain as historical delivery records / acceptance traces
+✘ Do not open work with “implement TASK-0XX”
+✔ Open work with “build <Module> Workspace / Screen / Flow”
 ```
 
-Do **not** treat `TASK-046` as “the BOM screen” or `TASK-070` as “the NCR screen”.
+Design (`13`), UI Architecture (`15_UI_Architecture`), Screen Architecture (`15_UI`),
+Navigation (`19`), User Flows (`17`), Component Library (`18`), and Frontend
+Architecture (`20`) now define **what NOS is**.
 
-**Never generate a screen directly from a TASK.** Reconstruct the complete
-module first, then implement only this TASK’s slice.
+`14_Implementation` no longer defines **what to build next**.
 
-TASKs implement **slices** of screen families defined in:
+---
 
-- `docs/15_UI_Architecture/`
-- `docs/15_UI/`
-- `docs/13_Design/`
-- `docs/04_Application/Screen_Catalog.md`
+## Why frozen
 
-See `docs/15_UI_Architecture/00_Governing_Principles.md` and `03_Screen_to_Task_Mapping.md`.
+The anti-pattern this freeze ends:
+
+```text
+Architecture → TASK → TASK → TASK → TASK
+```
+
+Target delivery chain:
+
+```text
+Architecture
+  → Module
+  → Workspace
+  → Navigation
+  → Screens
+  → Components
+  → User Flow
+  → Frontend
+```
+
+See: [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](../../AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+
+---
+
+## Historical rule (for existing TASK files)
+
+Existing `TASK-*` documents are **work-package archives**. They may still be
+referenced for acceptance criteria of already-scoped increments, but they:
+
+- never define product, UI, workflow, navigation, or business architecture
+- never authorize a new CRUD screen by themselves
+- must yield to Screen Architecture (`15_UI`) and UI Architecture (`15_UI_Architecture`)
+
+---
+
+## Where to work instead
+
+| Need | Layer |
+|------|--------|
+| Module / workspace structure | `docs/15_UI_Architecture/` |
+| Named screens (PRD / QLT / MNT …) | `docs/15_UI/` |
+| Design tokens & primitives | `docs/16_Design_System/` |
+| End-to-end jobs | `docs/17_User_Flows/` |
+| Enterprise UI building blocks | `docs/18_Component_Library/` |
+| Menu, permissions, breadcrumbs | `docs/19_Navigation/` |
+| Frontend app structure | `docs/20_Frontend_Architecture/` |
+
 ---
 
 ## Sprint folders
 
-Platform and business sprints live under this directory (`Sprint_00_…`, `Sprint_01_…`, …).
-
-When opening a new UI-facing TASK, require the **UI Architecture Mapping** block described in `15_UI_Architecture/03_Screen_to_Task_Mapping.md`.
+Sprint folders under this directory remain for archive / traceability only.
+Do not add new TASK files into them.

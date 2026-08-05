@@ -1,44 +1,49 @@
-# 17 — User Flows (Index)
+# 17 — User Flows
 
-**Role:** Stable entry point for end-to-end UI flows  
-**Canonical content lives at:** `docs/04_Application/UI_Flows.md`
-
----
-
-## Why this folder exists
-
-Pairs with `15_UI_Architecture` and `16_Design_System` so the product stack is visible at docs root:
-
-```text
-15 UI Architecture  → structure (module / workspace / screen family)
-16 Design System    → visual & interaction standards
-17 User Flows       → how users move through screens to complete jobs
-14 Implementation   → TASKs that build slices
-```
-
-**Do not fork a second flow catalog here** until a flow outgrows `UI_Flows.md`. Prefer adding module-specific flow files under this folder that link back to Screen Catalog + UI Architecture.
+**Layer:** End-to-end jobs across screens  
+**Status:** Active product layer  
+**Registry (legacy flat):** [`docs/04_Application/UI_Flows.md`](../04_Application/UI_Flows.md)
 
 ---
 
-## Start here
+## Purpose
 
-| Topic | Path |
-|-------|------|
-| UI Flows (canonical) | [`../04_Application/UI_Flows.md`](../04_Application/UI_Flows.md) |
-| Screen Catalog | [`../04_Application/Screen_Catalog.md`](../04_Application/Screen_Catalog.md) |
-| Production IA | [`../15_UI_Architecture/Production/`](../15_UI_Architecture/Production/) |
+Flows answer: **how does a role complete a job** across workspaces and screens?
 
----
-
-## Future expansion (optional files)
-
-When needed:
+They reference Screen IDs from `15_UI`, not TASK ids.
 
 ```text
 17_User_Flows/
-  Production_Order_Release.md
-  NCR_to_CAPA.md
-  Asset_Work_Order.md
+  Production_Flow.md
+  Planning_Flow.md
+  Inventory_Flow.md
+  Maintenance_Flow.md
+  Quality_Flow.md
+  Sales_Flow.md
+  Purchasing_Flow.md
 ```
 
-Each flow doc must name screens from UI Architecture, not TASKs as steps.
+---
+
+## Flow index
+
+| Flow | File |
+|------|------|
+| Production (order → execution → FG) | [Production_Flow.md](Production_Flow.md) |
+| Planning | [Planning_Flow.md](Planning_Flow.md) |
+| Inventory | [Inventory_Flow.md](Inventory_Flow.md) |
+| Maintenance | [Maintenance_Flow.md](Maintenance_Flow.md) |
+| Quality | [Quality_Flow.md](Quality_Flow.md) |
+| Sales | [Sales_Flow.md](Sales_Flow.md) |
+| Purchasing | [Purchasing_Flow.md](Purchasing_Flow.md) |
+
+Legacy narrative catalog: `04_Application/UI_Flows.md` (keep in sync when expanding).
+
+---
+
+## Authoring rules
+
+1. Name actors and preconditions
+2. List screens by ID (PRD-xxx / MNT-xxx / …)
+3. Name workflow verbs at each step
+4. Never use `TASK-0XX` as a flow step

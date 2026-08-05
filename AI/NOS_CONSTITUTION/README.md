@@ -4,7 +4,7 @@
 
 | Part | File | Role |
 |------|------|------|
-| **00 — AI Execution** | [`00_AI_EXECUTION.md`](./00_AI_EXECUTION.md) | Binding AI read order, document authority ladder, anti-TASK-as-product rules |
+| **00 — AI Execution** | [`00_AI_EXECUTION.md`](./00_AI_EXECUTION.md) | Binding AI protocol: product layers over TASKs; `14_Implementation` frozen |
 | 01 — Foundation | [`01_FOUNDATION.md`](./01_FOUNDATION.md) | Identity, vision, principles, documentation hierarchy |
 | 02 — Engineering | [`02_ENGINEERING.md`](./02_ENGINEERING.md) | Engineering philosophy, SDLC, Clean Architecture, DDD, Hexagonal |
 | 03 — Platform | [`03_PLATFORM.md`](./03_PLATFORM.md) | Platform rules and platform capabilities |

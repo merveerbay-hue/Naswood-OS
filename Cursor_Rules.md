@@ -4,7 +4,7 @@
 
 **Document:** Cursor Rules
 
-**Version:** 1.1
+**Version:** 1.2
 
 ---
 
@@ -18,43 +18,43 @@ The objective is to ensure consistency, maintainability and enterprise-grade sof
 
 # AI Execution Constitution (read first — mandatory)
 
-**Canonical document:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+**Canonical:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
+**Product stack:** [`docs/PRODUCT_LAYERS.md`](docs/PRODUCT_LAYERS.md)
 
-TASK documents are **implementation work packages only**.  
-They never define product, UI, workflow, navigation, or business architecture.
+`docs/14_Implementation` is **FROZEN** — no new TASK files.  
+Delivery driver is the product layer, not Architecture → TASK → TASK.
 
 ### Absolute rules
 
-1. **Never generate a screen directly from a TASK.**
-2. **Always reconstruct the complete module first** (navigation, roles, workflows, dashboards, workspace hierarchy, page hierarchy).
-3. **Only then** implement the requested TASK slice.
+1. **Never generate a screen from a TASK** (or TASK habit).
+2. **Always reconstruct the complete module first.**
+3. Deliver **Module → Workspace → Navigation → Screens → Components → User Flow → Frontend.**
+4. Prefer prompts like **“Maintenance Workspace’i oluştur”**, not **“TASK-078’i yap”**.
 
-### Mandatory read order before any TASK
+### Mandatory read order before product UI / FE work
 
 ```text
-1. AI Execution Constitution     AI/NOS_CONSTITUTION/00_AI_EXECUTION.md
-2. Constitution — Foundation     AI/NOS_CONSTITUTION/01_FOUNDATION.md
-3. Engineering Rules             AI/NOS_CONSTITUTION/02_ENGINEERING.md
-4. Platform Rules                AI/NOS_CONSTITUTION/03_PLATFORM.md
-5. ADRs / system architecture
-6. Module Architecture
-7. Module Workflow
-8. Module API
-9. Module Dashboard
-10. Module Mobile
-11. UI Architecture              docs/15_UI_Architecture/
-12. Screen Architecture          docs/15_UI/… (PRD / QLT / MNT / INV …)
-13. THEN the TASK document       docs/14_Implementation/ or Design TASK-*
+1. AI Execution Constitution
+2. Foundation / Engineering / Platform
+3. Module Architecture · Workflow · API · Dashboard · Mobile
+4. UI Architecture          docs/15_UI_Architecture/
+5. Navigation               docs/19_Navigation/
+6. Screen Architecture      docs/15_UI/
+7. User Flows               docs/17_User_Flows/
+8. Component Library        docs/18_Component_Library/
+9. Design System            docs/16_Design_System/
+10. Frontend Architecture   docs/20_Frontend_Architecture/
 ```
 
 ### Forbidden default
 
 ```text
-TASK-078 → Asset CRUD screen
-TASK-046 → BOM ResourcePage
+TASK-078 → Asset CRUD
+next TASK → another ResourcePage
+new file under 14_Implementation/
 ```
 
-If higher documents are missing, **stop and report** — do not invent product UI from the TASK.
+If product docs are missing, **author the product layer** (screen/flow/nav) — do not invent a TASK.
 
 ---
 
@@ -95,28 +95,25 @@ Every new feature shall include:
 
 # Product UI Hierarchy (mandatory)
 
-Follow Constitution authority. For UI work, use this order:
-
 ```text
-AI Execution Constitution → Constitution → Architecture → Business Domain
+AI Execution Constitution → Constitution → Architecture → Domain
     → Module Design (Architecture / Workflow / API / Dashboard / Mobile)
-    → UI Architecture (docs/15_UI_Architecture) — Module / Workspace
-    → Screen Architecture (docs/15_UI) — PRD-001, QLT-008, … named screens
-    → Design specs (docs/13_Design)
-    → User Flows (docs/17_User_Flows → 04_Application/UI_Flows.md)
-    → Navigation
-    → Design System (docs/16_Design_System → 13_Design/.../Design_System)
-    → Implementation TASK (docs/14_Implementation)
+    → UI Architecture (15_UI_Architecture)
+    → Navigation (19_Navigation)
+    → Screen Architecture (15_UI)
+    → User Flows (17_User_Flows)
+    → Component Library (18) → Design System (16)
+    → Frontend Architecture (20)
     → Source Code
+
+14_Implementation = FROZEN (historical only)
 ```
 
 ### Critical rules
 
-- An Implementation **TASK is a work package**, not a product screen and not a module.
-- **Forbidden default:** `TASK-XXX → one Library/Create/Edit/Delete ResourcePage` as the finished product shape.
-- Before coding business UI, open the **screen PRD** (e.g. `docs/15_UI/Production/Screens/PRD-011_Production_Order_Detail.md`) and implement its components/actions (or a declared MVP subset).
-- Production has ~29 indexed screens (target 35–40); Quality ~20; Maintenance ~25; Inventory ~30.
-- Current flat CRUD nav/pages are **technical MVP debt**; converge toward `15_UI_Architecture/02_Navigation_Map.md` + `15_UI/`.
+- Open work with **workspace / screen / flow**, never with a new TASK file.
+- Before coding business UI, open the **screen PRD** and compose from Component Library.
+- Current flat CRUD nav/pages are **technical MVP debt**; converge to `19_Navigation` + `15_UI`.
 
 ---
 
