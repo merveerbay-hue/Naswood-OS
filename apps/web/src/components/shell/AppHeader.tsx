@@ -1,8 +1,10 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Bell, ChevronDown, LogOut, Menu, Moon, PanelLeft, Search, Sparkles } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, PanelLeft, Search, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button, cn } from '@naswood/ui';
 import { useAuth } from '@/auth/useAuth';
+import { NotificationBell } from './NotificationBell';
+import { ThemeToggle } from './ThemeToggle';
 import { useShell } from './useShell';
 
 export function AppHeader() {
@@ -90,7 +92,14 @@ export function AppHeader() {
           </select>
         </div>
 
-        <Button type="button" variant="outline" size="sm" className="hidden sm:inline-flex" disabled title="Global search coming soon">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="hidden sm:inline-flex"
+          disabled
+          title="Global search coming soon"
+        >
           <Search className="size-4" />
           <span className="hidden lg:inline">Search</span>
           <kbd className="ml-1 hidden rounded border border-[var(--border-default)] px-1 text-[10px] text-[var(--text-muted)] lg:inline">
@@ -98,15 +107,11 @@ export function AppHeader() {
           </kbd>
         </Button>
 
-        <Button type="button" variant="ghost" size="sm" disabled title="Notifications (TASK-011)">
-          <Bell className="size-4" />
-        </Button>
+        <NotificationBell />
         <Button type="button" variant="ghost" size="sm" disabled title="AI Assistant coming soon">
           <Sparkles className="size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" disabled title="Theme (TASK-010)">
-          <Moon className="size-4" />
-        </Button>
+        <ThemeToggle />
 
         <div className="relative" ref={menuRef}>
           <button
