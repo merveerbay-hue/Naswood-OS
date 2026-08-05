@@ -48,6 +48,8 @@ import { RoutingPage } from './pages/business/RoutingPage';
 import { MachinePage } from './pages/business/MachinePage';
 import { WorkCenterPage } from './pages/business/WorkCenterPage';
 import { ProductionLinePage } from './pages/business/ProductionLinePage';
+import { ShiftPage } from './pages/business/ShiftPage';
+import { CalendarPage } from './pages/business/CalendarPage';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -122,8 +124,10 @@ const route_31 = createRoute({ getParentRoute: () => authenticatedRoute, path: '
 const route_32 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/machines', component: MachinePage });
 const route_33 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/work-centers', component: WorkCenterPage });
 const route_34 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-lines', component: ProductionLinePage });
+const route_35 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/shifts', component: ShiftPage });
+const route_36 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/calendars', component: CalendarPage });
 
-const implemented = new Set(['/', '/administration/files', '/inventory/materials', '/inventory/warehouses', '/inventory/locations', '/inventory/balances', '/inventory/batches', '/inventory/goods-receipts', '/inventory/goods-issues', '/inventory/transfers', '/inventory/counts', '/inventory/adjustments', '/purchasing/suppliers', '/purchasing/purchase-requests', '/purchasing/rfqs', '/purchasing/supplier-quotations', '/purchasing/purchase-orders', '/purchasing/purchase-goods-receipts', '/purchasing/purchase-returns', '/purchasing/supplier-invoices', '/purchasing/dashboard', '/purchasing/reports', '/sales/customers', '/sales/leads', '/sales/opportunities', '/sales/quotations', '/sales/sales-orders', '/sales/shipments', '/sales/deliveries', '/sales/customer-invoices', '/sales/dashboard', '/sales/reports', '/production/boms', '/production/routings', '/production/machines', '/production/work-centers', '/production/production-lines']);
+const implemented = new Set(['/', '/administration/files', '/inventory/materials', '/inventory/warehouses', '/inventory/locations', '/inventory/balances', '/inventory/batches', '/inventory/goods-receipts', '/inventory/goods-issues', '/inventory/transfers', '/inventory/counts', '/inventory/adjustments', '/purchasing/suppliers', '/purchasing/purchase-requests', '/purchasing/rfqs', '/purchasing/supplier-quotations', '/purchasing/purchase-orders', '/purchasing/purchase-goods-receipts', '/purchasing/purchase-returns', '/purchasing/supplier-invoices', '/purchasing/dashboard', '/purchasing/reports', '/sales/customers', '/sales/leads', '/sales/opportunities', '/sales/quotations', '/sales/sales-orders', '/sales/shipments', '/sales/deliveries', '/sales/customer-invoices', '/sales/dashboard', '/sales/reports', '/production/boms', '/production/routings', '/production/machines', '/production/work-centers', '/production/production-lines', '/production/shifts', '/production/calendars']);
 const modulePaths = collectNavPaths().filter((path) => !implemented.has(path));
 const moduleRoutes = modulePaths.map((path) =>
   createRoute({ getParentRoute: () => authenticatedRoute, path, component: ModulePlaceholderPage }),
@@ -169,6 +173,8 @@ export const routeTree = rootRoute.addChildren([
     route_32,
     route_33,
     route_34,
+    route_35,
+    route_36,
     ...moduleRoutes,
   ]),
 ]);

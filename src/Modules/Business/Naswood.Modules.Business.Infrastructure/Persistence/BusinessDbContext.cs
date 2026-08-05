@@ -39,6 +39,8 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Production.Machine> Machines => Set<Naswood.Modules.Business.Domain.Production.Machine>();
     public DbSet<Naswood.Modules.Business.Domain.Production.WorkCenter> WorkCenters => Set<Naswood.Modules.Business.Domain.Production.WorkCenter>();
     public DbSet<Naswood.Modules.Business.Domain.Production.ProductionLine> ProductionLines => Set<Naswood.Modules.Business.Domain.Production.ProductionLine>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Shift> Shifts => Set<Naswood.Modules.Business.Domain.Production.Shift>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.Calendar> Calendars => Set<Naswood.Modules.Business.Domain.Production.Calendar>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -483,6 +485,34 @@ public sealed class BusinessDbContext : DbContext
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionLine>(entity =>
         {
             entity.ToTable("business_production_productionline");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Shift>(entity =>
+        {
+            entity.ToTable("business_production_shift");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Code).HasMaxLength(200);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.PlantId).HasMaxLength(200);
+            entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.Calendar>(entity =>
+        {
+            entity.ToTable("business_production_calendar");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
             entity.Property(x => x.PlantId).HasMaxLength(20);
