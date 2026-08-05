@@ -39,11 +39,11 @@ the approved decision.
 | P0-002 | Production and Manufacturing overlap | Boundary proposal recorded; business approval required | Blocked |
 | P0-003 | Sales, CRM and Customer ownership overlap | Boundary proposal recorded; business approval required | Blocked |
 | P0-004 | Product, Material and genealogy ownership missing | Ownership decision required | Blocked |
-| P0-005 | Planning module lacks complete architecture/design/tasks | Produce canonical Planning documentation | Open |
+| P0-005 | Planning module lacks complete architecture/design/tasks | Architecture created; domain decisions and implementation tasks remain | Blocked |
 | P0-006 | Reference Data standard empty | Standard completed | Closed |
 | P0-007 | Transaction standard empty | Standard completed | Closed |
-| P0-008 | Workflow Engine design missing | Canonical ownership/contract approved; detailed domain design required | Decision Approved |
-| P0-009 | Inventory ledger/stock movement has no dedicated canonical task | Create canonical ledger design and implementation task | Open |
+| P0-008 | Workflow Engine design missing | Canonical ownership, domain model and contract completed | Closed |
+| P0-009 | Inventory ledger/stock movement has no dedicated canonical task | Canonical design created; implementation task remains required | Open |
 | P0-010 | Reservation duplicated across Material and Inventory | Inventory ownership approved; dependent docs require alignment | Decision Approved |
 | P0-011 | Purchasing GR and Inventory GR consistency undefined | Event-driven saga boundary approved | Decision Approved |
 | P0-012 | SQL Server/PostgreSQL conflict | PostgreSQL approved in ADR-003 | Decision Approved |
@@ -84,10 +84,10 @@ the approved decision.
 
 | ID | Missing or incomplete artifact | Status |
 |---|---|---|
-| P0-036 | Planning Architecture, Domain and Design | Open |
-| P0-037 | Workflow Engine Domain, API and persistence model | Open |
-| P0-038 | Inventory Ledger/Stock Movement canonical design | Open |
-| P0-039 | Reservation canonical design | Open |
+| P0-036 | Planning Architecture, Domain and Design | Blocked |
+| P0-037 | Workflow Engine Domain, API and persistence model | Closed |
+| P0-038 | Inventory Ledger/Stock Movement canonical design | Closed |
+| P0-039 | Reservation canonical design | Closed |
 | P0-040 | Product-to-Material transition rules | Blocked |
 | P0-041 | Finance double-entry, posting, reversal and period-lock rules | Blocked |
 | P0-042 | Log Yard specification | Blocked |
