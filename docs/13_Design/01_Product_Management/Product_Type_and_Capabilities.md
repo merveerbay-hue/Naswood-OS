@@ -8,6 +8,8 @@
 
 **Status:** Approved
 
+**Domain Status:** Canonical
+
 ---
 
 # Purpose

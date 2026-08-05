@@ -114,6 +114,8 @@ the approved decision.
 | P0-056 | Several tasks lack authorization requirements | Add permission and scope requirements | Open |
 | P0-057 | Several tasks lack event contracts | Add canonical events or state explicitly that none are published | Open |
 | P0-058 | Empty task/design placeholders treated as dependencies | Replace with approved content or remove dependency | Open |
+| P0-059 | Product Canonical Domain Freeze | ADR-013; Constitution and Product designs marked Canonical | Closed |
+| P0-060 | Inventory Canonicalization Candidate gates | Warehouse hierarchy, batch taxonomy, stock-status separation, Logistics boundary | Open |
 
 ---
 

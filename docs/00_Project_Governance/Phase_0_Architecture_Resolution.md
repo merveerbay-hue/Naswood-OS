@@ -164,6 +164,8 @@ teams:
 | Material ownership | Inventory owns Material Master and physical identity; Manufacturing owns genealogy | Approved |
 | BOM ownership | Manufacturing Production Master owns BOM | Approved |
 | Product capability model | Enum modes and approved Product Type defaults govern module eligibility; Maintenance defaults remain explicit | Approved |
+| Product Canonical freeze | Product Management is Canonical; breaking reinterpretation forbidden (ADR-013) | Approved |
+| Inventory Canonical freeze | Candidate only; gates in Inventory_Canonicalization_Candidate.md | Pending |
 | Planning scope | Demand, MRP, capacity and scheduling boundaries | Pending |
 | Finance event policy | Events Finance may publish without becoming an operational source | Pending |
 | Negative inventory | Prohibited without exceptions; shortages are represented separately | Approved |

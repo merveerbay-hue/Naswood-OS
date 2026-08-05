@@ -331,10 +331,13 @@ quantity, unit and operation context without owning Product or Material.
 
 ---
 
-## Stable Product Domain Invariants
+## Canonical Product Domain Invariants
 
 The following invariants are stable platform contracts:
 
+- A Product represents business identity, not physical existence. The identity
+  of a Product is immutable throughout its lifetime; only its revisions and
+  capability profiles may evolve.
 - Product is a business definition.
 - Material is a physical identity.
 - Inventory represents physical quantity and stock state.
@@ -349,6 +352,40 @@ The following invariants are stable platform contracts:
 
 Changes to these invariants require an approved architecture decision, contract
 versioning, compatibility analysis and migration strategy.
+
+---
+
+## Product Canonical Domain Status
+
+```
+STATUS: CANONICAL
+BREAKING CHANGES: FORBIDDEN
+ADDITIVE EXTENSIONS: ALLOWED
+BEHAVIOR CHANGES: ADR REQUIRED
+SCHEMA CHANGES: ADR REQUIRED
+```
+
+Product ID and Product Code are immutable and shall never be reused.
+
+Additive extensions shall preserve all published API, event, persistence and
+historical interpretation contracts.
+
+Inventory, Sales, Purchasing, Manufacturing, Production, Planning, Quality,
+Finance, Analytics, AI and Digital Twin consume Product contracts. They shall
+not redefine Product identity, add private Product masters, mutate Product
+persistence or require Product to absorb their domain logic.
+
+Any proposed behavior or schema change requires:
+
+- Approved ADR
+- Compatibility analysis
+- Additive versioned contract
+- Data migration strategy where applicable
+- Consumer impact analysis
+- Rollback or safe forward-recovery strategy
+
+An ADR cannot authorize a breaking reinterpretation of existing Product
+identity or historical Product revisions.
 
 ---
 

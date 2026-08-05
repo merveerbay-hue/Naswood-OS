@@ -391,3 +391,44 @@ completed without changing the stable contract.
 **Related Documents:**
 `docs/13_Design/01_Product_Management/Product_Management_Architecture.md`,
 `docs/13_Design/01_Product_Management/Product_Type_and_Capabilities.md`
+
+---
+
+## ADR-013 — Product Canonical Domain Freeze
+
+**Status:** Approved
+
+**Context:** Downstream modules consume Product identity, revisions and
+capability profiles. Without an explicit freeze, Additive extensions could
+silently reinterpret historical Product meaning.
+
+**Decision:** Product Management is declared Canonical.
+
+```
+STATUS: CANONICAL
+BREAKING CHANGES: FORBIDDEN
+ADDITIVE EXTENSIONS: ALLOWED
+BEHAVIOR CHANGES: ADR REQUIRED
+SCHEMA CHANGES: ADR REQUIRED
+```
+
+Product ID and Product Code are immutable and never reused. A Product
+represents business identity, not physical existence; only revisions and
+capability profiles may evolve. Consumer modules shall not add private Product
+masters or mutate Product persistence.
+
+An ADR cannot authorize a breaking reinterpretation of existing Product
+identity or historical Product revisions.
+
+**Rationale:** Freezing Product first enables Inventory, Manufacturing,
+Planning, Sales and Purchasing to depend on durable contracts while remaining
+candidates for their own later canonicalization.
+
+**Consequences:** Inventory is the next canonicalization candidate and is not
+yet Canonical. Open Product policies such as Maintenance defaults may be
+completed as additive Product-level decisions without changing the freeze.
+
+**Related Documents:**
+`AI/NOS_CONSTITUTION/03_PLATFORM.md`,
+`docs/13_Design/01_Product_Management/Product_Management_Architecture.md`,
+`docs/13_Design/02_Inventory/Inventory_Canonicalization_Candidate.md`

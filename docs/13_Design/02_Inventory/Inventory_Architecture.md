@@ -8,6 +8,10 @@
 
 **Status:** Approved
 
+**Domain Status:** Candidate (Not Canonical)
+
+See `Inventory_Canonicalization_Candidate.md` for freeze gates.
+
 ---
 
 # Purpose

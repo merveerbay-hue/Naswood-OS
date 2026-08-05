@@ -8,6 +8,8 @@
 
 **Status:** Approved
 
+**Domain Status:** Canonical
+
 ---
 
 # Purpose
@@ -18,6 +20,38 @@ Operating System.
 
 A Product describes what the enterprise offers, plans, manufactures, assures,
 costs and sells. It is not a physical inventory instance.
+
+---
+
+# Product Identity Rule
+
+> A Product represents business identity, not physical existence. The identity
+> of a Product is immutable throughout its lifetime; only its revisions and
+> capability profiles may evolve.
+
+Product ID and Product Code are immutable and never reused.
+
+Name, description, classification, technical definition and other evolving
+meaning belong to effective Product revisions. Behavior belongs to effective
+Capability Profiles.
+
+---
+
+# Canonical Domain Governance
+
+| Rule | Policy |
+|---|---|
+| Domain Status | CANONICAL |
+| Breaking Changes | FORBIDDEN |
+| Additive Extensions | ALLOWED |
+| Behavior Changes | ADR REQUIRED |
+| Schema Changes | ADR REQUIRED |
+
+Consumer modules shall not add private Product masters, Product extension
+tables that redefine Product meaning, or fields to Product persistence.
+
+An additive extension must preserve existing Product identity, historical
+revisions, Capability Profiles, APIs and events.
 
 ---
 
