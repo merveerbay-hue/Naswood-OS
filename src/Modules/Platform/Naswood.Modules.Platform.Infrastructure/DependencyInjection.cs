@@ -53,15 +53,8 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddHostedService<AuthBootstrapHostedService>();
-
-        var environment = configuration["ASPNETCORE_ENVIRONMENT"]
-            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-            ?? "Production";
-        if (!string.Equals(environment, "Testing", StringComparison.OrdinalIgnoreCase))
-        {
-            services.AddHostedService<OrganizationBootstrapHostedService>();
-            services.AddHostedService<AuthorizationBootstrapHostedService>();
-        }
+        services.AddHostedService<OrganizationBootstrapHostedService>();
+        services.AddHostedService<AuthorizationBootstrapHostedService>();
 
         services.AddMemoryCache();
         services.AddScoped<IPermissionCatalogRepository, PermissionCatalogRepository>();

@@ -22,6 +22,12 @@ public sealed class OrganizationBootstrapHostedService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        if (environment.IsEnvironment("Testing"))
+        {
+            return;
+        }
+
         var organization = scope.ServiceProvider.GetRequiredService<IOrganizationReferenceRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
 

@@ -22,6 +22,12 @@ public sealed class AuthorizationBootstrapHostedService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        if (environment.IsEnvironment("Testing"))
+        {
+            return;
+        }
+
         var permissions = scope.ServiceProvider.GetRequiredService<IPermissionCatalogRepository>();
         var roles = scope.ServiceProvider.GetRequiredService<IRoleCatalogRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
