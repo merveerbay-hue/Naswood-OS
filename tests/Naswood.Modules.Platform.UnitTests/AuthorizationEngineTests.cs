@@ -116,6 +116,10 @@ public class AuthorizationEngineTests
             IReadOnlyList<RoleDefinition> result = _roles.Where(r => set.Contains(r.Code)).ToArray();
             return Task.FromResult(result);
         }
+
+        public Task<RoleDefinition?> GetByCodeAsync(string code, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_roles.FirstOrDefault(r =>
+                string.Equals(r.Code, code, StringComparison.OrdinalIgnoreCase)));
     }
 
     private sealed class StubCache : IPermissionCache
