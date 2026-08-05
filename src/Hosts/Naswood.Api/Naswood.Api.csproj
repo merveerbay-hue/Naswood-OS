@@ -5,6 +5,10 @@
     <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Infrastructure\Naswood.Modules.Platform.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.17" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>

@@ -4,19 +4,19 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Naswood.Api.IntegrationTests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(ApiCollection.Name)]
+public class HealthEndpointTests
 {
-    private readonly HttpClient _client;
+    private readonly NaswoodApiFactory _factory;
 
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
-    {
-        _client = factory.CreateClient();
-    }
+    public HealthEndpointTests(NaswoodApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Live_returns_healthy_envelope()
     {
-        var response = await _client.GetAsync("/health/live");
+        await _factory.ResetDatabaseAsync();
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/health/live");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -30,7 +30,9 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Ready_returns_component_list()
     {
-        var response = await _client.GetAsync("/health/ready");
+        await _factory.ResetDatabaseAsync();
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/health/ready");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -44,7 +46,9 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Health_returns_version_and_components()
     {
-        var response = await _client.GetAsync("/health");
+        await _factory.ResetDatabaseAsync();
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

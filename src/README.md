@@ -49,10 +49,14 @@ Health endpoints:
 Implemented:
 
 - BuildingBlocks foundation
-- Platform Health Check vertical slice (Sprint 00 TASK-015)
+- Platform Health Check vertical slice (`GET /health`, `/health/live`, `/health/ready`)
+- Platform Authentication (TASK-001):
+  - `POST /api/v1/auth/login|logout|refresh|revoke`
+  - `GET /api/v1/auth/me|session`
+  - JWT + refresh rotation, lockout, login history, outbox events
 
-Next:
+Next (requires explicit approval):
 
-- Authentication / Authorization / Users / Roles / Permissions
-- PostgreSQL persistence adapter
-- React application shell (separate frontend workspace)
+- TASK-000 Login UI and/or TASK-002 Authorization
+- User / Role / Permission management
+- React application shell
