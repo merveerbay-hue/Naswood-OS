@@ -1,5 +1,6 @@
 using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.Domain;
+using Naswood.Modules.Platform.Application.Audit;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Contracts.Users;
@@ -113,6 +114,7 @@ public sealed class CreateUserCommandHandler : ICommandHandler<CreateUserCommand
     private readonly IAuthRequestContext _context;
     private readonly IClock _clock;
     private readonly IPermissionCache _permissionCache;
+    private readonly IAuditWriter _audit;
 
     public CreateUserCommandHandler(
         IUserManagementRepository users,
@@ -124,7 +126,8 @@ public sealed class CreateUserCommandHandler : ICommandHandler<CreateUserCommand
         IUserHistoryRepository history,
         IAuthRequestContext context,
         IClock clock,
-        IPermissionCache permissionCache)
+        IPermissionCache permissionCache,
+        IAuditWriter audit)
     {
         _users = users;
         _organization = organization;
@@ -136,6 +139,7 @@ public sealed class CreateUserCommandHandler : ICommandHandler<CreateUserCommand
         _context = context;
         _clock = clock;
         _permissionCache = permissionCache;
+        _audit = audit;
     }
 
     public async Task<Result<UserDto>> HandleAsync(
@@ -265,6 +269,25 @@ public sealed class CreateUserCommandHandler : ICommandHandler<CreateUserCommand
                     Details = details,
                     CorrelationId = _context.CorrelationId,
                     OccurredAt = _clock.UtcNow
+                },
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await _audit.WriteAsync(
+                new Domain.Audit.AuditWriteModel
+                {
+                    OccurredAt = _clock.UtcNow,
+                    UserId = _context.UserId,
+                    Module = "Administration",
+                    Entity = "User",
+                    EntityId = userId.ToString("D"),
+                    Action = action,
+                    NewValuesJson = details,
+                    CorrelationId = _context.CorrelationId,
+                    CompanyId = _context.CompanyId,
+                    PlantId = _context.PlantId,
+                    IpAddress = _context.IpAddress,
+                    SessionId = _context.SessionId
                 },
                 cancellationToken)
             .ConfigureAwait(false);

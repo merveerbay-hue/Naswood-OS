@@ -14,7 +14,9 @@ using Microsoft.IdentityModel.Tokens;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Application.Health;
+using Naswood.Modules.Platform.Application.Audit;
 using Naswood.Modules.Platform.Application.Users;
+using Naswood.Modules.Platform.Infrastructure.Audit;
 using Naswood.Modules.Platform.Infrastructure.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Authorization;
 using Naswood.Modules.Platform.Infrastructure.Health;
@@ -45,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<IUserManagementRepository, UserManagementRepository>();
         services.AddScoped<IOrganizationReferenceRepository, OrganizationReferenceRepository>();
         services.AddScoped<IUserHistoryRepository, UserHistoryRepository>();
+        services.AddScoped<IAuditWriter, AuditLogRepository>();
+        services.AddScoped<IAuditQueryRepository, AuditLogRepository>();
         services.AddScoped<UserLifecycleService>();
         services.AddScoped<IPlatformUnitOfWork, PlatformUnitOfWork>();
         services.AddScoped<IOutboxWriter, EfOutboxWriter>();

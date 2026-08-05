@@ -1,5 +1,6 @@
 using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.Domain;
+using Naswood.Modules.Platform.Application.Audit;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Contracts.Users;
@@ -531,6 +532,7 @@ public sealed class UserLifecycleService
     private readonly IAuthRequestContext _context;
     private readonly IClock _clock;
     private readonly IPermissionCache _permissionCache;
+    private readonly IAuditWriter _audit;
 
     public UserLifecycleService(
         IUserManagementRepository users,
@@ -539,7 +541,8 @@ public sealed class UserLifecycleService
         IUserHistoryRepository history,
         IAuthRequestContext context,
         IClock clock,
-        IPermissionCache permissionCache)
+        IPermissionCache permissionCache,
+        IAuditWriter audit)
     {
         _users = users;
         _unitOfWork = unitOfWork;
@@ -548,6 +551,7 @@ public sealed class UserLifecycleService
         _context = context;
         _clock = clock;
         _permissionCache = permissionCache;
+        _audit = audit;
     }
 
     public Task<Result<UserDto>> ActivateAsync(Guid userId, CancellationToken cancellationToken) =>
@@ -588,7 +592,8 @@ public sealed class UserLifecycleService
                 _unitOfWork,
                 _context,
                 _clock,
-                cancellationToken)
+                cancellationToken,
+                _audit)
             .ConfigureAwait(false);
         _permissionCache.InvalidateUser(user.Id);
         return Result.Success(UserDtoMapper.ToDto(user));
@@ -605,7 +610,8 @@ internal static class UserMutationSupport
         IPlatformUnitOfWork unitOfWork,
         IAuthRequestContext context,
         IClock clock,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IAuditWriter? audit = null)
     {
         await history.AddAsync(
                 new UserHistoryEntry
@@ -618,6 +624,27 @@ internal static class UserMutationSupport
                 },
                 cancellationToken)
             .ConfigureAwait(false);
+
+        if (audit is not null)
+        {
+            await audit.WriteAsync(
+                    new Domain.Audit.AuditWriteModel
+                    {
+                        OccurredAt = clock.UtcNow,
+                        UserId = context.UserId,
+                        Module = "Administration",
+                        Entity = "User",
+                        EntityId = user.Id.ToString("D"),
+                        Action = action,
+                        CorrelationId = context.CorrelationId,
+                        CompanyId = context.CompanyId,
+                        PlantId = context.PlantId,
+                        IpAddress = context.IpAddress,
+                        SessionId = context.SessionId
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
 
         foreach (var domainEvent in user.DomainEvents)
         {

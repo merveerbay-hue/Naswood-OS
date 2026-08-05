@@ -37,6 +37,9 @@ public sealed class PlatformDbContext : DbContext
 
     public DbSet<UserHistoryEntry> UserHistory => Set<UserHistoryEntry>();
 
+    public DbSet<Naswood.Modules.Platform.Domain.Audit.AuditLogEntry> AuditLogs =>
+        Set<Naswood.Modules.Platform.Domain.Audit.AuditLogEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("platform");
@@ -254,6 +257,32 @@ public sealed class PlatformDbContext : DbContext
             entity.Property(x => x.Details).HasMaxLength(1000);
             entity.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
             entity.HasIndex(x => x.OccurredAt);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Platform.Domain.Audit.AuditLogEntry>(entity =>
+        {
+            entity.ToTable("audit_logs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Module).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Entity).HasMaxLength(100);
+            entity.Property(x => x.EntityId).HasMaxLength(100);
+            entity.Property(x => x.Action).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Username).HasMaxLength(100);
+            entity.Property(x => x.OldValuesJson).HasColumnType("jsonb");
+            entity.Property(x => x.NewValuesJson).HasColumnType("jsonb");
+            entity.Property(x => x.IpAddress).HasMaxLength(64);
+            entity.Property(x => x.Browser).HasMaxLength(200);
+            entity.Property(x => x.Device).HasMaxLength(200);
+            entity.Property(x => x.OperatingSystem).HasMaxLength(200);
+            entity.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.CompanyId).HasMaxLength(64);
+            entity.Property(x => x.PlantId).HasMaxLength(64);
+            entity.Property(x => x.Severity).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            entity.HasIndex(x => x.OccurredAt);
+            entity.HasIndex(x => x.EntityId);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.Module);
         });
     }
 }
