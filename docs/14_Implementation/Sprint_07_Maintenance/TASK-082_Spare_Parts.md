@@ -1,6 +1,6 @@
 # ==============================================================================
-# TASK-081 — IMPLEMENTATION
-# DOWNTIME MANAGEMENT
+# TASK-082 — IMPLEMENTATION
+# SPARE PARTS MANAGEMENT
 # Naswood Operating System (NOS)
 # Module: Maintenance Management
 # Sprint: Sprint 07 – Maintenance
@@ -9,18 +9,16 @@
 
 # OBJECTIVE
 
-Implement the Downtime Management aggregate responsible for recording,
-classifying, analyzing and reporting all planned and unplanned equipment
-downtime across manufacturing operations.
+Implement the Spare Parts Management aggregate responsible for managing all
+maintenance spare parts, consumables and service materials used during
+maintenance activities.
 
-Downtime represents periods during which an Asset or Production Line is unable
-to produce according to its planned schedule.
+Spare Parts are inventory-controlled maintenance materials.
 
-Downtime impacts OEE, Production Capacity and Maintenance KPIs.
+Inventory ownership belongs entirely to the Inventory module.
 
-Downtime records operational events only.
-
-It never changes Production Orders or Maintenance Work Orders directly.
+The Maintenance module only reserves and consumes spare parts through
+Inventory Transactions.
 
 ---
 
@@ -31,7 +29,7 @@ Maintenance Management
 Aggregate Root
 
 ```
-Downtime
+SparePart
 ```
 
 ---
@@ -44,11 +42,10 @@ Implementation must comply with:
 - Maintenance_Architecture.md
 - Maintenance_Workflow.md
 - Maintenance_API.md
-- Production_Architecture.md
-- OEE Architecture
+- Inventory_Architecture.md
+- Product Capability Profile
 - TASK-076_Asset.md
 - TASK-078_Maintenance_Order.md
-- TASK-080_Corrective_Maintenance.md
 
 ---
 
@@ -56,35 +53,32 @@ Implementation must comply with:
 
 Requires completed modules:
 
-- Asset
-- Production Line
-- Work Center
-- Machine
-- Production Order
-- Maintenance Work Order
-- Employee
-- OEE
+- Product
+- Product Revision
+- Capability Profile
+- Inventory
+- Warehouse
+- Supplier
+- Unit Of Measure
 
 ---
 
 # AGGREGATE
 
 ```
-Downtime
+SparePart
 ```
 
 Children
 
 ```
-DowntimeReason
+SparePartAlternative
 
-DowntimeCategory
+CompatibleAsset
 
-DowntimeComment
+PreferredSupplier
 
-DowntimeAttachment
-
-DowntimeHistory
+MinMaxPolicy
 
 AuditEntry
 ```
@@ -94,82 +88,38 @@ AuditEntry
 # VALUE OBJECTS
 
 ```
-DowntimeNumber
+SparePartCode
 
-DowntimeStatus
+Criticality
 
-DowntimeType
+ProcurementType
 
-DowntimeDuration
+StockPolicy
 
-DowntimeReasonCode
+ReorderPolicy
 ```
 
 ---
 
 # ENUMS
 
-## DowntimeStatus
+## SparePartStatus
 
 ```text
-Open
+Draft
 
-Running
+Active
 
-Resolved
+Obsolete
 
-Verified
+Discontinued
 
-Closed
-
-Cancelled
+Archived
 ```
 
 ---
 
-## DowntimeType
-
-```text
-Planned
-
-Unplanned
-```
-
----
-
-## DowntimeCategory
-
-```text
-Mechanical
-
-Electrical
-
-Hydraulic
-
-Pneumatic
-
-Software
-
-Setup
-
-MaterialShortage
-
-QualityIssue
-
-Operator
-
-UtilityFailure
-
-Maintenance
-
-Safety
-
-Other
-```
-
----
-
-## DowntimeSeverity
+## SparePartCriticality
 
 ```text
 Low
@@ -183,48 +133,66 @@ Critical
 
 ---
 
+## ProcurementType
+
+```text
+Purchased
+
+Manufactured
+
+Subcontracted
+```
+
+---
+
+## StockPolicy
+
+```text
+Stocked
+
+NonStocked
+
+VendorManaged
+
+Consignment
+```
+
+---
+
 # ENTITY FIELDS
 
 ```text
 Id
 
-DowntimeNumber
+ProductRevisionId
 
-AssetId
+CapabilityProfileId
 
-ProductionLineId
-
-WorkCenterId
-
-MachineId
-
-ProductionOrderId
-
-MaintenanceWorkOrderId
-
-Category
-
-ReasonCode
-
-Type
-
-Severity
-
-Status
+SparePartCode
 
 Description
 
-StartedAt
+Status
 
-EndedAt
+Criticality
 
-DurationMinutes
+ProcurementType
 
-ReportedBy
+StockPolicy
 
-ResolvedBy
+PreferredWarehouseId
 
-VerifiedBy
+DefaultSupplierId
+
+MinimumStock
+
+MaximumStock
+
+ReorderPoint
+
+EconomicOrderQuantity
+
+LeadTimeDays
 
 CreatedAt
 
@@ -233,39 +201,49 @@ UpdatedAt
 
 ---
 
-# DOWNTIME REASON
+# COMPATIBLE ASSET
 
 ```text
 Id
 
-DowntimeId
+SparePartId
 
-ReasonCode
+AssetId
 
-ReasonDescription
+CompatibilityLevel
 
-RootCause
+Notes
+```
 
-CorrectiveAction
+---
 
-Verified
+# ALTERNATIVE PART
+
+```text
+Id
+
+SparePartId
+
+AlternativeProductRevisionId
+
+Priority
+
+Approved
 ```
 
 ---
 
 # DOMAIN INVARIANTS
 
-Every Downtime references exactly one Asset.
+Every Spare Part references one Product Revision.
 
-Open Downtime has no End Time.
+Product Capability Profile must allow Purchasing and Inventory.
 
-Closed Downtime is immutable.
+Inventory quantities are never stored in this aggregate.
 
-Duration is calculated automatically.
+One Spare Part Code is unique.
 
-Downtime cannot overlap another Active Downtime for the same Asset.
-
-Every Downtime has one Category and one Reason Code.
+Archived Spare Parts cannot be assigned to Maintenance Work Orders.
 
 ---
 
@@ -274,23 +252,19 @@ Every Downtime has one Category and one Reason Code.
 ```text
 Create()
 
-Start()
+Activate()
 
-Pause()
+AssignSupplier()
 
-Resume()
+AssignWarehouse()
 
-Resolve()
+AddCompatibleAsset()
 
-Verify()
+AddAlternative()
 
-Close()
+UpdateStockPolicy()
 
-Cancel()
-
-AssignReason()
-
-CalculateDuration()
+Archive()
 ```
 
 ---
@@ -298,21 +272,17 @@ CalculateDuration()
 # DOMAIN EVENTS
 
 ```text
-DowntimeStarted
+SparePartCreated
 
-DowntimePaused
+SparePartActivated
 
-DowntimeResumed
+CompatibleAssetAdded
 
-DowntimeResolved
+AlternativeAdded
 
-DowntimeVerified
+StockPolicyUpdated
 
-DowntimeClosed
-
-DowntimeCancelled
-
-DowntimeReasonAssigned
+SparePartArchived
 ```
 
 ---
@@ -321,48 +291,45 @@ DowntimeReasonAssigned
 
 Create
 
+- Product Revision exists
+- Capability Profile supports Purchasing
+- Capability Profile supports Inventory
+
+Activate
+
+- Default Supplier exists
+- Warehouse assigned
+
+Assign Compatible Asset
+
 - Asset exists
-- Asset Active
 
-Start
+Archive
 
-- Asset not already in Active Downtime
-
-Resolve
-
-- End Time defined
-- Reason assigned
-
-Verify
-
-- Resolution completed
-
-Close
-
-- Verification completed
+- No open reservations
 
 ---
 
 # REPOSITORY
 
 ```text
-IDowntimeRepository
+ISparePartRepository
 ```
 
 Methods
 
 ```csharp
-Task<Downtime?> GetByIdAsync(Guid id);
+Task<SparePart?> GetByIdAsync(Guid id);
 
-Task<Downtime?> GetByNumberAsync(string downtimeNumber);
+Task<SparePart?> GetByCodeAsync(string sparePartCode);
 
-Task<IEnumerable<Downtime>> GetOpenAsync();
+Task<IEnumerable<SparePart>> GetActiveAsync();
 
-Task<IEnumerable<Downtime>> GetByAssetAsync(Guid assetId);
+Task<IEnumerable<SparePart>> GetByAssetAsync(Guid assetId);
 
-Task AddAsync(Downtime entity);
+Task AddAsync(SparePart entity);
 
-Task UpdateAsync(Downtime entity);
+Task UpdateAsync(SparePart entity);
 ```
 
 ---
@@ -370,23 +337,21 @@ Task UpdateAsync(Downtime entity);
 # COMMANDS
 
 ```text
-CreateDowntimeCommand
+CreateSparePartCommand
 
-StartDowntimeCommand
+ActivateSparePartCommand
 
-PauseDowntimeCommand
+AssignSupplierCommand
 
-ResumeDowntimeCommand
+AssignWarehouseCommand
 
-ResolveDowntimeCommand
+AddCompatibleAssetCommand
 
-VerifyDowntimeCommand
+AddAlternativePartCommand
 
-CloseDowntimeCommand
+UpdateStockPolicyCommand
 
-CancelDowntimeCommand
-
-AssignDowntimeReasonCommand
+ArchiveSparePartCommand
 ```
 
 ---
@@ -394,15 +359,15 @@ AssignDowntimeReasonCommand
 # QUERIES
 
 ```text
-GetDowntimeByIdQuery
+GetSparePartByIdQuery
 
-GetDowntimesQuery
+GetSparePartsQuery
 
-GetOpenDowntimesQuery
+GetAssetSparePartsQuery
 
-GetAssetDowntimeHistoryQuery
+GetCriticalSparePartsQuery
 
-GetDowntimeStatisticsQuery
+GetLowStockSparePartsQuery
 ```
 
 ---
@@ -410,27 +375,23 @@ GetDowntimeStatisticsQuery
 # API ENDPOINTS
 
 ```http
-GET    /api/v1/maintenance/downtime
+GET    /api/v1/maintenance/spare-parts
 
-GET    /api/v1/maintenance/downtime/{id}
+GET    /api/v1/maintenance/spare-parts/{id}
 
-POST   /api/v1/maintenance/downtime
+POST   /api/v1/maintenance/spare-parts
 
-POST   /api/v1/maintenance/downtime/{id}/start
+PUT    /api/v1/maintenance/spare-parts/{id}
 
-POST   /api/v1/maintenance/downtime/{id}/pause
+POST   /api/v1/maintenance/spare-parts/{id}/activate
 
-POST   /api/v1/maintenance/downtime/{id}/resume
+POST   /api/v1/maintenance/spare-parts/{id}/compatible-asset
 
-POST   /api/v1/maintenance/downtime/{id}/resolve
+POST   /api/v1/maintenance/spare-parts/{id}/alternative
 
-POST   /api/v1/maintenance/downtime/{id}/verify
+POST   /api/v1/maintenance/spare-parts/{id}/stock-policy
 
-POST   /api/v1/maintenance/downtime/{id}/close
-
-POST   /api/v1/maintenance/downtime/{id}/cancel
-
-POST   /api/v1/maintenance/downtime/{id}/reason
+POST   /api/v1/maintenance/spare-parts/{id}/archive
 ```
 
 ---
@@ -438,67 +399,55 @@ POST   /api/v1/maintenance/downtime/{id}/reason
 # AUTHORIZATION
 
 ```text
-maintenance.downtime.read
+maintenance.sparepart.read
 
-maintenance.downtime.create
+maintenance.sparepart.create
 
-maintenance.downtime.update
+maintenance.sparepart.update
 
-maintenance.downtime.resolve
+maintenance.sparepart.activate
 
-maintenance.downtime.verify
-
-maintenance.downtime.close
-
-maintenance.downtime.cancel
+maintenance.sparepart.archive
 ```
 
 ---
 
 # DATABASE TABLES
 
-## Downtimes
+## SpareParts
 
 ```text
 Id
 
-DowntimeNumber
+ProductRevisionId
 
-AssetId
+CapabilityProfileId
 
-ProductionLineId
-
-WorkCenterId
-
-MachineId
-
-ProductionOrderId
-
-MaintenanceWorkOrderId
-
-Category
-
-ReasonCode
-
-Type
-
-Severity
-
-Status
+SparePartCode
 
 Description
 
-StartedAt
+Status
 
-EndedAt
+Criticality
 
-DurationMinutes
+ProcurementType
 
-ReportedBy
+StockPolicy
 
-ResolvedBy
+PreferredWarehouseId
 
-VerifiedBy
+DefaultSupplierId
+
+MinimumStock
+
+MaximumStock
+
+ReorderPoint
+
+EconomicOrderQuantity
+
+LeadTimeDays
 
 CreatedAt
 
@@ -507,22 +456,34 @@ UpdatedAt
 
 ---
 
-## DowntimeReasons
+## CompatibleAssets
 
 ```text
 Id
 
-DowntimeId
+SparePartId
 
-ReasonCode
+AssetId
 
-ReasonDescription
+CompatibilityLevel
 
-RootCause
+Notes
+```
 
-CorrectiveAction
+---
 
-Verified
+## AlternativeSpareParts
+
+```text
+Id
+
+SparePartId
+
+AlternativeProductRevisionId
+
+Priority
+
+Approved
 ```
 
 ---
@@ -530,22 +491,48 @@ Verified
 # INDEXES
 
 ```text
-IX_DowntimeNumber (Unique)
+IX_SparePartCode (Unique)
 
-IX_AssetId
-
-IX_ProductionLineId
-
-IX_WorkCenterId
-
-IX_MachineId
+IX_ProductRevisionId
 
 IX_Status
 
-IX_Category
+IX_Criticality
 
-IX_StartedAt
+IX_DefaultSupplierId
+
+IX_PreferredWarehouseId
 ```
+
+---
+
+# INVENTORY INTEGRATION
+
+Maintenance never updates stock quantities directly.
+
+Spare Part usage is performed through:
+
+```text
+Inventory Reservation
+
+↓
+
+Inventory Issue
+
+↓
+
+Maintenance Material Consumption
+
+↓
+
+Inventory Transaction
+
+↓
+
+Inventory Balance Update
+```
+
+Inventory remains the System of Record.
 
 ---
 
@@ -553,15 +540,14 @@ IX_StartedAt
 
 Audit every
 
-- Downtime creation
-- Start
-- Pause
-- Resume
-- Resolution
-- Verification
-- Closure
-- Cancellation
-- Reason assignment
+- Spare Part creation
+- Activation
+- Supplier assignment
+- Warehouse assignment
+- Compatible Asset assignment
+- Alternative Part assignment
+- Stock Policy update
+- Archive
 
 Capture
 
@@ -585,16 +571,14 @@ CorrelationId
 
 ## Unit Tests
 
-- Create Downtime
-- Start Downtime
-- Pause Downtime
-- Resume Downtime
-- Resolve Downtime
-- Verify Downtime
-- Close Downtime
-- Prevent overlapping Downtime
-- Calculate Duration automatically
-- Prevent modification after Closure
+- Create Spare Part
+- Activate Spare Part
+- Assign Supplier
+- Assign Warehouse
+- Add Compatible Asset
+- Add Alternative Part
+- Archive Spare Part
+- Prevent duplicate Spare Part Code
 
 ## Integration Tests
 
@@ -602,9 +586,9 @@ CorrelationId
 - Commands
 - Queries
 - REST API
-- Asset integration
-- Maintenance Work Order integration
-- OEE integration
+- Product integration
+- Inventory integration
+- Supplier integration
 - Domain Events
 - Audit
 
@@ -612,12 +596,11 @@ CorrelationId
 
 # ACCEPTANCE CRITERIA
 
-- Every Downtime references a valid Asset.
-- Planned and Unplanned Downtime are supported.
-- Duration is calculated automatically.
-- Overlapping Downtime is prevented.
-- Downtime integrates with OEE calculations.
-- Closed Downtime records become immutable.
+- Every Spare Part references a Product Revision.
+- Capability Profile validation is enforced.
+- Inventory ownership remains within the Inventory module.
+- Compatible Assets are maintained.
+- Alternative Spare Parts are supported.
 - CQRS architecture is respected.
 - Domain Events are published.
 - API integration tests pass.
@@ -634,9 +617,9 @@ CorrelationId
 - REST API completed
 - CQRS completed
 - Validation rules completed
-- Asset integration completed
-- OEE integration completed
-- Maintenance Work Order integration completed
+- Product integration completed
+- Inventory integration completed
+- Supplier integration completed
 - Authorization implemented
 - Audit implemented
 - Domain Events implemented
