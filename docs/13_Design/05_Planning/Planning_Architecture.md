@@ -126,7 +126,8 @@ Contains:
 - Company and plant scope
 - Horizon
 - Input snapshot
-- Product Revision and Capability Profile references
+- Product Revision ID references
+- Capability Profile ID references
 - Algorithm version
 - Configuration version
 - Status
