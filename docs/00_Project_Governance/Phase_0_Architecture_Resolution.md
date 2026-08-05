@@ -159,7 +159,8 @@ teams:
 |---|---|---|
 | Production versus Manufacturing | Manufacturing owns resources, Material and genealogy; Production owns execution | Approved |
 | Sales versus CRM | Sales owns Customer and commercial transactions; CRM owns pre-sale relationships | Approved |
-| Product ownership | Owning module and Product-to-Material transition | Pending |
+| Product ownership | Product Management owns Product definitions and revisions | Approved |
+| Product-to-Material transition | Creation and linkage rules for physical Material instances | Pending |
 | Material ownership | Manufacturing owns physical identity and genealogy | Approved |
 | Planning scope | Demand, MRP, capacity and scheduling boundaries | Pending |
 | Finance event policy | Events Finance may publish without becoming an operational source | Pending |

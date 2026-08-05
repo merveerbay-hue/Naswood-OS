@@ -216,6 +216,8 @@ AI Providers
 
 Platform
 
+Product Management
+
 CRM
 
 Sales

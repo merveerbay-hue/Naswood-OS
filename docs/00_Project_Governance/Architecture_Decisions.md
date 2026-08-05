@@ -292,22 +292,25 @@ a negative On Hand quantity. Configuration cannot weaken this invariant.
 
 ---
 
-## ADR-010 — Product Ownership Deferred
+## ADR-010 — Product Management Ownership
 
-**Status:** Proposed
+**Status:** Approved
 
 **Context:** Product is used as a commercial catalog, technical definition,
 planning input and costing reference. The proposed Sales ownership was not
 approved.
 
-**Decision:** Product ownership and the Product-to-Material transition remain
-undecided.
+**Decision:** Product Management owns Product identity, definitions,
+classifications, revisions and lifecycle. Sales and operational modules consume
+released Product contracts.
 
-**Rationale:** Architecture shall not infer the missing business boundary.
+**Rationale:** The accountable business owner approved Product Management as a
+dedicated module during Phase 0.
 
-**Consequences:** Product and BOM persistence, Product lifecycle changes and
-Product-to-Material commands remain blocked until an accountable decision is
-Approved.
+**Consequences:** Sales shall not own or mutate Product definitions. Product
+Management shall not own physical Material, inventory or production execution.
+BOM ownership and Product-to-Material transition rules remain blocked until
+separately Approved.
 
 **Related Documents:** `Module_Boundaries_and_Ownership.md`,
 `Phase_0_Issue_Register.md`

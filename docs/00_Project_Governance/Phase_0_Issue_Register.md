@@ -38,7 +38,7 @@ the approved decision.
 | P0-001 | Constitution/Architecture authority conflict | Constitution declared highest authority in ADR-001 | Decision Approved |
 | P0-002 | Production and Manufacturing overlap | Manufacturing owns resources, Material and genealogy; Production owns execution | Decision Approved |
 | P0-003 | Sales, CRM and Customer ownership overlap | Sales owns Customer/commercial transactions; CRM owns pre-sale relationships | Decision Approved |
-| P0-004 | Product, Material and genealogy ownership missing | Material/genealogy approved for Manufacturing; Product remains undecided | Blocked |
+| P0-004 | Product, Material and genealogy ownership missing | Product Management owns Product; Manufacturing owns Material/genealogy | Decision Approved |
 | P0-005 | Planning module lacks complete architecture/design/tasks | Architecture created; domain decisions and implementation tasks remain | Blocked |
 | P0-006 | Reference Data standard empty | Standard completed | Closed |
 | P0-007 | Transaction standard empty | Standard completed | Closed |
@@ -121,7 +121,7 @@ the approved decision.
 
 The accountable business owner must still approve:
 
-1. Product ownership, Product-to-Material transition and BOM ownership
+1. Product-to-Material transition and BOM ownership
 2. Planning policies and delivery-commitment authority
 3. Costing and valuation methods
 4. Approval matrices and segregation of duties

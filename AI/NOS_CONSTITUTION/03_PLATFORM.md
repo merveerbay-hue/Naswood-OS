@@ -40,6 +40,7 @@ Every business process should be executed through one unified platform.
 Examples include:
 
 - Customer Management
+- Product Management
 - Sales
 - Purchasing
 - Inventory
@@ -212,6 +213,18 @@ Warehouse
 ↓
 
 Inventory
+
+Product
+
+↓
+
+Product Management
+
+Material
+
+↓
+
+Manufacturing
 
 Ownership defines responsibility.
 

@@ -41,6 +41,7 @@ approval before implementation.
 | Module | Owns | Does not own | Status |
 |---|---|---|---|
 | Platform | Identity, permissions, configuration, audit, notifications, numbering, localization, observability | Commercial or operational business entities | Approved |
+| Product Management | Product definitions, product revisions, classifications and product lifecycle | Physical Material, sales transactions, production execution and inventory balance | Approved |
 | Inventory | Warehouses, locations, stock ledger, availability, reservations, inventory movements | Material definition, purchase orders, sales orders, production orders | Approved |
 | Purchasing | Suppliers, purchase requests, RFQs, supplier quotations, purchase orders, purchase returns, supplier invoices | Inventory balances, quality decisions, financial postings | Approved |
 | Sales | Customer commercial master, quotations, sales orders and commercial commitments | Product definition, physical material, production execution, inventory balance, financial posting | Approved |
@@ -78,7 +79,7 @@ approval before implementation.
 | Reservation | Inventory | Sales, Planning, Production, Maintenance | Approved |
 | Machine and production capability | Manufacturing | Planning, Production, Maintenance, IoT, Digital Twin | Approved |
 | Employee | HR | Platform identity link, Planning, Production, Maintenance | Approved |
-| Product | Undecided | Sales, Planning, Production, Quality, Finance | Pending |
+| Product | Product Management | Sales, Planning, Manufacturing, Production, Quality, Finance | Approved |
 | Physical Material | Manufacturing | Purchasing, Inventory, Production, Quality, Logistics | Approved |
 | Material genealogy | Manufacturing | Production, Inventory, Quality, Logistics, Digital Twin | Approved |
 | BOM | Manufacturing or Planning | Sales, Planning, Production, Costing | Pending |
@@ -162,18 +163,26 @@ Material is the physical traceable instance owned by Manufacturing. Inventory
 owns its quantity, location, reservation and stock status without owning or
 mutating Material identity or genealogy.
 
-## 6.4 Product — Pending
+## 6.4 Product
 
-Product ownership is not approved. No module may create Product persistence or
-define the Product-to-Material transition until this decision is resolved.
+Product Management owns Product identity, definition, classification, revision
+history and lifecycle.
+
+Sales references released Product identifiers and manages customer-specific
+commercial terms without modifying Product definitions.
+
+Manufacturing and Production consume released Product revisions. The exact
+Product-to-Material transition and BOM ownership remain pending business
+decisions.
 
 ---
 
 # 7. Approval Gate
 
-No implementation may create Product or BOM persistence until the corresponding
-Pending ownership entries are Approved. Planning remains blocked until its
-Proposed domain scope and pending business policies are Approved.
+No implementation may create BOM persistence or Product-to-Material commands
+until the corresponding Pending decisions are Approved. Planning remains
+blocked until its Proposed domain scope and pending business policies are
+Approved.
 
 ---
 
