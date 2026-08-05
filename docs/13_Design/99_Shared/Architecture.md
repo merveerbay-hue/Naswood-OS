@@ -1,8 +1,8 @@
-# Approval Workflow
+# Platform Architecture
 
 **Module:** Shared
 
-**Category:** Workflow
+**Category:** Architecture
 
 **Version:** 1.0
 
@@ -12,514 +12,358 @@
 
 # Purpose
 
-The Approval Workflow standard defines the approval process used across all modules of Naswood OS.
+The Architecture standard defines the overall platform architecture of Naswood OS.
 
-Approval workflows ensure that business transactions are reviewed, authorized and recorded in a consistent, secure and auditable manner.
+It establishes the principles, layers and integration model used across the entire system.
 
-Every module requiring approval must use the shared Approval Engine.
+This document serves as the architectural foundation for all modules, services and future platform extensions.
 
 ---
 
 # Objectives
 
-- Standardized Approval Process
-- Flexible Workflow Configuration
-- Role-Based Authorization
-- Full Auditability
-- Process Transparency
-- Business Compliance
+- Standardize System Architecture
+- Enable Scalability
+- Improve Maintainability
+- Support AI Integration
+- Simplify Development
+- Ensure Long-Term Growth
 
 ---
 
-# Design Principles
+# Architecture Principles
 
-Approval workflows should be
+Naswood OS follows these principles
 
-- Consistent
+Modular
 
-- Configurable
+Scalable
 
-- Transparent
+Cloud Ready
 
-- Secure
+API First
 
-- Traceable
+AI Native
 
-Approval logic should be reusable across all business modules.
+Mobile First
+
+Security by Design
+
+Event Driven
+
+Domain Driven
 
 ---
 
-# Workflow Lifecycle
+# Platform Overview
 
 ```
-Draft
+Presentation Layer
 
 ↓
 
-Submitted
+Application Layer
 
 ↓
 
-Under Review
+Business Layer
 
 ↓
 
-Approved
+Data Layer
 
 ↓
 
-Completed
-```
-
-Alternative paths
-
-```
-Rejected
-
-Returned
-
-Cancelled
-
-Expired
+Infrastructure Layer
 ```
 
 ---
 
-# Workflow Components
-
-Workflow
-
-Step
-
-Approver
-
-Condition
-
-Rule
-
-Escalation
-
-Notification
-
-Audit Log
-
-History
-
-Comments
-
-Attachments
-
----
-
-# Approval Types
-
-Single Approval
-
-Sequential Approval
-
-Parallel Approval
-
-Conditional Approval
-
-Delegated Approval
-
-Multi-Level Approval
-
-Automatic Approval
-
-AI Recommendation
-
----
-
-# Standard Flow
+# High-Level Architecture
 
 ```
-Draft
+Users
 
 ↓
 
-Submit
+Web
+
+Mobile
+
+Tablet
+
+Industrial Panels
 
 ↓
 
-Validation
+API Gateway
 
 ↓
 
-Approver Assignment
+Business Services
 
 ↓
 
-Approval
+Database
 
 ↓
 
-Completion
+External Systems
 ```
 
 ---
 
-# Workflow States
+# Architecture Layers
 
-Draft
+## Presentation Layer
 
-Submitted
+Provides
 
-Pending
+Web UI
 
-In Review
+Mobile UI
 
-Approved
+Digital Twin UI
 
-Rejected
+Dashboards
 
-Returned
-
-Cancelled
-
-Expired
-
-Completed
-
----
-
-# Approval Levels
-
-Level 1
-
-Supervisor
-
-Level 2
-
-Department Manager
-
-Level 3
-
-Director
-
-Level 4
-
-Executive
-
-Additional levels may be configured.
-
----
-
-# Assignment Methods
-
-Specific User
-
-Role
-
-Department
-
-Manager
-
-Dynamic Rule
-
-AI Recommendation
-
-Round Robin (Optional)
-
----
-
-# Approval Conditions
-
-Amount
-
-Department
-
-Location
-
-Warehouse
-
-Project
-
-Supplier
-
-Customer
-
-Risk Level
-
-Material Group
-
-Document Type
-
-Priority
-
----
-
-# Approval Actions
-
-Approve
-
-Reject
-
-Return
-
-Cancel
-
-Delegate
-
-Escalate
-
-Comment
-
-Request Information
-
-View History
-
-Download Attachment
-
----
-
-# Rejection
-
-Requires
-
-Reason
-
-Optional Comment
-
-Optional Attachment
-
-Rejected workflows may return to Draft or be closed.
-
----
-
-# Return for Revision
-
-Supports
-
-Field Comments
-
-General Comments
-
-Requested Changes
-
-Revision Tracking
-
----
-
-# Delegation
-
-Approvers may delegate approvals to another authorized user.
-
-Delegation must be recorded in the audit log.
-
----
-
-# Escalation
-
-Supports
-
-Time-Based Escalation
-
-Role Escalation
-
-Manager Escalation
-
-Executive Escalation
-
-Automatic Reminder
-
----
-
-# SLA
-
-Each approval step may define
-
-Response Time
-
-Escalation Time
-
-Maximum Waiting Time
-
-Business Calendar
-
----
-
-# Notifications
-
-Notify
-
-Requester
-
-Approver
-
-Delegated User
-
-Manager
-
-Observers
-
-Reference
-
-Notifications.md
-
----
-
-# Comments
-
-Supports
-
-Rich Text
-
-Mentions
-
-Attachments
-
-Timestamp
-
-Author
-
----
-
-# Attachments
-
-Supports
-
-PDF
-
-Images
-
-Excel
-
-CAD
-
-ZIP
+Reports
 
 Documents
 
----
-
-# History
-
-Displays
-
-Submission
-
-Approval
-
-Rejection
-
-Delegation
-
-Escalation
-
-Comments
-
-Attachments
-
-Timestamp
-
-User
+AI Interfaces
 
 ---
 
-# Audit Trail
+## Application Layer
 
-Track
+Responsible for
 
-Created By
+Use Cases
 
-Submitted By
+Workflow
 
-Approved By
+Authorization
 
-Rejected By
+Validation
 
-Delegated By
+Notifications
 
-IP Address
+Caching
 
-Device
-
-Timestamp
+Background Jobs
 
 ---
 
-# Permissions
+## Business Layer
+
+Contains
+
+Business Rules
+
+Services
+
+Calculations
+
+Approval Logic
+
+Workflow Engine
+
+AI Services
+
+Digital Twin Logic
+
+---
+
+## Data Layer
+
+Responsible for
+
+Repositories
+
+ORM
+
+Transactions
+
+Database Access
+
+Search
+
+Caching
+
+---
+
+## Infrastructure Layer
+
+Includes
+
+Authentication
+
+Storage
+
+Messaging
+
+Logging
+
+Monitoring
+
+Email
+
+File Storage
+
+IoT
+
+AI Providers
+
+---
+
+# Core Platform Modules
+
+Master Data
+
+CRM
+
+Sales
+
+Purchasing
+
+Inventory
+
+Warehouse
+
+Production
+
+MES
+
+Quality
+
+Maintenance
+
+Finance
+
+Documents
+
+Analytics
+
+AI
+
+Digital Twin
+
+Administration
+
+---
+
+# Shared Platform Services
+
+Authentication
+
+Authorization
+
+Notification Engine
+
+Approval Engine
+
+Workflow Engine
+
+Audit Log
+
+Search Engine
+
+Reporting
+
+Printing
+
+Localization
+
+File Management
+
+Configuration
+
+---
+
+# AI Layer
 
 Supports
 
-Role Permissions
+AI Chat
 
-Department Permissions
+AI Copilot
 
-Record Permissions
+AI Widgets
 
-Approval Limits
+Knowledge Search
 
-Separation of Duties
+Recommendations
 
----
+Predictions
 
-# Approval Limits
+Document Analysis
 
-Example
-
-Supervisor
-
-≤ 50,000
-
-Manager
-
-≤ 250,000
-
-Director
-
-≤ 1,000,000
-
-Executive
-
-Unlimited
-
-Limits are configurable.
+Prompt Engine
 
 ---
 
-# AI Assistance
+# Digital Twin Layer
 
-AI may
+Supports
 
-Summarize requests
+Machine Monitoring
 
-Highlight risks
+Factory Map
 
-Detect anomalies
+Sensor Data
 
-Recommend approvers
+IoT Devices
 
-Estimate approval time
+Live Production
 
-AI never approves automatically.
+Real-Time Events
 
-Reference
-
-AI_Copilot.md
+Predictive Maintenance
 
 ---
 
-# Workflow Rules
+# Integration Layer
 
-Rules may evaluate
+Supports
 
-Value
+REST API
 
-Department
+SignalR
 
-Location
+Message Queue
 
-Project
+Webhook
 
-Material Type
+Import
 
-Supplier
+Export
 
-Risk Score
+ERP Integration
 
-Custom Expressions
+CRM Integration
+
+Accounting Systems
+
+IoT Platforms
+
+---
+
+# Database
+
+Supports
+
+SQL Server
+
+PostgreSQL
+
+Read Replicas
+
+Backups
+
+Encryption
+
+Versioning
 
 ---
 
@@ -527,93 +371,159 @@ Custom Expressions
 
 Supports
 
-Digital Signature
+JWT
 
-MFA
+OAuth2
 
-Approval Lock
+RBAC
 
-Immutable Audit Trail
+Field Permissions
 
-Encrypted Attachments
+Record Permissions
 
----
+Audit Trail
 
-# Offline Behaviour
-
-Approvals requiring authorization should not be finalized while offline.
-
-Draft actions may be stored locally.
-
-Reference
-
-Offline_UI.md
+Encryption
 
 ---
 
-# API
+# Workflow
 
-Standard Endpoints
+Business processes use
 
-```
-POST /approvals
+Workflow Engine
 
-GET /approvals/{id}
+Approval Engine
 
-POST /approvals/{id}/approve
+Notification Engine
 
-POST /approvals/{id}/reject
-
-POST /approvals/{id}/return
-
-POST /approvals/{id}/delegate
-```
+Rule Engine
 
 ---
 
-# User Interface
+# Event Driven Architecture
 
-Displays
+Examples
 
-Workflow Status
+MaterialCreated
 
-Current Step
+PurchaseOrderApproved
 
-Approver
+InventoryAdjusted
 
-History
+ProductionStarted
 
-Comments
+MachineStopped
 
-Attachments
+QualityInspectionCompleted
 
-Timeline
-
-Pending Actions
+Events should be immutable and publish business facts.
 
 ---
 
-# Example Workflows
+# Background Processing
 
-Purchase Request
+Supports
 
-Purchase Order
+Email
 
-Sales Discount
+PDF Generation
 
-Production Order Release
+AI Processing
 
-Quality Deviation
+Import
 
-Maintenance Work Order
+Export
 
-Inventory Adjustment
+Synchronization
 
-Supplier Approval
+Scheduled Jobs
 
-Document Approval
+---
 
-Expense Claim
+# Caching
+
+Supports
+
+Memory Cache
+
+Distributed Cache
+
+Query Cache
+
+Configuration Cache
+
+AI Cache
+
+---
+
+# Monitoring
+
+Supports
+
+Health Checks
+
+Performance Metrics
+
+Logging
+
+Tracing
+
+Alerts
+
+Audit
+
+---
+
+# Deployment
+
+Supports
+
+Development
+
+Test
+
+Staging
+
+Production
+
+Cloud
+
+On-Premise
+
+Hybrid
+
+---
+
+# Scalability
+
+Supports
+
+Horizontal Scaling
+
+Vertical Scaling
+
+Load Balancing
+
+Background Workers
+
+Stateless APIs
+
+---
+
+# Availability
+
+Supports
+
+Backup
+
+Recovery
+
+High Availability
+
+Disaster Recovery
+
+Redundancy
 
 ---
 
@@ -621,94 +531,182 @@ Expense Claim
 
 Supports
 
-Lazy History Loading
+Async Processing
 
-Optimistic Updates
+Lazy Loading
 
-Background Notifications
+Streaming
 
-Cached Workflow Data
+Virtualization
+
+Compression
+
+Caching
+
+---
+
+# Technology Stack
+
+Frontend
+
+React
+
+TypeScript
+
+Tailwind CSS
+
+Backend
+
+.NET
+
+Database
+
+SQL Server
+
+API
+
+REST
+
+SignalR
+
+Authentication
+
+JWT
+
+OAuth2
+
+AI
+
+OpenAI Compatible Providers
+
+Infrastructure
+
+Docker
+
+Kubernetes (Future)
+
+---
+
+# Development Principles
+
+Feature-Based Structure
+
+Dependency Injection
+
+Clean Architecture
+
+SOLID
+
+CQRS (Where Appropriate)
+
+Repository Pattern
+
+Unit Testing
+
+Integration Testing
+
+---
+
+# Documentation Standards
+
+Every module should define
+
+Purpose
+
+Architecture
+
+Responsibilities
+
+Interfaces
+
+Dependencies
+
+Security
+
+Performance
+
+Future Extensions
 
 ---
 
 # Best Practices
 
-✓ Keep approval chains simple.
+✓ Keep modules independent.
 
-✓ Use role-based assignment.
+✓ Use shared platform services.
 
-✓ Record every decision.
+✓ Prefer asynchronous operations.
 
-✓ Notify stakeholders.
+✓ Follow API standards.
 
-✓ Define escalation rules.
+✓ Reuse components.
 
-✓ Require reasons for rejection.
+✓ Maintain loose coupling.
 
 ---
 
 # Do
 
-✓ Maintain audit history
+✓ Build modular services
 
-✓ Support delegation
+✓ Separate business logic
 
-✓ Enforce approval limits
+✓ Reuse shared engines
 
-✓ Notify users
+✓ Document integrations
 
-✓ Display workflow status clearly
+✓ Version APIs
 
 ---
 
 # Don't
 
-✗ Skip approval history
+✗ Duplicate business logic
 
-✗ Allow unauthorized approval
+✗ Couple modules tightly
 
-✗ Modify approved records silently
+✗ Bypass shared services
 
-✗ Hide rejection reasons
+✗ Hardcode integrations
 
-✗ Bypass workflow rules
+✗ Ignore architectural boundaries
 
 ---
 
 # Acceptance Criteria
 
-Approval workflows follow the shared standard.
+Architecture follows the defined platform layers.
 
-Audit trails are complete.
+Modules remain loosely coupled.
 
-Permissions are enforced.
+Shared services are reused.
 
-Notifications are delivered.
+Security is enforced consistently.
 
-Escalation rules function correctly.
+Platform supports future growth.
 
-Workflow history is available.
-
-Accessibility complies with WCAG 2.1 AA.
+Documentation remains aligned with the architecture.
 
 ---
 
 # Related Documents
 
-Workflow_Engine.md
-
-Notifications.md
-
-Security.md
-
 API_Standards.md
 
-AI_Copilot.md
-
-Offline_UI.md
-
-Audit_Log.md
+Approval_Workflow.md
 
 Authentication.md
 
 Authorization.md
+
+Workflow_Engine.md
+
+Security.md
+
+Architecture_Decisions.md
+
+Database_Standards.md
+
+Logging.md
+
+Monitoring.md
