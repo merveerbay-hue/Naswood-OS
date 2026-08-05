@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource, deleteResource, searchResource } from '@/api/business';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge } from '@/modules/shared/entity/StatusBadge';
 
 export interface EntityField {
   key: string;

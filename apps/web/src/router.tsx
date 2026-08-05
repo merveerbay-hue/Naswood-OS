@@ -51,26 +51,38 @@ import { DeliveryPage } from './pages/business/DeliveryPage';
 import { CustomerInvoicePage } from './pages/business/CustomerInvoicePage';
 import { SalesDashboardPage } from './pages/business/SalesDashboardPage';
 import { SalesReportPage } from './pages/business/SalesReportPage';
-import { BomPage } from './pages/business/BomPage';
-import { RoutingPage } from './pages/business/RoutingPage';
-import { MachinePage } from './pages/business/MachinePage';
-import { WorkCenterPage } from './pages/business/WorkCenterPage';
-import { ProductionLinePage } from './pages/business/ProductionLinePage';
-import { ShiftPage } from './pages/business/ShiftPage';
-import { CalendarPage } from './pages/business/CalendarPage';
-import { ToolingPage } from './pages/business/ToolingPage';
-import { OperationPage } from './pages/business/OperationPage';
-import { ProductionParameterPage } from './pages/business/ProductionParameterPage';
-import { ProductionOrderPage } from './pages/business/ProductionOrderPage';
-import { WorkOrderPage } from './pages/business/WorkOrderPage';
-import { MaterialConsumptionPage } from './pages/business/MaterialConsumptionPage';
-import { ProductionConfirmationPage } from './pages/business/ProductionConfirmationPage';
-import { WipPage } from './pages/business/WipPage';
-import { PackagingPage } from './pages/business/PackagingPage';
-import { FinishedGoodPage } from './pages/business/FinishedGoodPage';
-import { ScrapPage } from './pages/business/ScrapPage';
-import { ReworkPage } from './pages/business/ReworkPage';
-import { ProductionDashboardPage } from './pages/business/ProductionDashboardPage';
+import { ProductionWorkspaceLayout } from './modules/production/ProductionWorkspaceLayout';
+import { ProductionDashboardPage } from './modules/production/overview/ProductionDashboardPage';
+import {
+  BomDetailPage,
+  BomListPage,
+  CalendarsPage,
+  CapacityPage,
+  ConfirmationPage,
+  ConsumptionPage,
+  DispatchPage,
+  FinishedGoodsPage,
+  MachinePanelPage,
+  MachinesMasterPage,
+  OperationsMasterPage,
+  OperatorTerminalPage,
+  PackagingPage,
+  ProductionAnalyticsPage,
+  ProductionLinesPage,
+  ProductionOrderDetailPage,
+  ProductionOrderListPage,
+  ProductionReportsPage,
+  ProductionSettingsPage,
+  ReworkPage,
+  RoutingListPage,
+  SchedulingPage,
+  ScrapPage,
+  ShiftsPage,
+  ToolingsPage,
+  WipPage,
+  WorkCentersPage,
+  WorkOrderListPage,
+} from './modules/production/screens';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -241,26 +253,76 @@ const route_26 = createRoute({ getParentRoute: () => authenticatedRoute, path: '
 const route_27 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/customer-invoices', component: CustomerInvoicePage });
 const route_28 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/dashboard', component: SalesDashboardPage });
 const route_29 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/reports', component: SalesReportPage });
-const route_30 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/boms', component: BomPage });
-const route_31 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/routings', component: RoutingPage });
-const route_32 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/machines', component: MachinePage });
-const route_33 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/work-centers', component: WorkCenterPage });
-const route_34 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-lines', component: ProductionLinePage });
-const route_35 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/shifts', component: ShiftPage });
-const route_36 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/calendars', component: CalendarPage });
-const route_37 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/toolings', component: ToolingPage });
-const route_38 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/operations', component: OperationPage });
-const route_39 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-parameters', component: ProductionParameterPage });
-const route_40 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-orders', component: ProductionOrderPage });
-const route_41 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/work-orders', component: WorkOrderPage });
-const route_42 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/material-consumptions', component: MaterialConsumptionPage });
-const route_43 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-confirmations', component: ProductionConfirmationPage });
-const route_44 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/wips', component: WipPage });
-const route_45 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/packagings', component: PackagingPage });
-const route_46 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/finished-goods', component: FinishedGoodPage });
-const route_47 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/scraps', component: ScrapPage });
-const route_48 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/reworks', component: ReworkPage });
-const route_49 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/dashboard', component: ProductionDashboardPage });
+const productionRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/production',
+  component: ProductionWorkspaceLayout,
+});
+const productionIndexRoute = createRoute({
+  getParentRoute: () => productionRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/production/dashboard' });
+  },
+});
+const prdDashboard = createRoute({ getParentRoute: () => productionRoute, path: 'dashboard', component: ProductionDashboardPage });
+const prdOrders = createRoute({ getParentRoute: () => productionRoute, path: 'planning/orders', component: ProductionOrderListPage });
+const prdOrderDetail = createRoute({ getParentRoute: () => productionRoute, path: 'planning/orders/$id', component: ProductionOrderDetailPage });
+const prdWorkOrders = createRoute({ getParentRoute: () => productionRoute, path: 'planning/work-orders', component: WorkOrderListPage });
+const prdScheduling = createRoute({ getParentRoute: () => productionRoute, path: 'planning/scheduling', component: SchedulingPage });
+const prdCapacity = createRoute({ getParentRoute: () => productionRoute, path: 'planning/capacity', component: CapacityPage });
+const prdDispatch = createRoute({ getParentRoute: () => productionRoute, path: 'planning/dispatch', component: DispatchPage });
+const prdOperator = createRoute({ getParentRoute: () => productionRoute, path: 'execution/operator-terminal', component: OperatorTerminalPage });
+const prdMachinePanel = createRoute({ getParentRoute: () => productionRoute, path: 'execution/machine-panel', component: MachinePanelPage });
+const prdConsumption = createRoute({ getParentRoute: () => productionRoute, path: 'execution/consumption', component: ConsumptionPage });
+const prdConfirmation = createRoute({ getParentRoute: () => productionRoute, path: 'execution/confirmation', component: ConfirmationPage });
+const prdWip = createRoute({ getParentRoute: () => productionRoute, path: 'execution/wip', component: WipPage });
+const prdPackaging = createRoute({ getParentRoute: () => productionRoute, path: 'execution/packaging', component: PackagingPage });
+const prdFg = createRoute({ getParentRoute: () => productionRoute, path: 'execution/finished-goods', component: FinishedGoodsPage });
+const prdScrap = createRoute({ getParentRoute: () => productionRoute, path: 'execution/scrap', component: ScrapPage });
+const prdRework = createRoute({ getParentRoute: () => productionRoute, path: 'execution/rework', component: ReworkPage });
+const prdBoms = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/boms', component: BomListPage });
+const prdBomDetail = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/boms/$id', component: BomDetailPage });
+const prdRoutings = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/routings', component: RoutingListPage });
+const prdOperations = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/operations', component: OperationsMasterPage });
+const prdMachines = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/machines', component: MachinesMasterPage });
+const prdWorkCenters = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/work-centers', component: WorkCentersPage });
+const prdLines = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/lines', component: ProductionLinesPage });
+const prdShifts = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/shifts', component: ShiftsPage });
+const prdCalendars = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/calendars', component: CalendarsPage });
+const prdToolings = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/toolings', component: ToolingsPage });
+const prdReports = createRoute({ getParentRoute: () => productionRoute, path: 'reports', component: ProductionReportsPage });
+const prdAnalytics = createRoute({ getParentRoute: () => productionRoute, path: 'analytics', component: ProductionAnalyticsPage });
+const prdSettings = createRoute({ getParentRoute: () => productionRoute, path: 'settings', component: ProductionSettingsPage });
+
+const legacyProductionRedirects = [
+  ['/production/boms', '/production/master-data/boms'],
+  ['/production/routings', '/production/master-data/routings'],
+  ['/production/machines', '/production/master-data/machines'],
+  ['/production/work-centers', '/production/master-data/work-centers'],
+  ['/production/production-lines', '/production/master-data/lines'],
+  ['/production/shifts', '/production/master-data/shifts'],
+  ['/production/calendars', '/production/master-data/calendars'],
+  ['/production/toolings', '/production/master-data/toolings'],
+  ['/production/operations', '/production/master-data/operations'],
+  ['/production/production-orders', '/production/planning/orders'],
+  ['/production/work-orders', '/production/planning/work-orders'],
+  ['/production/material-consumptions', '/production/execution/consumption'],
+  ['/production/production-confirmations', '/production/execution/confirmation'],
+  ['/production/wips', '/production/execution/wip'],
+  ['/production/packagings', '/production/execution/packaging'],
+  ['/production/finished-goods', '/production/execution/finished-goods'],
+  ['/production/scraps', '/production/execution/scrap'],
+  ['/production/reworks', '/production/execution/rework'],
+].map(([from, to]) =>
+  createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: from,
+    beforeLoad: () => {
+      throw redirect({ to });
+    },
+  }),
+);
 
 const implemented = new Set([
   '/',
@@ -308,6 +370,34 @@ const implemented = new Set([
   '/sales/customer-invoices',
   '/sales/dashboard',
   '/sales/reports',
+  '/production',
+  '/production/dashboard',
+  '/production/planning/orders',
+  '/production/planning/work-orders',
+  '/production/planning/scheduling',
+  '/production/planning/capacity',
+  '/production/planning/dispatch',
+  '/production/execution/operator-terminal',
+  '/production/execution/machine-panel',
+  '/production/execution/consumption',
+  '/production/execution/confirmation',
+  '/production/execution/wip',
+  '/production/execution/packaging',
+  '/production/execution/finished-goods',
+  '/production/execution/scrap',
+  '/production/execution/rework',
+  '/production/master-data/boms',
+  '/production/master-data/routings',
+  '/production/master-data/operations',
+  '/production/master-data/machines',
+  '/production/master-data/work-centers',
+  '/production/master-data/lines',
+  '/production/master-data/shifts',
+  '/production/master-data/calendars',
+  '/production/master-data/toolings',
+  '/production/reports',
+  '/production/analytics',
+  '/production/settings',
   '/production/boms',
   '/production/routings',
   '/production/machines',
@@ -317,7 +407,6 @@ const implemented = new Set([
   '/production/calendars',
   '/production/toolings',
   '/production/operations',
-  '/production/production-parameters',
   '/production/production-orders',
   '/production/work-orders',
   '/production/material-consumptions',
@@ -327,7 +416,6 @@ const implemented = new Set([
   '/production/finished-goods',
   '/production/scraps',
   '/production/reworks',
-  '/production/dashboard',
 ]);
 const modulePaths = collectNavPaths().filter((path) => !implemented.has(path));
 const moduleRoutes = modulePaths.map((path) =>
@@ -378,26 +466,39 @@ export const routeTree = rootRoute.addChildren([
     route_27,
     route_28,
     route_29,
-    route_30,
-    route_31,
-    route_32,
-    route_33,
-    route_34,
-    route_35,
-    route_36,
-    route_37,
-    route_38,
-    route_39,
-    route_40,
-    route_41,
-    route_42,
-    route_43,
-    route_44,
-    route_45,
-    route_46,
-    route_47,
-    route_48,
-    route_49,
+    productionRoute.addChildren([
+      productionIndexRoute,
+      prdDashboard,
+      prdOrders,
+      prdOrderDetail,
+      prdWorkOrders,
+      prdScheduling,
+      prdCapacity,
+      prdDispatch,
+      prdOperator,
+      prdMachinePanel,
+      prdConsumption,
+      prdConfirmation,
+      prdWip,
+      prdPackaging,
+      prdFg,
+      prdScrap,
+      prdRework,
+      prdBoms,
+      prdBomDetail,
+      prdRoutings,
+      prdOperations,
+      prdMachines,
+      prdWorkCenters,
+      prdLines,
+      prdShifts,
+      prdCalendars,
+      prdToolings,
+      prdReports,
+      prdAnalytics,
+      prdSettings,
+    ]),
+    ...legacyProductionRedirects,
     ...moduleRoutes,
   ]),
 ]);

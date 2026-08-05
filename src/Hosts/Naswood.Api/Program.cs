@@ -38,6 +38,8 @@ using (var scope = app.Services.CreateScope())
     await db.Database.EnsureCreatedAsync();
     var businessDb = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
     // Same PostgreSQL database as Platform — EnsureCreated is a no-op once DB exists.
+    // CreateTables also fails once any business table exists, so apply the model script
+    // statement-by-statement and ignore "already exists" for incremental entity adds.
     var businessCreator = businessDb.Database.GetService<IRelationalDatabaseCreator>();
     try
     {
@@ -45,7 +47,24 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
     {
-        // Schema already provisioned.
+        var script = businessDb.Database.GenerateCreateScript();
+        foreach (var statement in script.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (string.IsNullOrWhiteSpace(statement))
+            {
+                continue;
+            }
+
+            try
+            {
+                await businessDb.Database.ExecuteSqlRawAsync(statement).ConfigureAwait(false);
+            }
+            catch (Exception statementEx) when (
+                statementEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+            {
+                // Table/index already provisioned.
+            }
+        }
     }
 }
 

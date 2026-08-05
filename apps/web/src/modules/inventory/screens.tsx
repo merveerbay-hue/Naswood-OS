@@ -1,7 +1,7 @@
 import { useParams } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
-import { EntityDetailScreen } from './components/EntityDetailScreen';
-import { EntityListScreen, type EntityField } from './components/EntityListScreen';
+import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
+import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
 
 const materialFields: EntityField[] = [
   { key: 'Code', label: 'Code' },

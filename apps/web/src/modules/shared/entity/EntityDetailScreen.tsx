@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { getResource } from '@/api/business';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge } from '@/modules/shared/entity/StatusBadge';
 
 interface EntityDetailScreenProps {
   screenId: string;

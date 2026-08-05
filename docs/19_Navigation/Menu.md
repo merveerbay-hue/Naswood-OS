@@ -6,14 +6,13 @@
 
 ## Production
 
-| Workspace | Menu items | Screen IDs |
-|-----------|------------|------------|
-| Dashboard | Production Dashboard | PRD-001 |
-| Planning | Production Orders, Work Orders, Scheduling, Capacity, Dispatch | PRD-010, PRD-012, PRD-021, PRD-022, PRD-023 |
-| Execution | Operator Terminal, Machine Panel, Consumption, Confirmation, WIP, Packaging, FG, Scrap, Rework | PRD-013, PRD-024, PRD-014…018, PRD-027, PRD-028 |
-| Master Data | BOM, Routing, Operations, Machines, Work Centers, Lines, Shifts, Calendars | PRD-002…009, PRD-025, PRD-026 |
-| Insights | Reports, Analytics | PRD-020, PRD-019 |
-| Settings | Production Settings | PRD-029 |
+| Workspace | Menu items | Screen IDs | Routes |
+|-----------|------------|------------|--------|
+| Dashboard | Production Dashboard | PRD-001 | `/production/dashboard` |
+| Planning | Production Orders, Work Orders, Scheduling, Capacity, Dispatch | PRD-010, PRD-012, PRD-021, PRD-022, PRD-023 | `/production/planning/...` |
+| Execution | Operator Terminal, Machine Panel, Consumption, Confirmation, WIP, Packaging, FG, Scrap, Rework | PRD-013, PRD-024, PRD-014…018, PRD-027, PRD-028 | `/production/execution/...` |
+| Master Data | BOM, Routing, Operations, Machines, Work Centers, Lines, Shifts, Calendars, Tooling | PRD-002…009, PRD-025, PRD-026 | `/production/master-data/...` |
+| Insights | Reports, Analytics, Settings | PRD-020, PRD-019, PRD-029 | `/production/reports` … |
 
 ---
 
