@@ -43,6 +43,9 @@ public sealed class PlatformDbContext : DbContext
     public DbSet<Naswood.Modules.Platform.Domain.Settings.SettingEntry> Settings =>
         Set<Naswood.Modules.Platform.Domain.Settings.SettingEntry>();
 
+    public DbSet<Naswood.Modules.Platform.Domain.Files.StoredFile> Files =>
+        Set<Naswood.Modules.Platform.Domain.Files.StoredFile>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("platform");
@@ -305,6 +308,37 @@ public sealed class PlatformDbContext : DbContext
             entity.Property(x => x.ValidationRule).HasMaxLength(500);
             entity.Ignore(x => x.DomainEvents);
             entity.HasIndex(x => new { x.Key, x.Scope, x.CompanyId, x.PlantId, x.UserId });
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Platform.Domain.Files.StoredFile>(entity =>
+        {
+            entity.ToTable("files");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Number).HasMaxLength(40).IsRequired();
+            entity.HasIndex(x => x.Number);
+            entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.OriginalName).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.Extension).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.ContentType).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Checksum).HasMaxLength(128);
+            entity.Property(x => x.Category).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Module).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.RelatedEntityType).HasMaxLength(100);
+            entity.Property(x => x.RelatedEntityId).HasMaxLength(100);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Property(x => x.StorageKey).HasMaxLength(500).IsRequired();
+            entity.HasIndex(x => x.StorageKey).IsUnique();
+            entity.Property(x => x.ThumbnailStorageKey).HasMaxLength(500);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Ignore(x => x.Tags);
+            entity.Property<List<string>>("_tags")
+                .HasField("_tags")
+                .HasColumnName("tags")
+                .HasColumnType("text[]");
+            entity.HasIndex(x => x.UploadedAt);
+            entity.HasIndex(x => new { x.Module, x.RelatedEntityType, x.RelatedEntityId });
         });
     }
 }

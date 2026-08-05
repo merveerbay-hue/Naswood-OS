@@ -31,17 +31,29 @@ public sealed class AuthorizationBootstrapHostedService : IHostedService
         var permissions = scope.ServiceProvider.GetRequiredService<IPermissionCatalogRepository>();
         var roles = scope.ServiceProvider.GetRequiredService<IRoleCatalogRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
+        var catalog = AuthorizationCatalogSeed.CreatePermissions();
 
         if (!await permissions.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
-            var catalog = AuthorizationCatalogSeed.CreatePermissions();
             await permissions.AddRangeAsync(catalog, cancellationToken).ConfigureAwait(false);
             _logger.LogInformation("Seeded {Count} permissions.", catalog.Count);
+        }
+        else
+        {
+            // Upsert newly introduced permission codes without wiping existing catalog.
+            var existing = await permissions.GetAllActiveAsync(cancellationToken).ConfigureAwait(false);
+            var existingCodes = existing.Select(p => p.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var missing = catalog.Where(p => !existingCodes.Contains(p.Code)).ToArray();
+            if (missing.Length > 0)
+            {
+                await permissions.AddRangeAsync(missing, cancellationToken).ConfigureAwait(false);
+                _logger.LogInformation("Seeded {Count} newly added permissions.", missing.Length);
+            }
         }
 
         if (!await roles.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
-            var catalog = await permissions.GetAllActiveAsync(cancellationToken).ConfigureAwait(false);
+            // Use in-memory catalog (not DB query) so permission codes are present before SaveChanges.
             await roles.AddAsync(AuthorizationCatalogSeed.CreateAdministratorRole(catalog), cancellationToken)
                 .ConfigureAwait(false);
             await roles.AddAsync(AuthorizationCatalogSeed.CreateReadOnlyRole(), cancellationToken)

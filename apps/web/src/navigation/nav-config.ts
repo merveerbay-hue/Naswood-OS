@@ -99,6 +99,7 @@ export const navigationTree: NavItem[] = [
       { id: 'admin-users', label: 'Users', path: '/administration/users', roles: ['Administrator'] },
       { id: 'admin-roles', label: 'Roles', path: '/administration/roles', roles: ['Administrator'] },
       { id: 'admin-permissions', label: 'Permissions', path: '/administration/permissions', roles: ['Administrator'] },
+      { id: 'admin-files', label: 'Files', path: '/administration/files', roles: ['Administrator'] },
       { id: 'admin-settings', label: 'Settings', path: '/administration/settings', roles: ['Administrator'] },
       { id: 'admin-audit', label: 'Audit Logs', path: '/administration/audit', roles: ['Administrator'] },
       { id: 'admin-health', label: 'System Health', path: '/administration/health', roles: ['Administrator'] },
