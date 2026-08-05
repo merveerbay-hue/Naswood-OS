@@ -48,6 +48,18 @@ public static class DependencyInjection
         services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionLineRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionLineRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.IShiftRepository, Naswood.Modules.Business.Infrastructure.Production.ShiftRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.ICalendarRepository, Naswood.Modules.Business.Infrastructure.Production.CalendarRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IToolingRepository, Naswood.Modules.Business.Infrastructure.Production.ToolingRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IOperationRepository, Naswood.Modules.Business.Infrastructure.Production.OperationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionParameterRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionParameterRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionOrderRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionOrderRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IWorkOrderRepository, Naswood.Modules.Business.Infrastructure.Production.WorkOrderRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IMaterialConsumptionRepository, Naswood.Modules.Business.Infrastructure.Production.MaterialConsumptionRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionConfirmationRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionConfirmationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IWipRepository, Naswood.Modules.Business.Infrastructure.Production.WipRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IPackagingRepository, Naswood.Modules.Business.Infrastructure.Production.PackagingRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IFinishedGoodRepository, Naswood.Modules.Business.Infrastructure.Production.FinishedGoodRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IScrapRepository, Naswood.Modules.Business.Infrastructure.Production.ScrapRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IReworkRepository, Naswood.Modules.Business.Infrastructure.Production.ReworkRepository>();
         return services;
     }
 }

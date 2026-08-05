@@ -50,6 +50,19 @@ import { WorkCenterPage } from './pages/business/WorkCenterPage';
 import { ProductionLinePage } from './pages/business/ProductionLinePage';
 import { ShiftPage } from './pages/business/ShiftPage';
 import { CalendarPage } from './pages/business/CalendarPage';
+import { ToolingPage } from './pages/business/ToolingPage';
+import { OperationPage } from './pages/business/OperationPage';
+import { ProductionParameterPage } from './pages/business/ProductionParameterPage';
+import { ProductionOrderPage } from './pages/business/ProductionOrderPage';
+import { WorkOrderPage } from './pages/business/WorkOrderPage';
+import { MaterialConsumptionPage } from './pages/business/MaterialConsumptionPage';
+import { ProductionConfirmationPage } from './pages/business/ProductionConfirmationPage';
+import { WipPage } from './pages/business/WipPage';
+import { PackagingPage } from './pages/business/PackagingPage';
+import { FinishedGoodPage } from './pages/business/FinishedGoodPage';
+import { ScrapPage } from './pages/business/ScrapPage';
+import { ReworkPage } from './pages/business/ReworkPage';
+import { ProductionDashboardPage } from './pages/business/ProductionDashboardPage';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -126,8 +139,21 @@ const route_33 = createRoute({ getParentRoute: () => authenticatedRoute, path: '
 const route_34 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-lines', component: ProductionLinePage });
 const route_35 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/shifts', component: ShiftPage });
 const route_36 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/calendars', component: CalendarPage });
+const route_37 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/toolings', component: ToolingPage });
+const route_38 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/operations', component: OperationPage });
+const route_39 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-parameters', component: ProductionParameterPage });
+const route_40 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-orders', component: ProductionOrderPage });
+const route_41 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/work-orders', component: WorkOrderPage });
+const route_42 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/material-consumptions', component: MaterialConsumptionPage });
+const route_43 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/production-confirmations', component: ProductionConfirmationPage });
+const route_44 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/wips', component: WipPage });
+const route_45 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/packagings', component: PackagingPage });
+const route_46 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/finished-goods', component: FinishedGoodPage });
+const route_47 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/scraps', component: ScrapPage });
+const route_48 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/reworks', component: ReworkPage });
+const route_49 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/production/dashboard', component: ProductionDashboardPage });
 
-const implemented = new Set(['/', '/administration/files', '/inventory/materials', '/inventory/warehouses', '/inventory/locations', '/inventory/balances', '/inventory/batches', '/inventory/goods-receipts', '/inventory/goods-issues', '/inventory/transfers', '/inventory/counts', '/inventory/adjustments', '/purchasing/suppliers', '/purchasing/purchase-requests', '/purchasing/rfqs', '/purchasing/supplier-quotations', '/purchasing/purchase-orders', '/purchasing/purchase-goods-receipts', '/purchasing/purchase-returns', '/purchasing/supplier-invoices', '/purchasing/dashboard', '/purchasing/reports', '/sales/customers', '/sales/leads', '/sales/opportunities', '/sales/quotations', '/sales/sales-orders', '/sales/shipments', '/sales/deliveries', '/sales/customer-invoices', '/sales/dashboard', '/sales/reports', '/production/boms', '/production/routings', '/production/machines', '/production/work-centers', '/production/production-lines', '/production/shifts', '/production/calendars']);
+const implemented = new Set(['/', '/administration/files', '/inventory/materials', '/inventory/warehouses', '/inventory/locations', '/inventory/balances', '/inventory/batches', '/inventory/goods-receipts', '/inventory/goods-issues', '/inventory/transfers', '/inventory/counts', '/inventory/adjustments', '/purchasing/suppliers', '/purchasing/purchase-requests', '/purchasing/rfqs', '/purchasing/supplier-quotations', '/purchasing/purchase-orders', '/purchasing/purchase-goods-receipts', '/purchasing/purchase-returns', '/purchasing/supplier-invoices', '/purchasing/dashboard', '/purchasing/reports', '/sales/customers', '/sales/leads', '/sales/opportunities', '/sales/quotations', '/sales/sales-orders', '/sales/shipments', '/sales/deliveries', '/sales/customer-invoices', '/sales/dashboard', '/sales/reports', '/production/boms', '/production/routings', '/production/machines', '/production/work-centers', '/production/production-lines', '/production/shifts', '/production/calendars', '/production/toolings', '/production/operations', '/production/production-parameters', '/production/production-orders', '/production/work-orders', '/production/material-consumptions', '/production/production-confirmations', '/production/wips', '/production/packagings', '/production/finished-goods', '/production/scraps', '/production/reworks', '/production/dashboard']);
 const modulePaths = collectNavPaths().filter((path) => !implemented.has(path));
 const moduleRoutes = modulePaths.map((path) =>
   createRoute({ getParentRoute: () => authenticatedRoute, path, component: ModulePlaceholderPage }),
@@ -175,6 +201,19 @@ export const routeTree = rootRoute.addChildren([
     route_34,
     route_35,
     route_36,
+    route_37,
+    route_38,
+    route_39,
+    route_40,
+    route_41,
+    route_42,
+    route_43,
+    route_44,
+    route_45,
+    route_46,
+    route_47,
+    route_48,
+    route_49,
     ...moduleRoutes,
   ]),
 ]);
