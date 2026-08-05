@@ -60,6 +60,25 @@ public sealed class AuthorizationBootstrapHostedService : IHostedService
                 .ConfigureAwait(false);
             _logger.LogInformation("Seeded Administrator and ReadOnly roles.");
         }
+        else
+        {
+            // Keep Administrator in sync when new permission codes are introduced.
+            var administrator = await roles.GetByCodeAsync("Administrator", cancellationToken).ConfigureAwait(false);
+            if (administrator is not null)
+            {
+                var before = administrator.PermissionCodes.Count;
+                var result = administrator.AssignPermissions(
+                    catalog.Select(p => p.Code),
+                    updatedBy: null,
+                    utcNow: DateTimeOffset.UtcNow);
+                if (result.IsSuccess && administrator.PermissionCodes.Count > before)
+                {
+                    _logger.LogInformation(
+                        "Synced {Count} new permissions onto Administrator role.",
+                        administrator.PermissionCodes.Count - before);
+                }
+            }
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

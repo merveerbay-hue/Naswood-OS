@@ -17,6 +17,17 @@ interface ResourcePageProps {
   kind?: 'master' | 'document' | 'dashboard' | 'report';
 }
 
+function toCamelKey(key: string): string {
+  return key.length === 0 ? key : key.charAt(0).toLowerCase() + key.slice(1);
+}
+
+function readField(row: Record<string, unknown>, key: string): unknown {
+  if (key in row) return row[key];
+  const camel = toCamelKey(key);
+  if (camel in row) return row[camel];
+  return undefined;
+}
+
 export function ResourcePage({ title, description, route, fields, kind = 'master' }: ResourcePageProps) {
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
@@ -44,9 +55,10 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
       const body: Record<string, unknown> = {};
       for (const field of fields) {
         const raw = form[field.key] ?? '';
-        if (field.type === 'number') body[field.key] = Number(raw || 0);
-        else if (field.type === 'date') body[field.key] = raw || null;
-        else body[field.key] = raw;
+        const key = toCamelKey(field.key);
+        if (field.type === 'number') body[key] = Number(raw || 0);
+        else if (field.type === 'date') body[key] = raw || null;
+        else body[key] = raw;
       }
       return createResource(route, body);
     },
@@ -150,16 +162,16 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
                 </thead>
                 <tbody>
                   {(listQuery.data?.items ?? []).map((row) => (
-                    <tr key={String(row.id)} className="border-b border-[var(--border-default)]">
+                    <tr key={String(readField(row, 'id'))} className="border-b border-[var(--border-default)]">
                       {columns.map((c) => (
-                        <td key={c.key} className="px-2 py-2">{String(row[c.key] ?? '—')}</td>
+                        <td key={c.key} className="px-2 py-2">{String(readField(row, c.key) ?? '—')}</td>
                       ))}
                       <td className="px-2 py-2">
                         <Button
                           type="button"
                           size="sm"
                           variant="danger"
-                          onClick={() => deleteMutation.mutate(String(row.id))}
+                          onClick={() => deleteMutation.mutate(String(readField(row, 'id') ?? ''))}
                         >
                           Delete
                         </Button>

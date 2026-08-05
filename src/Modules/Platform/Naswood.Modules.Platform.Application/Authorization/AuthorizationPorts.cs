@@ -7,6 +7,8 @@ public interface IPermissionCatalogRepository
 {
     Task<IReadOnlyList<PermissionDefinition>> GetAllActiveAsync(CancellationToken cancellationToken = default);
 
+    Task<PermissionDefinition?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+
     Task<bool> AnyAsync(CancellationToken cancellationToken = default);
 
     Task AddRangeAsync(IEnumerable<PermissionDefinition> permissions, CancellationToken cancellationToken = default);
@@ -19,6 +21,8 @@ public interface IRoleCatalogRepository
     Task<IReadOnlyList<RoleDefinition>> GetByCodesAsync(
         IEnumerable<string> codes,
         CancellationToken cancellationToken = default);
+
+    Task<RoleDefinition?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
 
     Task<bool> AnyAsync(CancellationToken cancellationToken = default);
 
