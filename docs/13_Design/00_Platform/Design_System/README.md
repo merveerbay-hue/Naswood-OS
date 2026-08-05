@@ -1,361 +1,508 @@
 # Naswood OS Design System
 
-**Module:** Platform
+**Module:** Design System
 
 **Version:** 1.0
 
-**Status:** Active
+**Status:** Approved
 
 ---
 
 # Overview
 
-The Naswood OS Design System is the official design reference for all user interfaces across the platform.
+The Naswood OS Design System defines the visual language, interaction patterns, reusable components and user experience standards used throughout the entire platform.
 
-It defines the visual language, reusable components, interaction patterns and design standards used by every module.
+It provides a single source of truth for designers, developers, AI agents and product teams to build consistent, scalable and maintainable interfaces.
 
-The Design System ensures consistency across Web, Mobile, AI, Digital Twin and future applications.
+The Design System applies to:
 
-It serves as the single source of truth for designers, frontend developers and AI-assisted development tools.
+- Web Application
+- Mobile Application
+- Digital Twin
+- AI Platform
+- Reports
+- Documents
+- Dashboards
+- Future Products
 
 ---
 
 # Goals
 
-- Consistent User Experience
-- Reusable Components
-- Faster Development
-- Better Accessibility
-- Responsive Design
-- Enterprise UI Standards
-- AI-Friendly Documentation
-- Maintainable Frontend Architecture
+The Design System aims to
 
----
-
-# Design Philosophy
-
-Naswood OS follows a modern enterprise software design language.
-
-The interface should be
-
-- Clean
-- Predictable
-- Minimal
-- Fast
-- Accessible
-- Consistent
-
-Business information always has higher priority than decorative elements.
+- Maintain visual consistency
+- Improve development speed
+- Reduce UI duplication
+- Support accessibility
+- Enable scalable product growth
+- Provide reusable components
+- Standardize AI experiences
 
 ---
 
 # Design Principles
 
-Every screen should follow these principles.
-
-## Consistency
-
-Use the same visual patterns throughout the application.
-
----
+Naswood OS follows these principles:
 
 ## Simplicity
 
-Reduce unnecessary complexity.
+Remove unnecessary complexity.
 
 ---
 
-## Readability
+## Consistency
 
-Information should be easy to scan.
+The same interaction should always behave the same way.
+
+---
+
+## Data First
+
+Business information has priority over decoration.
+
+---
+
+## Industrial UX
+
+Designed for manufacturing, warehouse and production environments.
 
 ---
 
 ## Accessibility
 
-Every feature must comply with WCAG 2.1 AA.
+Every interface should comply with WCAG 2.1 AA.
 
 ---
 
-## Performance
+## AI Native
 
-Animations and effects should never reduce productivity.
-
----
-
-## Reusability
-
-Components should be reusable across modules.
+Artificial Intelligence is part of the platform rather than an optional feature.
 
 ---
 
-# Technology Stack
+# Design System Architecture
 
-Frontend
+```
+Design System
 
-- React
-- TypeScript
-- Tailwind CSS
-- Shadcn/UI
-- TanStack Table
-- React Hook Form
-
-Icons
-
-- Lucide React
-
-Charts
-
-- Recharts
-
-Design
-
-- Figma
+├── Foundation
+├── Components
+├── Layout
+├── Data Display
+├── Charts
+├── Documents
+├── AI
+├── Brand
+├── Mobile
+└── Digital Twin
+```
 
 ---
 
 # Folder Structure
 
-```text
-Design_System/
+## 01 Foundation
 
-01_Foundation/
-02_Components/
-03_Layout/
-04_Data_Display/
-05_Charts/
-06_Documents/
-07_AI/
-08_Brand/
-```
-
----
-
-# Foundation
-
-Foundation defines the visual rules of the platform.
+Core visual rules.
 
 Includes
 
-- Colors
-- Typography
-- Icons
-- Grid System
-- Breakpoints
-- Spacing
-- Elevation
-- Border Radius
-- Accessibility
-- Design Tokens
+Typography
+
+Colors
+
+Spacing
+
+Grid
+
+Icons
+
+Elevation
+
+Accessibility
+
+Motion
+
+Tokens
 
 ---
 
-# Components
+## 02 Components
 
-Reusable UI building blocks.
+Reusable UI components.
 
 Examples
 
-- Buttons
-- Inputs
-- Forms
-- Tables
-- Cards
-- Dialogs
-- Notifications
+Buttons
+
+Inputs
+
+Cards
+
+Forms
+
+Tables
+
+Dialogs
+
+Search
+
+Notifications
+
+Data Grid
 
 ---
 
-# Layout
+## 03 Layout
 
-Defines page structure.
-
-Includes
-
-- Application Shell
-- Header
-- Sidebar
-- Navigation
-- Dashboard
-- Workspace
-
----
-
-# Data Display
-
-Business information visualization.
-
-Includes
-
-- Lists
-- Detail Views
-- Reports
-- KPI Widgets
-- Dashboard Components
-
----
-
-# Charts
-
-Standard analytics components.
+Application structure.
 
 Examples
 
-- Bar Chart
-- Line Chart
-- Pie Chart
-- KPI Cards
-- OEE Dashboard
+Application Shell
+
+Header
+
+Sidebar
+
+Workspace
+
+Navigation
+
+Responsive
+
+Dashboard
 
 ---
 
-# Documents
+## 04 Data Display
 
-Enterprise document templates.
-
-Examples
-
-- PDF
-- Print
-- Labels
-- Email Templates
-
----
-
-# AI
-
-Artificial Intelligence interface standards.
+Business information presentation.
 
 Includes
 
-- AI Copilot
-- AI Chat
-- AI Widgets
+KPIs
+
+Reports
+
+Lists
+
+Detail Views
+
+Dashboard Widgets
 
 ---
 
-# Brand
+## 05 Charts
+
+Visualization standards.
+
+Includes
+
+Standard Charts
+
+KPI Cards
+
+OEE Dashboard
+
+---
+
+## 06 Documents
+
+Generated documents.
+
+Includes
+
+PDF
+
+Print
+
+Labels
+
+Email Templates
+
+---
+
+## 07 AI
+
+Enterprise AI experience.
+
+Includes
+
+AI Chat
+
+AI Copilot
+
+AI Widgets
+
+Future AI modules
+
+---
+
+## 08 Brand
 
 Corporate identity.
 
 Includes
 
-- Logo
-- Brand Guidelines
-- Corporate Colors
+Brand Guidelines
+
+Logo
+
+Corporate Colors
+
+Illustrations
+
+Photography
+
+Marketing Assets
+
+UI Examples
+
+---
+
+## 09 Mobile
+
+Mobile-first standards.
+
+Includes
+
+Dashboard
+
+Cards
+
+Forms
+
+Navigation
+
+Offline UI
+
+Scanner UI
+
+---
+
+## 10 Digital Twin
+
+Future real-time factory visualization.
+
+Machine Monitoring
+
+Factory Map
+
+Sensors
+
+3D Visualization
+
+IoT
+
+---
+
+# Component Philosophy
+
+Every component should be
+
+Reusable
+
+Composable
+
+Accessible
+
+Responsive
+
+Theme Aware
+
+Permission Aware
+
+---
+
+# Naming Convention
+
+Files
+
+Pascal_Case.md
+
+React Components
+
+PascalCase
+
+Props
+
+camelCase
+
+Variables
+
+camelCase
+
+CSS Variables
+
+kebab-case
+
+---
+
+# Technology
+
+Frontend
+
+React
+
+TypeScript
+
+Tailwind CSS
+
+Backend
+
+.NET
+
+Design
+
+Figma
+
+Icons
+
+Lucide
+
+Charts
+
+Recharts
 
 ---
 
 # Design Tokens
 
-All visual properties are managed through Design Tokens.
+All visual values must originate from Design Tokens.
 
-Never hardcode
+Examples
 
-- Colors
-- Typography
-- Spacing
-- Radius
-- Shadows
-- Motion
+Colors
 
----
+Spacing
 
-# Theme Support
+Typography
 
-Supported themes
+Radius
 
-- Light
-- Dark
-- System
-- Corporate
+Shadow
 
-Themes only change token values.
+Motion
 
-Components remain unchanged.
+Never hardcode visual values.
 
 ---
 
-# Responsive Strategy
+# Themes
 
-Desktop First
+Supported
 
-↓
+Light
 
-Tablet
+Dark
 
-↓
+System
 
-Mobile
+Future
 
-↓
-
-Industrial Touch Panels
+Customer Themes
 
 ---
 
 # Accessibility
 
-The entire Design System follows
+The Design System follows
 
 WCAG 2.1 AA
 
-Requirements include
+Keyboard Navigation
 
-- Keyboard Navigation
-- Screen Reader Support
-- High Contrast
-- Reduced Motion
-- Minimum Touch Target
+ARIA
 
----
+High Contrast
 
-# Naming Conventions
+Screen Readers
 
-Components
-
-PascalCase
-
-Example
-
-InventoryTable
-
-DashboardCard
-
-PrimaryButton
-
-Files
-
-PascalCase.md
-
-Examples
-
-Buttons.md
-
-Cards.md
-
-Sidebar.md
+Reduced Motion
 
 ---
 
-# Development Rules
+# Responsive Design
 
-Always use design tokens.
+Supported
 
-Never hardcode colors.
+Desktop
 
-Never hardcode spacing.
+Tablet
 
-Never create duplicate components.
+Mobile
 
-Reuse existing patterns whenever possible.
+Industrial Touch Panel
+
+Large Display
 
 ---
 
-# Documentation Rules
+# AI Integration
 
-Every Design System document follows the same structure.
+Artificial Intelligence is integrated across
+
+Dashboard
+
+Search
+
+Reports
+
+Forms
+
+Data Grid
+
+Production
+
+Inventory
+
+Purchasing
+
+Quality
+
+Maintenance
+
+Digital Twin
+
+---
+
+# Security
+
+Every component respects
+
+Role Permissions
+
+Department Permissions
+
+Module Permissions
+
+Field Permissions
+
+Record Permissions
+
+---
+
+# Performance
+
+The Design System prioritizes
+
+Lazy Loading
+
+Virtualization
+
+Caching
+
+Streaming
+
+Optimized Rendering
+
+---
+
+# Documentation Standard
+
+Each document follows
 
 Purpose
 
@@ -363,11 +510,15 @@ Objectives
 
 Design Principles
 
-Standards
+Structure
 
-Usage Rules
+Usage
 
 Accessibility
+
+Performance
+
+Security
 
 Best Practices
 
@@ -379,36 +530,94 @@ Related Documents
 
 # Versioning
 
-Semantic Versioning
+Versioning follows Semantic Versioning.
 
-MAJOR.MINOR.PATCH
+Major
+
+Breaking Changes
+
+Minor
+
+New Features
+
+Patch
+
+Bug Fixes
+
+---
+
+# Contribution Guidelines
+
+Before introducing a new component
+
+Check existing components.
+
+Reuse whenever possible.
+
+Document before implementation.
+
+Maintain naming consistency.
+
+Update related documentation.
 
 ---
 
 # Future Roadmap
 
-- Storybook Integration
-- Figma Variables
-- Design Token Generator
-- Component Library
-- Automated Visual Testing
-- Mobile Design System
-- Digital Twin UI Components
+Future areas include
+
+Advanced AI
+
+Digital Twin
+
+IoT Integration
+
+Voice Interface
+
+Augmented Reality
+
+Predictive UX
+
+Cross-Platform Components
+
+---
+
+# Acceptance Criteria
+
+The Design System provides a single source of truth.
+
+All UI components follow the documented standards.
+
+Design Tokens are used consistently.
+
+Accessibility requirements are satisfied.
+
+Brand identity remains consistent.
+
+Components are reusable and maintainable.
+
+Documentation is complete and version controlled.
 
 ---
 
 # Related Documents
 
-Theme.md
+01_Foundation/
 
-Colors.md
+02_Components/
 
-Color_Tokens.md
+03_Layout/
 
-Design_Tokens.md
+04_Data_Display/
 
-Accessibility.md
+05_Charts/
 
-Application_Shell.md
+06_Documents/
 
-Brand_Guidelines.md
+07_AI/
+
+08_Brand/
+
+09_Mobile/
+
+10_Digital_Twin/
