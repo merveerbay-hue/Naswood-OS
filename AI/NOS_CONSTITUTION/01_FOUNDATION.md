@@ -2974,6 +2974,10 @@ Documentation always precedes development.
 Every contributor must follow this hierarchy.
 
 ```
+AI Execution Constitution   ← AI procedure (00_AI_EXECUTION.md)
+
+↓
+
 NOS Constitution
 
 ↓
@@ -2990,11 +2994,12 @@ Domain
 
 ↓
 
-Design
+Design   (includes Module Architecture / Workflow / API / Dashboard / Mobile
+          and UI / Screen Architecture)
 
 ↓
 
-Implementation
+Implementation   (TASK-* work packages only)
 
 ↓
 
@@ -3012,6 +3017,9 @@ Deployment
 A lower level may extend a higher level.
 
 A lower level may never contradict a higher level.
+
+AI assistants must additionally obey `00_AI_EXECUTION.md`: never generate a
+screen directly from a TASK; reconstruct the module first.
 
 ---
 
@@ -3135,6 +3143,9 @@ Each task should include:
 - References
 
 Implementation documents translate design into development work.
+
+They do **not** define product, UI, workflow, navigation, or business
+architecture. See `00_AI_EXECUTION.md`.
 
 ---
 
@@ -3329,14 +3340,32 @@ Documentation updates should accompany implementation changes.
 
 # AI Documentation Rules
 
-Before generating code, every AI must read:
+The binding AI procedure is defined in:
 
-1. NOS Constitution
-2. Architecture
-3. Relevant Standards
-4. Domain Documentation
-5. Design Documentation
-6. Implementation Task
+**`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md` (AI Execution Constitution)**
+
+Before generating code for any TASK, every AI must read and comply with:
+
+1. AI Execution Constitution (`00_AI_EXECUTION.md`)
+2. NOS Constitution — Foundation, Engineering, Platform
+3. Relevant ADRs / Architecture
+4. Engineering Rules and Platform Rules
+5. Domain Documentation
+6. Module Architecture
+7. Module Workflow
+8. Module API
+9. Module Dashboard
+10. Module Mobile
+11. UI Architecture and Screen Architecture (when UI is in scope)
+12. Implementation Task (last)
+
+**Never generate a screen directly from a TASK.**  
+**Always reconstruct the complete module first** (navigation, roles, workflows,
+dashboards, workspace hierarchy, page hierarchy), then implement only the
+requested TASK slice.
+
+TASK documents are work packages only. They never define product, UI,
+workflow, navigation, or business architecture.
 
 Only after understanding these documents may implementation begin.
 
@@ -3781,9 +3810,17 @@ Every improvement matters.
 
 Before implementing any feature, verify:
 
-✓ Constitution reviewed
+✓ AI Execution Constitution complied with (`00_AI_EXECUTION.md`)
+
+✓ Module reconstructed (roles, nav, workflows, dashboards, workspace & page hierarchy)
+
+✓ Constitution reviewed (Foundation / Engineering / Platform)
 
 ✓ Architecture understood
+
+✓ Module Architecture / Workflow / API / Dashboard / Mobile reviewed
+
+✓ UI Architecture and Screen Architecture reviewed (when UI in scope)
 
 ✓ Design reviewed
 
@@ -3804,6 +3841,8 @@ Before implementing any feature, verify:
 ✓ Audit logging planned
 
 ✓ Tests planned
+
+✓ TASK opened last — only as a work-package slice, not as product definition
 
 Only after every item is satisfied may implementation begin.
 

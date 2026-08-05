@@ -3,12 +3,16 @@
 **Role:** Executable work packages (TASK-*)  
 **Authority:** Lowest planning layer — below UI Architecture and Design
 
+**AI must read first:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](../../AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+
 ---
 
 ## Rule
 
 ```text
-UI Architecture / Design / Flows
+Constitution + Module Design (Architecture / Workflow / API / Dashboard / Mobile)
+            ↓
+UI Architecture / Screen Architecture / Flows
             ↓
     Implementation TASK   ← this folder
             ↓
@@ -17,14 +21,17 @@ UI Architecture / Design / Flows
 
 Do **not** treat `TASK-046` as “the BOM screen” or `TASK-070` as “the NCR screen”.
 
+**Never generate a screen directly from a TASK.** Reconstruct the complete
+module first, then implement only this TASK’s slice.
+
 TASKs implement **slices** of screen families defined in:
 
 - `docs/15_UI_Architecture/`
+- `docs/15_UI/`
 - `docs/13_Design/`
 - `docs/04_Application/Screen_Catalog.md`
 
 See `docs/15_UI_Architecture/00_Governing_Principles.md` and `03_Screen_to_Task_Mapping.md`.
-
 ---
 
 ## Sprint folders

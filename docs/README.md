@@ -67,7 +67,9 @@ The platform combines ERP, MES, WMS, QMS, CMMS, CRM, Analytics, AI and Digital T
 ### Product UI authority order
 
 ```text
-Constitution → Architecture → Domain
+AI Execution Constitution (AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+    → Constitution → Architecture → Domain
+    → Module Design (Architecture / Workflow / API / Dashboard / Mobile)
     → UI Architecture (15_UI_Architecture) — workspaces
     → Screen Architecture (15_UI) — named screens (PRD-001…)
     → Design (13) → User Flows (17) → Design System (16)
@@ -75,8 +77,8 @@ Constitution → Architecture → Domain
 ```
 
 A TASK never defines module navigation or screen architecture by itself.  
-See `15_UI_Architecture/00_Governing_Principles.md` and `15_UI/Production/`.
-
+**Never generate a screen directly from a TASK** — reconstruct the module first.  
+See `AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`, `15_UI_Architecture/00_Governing_Principles.md`, and `15_UI/Production/`.
 ---
 
 # Core Principles

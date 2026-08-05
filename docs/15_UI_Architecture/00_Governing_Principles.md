@@ -134,3 +134,14 @@ MVP must **still**:
 | Level 6 Implementation — TASK-* | Executable slices of those designs |
 
 See `AI/NOS_CONSTITUTION/01_FOUNDATION.md` Architecture Hierarchy and Level 5–6.
+
+---
+
+## 9. AI Execution Constitution
+
+Binding AI protocol (authority ladder + mandatory read order + module
+reconstruction before any TASK):
+
+**`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`**
+
+Never generate a screen directly from a TASK. Reconstruct the module first.

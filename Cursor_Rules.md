@@ -4,7 +4,7 @@
 
 **Document:** Cursor Rules
 
-**Version:** 1.0
+**Version:** 1.1
 
 ---
 
@@ -13,6 +13,48 @@
 These rules define how Cursor AI shall operate while developing Naswood OS.
 
 The objective is to ensure consistency, maintainability and enterprise-grade software quality across the entire project.
+
+---
+
+# AI Execution Constitution (read first — mandatory)
+
+**Canonical document:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+
+TASK documents are **implementation work packages only**.  
+They never define product, UI, workflow, navigation, or business architecture.
+
+### Absolute rules
+
+1. **Never generate a screen directly from a TASK.**
+2. **Always reconstruct the complete module first** (navigation, roles, workflows, dashboards, workspace hierarchy, page hierarchy).
+3. **Only then** implement the requested TASK slice.
+
+### Mandatory read order before any TASK
+
+```text
+1. AI Execution Constitution     AI/NOS_CONSTITUTION/00_AI_EXECUTION.md
+2. Constitution — Foundation     AI/NOS_CONSTITUTION/01_FOUNDATION.md
+3. Engineering Rules             AI/NOS_CONSTITUTION/02_ENGINEERING.md
+4. Platform Rules                AI/NOS_CONSTITUTION/03_PLATFORM.md
+5. ADRs / system architecture
+6. Module Architecture
+7. Module Workflow
+8. Module API
+9. Module Dashboard
+10. Module Mobile
+11. UI Architecture              docs/15_UI_Architecture/
+12. Screen Architecture          docs/15_UI/… (PRD / QLT / MNT / INV …)
+13. THEN the TASK document       docs/14_Implementation/ or Design TASK-*
+```
+
+### Forbidden default
+
+```text
+TASK-078 → Asset CRUD screen
+TASK-046 → BOM ResourcePage
+```
+
+If higher documents are missing, **stop and report** — do not invent product UI from the TASK.
 
 ---
 
@@ -56,7 +98,8 @@ Every new feature shall include:
 Follow Constitution authority. For UI work, use this order:
 
 ```text
-Constitution → Architecture → Business Domain
+AI Execution Constitution → Constitution → Architecture → Business Domain
+    → Module Design (Architecture / Workflow / API / Dashboard / Mobile)
     → UI Architecture (docs/15_UI_Architecture) — Module / Workspace
     → Screen Architecture (docs/15_UI) — PRD-001, QLT-008, … named screens
     → Design specs (docs/13_Design)
