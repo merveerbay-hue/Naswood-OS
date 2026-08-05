@@ -51,6 +51,32 @@ Every new feature shall include:
 
 ---
 
+# Product UI Hierarchy (mandatory)
+
+Follow Constitution authority. For UI work, use this order:
+
+```text
+Constitution → Architecture → Business Domain
+    → UI Architecture (docs/15_UI_Architecture)
+    → Screen / Design specs (docs/13_Design)
+    → User Flows (docs/17_User_Flows → 04_Application/UI_Flows.md)
+    → Navigation
+    → Design System (docs/16_Design_System → 13_Design/.../Design_System)
+    → Implementation TASK (docs/14_Implementation)
+    → Source Code
+```
+
+### Critical rules
+
+- An Implementation **TASK is a work package**, not a product screen and not a module.
+- **Forbidden default:** `TASK-XXX → one Library/Create/Edit/Delete ResourcePage` as the finished product shape.
+- Before coding business UI, identify **Module → Workspace → Screen family → user jobs**, then map the TASK as a **slice**.
+- Production exemplar: `docs/15_UI_Architecture/Production/` (BOM, Production Order, Workspaces).
+- Quality / Maintenance exemplars: NCR and Asset families under `docs/15_UI_Architecture/Quality/` and `.../Maintenance/`.
+- Current flat CRUD nav/pages are **technical MVP debt**; converge toward workspace navigation in `15_UI_Architecture/02_Navigation_Map.md`.
+
+---
+
 # Code Standards
 
 - Use meaningful names.

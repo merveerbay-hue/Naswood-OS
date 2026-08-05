@@ -30,6 +30,11 @@ The platform combines ERP, MES, WMS, QMS, CMMS, CRM, Analytics, AI and Digital T
 10_Testing
 11_Documentation
 12_Reference
+13_Design
+14_Implementation
+15_UI_Architecture
+16_Design_System
+17_User_Flows
 ```
 
 ---
@@ -37,12 +42,12 @@ The platform combines ERP, MES, WMS, QMS, CMMS, CRM, Analytics, AI and Digital T
 # Documentation Overview
 
 | Folder | Description |
-|---------|-------------|
+|--------|-------------|
 | 00_Project_Governance | Vision, roadmap and project governance |
 | 01_Business | Business processes and rules |
 | 02_Manufacturing | Manufacturing concepts and standards |
 | 03_System | Core system architecture |
-| 04_Application | User interface and application design |
+| 04_Application | Screen catalog, dashboards, UI flow registry |
 | 05_Modules | Functional business modules |
 | 06_AI | Artificial Intelligence platform |
 | 07_Digital_Twin | Digital Twin architecture |
@@ -51,6 +56,21 @@ The platform combines ERP, MES, WMS, QMS, CMMS, CRM, Analytics, AI and Digital T
 | 10_Testing | Testing strategy and quality assurance |
 | 11_Documentation | Documentation standards |
 | 12_Reference | Standards and reference materials |
+| 13_Design | Design specifications (APIs, entities, UX specs) |
+| 14_Implementation | Implementation TASKs (work packages — lowest planning unit) |
+| 15_UI_Architecture | Product UI IA — Module → Workspace → Screen family (above TASKs) |
+| 16_Design_System | Index to canonical Design System under `13_Design` |
+| 17_User_Flows | Index to canonical UI Flows under `04_Application` |
+
+### Product UI authority order
+
+```text
+Constitution → Architecture → Domain → UI Architecture (15)
+    → Design (13) → User Flows (17) → Design System (16)
+    → Implementation TASK (14) → Code
+```
+
+A TASK never defines module navigation or screen architecture by itself. See `15_UI_Architecture/00_Governing_Principles.md`.
 
 ---
 
