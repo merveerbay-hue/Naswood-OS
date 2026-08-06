@@ -78,6 +78,61 @@ type AllocRow = {
 type SortKey = 'code' | 'location' | 'lot' | 'quality' | 'moisture' | 'available' | 'selected';
 type GroupKey = 'none' | 'warehouse' | 'lot' | 'quality';
 
+type Disposition = {
+  good: number;
+  damaged: number;
+  scrap: number;
+  qualityHold: number;
+  rework: number;
+  damageReason: string;
+  scrapReason: string;
+  damagePhoto: boolean;
+  scrapPhoto: boolean;
+  notes: string;
+};
+
+const DAMAGE_REASONS = [
+  'Broken',
+  'Cracked',
+  'Wet',
+  'Blue Stain',
+  'Warped',
+  'Forklift Damage',
+  'Transport Damage',
+  'Packaging Damage',
+  'Missing Material',
+  'Impact Damage',
+  'Other',
+] as const;
+
+const SCRAP_REASONS = [
+  'Machine Damage',
+  'Transport Damage',
+  'Broken Strap',
+  'Forklift Damage',
+  'Operator Damage',
+  'Unknown',
+] as const;
+
+function emptyDisposition(picked: number): Disposition {
+  return {
+    good: picked,
+    damaged: 0,
+    scrap: 0,
+    qualityHold: 0,
+    rework: 0,
+    damageReason: '',
+    scrapReason: '',
+    damagePhoto: false,
+    scrapPhoto: false,
+    notes: '',
+  };
+}
+
+function dispositionSum(d: Disposition) {
+  return d.good + d.damaged + d.scrap + d.qualityHold + d.rework;
+}
+
 const REQUIRED_QTY = 50;
 
 const AI_RULES = [
@@ -227,6 +282,13 @@ export function GoodsIssueWorkbench() {
   const [filterText, setFilterText] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('location');
   const [groupKey, setGroupKey] = useState<GroupKey>('none');
+  const [dispositions, setDispositions] = useState<Record<string, Disposition>>({});
+  const [closing, setClosing] = useState({
+    restacked: false,
+    strapped: false,
+    labelOk: false,
+    photoUpdated: false,
+  });
   const [verifyOk, setVerifyOk] = useState(false);
   const [evidence, setEvidence] = useState<string[]>([]);
   const [qualityOk, setQualityOk] = useState(false);
@@ -252,6 +314,29 @@ export function GoodsIssueWorkbench() {
   );
   const packageCount = useMemo(() => allocation.filter((r) => r.selected > 0).length, [allocation]);
   const warnings = useMemo(() => mixWarnings(allocation), [allocation]);
+  const focusedRow = useMemo(
+    () => allocation.find((r) => r.code === focusedCode) ?? allocation[0] ?? null,
+    [allocation, focusedCode],
+  );
+  const focusedDisp = focusedRow
+    ? dispositions[focusedRow.code] ?? emptyDisposition(focusedRow.selected)
+    : null;
+  const dispositionOk = useMemo(() => {
+    if (allocation.length === 0) return false;
+    return allocation.every((r) => {
+      const d = dispositions[r.code] ?? emptyDisposition(r.selected);
+      if (dispositionSum(d) !== r.selected) return false;
+      if (d.damaged > 0 && (!d.damageReason || !d.damagePhoto)) return false;
+      if (d.scrap > 0 && (!d.scrapReason || !d.scrapPhoto)) return false;
+      return true;
+    });
+  }, [allocation, dispositions]);
+  const closingOk = closing.restacked && closing.strapped && closing.labelOk;
+  const goodTotal = useMemo(
+    () =>
+      allocation.reduce((s, r) => s + (dispositions[r.code] ?? emptyDisposition(r.selected)).good, 0),
+    [allocation, dispositions],
+  );
   const addablePackages = useMemo(
     () => PACKAGE_CATALOG.filter((p) => !allocation.some((a) => a.code === p.code)),
     [allocation],
@@ -293,8 +378,10 @@ export function GoodsIssueWorkbench() {
       case 'picking':
         if (allocation.length === 0) return t('wb.iss.gateNeedAlloc');
         if (allocation.some((r) => r.selected <= 0 || r.selected > r.available)) return t('wb.iss.gateNeedPartialQty');
-        if (selectedTotal !== REQUIRED_QTY) return t('wb.iss.gateNeedTotal');
+        if (goodTotal !== REQUIRED_QTY) return t('wb.iss.gateNeedGoodTotal');
         if (warnings.length > 0 && !mixWaived) return t('wb.iss.gateNeedMixAuth');
+        if (!dispositionOk) return t('wb.iss.gateNeedDisposition');
+        if (!closingOk) return t('wb.iss.gateNeedClosing');
         return !scannedOk ? t('wb.iss.gateNeedScan') : null;
       case 'verify':
         return !verifyOk ? t('wb.iss.gateNeedVerify') : null;
@@ -315,9 +402,11 @@ export function GoodsIssueWorkbench() {
     manualReason,
     aiDecision,
     allocation,
-    selectedTotal,
+    goodTotal,
     warnings,
     mixWaived,
+    dispositionOk,
+    closingOk,
     scannedOk,
     verifyOk,
     qualityOk,
@@ -337,10 +426,17 @@ export function GoodsIssueWorkbench() {
         notes: [
           `docType=${docType}`,
           `ai=${aiDecision}`,
-          `alloc=${allocation.map((r) => `${r.code}:${r.selected}/${r.available}`).join(',')}`,
+          `alloc=${allocation
+            .map((r) => {
+              const d = dispositions[r.code] ?? emptyDisposition(r.selected);
+              return `${r.code}:pick=${r.selected}/good=${d.good}/dmg=${d.damaged}/scrap=${d.scrap}/rem=${remainingOf(r)}`;
+            })
+            .join(',')}`,
+          `goodTotal=${goodTotal}`,
           `selectedTotal=${selectedTotal}`,
           `mix=${warnings.join(',') || 'ok'}`,
           `mixWaived=${mixWaived}`,
+          `closing=${JSON.stringify(closing)}`,
           `dest=${destination}`,
           `scan=${scanValue || 'OK'}`,
           `evidence=${evidence.length}`,
@@ -379,10 +475,24 @@ export function GoodsIssueWorkbench() {
     setEvidence((e) => (e.includes(kind) ? e : [...e, kind]));
   }
 
+  function syncDispositions(rows: AllocRow[]) {
+    setDispositions((prev) => {
+      const next: Record<string, Disposition> = {};
+      for (const r of rows) {
+        const existing = prev[r.code];
+        if (existing && dispositionSum(existing) === r.selected) next[r.code] = existing;
+        else next[r.code] = emptyDisposition(r.selected);
+      }
+      return next;
+    });
+  }
+
   function acceptAi() {
     setAiDecision('accept');
     setOverrideOpen(false);
-    setAllocation(AI_ALLOCATION.map((p) => ({ ...p })));
+    const rows = AI_ALLOCATION.map((p) => ({ ...p }));
+    setAllocation(rows);
+    syncDispositions(rows);
     setMixWaived(false);
     setError(null);
   }
@@ -391,6 +501,7 @@ export function GoodsIssueWorkbench() {
     setAiDecision('ignore');
     setOverrideOpen(true);
     setAllocation([]);
+    setDispositions({});
     setMixWaived(false);
     setError(null);
   }
@@ -398,28 +509,79 @@ export function GoodsIssueWorkbench() {
   function addPackage(code: string) {
     const src = PACKAGE_CATALOG.find((p) => p.code === code);
     if (!src || allocation.some((a) => a.code === code)) return;
-    setAllocation((rows) => [...rows, { ...src }]);
+    setAllocation((rows) => {
+      const next = [...rows, { ...src }];
+      syncDispositions(next);
+      return next;
+    });
+    setFocusedCode(code);
     setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} Add → ${code}`]);
     setMixWaived(false);
     setError(null);
   }
 
   function removePackage(code: string) {
-    setAllocation((rows) => rows.filter((r) => r.code !== code));
+    setAllocation((rows) => {
+      const next = rows.filter((r) => r.code !== code);
+      syncDispositions(next);
+      return next;
+    });
     setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} Remove → ${code}`]);
     setMixWaived(false);
   }
 
   function setSelectedQty(code: string, selected: number) {
-    setAllocation((rows) =>
-      rows.map((r) => (r.code === code ? { ...r, selected: Math.min(Math.max(0, selected), r.available) } : r)),
-    );
+    setAllocation((rows) => {
+      const next = rows.map((r) =>
+        r.code === code ? { ...r, selected: Math.min(Math.max(0, selected), r.available) } : r,
+      );
+      syncDispositions(next);
+      return next;
+    });
     setMixWaived(false);
+  }
+
+  function patchDisposition(code: string, patch: Partial<Disposition>) {
+    setDispositions((prev) => {
+      const row = allocation.find((r) => r.code === code);
+      const base = prev[code] ?? emptyDisposition(row?.selected ?? 0);
+      return { ...prev, [code]: { ...base, ...patch } };
+    });
+  }
+
+  function applyDemoDisposition(code: string) {
+    const pkg = PACKAGE_CATALOG.find((p) => p.code === code);
+    if (!pkg) return;
+    // A:13 Good + PKG-00254:40 (Good 37 · Damaged 2 · Scrap 1) → Good total 50
+    const a = { ...AI_ALLOCATION[0], selected: 13 };
+    const pick = { ...pkg, selected: 40 };
+    setAllocation([a, pick]);
+    setDispositions({
+      [a.code]: emptyDisposition(13),
+      [code]: {
+        good: 37,
+        damaged: 2,
+        scrap: 1,
+        qualityHold: 0,
+        rework: 0,
+        damageReason: 'Cracked',
+        scrapReason: 'Forklift Damage',
+        damagePhoto: true,
+        scrapPhoto: true,
+        notes: '2 çatlak · 1 köşe kırık',
+      },
+    });
+    setFocusedCode(code);
+    setClosing({ restacked: true, strapped: true, labelOk: true, photoUpdated: true });
+    setAiDecision('accept');
+    setError(null);
   }
 
   function resetToAi() {
     setAiDecision('accept');
-    setAllocation(AI_ALLOCATION.map((p) => ({ ...p })));
+    const rows = AI_ALLOCATION.map((p) => ({ ...p }));
+    setAllocation(rows);
+    syncDispositions(rows);
     setOverrideOpen(false);
     setMixWaived(false);
   }
@@ -473,13 +635,12 @@ export function GoodsIssueWorkbench() {
   }
 
   function LiveTotalsStrip() {
-    const deficit = REQUIRED_QTY - selectedTotal;
     return (
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {[
           [t('wb.iss.required'), String(REQUIRED_QTY)],
-          [t('wb.iss.colSelected'), String(selectedTotal)],
-          [t('wb.iss.remaining'), String(Math.max(0, deficit))],
+          [t('wb.iss.disp.good'), String(goodTotal)],
+          [t('wb.iss.picked'), String(selectedTotal)],
           [t('wb.iss.metricVolume'), `${selectedVolume} m³`],
           [t('wb.iss.metricWeight'), `${selectedWeight} kg`],
           [t('wb.iss.metricPkgCount'), String(packageCount)],
@@ -488,8 +649,8 @@ export function GoodsIssueWorkbench() {
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{label}</p>
             <p
               className={`font-mono text-sm font-semibold tabular-nums ${
-                label === t('wb.iss.colSelected')
-                  ? selectedTotal === REQUIRED_QTY
+                label === t('wb.iss.disp.good')
+                  ? goodTotal === REQUIRED_QTY
                     ? 'text-[var(--color-primary)]'
                     : 'text-[var(--color-danger)]'
                   : ''
@@ -976,6 +1137,9 @@ export function GoodsIssueWorkbench() {
                     <Button type="button" variant="secondary" onClick={() => setOverrideOpen(true)}>
                       {t('wb.iss.addPkg')}
                     </Button>
+                    <Button type="button" variant="secondary" onClick={() => applyDemoDisposition('PKG-00254')}>
+                      {t('wb.iss.demoDisposition')}
+                    </Button>
                   </div>
                   {overrideOpen ? (
                     <div className="flex flex-wrap gap-2 rounded-md border border-[var(--border-default)] px-3 py-2">
@@ -999,23 +1163,176 @@ export function GoodsIssueWorkbench() {
                       )}
                     </div>
                   ) : null}
-                  <PackageAllocationWorkspace editable />
-                  {warnings.length > 0 ? (
-                    <div className="space-y-2 rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2">
-                      <p className="text-xs font-semibold text-[var(--color-danger)]">{t('wb.iss.mixWarnings')}</p>
-                      <ul className="list-inside list-disc text-xs text-[var(--text-secondary)]">
-                        {warnings.map((w) => (
-                          <li key={w}>{t(`wb.iss.warn.${w}`)}</li>
-                        ))}
-                      </ul>
-                      <label className="flex items-center gap-2 text-sm font-medium">
-                        <input type="checkbox" checked={mixWaived} onChange={(e) => setMixWaived(e.target.checked)} />
-                        {t('wb.iss.mixWaive')}
-                      </label>
+
+                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
+                    <div className="min-w-0 space-y-3">
+                      <PackageAllocationWorkspace editable />
+                      {warnings.length > 0 ? (
+                        <div className="space-y-2 rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2">
+                          <p className="text-xs font-semibold text-[var(--color-danger)]">{t('wb.iss.mixWarnings')}</p>
+                          <ul className="list-inside list-disc text-xs text-[var(--text-secondary)]">
+                            {warnings.map((w) => (
+                              <li key={w}>{t(`wb.iss.warn.${w}`)}</li>
+                            ))}
+                          </ul>
+                          <label className="flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" checked={mixWaived} onChange={(e) => setMixWaived(e.target.checked)} />
+                            {t('wb.iss.mixWaive')}
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--color-primary)]">{t('wb.iss.mixOk')}</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-[var(--color-primary)]">{t('wb.iss.mixOk')}</p>
-                  )}
+
+                    <aside className="space-y-3">
+                      {focusedRow && focusedDisp ? (
+                        <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+                            {t('wb.iss.takeFromPackage')}
+                          </p>
+                          <p className="font-mono text-xs font-medium">{focusedRow.code}</p>
+                          <dl className="grid grid-cols-2 gap-1 text-xs">
+                            <dt className="text-[var(--text-muted)]">{t('wb.iss.requested')}</dt>
+                            <dd className="tabular-nums text-right">{focusedRow.selected}</dd>
+                            <dt className="text-[var(--text-muted)]">{t('wb.iss.picked')}</dt>
+                            <dd className="tabular-nums text-right font-medium">{focusedRow.selected}</dd>
+                          </dl>
+                          <hr className="border-[var(--border-default)]" />
+                          {(
+                            [
+                              ['good', 'good'],
+                              ['damaged', 'damaged'],
+                              ['scrap', 'scrap'],
+                              ['qualityHold', 'qualityHold'],
+                              ['rework', 'rework'],
+                            ] as const
+                          ).map(([key, labelKey]) => (
+                            <label key={key} className="flex items-center justify-between gap-2 text-xs">
+                              <span>{t(`wb.iss.disp.${labelKey}`)}</span>
+                              <Input
+                                type="number"
+                                className="h-7 w-16"
+                                min={0}
+                                max={focusedRow.selected}
+                                value={focusedDisp[key]}
+                                onChange={(e) =>
+                                  patchDisposition(focusedRow.code, { [key]: Number(e.target.value) || 0 })
+                                }
+                              />
+                            </label>
+                          ))}
+                          <p
+                            className={`text-[11px] ${
+                              dispositionSum(focusedDisp) === focusedRow.selected
+                                ? 'text-[var(--color-primary)]'
+                                : 'text-[var(--color-danger)]'
+                            }`}
+                          >
+                            Σ {dispositionSum(focusedDisp)} / {focusedRow.selected} · {t('wb.iss.remainingInPkg')}:{' '}
+                            {remainingOf(focusedRow)}
+                          </p>
+
+                          {focusedDisp.damaged > 0 ? (
+                            <div className="space-y-1 rounded-md border border-[var(--border-default)] px-2 py-2">
+                              <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                                {t('wb.iss.damageEvidence')}
+                              </p>
+                              <select
+                                className="h-8 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                                value={focusedDisp.damageReason}
+                                onChange={(e) => patchDisposition(focusedRow.code, { damageReason: e.target.value })}
+                              >
+                                <option value="">{t('wb.iss.selectReason')}</option>
+                                {DAMAGE_REASONS.map((r) => (
+                                  <option key={r} value={r}>
+                                    {r}
+                                  </option>
+                                ))}
+                              </select>
+                              <label className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={focusedDisp.damagePhoto}
+                                  onChange={(e) =>
+                                    patchDisposition(focusedRow.code, { damagePhoto: e.target.checked })
+                                  }
+                                />
+                                {t('wb.iss.photoCaptured')}
+                              </label>
+                            </div>
+                          ) : null}
+
+                          {focusedDisp.scrap > 0 ? (
+                            <div className="space-y-1 rounded-md border border-[var(--border-default)] px-2 py-2">
+                              <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                                {t('wb.iss.scrapHandling')}
+                              </p>
+                              <select
+                                className="h-8 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                                value={focusedDisp.scrapReason}
+                                onChange={(e) => patchDisposition(focusedRow.code, { scrapReason: e.target.value })}
+                              >
+                                <option value="">{t('wb.iss.selectReason')}</option>
+                                {SCRAP_REASONS.map((r) => (
+                                  <option key={r} value={r}>
+                                    {r}
+                                  </option>
+                                ))}
+                              </select>
+                              <label className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={focusedDisp.scrapPhoto}
+                                  onChange={(e) =>
+                                    patchDisposition(focusedRow.code, { scrapPhoto: e.target.checked })
+                                  }
+                                />
+                                {t('wb.iss.photoCaptured')}
+                              </label>
+                              <p className="text-[10px] text-[var(--text-muted)]">{t('wb.iss.scrapNeverReturns')}</p>
+                            </div>
+                          ) : null}
+
+                          <label className="block space-y-1 text-xs">
+                            <span className="text-[var(--text-muted)]">{t('wb.iss.notes')}</span>
+                            <Input
+                              value={focusedDisp.notes}
+                              onChange={(e) => patchDisposition(focusedRow.code, { notes: e.target.value })}
+                              placeholder={t('wb.iss.notesPh')}
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.selectPkgForTake')}</p>
+                      )}
+
+                      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                          {t('wb.iss.closingChecklist')}
+                        </p>
+                        {(
+                          [
+                            ['restacked', 'closeRestack'],
+                            ['strapped', 'closeStrap'],
+                            ['labelOk', 'closeLabel'],
+                            ['photoUpdated', 'closePhoto'],
+                          ] as const
+                        ).map(([key, labelKey]) => (
+                          <label key={key} className="flex items-start gap-2 text-xs">
+                            <input
+                              type="checkbox"
+                              className="mt-0.5"
+                              checked={closing[key]}
+                              onChange={(e) => setClosing((c) => ({ ...c, [key]: e.target.checked }))}
+                            />
+                            <span>{t(`wb.iss.${labelKey}`)}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </aside>
+                  </div>
+
                   <label className="block max-w-md space-y-1 text-sm">
                     <span className="text-[var(--text-secondary)]">{t('wb.iss.scanLabel')}</span>
                     <div className="flex gap-2">
@@ -1041,6 +1358,9 @@ export function GoodsIssueWorkbench() {
                     {t('wb.iss.demoScan')}
                   </Button>
                   {scannedOk ? <p className="text-sm text-[var(--color-primary)]">{t('wb.iss.scanOk')}</p> : null}
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {t('wb.iss.goodForDemand')}: {goodTotal} · {t('wb.iss.integrityHint')}
+                  </p>
                 </div>
               ) : null}
 
