@@ -149,7 +149,10 @@ Inventory shall always represent the physical state of the factory.
 
 Every inventory movement shall be recorded.
 
-Negative inventory is not permitted unless explicitly configured.
+Negative inventory is not permitted without exception.
+
+Shortages shall be represented as demand, backorder or planning exceptions,
+never as negative physical stock.
 
 Batch traceability shall be preserved.
 
