@@ -93,7 +93,8 @@ NOS'ta Master Data ekranları "Create Form" değildir.
 
 “Yeni Goods Receipt” ≠ “Yeni Production Order” ≠ “Yeni Machine” — Receiving Wizard · Planning Wizard · **Machine Configuration** (facets → Release).
 
-Production engineering: BOM Builder · Routing Designer · Machine Configuration · … (`Production_Screens.md` PRD-501…509).
+Production engineering: BOM Builder · Routing Designer · **Machine Configuration Studio** · Work Center Designer · Line Designer · … (`Production_Screens.md` § ENGINEERING MASTER DATA PRINCIPLE · PRD-501…509).
+
 
 ## 2.3 SYSTEM GENERATED IDENTIFIERS (Constitution)
 

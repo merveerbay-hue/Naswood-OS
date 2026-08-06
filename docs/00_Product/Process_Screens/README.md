@@ -24,14 +24,13 @@ These PRDs replace shared **Create / Yeni** entity forms.
 | [`PUR_Purchase_Order_Wizard.md`](./PUR_Purchase_Order_Wizard.md) | Place purchase order / Sipariş ver | Wizard |
 | [`SAL_Sales_Order_Wizard.md`](./SAL_Sales_Order_Wizard.md) | Enter sales order / Sipariş gir | Wizard |
 
-## Engineering (Builder / Designer / Configuration)
+## Engineering (Builder / Designer / Configuration Studio)
 
-| File | CTA | Type | Screen ID |
-|------|-----|------|-----------|
-| [`PRD_BOM_Builder.md`](./PRD_BOM_Builder.md) | Build BOM / BOM oluştur | Builder | PRD-501 |
-| [`PRD_Machine_Configuration.md`](./PRD_Machine_Configuration.md) | Configure machine / Makine yapılandır | Configuration | PRD-503 |
+| File | CTA | Type | Screen ID | Auto ID |
+|------|-----|------|-----------|---------|
+| [`PRD_BOM_Builder.md`](./PRD_BOM_Builder.md) | Build BOM | Builder | PRD-501 | `BOM-…` |
+| [`PRD_Machine_Configuration.md`](./PRD_Machine_Configuration.md) | Configure machine (Studio) | Configuration | PRD-503 | `MC-…` |
 
-Further engineering surfaces (Routing Designer, WC Designer, Line Configuration, Operation Designer, Shift/Calendar Planner, Tool Library) are indexed in `Production_Screens.md` — full PRDs follow the same pattern.
+Full engineering index + **ENGINEERING MASTER DATA PRINCIPLE**: `Production_Screens.md` (Routing Designer, Work Center Designer, Line Designer, Shift/Calendar Planner, Tool Library Manager, …).
 
-**FE rule:** CTA navigates here — never opens a shared `ResourcePage` / `EntityListScreen` create panel.  
-**Mental model:** Business Object → Business Workspace → Business Designer.
+**FE rule:** Never editable Code fields; name-first pickers; design environments — not Create forms.
