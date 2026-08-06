@@ -348,7 +348,14 @@ Users work with names — not codes. Codes are display-only when shown.
 | Material | Ad · Tip · Grup · Ağaç türü · Ölçüler · Birim · Capability · … | `MAT-…` | On save / first persist |
 | Warehouse | Depo adı · Tip · Fabrika · Sorumlu · … | `WH-…` | On save |
 | Location | Ad · Zone · … | `LOC-…` (policy) | On save |
-| Machine | Makine adı · Üretici · Model · … (Configuration facets) | `MC-…` | On save / Release |
+| Machine | Makine adı · Üretici · Model · … (Studio facets) | `MC-…` | On save |
+| BOM | Ürün (name) · Revizyon · tree · … | `BOM-…` | On save / Release |
+| Routing | Operasyon akışı · makine · süreler · … | `RT-…` | On save / Release |
+| Work Center | Hat · yerleşim · kapasite · … | `WC-…` | On save |
+| Production Line | Hat tanımı · istasyonlar · … | `LINE-…` | On save |
+| Shift | Şablon adı · saatler · molalar · … | `SHIFT-…` | On save |
+| Calendar | Çalışma / tatil / bakım günleri · … | `CAL-…` | On save |
+| Tooling | Takım tipi · uyumlu makineler · ömür · … | `TL-…` | On save |
 | Production Order | Ürün (by **name**) · qty · dates · … | `PO-2026-…` | On **Release** (draft may show “atanacak”) |
 | Goods Receipt | PO · qty · Depo · … | `GR-…` | On Post / save per policy |
 | Lot / Batch | *(nothing — category drives series)* | `LOT-…` | On GR line / process mint |

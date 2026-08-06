@@ -55,10 +55,10 @@ Reusable **CRUD create/edit screens** are forbidden as the default — for **ope
 |-------------|---------|--------------|
 | **Builder** | Construct a structured engineering object (tree / structure) with validate & Release | BOM Builder, Package structure |
 | **Designer** | Design a process / graph / operation sequence with relations & simulation | Routing Designer, Operation Designer, Work Center Layout Designer |
-| **Configuration** | Define a rich multi-facet asset/resource (tabs/sections → Release) | Machine Configuration, Line Configuration, Product Wizard |
+| **Configuration** | Define a rich multi-facet asset/resource (Studio facets → Release) | Machine Configuration Studio, Line Designer, Product Wizard |
 | **Planner** | Balance time / capacity / resources visually | Capacity, Scheduling, Dispatch, Shift Planner, Calendar Planner, PM calendar |
 | **Workbench** | Knowledge / analysis / multi-object engineering surface | Quality engineering, CAPA analysis, genealogy inquiry |
-| **Library** | Find & reopen engineering objects — **not** a Create Form | Tool Library, Machine Library → opens Configuration |
+| **Library** | Find & reopen engineering objects — **not** a Create Form | Tool Library Manager, Machine Library → opens Studio |
 | **Explorer** | Find, inspect, navigate hierarchical / catalog data | Warehouse map, Lot library, Product catalog browse |
 
 ```text
@@ -94,20 +94,16 @@ Full: `docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`
 ### Not “New Machine” (Code · Name · Save)
 
 **CTA:** Configure machine / Makine yapılandır  
-**Type:** **Configuration**  
-**Screen:** PRD-503 Machine Configuration
+**Type:** **Configuration** (Studio)  
+**Screen:** PRD-503 Machine Configuration Studio
 
 ```text
-Kimlik → Tip / Grup → Üretici / Model / Seri / Asset
-  → Yerleşim (Fabrika · Bina · Hat · Work Center · Pozisyon)
-  → Teknik (eksen · max ölçü · devir · güç · voltaj)
-  → Üretim yetenekleri (operasyonlar · ağaç türleri · ürünler · tool magazine · setup · cycle)
-  → Bakım (PM · yağlama · sensörler · sayaçlar)
-  → Doküman (PDF · Manual · CAD · Fotoğraf)
-  → Validate → Release
+Genel Bilgiler → Teknik → Kapasiteler → Operasyonlar → Tool Magazine
+  → Bakım → Sensörler → Dokümanlar → IoT → Devreye Alma → Release
 ```
 
-Full: `docs/00_Product/Process_Screens/PRD_Machine_Configuration.md`
+Full: `docs/00_Product/Process_Screens/PRD_Machine_Configuration.md`  
+Code `MC-…` auto — never `Code *` input.
 
 ### Not “New BOM” (Code · Description · Save)
 
@@ -116,31 +112,29 @@ Full: `docs/00_Product/Process_Screens/PRD_Machine_Configuration.md`
 **Screen:** PRD-501 BOM Builder
 
 ```text
-Ürün → Revizyon → Malzeme ağacı → Alternatifler → Fire
-  → Operasyon bağlantıları → Onay → Release
+Ürün → Revizyon → Malzeme Ağacı → Alternatifler → Fire
+  → Operasyon Bağlantıları → Versiyon Karşılaştırma → Etki Analizi → Onay → Release
 ```
 
-Full: `docs/00_Product/Process_Screens/PRD_BOM_Builder.md`
+Full: `docs/00_Product/Process_Screens/PRD_BOM_Builder.md`  
+Code `BOM-…` auto.
 
 ### Production engineering matrix (authoritative)
 
-| Entity (data) | Forbidden UI | Screen | Type | CTA |
-|---------------|--------------|--------|------|-----|
-| Product *(catalog)* | Create Product form | Product Wizard | Configuration / Wizard | Define product |
-| BOM | BOM CRUD | **PRD-501 BOM Builder** | Builder | Build BOM |
-| Routing | Routing CRUD | **PRD-502 Routing Designer** | Designer | Design routing |
-| Machine | Machine CRUD | **PRD-503 Machine Configuration** | Configuration | Configure machine |
-| Work Center | WC CRUD | **PRD-504 Work Center Designer** | Designer | Design work center layout |
-| Production Line | Line CRUD | **PRD-505 Line Configuration** | Configuration | Configure line |
-| Operation | Operation CRUD | **PRD-506 Operation Designer** | Designer | Design operation |
-| Shift | Shift CRUD | **PRD-507 Shift Planner** | Planner | Plan shifts |
-| Calendar | Calendar CRUD | **PRD-508 Calendar Planner** | Planner | Plan calendar |
-| Tooling | Tooling CRUD | **PRD-509 Tool Library** | Library → Configuration | Manage tooling |
+| Entity (data) | Forbidden UI | Screen | Type | Auto ID |
+|---------------|--------------|--------|------|---------|
+| BOM | BOM CRUD | **PRD-501 BOM Builder** | Builder | `BOM-…` |
+| Routing | Routing CRUD | **PRD-502 Routing Designer** | Designer | `RT-…` |
+| Machine | Machine CRUD | **PRD-503 Machine Configuration Studio** | Configuration | `MC-…` |
+| Work Center | WC CRUD | **PRD-504 Work Center Designer** | Designer | `WC-…` |
+| Production Line | Line CRUD | **PRD-505 Line Designer** | Designer | `LINE-…` |
+| Operation | Operation CRUD | **PRD-506 Operation Designer** | Designer | `OP-…` |
+| Shift | Shift CRUD | **PRD-507 Shift Planner** | Planner | `SHIFT-…` |
+| Calendar | Calendar CRUD | **PRD-508 Calendar Planner** | Planner | `CAL-…` |
+| Tooling | Tooling CRUD | **PRD-509 Tool Library Manager** | Library → Configuration | `TL-…` |
 
-None of these are Create · Edit · Delete screens.  
-Libraries reopen work; Designers/Builders/Configurations **author and Release** knowledge.
-
-Authority for Production screen index: `docs/13_Design/05_Production/Production_Screens.md`.
+Principle (full text): `Production_Screens.md` § **ENGINEERING MASTER DATA PRINCIPLE**.  
+None are Create · Edit · Delete screens. No editable Code fields.
 
 ---
 

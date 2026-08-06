@@ -457,15 +457,15 @@ Production
 | PRD-042 | Kiln Schedule / Batch | Industry | Mapped |
 | PRD-043 | Kiln Monitoring | Industry | Mapped |
 | PRD-044 | Thermowood Batch / Curves | Industry | Mapped |
-| PRD-501 | **BOM Builder** (+ Library) | Engineering | ★ Spec — replaces BOM List/Detail CRUD |
-| PRD-502 | **Routing Designer** (+ Library) | Engineering | Spec — replaces Routing CRUD |
-| PRD-503 | **Machine Configuration** (+ Library) | Engineering | ★ Spec — replaces Machine CRUD |
-| PRD-504 | **Work Center Designer** | Engineering | Spec — Layout Builder |
-| PRD-505 | **Line Configuration** | Engineering | Spec |
-| PRD-506 | **Operation Designer** | Engineering | Spec |
-| PRD-507 | **Shift Planner** | Engineering | Spec |
-| PRD-508 | **Calendar Planner** | Engineering | Spec |
-| PRD-509 | **Tool Library** | Engineering | Mapped |
+| PRD-501 | **BOM Builder** (+ Library) | Engineering | ★ Spec — `BOM-…` auto; version compare + impact |
+| PRD-502 | **Routing Designer** (+ Library) | Engineering | Spec — `RT-…` auto; simulation |
+| PRD-503 | **Machine Configuration Studio** (+ Library) | Engineering | ★ Spec — `MC-…` auto; IoT + commission |
+| PRD-504 | **Work Center Designer** | Engineering | Spec — `WC-…` auto |
+| PRD-505 | **Line Designer** | Engineering | Spec — `LINE-…` auto |
+| PRD-506 | **Operation Designer** | Engineering | Spec — `OP-…` auto |
+| PRD-507 | **Shift Planner** | Engineering | Spec — `SHIFT-…` auto |
+| PRD-508 | **Calendar Planner** | Engineering | Spec — `CAL-…` auto |
+| PRD-509 | **Tool Library Manager** | Engineering | Mapped — `TL-…` auto |
 | PRD-020 | Production Reports | Reports | Spec’d |
 | PRD-019 | Production Analytics | Analytics | Spec’d |
 | PRD-029 | Production Settings | Settings | Spec’d |
