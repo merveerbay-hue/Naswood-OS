@@ -72,7 +72,7 @@ public sealed class CreateBatchCommandHandler : ICommandHandler<CreateBatchComma
     public CreateBatchCommandHandler(IBatchRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<BatchDto>> HandleAsync(CreateBatchCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Batch.Create(command.BatchNumber, command.MaterialCode, command.Quantity, command.ExpiryDate, command.Status);
+        var e = Batch.Create(SystemIdentifier.Ensure(command.BatchNumber, "LOT"), command.MaterialCode, command.Quantity, command.ExpiryDate, command.Status);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(BatchMapper.ToDto(e));

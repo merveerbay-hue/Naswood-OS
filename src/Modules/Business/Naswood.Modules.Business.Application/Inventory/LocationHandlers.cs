@@ -72,7 +72,7 @@ public sealed class CreateLocationCommandHandler : ICommandHandler<CreateLocatio
     public CreateLocationCommandHandler(ILocationRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<LocationDto>> HandleAsync(CreateLocationCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Location.Create(command.Code, command.Name, command.WarehouseCode, command.LocationType, command.Status);
+        var e = Location.Create(SystemIdentifier.Ensure(command.Code, "LOC"), command.Name, command.WarehouseCode, command.LocationType, command.Status);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(LocationMapper.ToDto(e));

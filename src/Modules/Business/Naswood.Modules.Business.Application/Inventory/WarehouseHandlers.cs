@@ -71,7 +71,7 @@ public sealed class CreateWarehouseCommandHandler : ICommandHandler<CreateWareho
     public CreateWarehouseCommandHandler(IWarehouseRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<WarehouseDto>> HandleAsync(CreateWarehouseCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Warehouse.Create(command.Code, command.Name, command.WarehouseType, command.Status, plantId: command.PlantId);
+        var e = Warehouse.Create(SystemIdentifier.Ensure(command.Code, "WH"), command.Name, command.WarehouseType, command.Status, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(WarehouseMapper.ToDto(e));

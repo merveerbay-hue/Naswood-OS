@@ -71,7 +71,7 @@ public sealed class CreateOperationCommandHandler : ICommandHandler<CreateOperat
     public CreateOperationCommandHandler(IOperationRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<OperationDto>> HandleAsync(CreateOperationCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Operation.Create(command.Code, command.Name, command.Status, command.Notes, plantId: command.PlantId);
+        var e = Operation.Create(SystemIdentifier.Ensure(command.Code, "OP"), command.Name, command.Status, command.Notes, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(OperationMapper.ToDto(e));

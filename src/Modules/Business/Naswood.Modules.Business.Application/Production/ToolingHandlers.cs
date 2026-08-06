@@ -71,7 +71,7 @@ public sealed class CreateToolingCommandHandler : ICommandHandler<CreateToolingC
     public CreateToolingCommandHandler(IToolingRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<ToolingDto>> HandleAsync(CreateToolingCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Tooling.Create(command.Code, command.Name, command.Status, command.Notes, plantId: command.PlantId);
+        var e = Tooling.Create(SystemIdentifier.Ensure(command.Code, "TL"), command.Name, command.Status, command.Notes, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(ToolingMapper.ToDto(e));

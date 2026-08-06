@@ -72,7 +72,7 @@ public sealed class CreateBomCommandHandler : ICommandHandler<CreateBomCommand, 
     public CreateBomCommandHandler(IBomRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<BomDto>> HandleAsync(CreateBomCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Bom.Create(command.Number, command.MaterialCode, command.Version, command.Status, command.Notes);
+        var e = Bom.Create(SystemIdentifier.Ensure(command.Number, "BOM"), command.MaterialCode, command.Version, command.Status, command.Notes);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(BomMapper.ToDto(e));

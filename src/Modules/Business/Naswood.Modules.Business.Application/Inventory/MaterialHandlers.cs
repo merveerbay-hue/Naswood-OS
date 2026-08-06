@@ -73,7 +73,7 @@ public sealed class CreateMaterialCommandHandler : ICommandHandler<CreateMateria
     public CreateMaterialCommandHandler(IMaterialRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<MaterialDto>> HandleAsync(CreateMaterialCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Material.Create(command.Code, command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status);
+        var e = Material.Create(SystemIdentifier.Ensure(command.Code, "MAT"), command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(MaterialMapper.ToDto(e));

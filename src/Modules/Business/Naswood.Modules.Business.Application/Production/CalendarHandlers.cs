@@ -71,7 +71,7 @@ public sealed class CreateCalendarCommandHandler : ICommandHandler<CreateCalenda
     public CreateCalendarCommandHandler(ICalendarRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<CalendarDto>> HandleAsync(CreateCalendarCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Calendar.Create(command.Code, command.Name, command.Status, command.Notes, plantId: command.PlantId);
+        var e = Calendar.Create(SystemIdentifier.Ensure(command.Code, "CAL"), command.Name, command.Status, command.Notes, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(CalendarMapper.ToDto(e));

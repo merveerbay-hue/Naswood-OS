@@ -71,7 +71,7 @@ public sealed class CreateProductionOrderCommandHandler : ICommandHandler<Create
     public CreateProductionOrderCommandHandler(IProductionOrderRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<ProductionOrderDto>> HandleAsync(CreateProductionOrderCommand command, CancellationToken cancellationToken = default)
     {
-        var e = ProductionOrder.Create(command.Code, command.Name, command.Status, command.Notes, plantId: command.PlantId);
+        var e = ProductionOrder.Create(SystemIdentifier.Ensure(command.Code, "PO"), command.Name, command.Status, command.Notes, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(ProductionOrderMapper.ToDto(e));

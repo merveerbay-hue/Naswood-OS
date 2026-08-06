@@ -72,7 +72,7 @@ public sealed class CreateGoodsReceiptCommandHandler : ICommandHandler<CreateGoo
     public CreateGoodsReceiptCommandHandler(IGoodsReceiptRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<GoodsReceiptDto>> HandleAsync(CreateGoodsReceiptCommand command, CancellationToken cancellationToken = default)
     {
-        var e = GoodsReceipt.Create(command.Number, command.WarehouseCode, command.Reference, command.Status, command.Notes);
+        var e = GoodsReceipt.Create(SystemIdentifier.Ensure(command.Number, "GR"), command.WarehouseCode, command.Reference, command.Status, command.Notes);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(GoodsReceiptMapper.ToDto(e));

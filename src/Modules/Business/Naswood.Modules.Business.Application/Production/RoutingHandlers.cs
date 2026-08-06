@@ -72,7 +72,7 @@ public sealed class CreateRoutingCommandHandler : ICommandHandler<CreateRoutingC
     public CreateRoutingCommandHandler(IRoutingRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<RoutingDto>> HandleAsync(CreateRoutingCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Routing.Create(command.Number, command.MaterialCode, command.Version, command.Status, command.Notes);
+        var e = Routing.Create(SystemIdentifier.Ensure(command.Number, "RT"), command.MaterialCode, command.Version, command.Status, command.Notes);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(RoutingMapper.ToDto(e));

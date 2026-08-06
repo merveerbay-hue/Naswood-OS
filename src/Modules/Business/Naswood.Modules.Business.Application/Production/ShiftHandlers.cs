@@ -71,7 +71,7 @@ public sealed class CreateShiftCommandHandler : ICommandHandler<CreateShiftComma
     public CreateShiftCommandHandler(IShiftRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<ShiftDto>> HandleAsync(CreateShiftCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Shift.Create(command.Code, command.Name, command.Status, command.Notes, plantId: command.PlantId);
+        var e = Shift.Create(SystemIdentifier.Ensure(command.Code, "SHIFT"), command.Name, command.Status, command.Notes, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(ShiftMapper.ToDto(e));

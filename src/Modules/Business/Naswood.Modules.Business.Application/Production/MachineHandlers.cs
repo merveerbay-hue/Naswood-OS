@@ -72,7 +72,7 @@ public sealed class CreateMachineCommandHandler : ICommandHandler<CreateMachineC
     public CreateMachineCommandHandler(IMachineRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<MachineDto>> HandleAsync(CreateMachineCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Machine.Create(command.Code, command.Name, command.WorkCenterCode, command.Status, command.OeeTarget);
+        var e = Machine.Create(SystemIdentifier.Ensure(command.Code, "MC"), command.Name, command.WorkCenterCode, command.Status, command.OeeTarget);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(MachineMapper.ToDto(e));

@@ -12,6 +12,8 @@ export function ReceivingWizardPage() {
       libraryPath="/inventory/operations/goods-receipts"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="GR-… · LOT-…"
+      persistRoute="goods-receipts"
+      mapBody={(v) => ({ warehouseCode: v.wh?.includes('Ana') ? 'WH-RM' : (v.wh || 'WH-RM'), reference: v.po || 'MANUAL', status: 'Draft', notes: `qty=${v.qty||''} loc=${v.loc||''}`, number: '' })}
       steps={[
         {
           title: t('wizard.rcv.po'),
@@ -54,6 +56,8 @@ export function IssueWizardPage() {
       libraryPath="/inventory/operations/goods-issues"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="GI-…"
+      persistRoute="goods-issues"
+      mapBody={(v) => ({ warehouseCode: v.wh || 'WH-RM', reference: v.ref || 'ISSUE', status: 'Draft', notes: `qty=${v.qty||''}`, number: '' })}
       steps={[
         { title: t('wizard.iss.ref'), fields: [{ key: 'ref', label: t('wizard.iss.ref') }] },
         { title: t('wizard.iss.lines') },
@@ -77,6 +81,8 @@ export function TransferWizardPage() {
       libraryPath="/inventory/operations/transfers"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="TR-…"
+      persistRoute="transfers"
+      mapBody={(v) => ({ fromWarehouseCode: v.from || 'WH-RM', toWarehouseCode: v.to || 'WH-FG', status: 'Draft', notes: v.mat || '', number: '' })}
       steps={[
         { title: t('wizard.trf.material'), fields: [{ key: 'mat', label: t('wizard.trf.material'), placeholder: t('wizard.nameFirstHint') }] },
         { title: t('wizard.trf.from'), fields: [{ key: 'from', label: t('wizard.trf.from') }] },
@@ -99,6 +105,8 @@ export function CycleCountWizardPage() {
       libraryPath="/inventory/counts/cycle-counts"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="CNT-…"
+      persistRoute="inventory-counts"
+      mapBody={(v) => ({ warehouseCode: v.scope || 'WH-RM', status: 'Draft', notes: 'cycle-count', number: '' })}
       steps={[
         { title: t('wizard.cnt.scope'), fields: [{ key: 'scope', label: t('wizard.cnt.scope'), placeholder: 'Ana Depo / Zone A' }] },
         { title: t('wizard.cnt.open') },
@@ -121,6 +129,8 @@ export function MaterialDefinePage() {
       libraryPath="/inventory/master-data/materials"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="MAT-…"
+      persistRoute="materials"
+      mapBody={(v) => ({ name: v.name || 'Malzeme', description: v.dims || '', category: v.type || v.group || 'Raw', unitOfMeasure: v.uom || 'm3', status: 'Active', code: '' })}
       steps={[
         {
           title: t('wizard.mat.general'),
@@ -156,6 +166,8 @@ export function WarehouseDefinePage() {
       libraryPath="/inventory/master-data/warehouses"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="WH-…"
+      persistRoute="warehouses"
+      mapBody={(v) => ({ name: v.name || 'Depo', warehouseType: v.type || 'General', status: 'Active', code: '', plantId: v.plant || 'PLANT-001' })}
       steps={[
         {
           title: t('wizard.wh.general'),
@@ -183,6 +195,8 @@ export function PlanningWizardPage() {
       libraryPath="/production/planning/orders"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="PO-2026-…"
+      persistRoute="production-orders"
+      mapBody={(v) => ({ name: v.product || 'Plan', status: 'Active', notes: `rev=${v.rev||''} line=${v.line||''} due=${v.due||''}`, code: '' })}
       steps={[
         {
           title: t('wizard.prd.product'),
@@ -215,6 +229,8 @@ export function BomBuilderPage() {
       libraryPath="/production/master-data/boms"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="BOM-…"
+      persistRoute="boms"
+      mapBody={(v) => ({ materialCode: 'MAT-DEMO-1', version: Number(v.rev || 1) || 1, status: 'Active', notes: `product=${v.product||''} scrap=${v.scrap||''}`, number: '' })}
       steps={[
         {
           title: t('wizard.bom.product'),
@@ -246,6 +262,8 @@ export function RoutingDesignerPage() {
       libraryPath="/production/master-data/routings"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="RT-…"
+      persistRoute="routings"
+      mapBody={(v) => ({ materialCode: 'MAT-DEMO-1', version: 1, status: 'Active', notes: `machine=${v.mc||''} wc=${v.wc||''}`, number: '' })}
       steps={[
         { title: t('wizard.rt.flow') },
         { title: t('wizard.rt.machine'), fields: [{ key: 'mc', label: t('wizard.rt.machine'), placeholder: t('wizard.nameFirstHint') }] },
@@ -273,6 +291,8 @@ export function MachineStudioPage() {
       libraryPath="/production/master-data/machines"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="MC-…"
+      persistRoute="machines"
+      mapBody={(v) => ({ name: v.name || 'Makine', workCenterCode: 'WC-SAW', status: 'Active', oeeTarget: 80, code: '' })}
       steps={[
         {
           title: t('wizard.mc.general'),
@@ -315,6 +335,8 @@ export function WorkCenterDesignerPage() {
       libraryPath="/production/master-data/work-centers"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="WC-…"
+      persistRoute="work-centers"
+      mapBody={(v) => ({ name: v.line || 'İş Merkezi', capacityPerHour: Number(v.cap || 40) || 40, status: 'Active', code: '' })}
       steps={[
         { title: t('wizard.wc.line'), fields: [{ key: 'line', label: t('wizard.wc.line') }] },
         { title: t('wizard.wc.layout') },
@@ -340,6 +362,8 @@ export function LineDesignerPage() {
       libraryPath="/production/master-data/lines"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="LINE-…"
+      persistRoute="production-lines"
+      mapBody={(v) => ({ name: v.name || 'Hat', status: 'Active', code: '' })}
       steps={[
         { title: t('wizard.line.def'), fields: [{ key: 'name', label: t('wizard.line.name'), placeholder: 'Profil Hattı 1' }] },
         { title: t('wizard.line.stations') },
@@ -362,6 +386,8 @@ export function OperationDesignerPage() {
       libraryPath="/production/master-data/operations"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="OP-…"
+      persistRoute="operations"
+      mapBody={(v) => ({ name: v.name || 'Operasyon', status: 'Active', code: '' })}
       steps={[
         { title: t('wizard.op.def'), fields: [{ key: 'name', label: t('wizard.op.name') }] },
         { title: t('wizard.op.params') },
@@ -385,6 +411,8 @@ export function ShiftPlannerPage() {
       libraryPath="/production/master-data/shifts"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="SHIFT-…"
+      persistRoute="shifts"
+      mapBody={(v) => ({ name: v.name || 'Vardiya', status: 'Active', code: '' })}
       steps={[
         { title: t('wizard.shift.template'), fields: [{ key: 'name', label: t('wizard.shift.template'), placeholder: 'Gündüz' }] },
         { title: t('wizard.shift.hours'), fields: [{ key: 'from', label: 'Başlangıç' }, { key: 'to', label: 'Bitiş' }] },
@@ -409,6 +437,8 @@ export function CalendarPlannerPage() {
       libraryPath="/production/master-data/calendars"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="CAL-…"
+      persistRoute="calendars"
+      mapBody={() => ({ name: 'Takvim', status: 'Active', code: '' })}
       steps={[
         { title: t('wizard.cal.work') },
         { title: t('wizard.cal.holiday') },
@@ -432,6 +462,8 @@ export function ToolLibraryManagerPage() {
       libraryPath="/production/master-data/toolings"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="TL-…"
+      persistRoute="toolings"
+      mapBody={(v) => ({ name: v.name || 'Takım', status: 'Active', code: '' })}
       steps={[
         { title: t('wizard.tool.type'), fields: [{ key: 'name', label: t('wizard.tool.type') }] },
         { title: t('wizard.tool.machines') },
@@ -456,6 +488,8 @@ export function PurchaseOrderWizardPage() {
       libraryPath="/purchasing/purchase-orders"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="PO-…"
+      persistRoute="purchase-orders"
+      mapBody={(v) => ({ supplierCode: v.sup || 'SUP-001', orderDate: new Date().toISOString().slice(0,10), totalAmount: 0, currency: 'TRY', status: 'Draft', number: '' })}
       steps={[
         { title: t('wizard.pur.supplier'), fields: [{ key: 'sup', label: t('wizard.pur.supplier'), placeholder: t('wizard.nameFirstHint') }] },
         { title: t('wizard.pur.source') },
@@ -480,6 +514,8 @@ export function SalesOrderWizardPage() {
       libraryPath="/sales/sales-orders"
       libraryLabel={t('wizard.backToLibrary')}
       autoCodeHint="SO-…"
+      persistRoute="sales-orders"
+      mapBody={(v) => ({ customerCode: v.cus || 'CUS-001', orderDate: new Date().toISOString().slice(0,10), totalAmount: 0, currency: 'TRY', status: 'Draft', number: '' })}
       steps={[
         { title: t('wizard.sal.customer'), fields: [{ key: 'cus', label: t('wizard.sal.customer'), placeholder: t('wizard.nameFirstHint') }] },
         { title: t('wizard.sal.source') },

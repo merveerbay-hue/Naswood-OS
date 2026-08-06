@@ -71,7 +71,7 @@ public sealed class CreateWorkCenterCommandHandler : ICommandHandler<CreateWorkC
     public CreateWorkCenterCommandHandler(IWorkCenterRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<WorkCenterDto>> HandleAsync(CreateWorkCenterCommand command, CancellationToken cancellationToken = default)
     {
-        var e = WorkCenter.Create(command.Code, command.Name, command.CapacityPerHour, command.Status, plantId: command.PlantId);
+        var e = WorkCenter.Create(SystemIdentifier.Ensure(command.Code, "WC"), command.Name, command.CapacityPerHour, command.Status, plantId: command.PlantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(WorkCenterMapper.ToDto(e));
