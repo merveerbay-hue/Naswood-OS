@@ -374,13 +374,14 @@ export function BomListPage() {
   const { bomFields } = usePrdFields();
   return (
     <EntityListScreen
-      screenId="PRD-002"
+      screenId="PRD-501"
       title={t('production.bom')}
       description={t('production.bomDesc')}
       route="boms"
       fields={bomFields}
       detailPath={(id) => `/production/master-data/boms/${id}`}
       createLabel={t('production.newBom')}
+      jobPath="/production/engineering/bom-builder"
     />
   );
 }
@@ -406,12 +407,13 @@ export function RoutingListPage() {
   const { bomFields } = usePrdFields();
   return (
     <EntityListScreen
-      screenId="PRD-004"
+      screenId="PRD-502"
       title={t('production.routing')}
       description={t('production.routingDesc')}
       route="routings"
       fields={bomFields}
       createLabel={t('production.newRouting')}
+      jobPath="/production/engineering/routing-designer"
     />
   );
 }
@@ -421,12 +423,13 @@ export function OperationsMasterPage() {
   const { codeNameStatus } = usePrdFields();
   return (
     <EntityListScreen
-      screenId="PRD-025"
+      screenId="PRD-506"
       title={t('production.operations')}
       description={t('production.operationsDesc')}
       route="operations"
       fields={codeNameStatus}
       createLabel={t('production.newOperation')}
+      jobPath="/production/engineering/operation-designer"
     />
   );
 }
@@ -436,12 +439,13 @@ export function MachinesMasterPage() {
   const { machineFields } = usePrdFields();
   return (
     <EntityListScreen
-      screenId="PRD-007"
+      screenId="PRD-503"
       title={t('production.machines')}
       description={t('production.machinesDesc')}
       route="machines"
       fields={machineFields}
       createLabel={t('production.newMachine')}
+      jobPath="/production/engineering/machine-studio"
     />
   );
 }
@@ -457,6 +461,7 @@ export function WorkCentersPage() {
       route="work-centers"
       fields={workCenterFields}
       createLabel={t('production.newWorkCenter')}
+      jobPath="/production/engineering/work-center-designer"
     />
   );
 }
@@ -472,6 +477,7 @@ export function ProductionLinesPage() {
       route="production-lines"
       fields={codeNameStatus}
       createLabel={t('production.newLine')}
+      jobPath="/production/engineering/line-designer"
     />
   );
 }
@@ -487,6 +493,7 @@ export function ShiftsPage() {
       route="shifts"
       fields={codeNameStatus}
       createLabel={t('production.newShift')}
+      jobPath="/production/engineering/shift-planner"
     />
   );
 }
@@ -502,6 +509,7 @@ export function CalendarsPage() {
       route="calendars"
       fields={codeNameStatus}
       createLabel={t('production.newCalendar')}
+      jobPath="/production/engineering/calendar-planner"
     />
   );
 }
@@ -517,6 +525,7 @@ export function ToolingsPage() {
       route="toolings"
       fields={codeNameStatus}
       createLabel={t('production.newTooling')}
+      jobPath="/production/engineering/tool-library"
     />
   );
 }

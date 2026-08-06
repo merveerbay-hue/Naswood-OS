@@ -35,9 +35,11 @@ export const productionWorkspaces: WorkspaceDefinition[] = [
   },
   {
     id: 'master-data',
-    label: 'Ana Veri',
+    label: 'Mühendislik',
     items: [
-      { id: 'prd-002', label: 'Ürün Ağacı (BOM)', path: '/production/master-data/boms', screenId: 'PRD-002' },
+      { id: 'prd-501', label: 'BOM Builder', path: '/production/engineering/bom-builder', screenId: 'PRD-501' },
+      { id: 'prd-503', label: 'Makine Studio', path: '/production/engineering/machine-studio', screenId: 'PRD-503' },
+      { id: 'prd-002', label: 'BOM Kütüphane', path: '/production/master-data/boms', screenId: 'PRD-002' },
       { id: 'prd-004', label: 'Rota', path: '/production/master-data/routings', screenId: 'PRD-004' },
       { id: 'prd-025', label: 'Operasyonlar', path: '/production/master-data/operations', screenId: 'PRD-025' },
       { id: 'prd-007', label: 'Makineler', path: '/production/master-data/machines', screenId: 'PRD-007' },

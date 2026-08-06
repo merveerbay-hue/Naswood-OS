@@ -94,6 +94,7 @@ export function MaterialListPage() {
       fields={fields}
       detailPath={(id) => `/inventory/master-data/materials/${id}`}
       createLabel={t('inventory.newMaterial')}
+      jobPath="/inventory/master-data/define-material"
     />
   );
 }
@@ -124,6 +125,7 @@ export function WarehouseListPage() {
       fields={useInvFields().warehouse}
       detailPath={(id) => `/inventory/master-data/warehouses/${id}`}
       createLabel={t('inventory.newWarehouse')}
+      jobPath="/inventory/master-data/define-warehouse"
     />
   );
 }

@@ -84,13 +84,24 @@ import {
   WorkOrderListPage,
 } from './modules/production/screens';
 import {
+  BomBuilderPage,
+  CalendarPlannerPage,
   CycleCountWizardPage,
   IssueWizardPage,
+  LineDesignerPage,
+  MachineStudioPage,
+  MaterialDefinePage,
+  OperationDesignerPage,
   PlanningWizardPage,
   PurchaseOrderWizardPage,
   ReceivingWizardPage,
+  RoutingDesignerPage,
   SalesOrderWizardPage,
+  ShiftPlannerPage,
+  ToolLibraryManagerPage,
   TransferWizardPage,
+  WarehouseDefinePage,
+  WorkCenterDesignerPage,
 } from './modules/shared/process/processWizardPages';
 
 export interface RouterContext {
@@ -174,6 +185,16 @@ const invLocationsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'master-data/locations',
   component: LocationListPage,
+});
+const invDefineMaterialRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/define-material',
+  component: MaterialDefinePage,
+});
+const invDefineWarehouseRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/define-warehouse',
+  component: WarehouseDefinePage,
 });
 const invBalancesRoute = createRoute({
   getParentRoute: () => inventoryRoute,
@@ -307,6 +328,16 @@ const productionIndexRoute = createRoute({
 const prdDashboard = createRoute({ getParentRoute: () => productionRoute, path: 'dashboard', component: ProductionDashboardPage });
 const prdOrders = createRoute({ getParentRoute: () => productionRoute, path: 'planning/orders', component: ProductionOrderListPage });
 const prdPlanWizard = createRoute({ getParentRoute: () => productionRoute, path: 'planning/plan', component: PlanningWizardPage });
+const prdBomBuilder = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/bom-builder', component: BomBuilderPage });
+const prdRoutingDesigner = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/routing-designer', component: RoutingDesignerPage });
+const prdMachineStudio = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/machine-studio', component: MachineStudioPage });
+const prdWcDesigner = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/work-center-designer', component: WorkCenterDesignerPage });
+const prdLineDesigner = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/line-designer', component: LineDesignerPage });
+const prdOpDesigner = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/operation-designer', component: OperationDesignerPage });
+const prdShiftPlanner = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/shift-planner', component: ShiftPlannerPage });
+const prdCalPlanner = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/calendar-planner', component: CalendarPlannerPage });
+const prdToolLib = createRoute({ getParentRoute: () => productionRoute, path: 'engineering/tool-library', component: ToolLibraryManagerPage });
+
 const prdOrderDetail = createRoute({ getParentRoute: () => productionRoute, path: 'planning/orders/$id', component: ProductionOrderDetailPage });
 const prdWorkOrders = createRoute({ getParentRoute: () => productionRoute, path: 'planning/work-orders', component: WorkOrderListPage });
 const prdScheduling = createRoute({ getParentRoute: () => productionRoute, path: 'planning/scheduling', component: SchedulingPage });
@@ -420,6 +451,17 @@ const implemented = new Set([
   '/production/dashboard',
   '/production/planning/orders',
   '/production/planning/plan',
+  '/production/engineering/tool-library',
+  '/production/engineering/calendar-planner',
+  '/production/engineering/shift-planner',
+  '/production/engineering/operation-designer',
+  '/production/engineering/line-designer',
+  '/production/engineering/work-center-designer',
+  '/production/engineering/machine-studio',
+  '/production/engineering/routing-designer',
+  '/production/engineering/bom-builder',
+  '/inventory/master-data/define-warehouse',
+  '/inventory/master-data/define-material',
   '/production/planning/work-orders',
   '/production/planning/scheduling',
   '/production/planning/capacity',
@@ -482,6 +524,8 @@ export const routeTree = rootRoute.addChildren([
       invWarehousesRoute,
       invWarehouseDetailRoute,
       invLocationsRoute,
+      invDefineMaterialRoute,
+      invDefineWarehouseRoute,
       invBalancesRoute,
       invLotsRoute,
       invReceiptsRoute,
@@ -524,6 +568,15 @@ export const routeTree = rootRoute.addChildren([
       prdDashboard,
       prdOrders,
       prdPlanWizard,
+      prdBomBuilder,
+      prdRoutingDesigner,
+      prdMachineStudio,
+      prdWcDesigner,
+      prdLineDesigner,
+      prdOpDesigner,
+      prdShiftPlanner,
+      prdCalPlanner,
+      prdToolLib,
       prdOrderDetail,
       prdWorkOrders,
       prdScheduling,
