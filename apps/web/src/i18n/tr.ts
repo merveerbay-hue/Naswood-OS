@@ -739,7 +739,16 @@ export const tr = {
       },
 
       ocrIntro: 'OCR sonucu — alanları kontrol edin, her şeyi yeniden yazmayın.',
-      ocrAccept: 'OCR çıkarımını kabul et / düzelttim',
+      ocrAccept: 'OCR çıkarımını kabul et',
+      ocrFixErrors: 'Hataları düzelt',
+      ocrApplySuggested: 'Önerilen düzeltmeleri uygula',
+      ocrSaveFixes: 'Düzeltmeleri kaydet',
+      ocrErrorsHint: 'Düşük güven / hatalı alanlar var — önce Hataları düzelt.',
+      ocrEditingHint: 'Yalnızca işaretli alanları düzeltin; tüm irsaliyeyi yeniden yazmayın.',
+      ocrNeedsFix: 'Düzelt',
+      ocrAcceptBlocked: 'Kabul için önce hataları düzeltip kaydedin.',
+      gateNeedOcrFix: 'AI belge hatalarını düzeltin (Hataları düzelt).',
+      gateNeedOcrSave: 'Düzeltmeleri kaydedin, sonra kabul edin.',
       ocrConfidence: 'Güven',
       ocrField: {
         material: 'Malzeme',

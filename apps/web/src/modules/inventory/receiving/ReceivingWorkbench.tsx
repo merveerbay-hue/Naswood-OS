@@ -46,7 +46,21 @@ const PHOTO_SLOTS = ['front', 'rear', 'side', 'cargo', 'seal'] as const;
 const DAMAGE_FLAGS = ['broken', 'wet', 'blueStain', 'crack', 'mold', 'rot', 'warping', 'mechanical', 'damage'] as const;
 const PHOTO_AI_FLAGS = ['bundles', 'damagedPkg', 'wet', 'mold', 'missingLabel', 'qr'] as const;
 
-const OCR_DEMO = {
+type OcrFieldKey = 'material' | 'dimensions' | 'quantity' | 'unit' | 'bundles' | 'supplier';
+
+const OCR_FIELD_KEYS: OcrFieldKey[] = ['material', 'dimensions', 'quantity', 'unit', 'bundles', 'supplier'];
+
+/** Demo extract — some fields start as low-confidence "errors" for Hataları düzelt. */
+const OCR_DEMO_INITIAL: Record<OcrFieldKey, { value: string; confidence: number; flagged: boolean }> = {
+  material: { value: 'Thermowood Deck 26×140×3000', confidence: 94, flagged: false },
+  dimensions: { value: '26 × 14O × 3000 mm', confidence: 61, flagged: true }, // OCR typo O vs 0
+  quantity: { value: '4B', confidence: 58, flagged: true }, // OCR typo
+  unit: { value: 'adet', confidence: 96, flagged: false },
+  bundles: { value: '4', confidence: 91, flagged: false },
+  supplier: { value: 'Nordlc Timber Oy', confidence: 72, flagged: true }, // OCR typo
+};
+
+const OCR_DEMO_CORRECTED: Record<OcrFieldKey, string> = {
   material: 'Thermowood Deck 26×140×3000',
   dimensions: '26 × 140 × 3000 mm',
   quantity: '48',
@@ -93,9 +107,13 @@ export function ReceivingWorkbench() {
   });
   const [photos, setPhotos] = useState<Record<string, boolean>>({});
   const [docs, setDocs] = useState<string[]>([]);
+  const [ocrFields, setOcrFields] = useState(OCR_DEMO_INITIAL);
+  const [ocrEditing, setOcrEditing] = useState(false);
   const [ocrAccepted, setOcrAccepted] = useState(false);
   const [verifyResolved, setVerifyResolved] = useState(false);
   const [countQty, setCountQty] = useState('48');
+
+  const ocrFlaggedCount = OCR_FIELD_KEYS.filter((k) => ocrFields[k].flagged).length;
   const [countMode, setCountMode] = useState<'scan' | 'sheet' | 'photo'>('scan');
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [inspectOk, setInspectOk] = useState(true);
@@ -114,6 +132,8 @@ export function ReceivingWorkbench() {
       case 'evidence':
         return docs.length === 0 ? t('wb.rcv.gateNeedDoc') : null;
       case 'aiDoc':
+        if (ocrEditing) return t('wb.rcv.gateNeedOcrSave');
+        if (ocrFlaggedCount > 0) return t('wb.rcv.gateNeedOcrFix');
         return !ocrAccepted ? t('wb.rcv.gateNeedOcr') : null;
       case 'compare':
       case 'materialVerify':
@@ -139,6 +159,8 @@ export function ReceivingWorkbench() {
     truck.supplier,
     docs.length,
     ocrAccepted,
+    ocrEditing,
+    ocrFlaggedCount,
     verifyResolved,
     countQty,
     photoAiAccepted,
@@ -164,7 +186,7 @@ export function ReceivingWorkbench() {
           `gate=${truck.gate}`,
           `qty=${countQty}`,
           `loc=${location}`,
-          `material=${OCR_DEMO.material}`,
+          `material=${ocrFields.material.value}`,
           `inspect=${inspectOk ? 'OK' : 'HOLD'}`,
           `flags=${DAMAGE_FLAGS.filter((f) => flags[f]).join(',') || 'none'}`,
           `docs=${docs.length}`,
@@ -412,20 +434,128 @@ export function ReceivingWorkbench() {
 
               {stage.id === 'aiDoc' ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ocrIntro')}</p>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ocrIntro')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {!ocrEditing ? (
+                        <Button
+                          type="button"
+                          variant={ocrFlaggedCount > 0 ? 'default' : 'secondary'}
+                          disabled={posted}
+                          onClick={() => {
+                            setOcrEditing(true);
+                            setOcrAccepted(false);
+                          }}
+                        >
+                          {t('wb.rcv.ocrFixErrors')}
+                          {ocrFlaggedCount > 0 ? ` (${ocrFlaggedCount})` : ''}
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => {
+                              setOcrFields((prev) => {
+                                const next = { ...prev };
+                                for (const k of OCR_FIELD_KEYS) {
+                                  next[k] = {
+                                    value: OCR_DEMO_CORRECTED[k],
+                                    confidence: 99,
+                                    flagged: false,
+                                  };
+                                }
+                                return next;
+                              });
+                              setCountQty(OCR_DEMO_CORRECTED.quantity);
+                            }}
+                          >
+                            {t('wb.rcv.ocrApplySuggested')}
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setOcrFields((prev) => {
+                                const next = { ...prev };
+                                for (const k of OCR_FIELD_KEYS) {
+                                  next[k] = { ...next[k], flagged: false, confidence: Math.max(next[k].confidence, 95) };
+                                }
+                                return next;
+                              });
+                              setCountQty(ocrFields.quantity.value.replace(/\D/g, '') || countQty);
+                              setOcrEditing(false);
+                            }}
+                          >
+                            {t('wb.rcv.ocrSaveFixes')}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {ocrFlaggedCount > 0 && !ocrEditing ? (
+                    <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.ocrErrorsHint')}</p>
+                  ) : null}
+                  {ocrEditing ? (
+                    <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ocrEditingHint')}</p>
+                  ) : null}
                   <div className="grid gap-2 md:grid-cols-2">
-                    {Object.entries(OCR_DEMO).map(([k, v]) => (
-                      <div key={k} className="rounded-md border border-[var(--border-default)] px-3 py-2">
-                        <p className="text-[10px] uppercase text-[var(--text-muted)]">{t(`wb.rcv.ocrField.${k}`)}</p>
-                        <p className="font-medium">{v}</p>
-                        <p className="text-[10px] text-[var(--color-primary)]">{t('wb.rcv.ocrConfidence')} 92%</p>
-                      </div>
-                    ))}
+                    {OCR_FIELD_KEYS.map((k) => {
+                      const field = ocrFields[k];
+                      const bad = field.flagged || field.confidence < 80;
+                      return (
+                        <div
+                          key={k}
+                          className={`rounded-md border px-3 py-2 ${
+                            bad
+                              ? 'border-[var(--color-danger)] bg-[var(--color-danger)]/5'
+                              : 'border-[var(--border-default)]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] uppercase text-[var(--text-muted)]">{t(`wb.rcv.ocrField.${k}`)}</p>
+                            {bad ? (
+                              <span className="text-[10px] font-semibold text-[var(--color-danger)]">
+                                {t('wb.rcv.ocrNeedsFix')}
+                              </span>
+                            ) : null}
+                          </div>
+                          {ocrEditing ? (
+                            <Input
+                              className="mt-1"
+                              value={field.value}
+                              onChange={(e) =>
+                                setOcrFields((prev) => ({
+                                  ...prev,
+                                  [k]: { ...prev[k], value: e.target.value, flagged: false },
+                                }))
+                              }
+                            />
+                          ) : (
+                            <p className="font-medium">{field.value}</p>
+                          )}
+                          <p
+                            className={`text-[10px] ${
+                              bad ? 'text-[var(--color-danger)]' : 'text-[var(--color-primary)]'
+                            }`}
+                          >
+                            {t('wb.rcv.ocrConfidence')} {field.confidence}%
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={ocrAccepted} onChange={(e) => setOcrAccepted(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={ocrAccepted}
+                      disabled={ocrEditing || ocrFlaggedCount > 0}
+                      onChange={(e) => setOcrAccepted(e.target.checked)}
+                    />
                     {t('wb.rcv.ocrAccept')}
                   </label>
+                  {ocrFlaggedCount > 0 ? (
+                    <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ocrAcceptBlocked')}</p>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -657,7 +787,7 @@ export function ReceivingWorkbench() {
                     {[
                       [t('wb.rcv.truck'), `${truck.plate || '—'} · ${truck.supplier} · Gate ${truck.gate}`],
                       [t('wb.rcv.documents'), `${docs.length} ${t('wb.rcv.files')}`],
-                      [t('wb.rcv.materials'), `${OCR_DEMO.material} · ${countQty} ${OCR_DEMO.unit}`],
+                      [t('wb.rcv.materials'), `${ocrFields.material.value} · ${countQty} ${ocrFields.unit.value}`],
                       [t('wb.rcv.diff'), verifyResolved ? t('wb.rcv.resolved') : t('wb.rcv.openDiffs')],
                       [t('wb.rcv.inspect'), inspectOk ? t('wb.rcv.visualOk') : DAMAGE_FLAGS.filter((f) => flags[f]).map((f) => t(`wb.rcv.flag.${f}`)).join(', ')],
                       [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
