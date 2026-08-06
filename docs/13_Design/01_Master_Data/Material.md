@@ -1,5 +1,19 @@
 # Material
 
+> **Status: Superseded**
+>
+> This document previously combined Product, commercial, purchasing, inventory
+> and physical Material concerns. It is retained for historical traceability
+> and shall not be used for implementation.
+>
+> Canonical ownership:
+>
+> - Product definition, Product Type and capabilities:
+>   `../01_Product_Management/Product_Management_Architecture.md`
+> - Physical Material and Material Master:
+>   `../02_Inventory/Material_Master.md`
+> - BOM: `../05_Production/BOM_Architecture.md`
+
 ## Purpose
 
 Material Master stores every raw material, semi-finished product and finished product used within Naswood OS.
@@ -24,7 +38,7 @@ Material Master stores every raw material, semi-finished product and finished pr
 
 **Version:** 1.0
 
-**Status:** Approved
+**Status:** Superseded
 
 ---
 

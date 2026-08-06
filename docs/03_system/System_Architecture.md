@@ -68,7 +68,8 @@ No module owns another module's data.
                  Manufacturing Core
                             │
  ┌─────────────────────────────────────────────────────────┐
- │ Material Engine                                         │
+ │ Product Management Engine                               │
+ │ Inventory Material Engine                               │
  │ Routing Engine                                          │
  │ Production Engine                                       │
  │ Inventory Engine                                        │
@@ -99,15 +100,29 @@ Naswood OS is divided into independent business engines.
 
 ---
 
-## Material Engine
+## Product Management Engine
 
 Responsible for:
 
-- Material Types
+- Product Master
+- Product Types
+- Product Capabilities
+- Product Revisions
+- Product Lifecycle
+
+---
+
+## Inventory Material Engine
+
+Responsible for:
+
+- Material Master
 - Material Instances
-- Material Transformations
 - Material Status
 - Material Locations
+
+Manufacturing owns transformation genealogy and references Inventory Material
+identifiers.
 
 ---
 
@@ -285,17 +300,25 @@ Each engine owns its own data.
 
 Examples
 
-Material Engine
+Inventory Engine
 
 owns
 
 Material Tables
 
-Inventory Engine
+Warehouse Tables
+
+Product Management Engine
 
 owns
 
-Warehouse Tables
+Product Tables
+
+Manufacturing
+
+owns
+
+BOM, Routing, Operation Definition and Genealogy Tables
 
 Quality Engine
 

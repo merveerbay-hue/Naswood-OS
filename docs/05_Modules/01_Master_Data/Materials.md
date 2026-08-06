@@ -1,8 +1,8 @@
-# Materials Module
+# Inventory Material Master
 
 **Project:** Naswood OS
 
-**Document:** Materials Module
+**Document:** Inventory Material Master
 
 **Version:** 1.0
 
@@ -14,7 +14,7 @@
 
 ## Module Name
 
-Materials
+Inventory Material Master
 
 ## Module Code
 
@@ -22,17 +22,19 @@ MOD-MAT
 
 ## Module Category
 
-Master Data
+Inventory
 
 ---
 
 ## Description
 
-The Materials module manages every physical material throughout its entire lifecycle within Naswood OS.
+Inventory Material Master owns every physical Material identity throughout its
+lifecycle within Naswood OS.
 
 A Material is any physical object that enters, is transformed within or exits the manufacturing process.
 
-Materials remain traceable from Receiving to Shipment through immutable Business Codes and Transformation records.
+Materials remain traceable from Receiving to Shipment through immutable
+Business Codes and Manufacturing-owned genealogy records.
 
 ---
 
@@ -40,9 +42,8 @@ Materials remain traceable from Receiving to Shipment through immutable Business
 
 - Establish a single source of truth for all materials
 - Maintain complete traceability
-- Support manufacturing transformations
-- Enable genealogy tracking
-- Integrate inventory and production
+- Support Manufacturing transformation references
+- Integrate Material identity with Inventory transactions and Production
 - Support AI-driven optimization
 
 ---
@@ -60,10 +61,6 @@ Material Identification
 Material Attributes
 
 Lifecycle Management
-
-Transformation Tracking
-
-Parent–Child Relationships
 
 Material Status Management
 
@@ -83,6 +80,8 @@ Material Attachments
 
 Inventory Transactions
 
+Transformation Genealogy
+
 Production Scheduling
 
 Sales Orders
@@ -95,13 +94,13 @@ Accounting
 
 ## Dependencies
 
-Master Data
+Product Management
 
-Inventory
+Inventory Ledger
 
 Production
 
-Transformation
+Manufacturing Genealogy
 
 Workflow
 
@@ -449,11 +448,23 @@ Package
 
 Material Business Codes are immutable.
 
+Inventory is the sole owner of Material Master and physical Material identity.
+
 Every Material shall have one Material Type.
 
 Every Material shall have one current state.
 
 Every Material shall support full traceability.
+
+Product creation, Product release, BOM release, planning and order creation
+shall never create Material automatically.
+
+Physical Material is created only by an authorized posted Inventory
+transaction such as goods receipt, production output or approved opening
+balance.
+
+Manufacturing owns transformation genealogy and references Inventory Material
+identifiers.
 
 Deleted Materials are not physically removed.
 
@@ -880,5 +891,11 @@ Recover material state using Event History, Audit Logs and Transformation record
 Materials are the digital representation of every physical object within Naswood OS.
 
 Each material has a unique identity, immutable Business Code and complete lifecycle history.
+
+Inventory owns Material identity and stock state. Manufacturing owns
+transformation genealogy. Product Management owns Product definitions.
+
+A Product is not a Material, and defining a Product never creates physical
+Material or stock.
 
 The Materials module forms the foundation of traceability, production control, inventory management, quality assurance and AI-driven manufacturing optimization.
