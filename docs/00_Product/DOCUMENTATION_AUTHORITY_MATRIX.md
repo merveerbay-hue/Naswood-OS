@@ -71,7 +71,7 @@ Manual entry is prohibited.
 | **UI Navigation (menu, workspace chrome, permissions map)** | [`docs/19_Navigation/`](../19_Navigation/) *(target; Platform Navigation until landed)* · [`docs/13_Design/00_Platform/Navigation.md`](../13_Design/00_Platform/Navigation.md) | Module Navigation docs, `nav-config` |
 | **Screen types (Wizard / Builder / Designer / Configuration / Terminal / …)** | [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md) | All module Screens, FE CTAs — **no shared Create**; **Master Data ≠ Create Form** |
 | **UI patterns (pattern anatomy)** | [`docs/13_Design/Common/UI_Patterns.md`](../13_Design/Common/UI_Patterns.md) | Screen PRDs compose patterns; steps stay in module flows |
-| **User experience (job screens & flows)** | Module **Screens** + **User Flows** (e.g. `Production_Screens.md`, `Inventory_Screens.md`) | Frontend — *not* numbering/genealogy; *not* a global Create form |
+| User experience (job screens & flows) | Module **Screens** + **User Flows** (e.g. `Production_Screens.md`, `Inventory_Screens.md`) · Inventory ops sequence: [`Inventory_Design_Program.md`](../13_Design/02_Inventory/Inventory_Design_Program.md) | Frontend — *not* numbering/genealogy; *not* a global Create form |
 | **Job-first screen naming** | [`docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md) | All Screens / Screen Map |
 | **NOS module → screen map** | [`docs/00_Product/NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md) | Navigation, FE routes |
 | **Product thinking protocol** | [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](../../AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md) | All design sessions |

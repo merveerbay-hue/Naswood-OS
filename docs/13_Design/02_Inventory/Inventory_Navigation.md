@@ -1,54 +1,55 @@
 # Inventory Navigation
 
 **Module:** Inventory  
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** Active  
 **Owns:** Sidebar / module nav labels and deep-link targets for Inventory  
 **Workspaces:** `Inventory_Workspaces.md`  
+**Screens:** `Inventory_Screens.md`  
 **Design program:** [`Inventory_Design_Program.md`](./Inventory_Design_Program.md)
 
 ---
 
-# Sidebar (job-oriented labels)
-
-Prefer **verbs / outcomes** over entity plurals for operations.  
-Ops order follows Design Program: Command Center → Receiving → Putaway → … → Shipping → Traceability → Analytics.
+# Authority references
 
 | Topic | Authority |
 |-------|-----------|
 | Workspaces | `Inventory_Workspaces.md` |
 | Job screens | `Inventory_Screens.md` |
+| Design sequence | `Inventory_Design_Program.md` |
 | Screen types / no Create | `Screen_Types.md` |
-| Receiving UX | `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md` |
+| Receiving UX | `INV_Receiving_Workbench.md` |
+| Command Center | `Inventory_Dashboard.md` |
 
 ---
 
 # Sidebar (job-oriented labels)
 
-Prefer **verbs / outcomes** over entity plurals for operations.
+Prefer **verbs / outcomes**. Ops order follows Design Program.
 
 ```text
 Inventory
-├── Komuta Merkezi / Command Center   → INV-001 (not KPI page)
+├── Komuta Merkezi                    → INV-001 Command Center ✓
 ├── Operations
-│   ├── Mal kabul başlat          → Receiving Workbench
-│   ├── Mal çıkışı                → Issue Wizard
-│   ├── Stok transfer             → Transfer Wizard
-│   ├── Kabul kayıtları           → Receipt Library (find & reopen)
-│   └── Putaway / Picking         → (future INV-027)
+│   ├── Mal kabul başlat              → Receiving Workbench ✓
+│   ├── Yerleştir (Putaway)           → INV-027 (next)
+│   ├── Kabul kayıtları               → Receipt Library
+│   ├── Stok transfer                 → Transfer Wizard
+│   ├── Mal çıkışı                    → Issue Wizard
+│   └── Sevkiyat                      → Shipping (queued)
 ├── Stock
+│   ├── Depo gezgini                  → Warehouse Explorer (queued)
 │   ├── Stok bakiyesi
-│   ├── Lot kütüphanesi
-│   ├── Seri kütüphanesi
-│   └── Rezervasyon masası
+│   ├── Lot / Material Identity
+│   ├── Rezervasyon masası
+│   └── İzlenebilirlik                → Traceability (queued)
 ├── Counts & Adjustments
-│   ├── Sayım başlat
+│   ├── Sayım başlat                  → Cycle Count
+│   ├── Fiziksel envanter             → Physical Inventory
 │   └── Düzeltme onayla
-├── Master Data
-│   ├── Malzeme kütüphanesi / Malzeme tanımla
-│   ├── Depolar
-│   └── Lokasyonlar
-├── Reports
+├── Master Data                       ← outside ops sequence
+│   ├── Malzeme / Depo / Lokasyon
+├── Reports                           → Analytics & Reports (item 12)
 ├── Analytics
 └── Settings
 ```
@@ -59,14 +60,15 @@ Inventory
 
 | Path (logical) | Target |
 |----------------|--------|
-| `/inventory` | **Warehouse Command Center** (INV-001) |
-| `/inventory/operations/receive` | **Receiving Workbench** (new session or resume draft) |
+| `/inventory` | Warehouse Command Center |
+| `/inventory/operations/receive` | Receiving Workbench |
+| `/inventory/operations/putaway` | Putaway *(next)* |
 | `/inventory/operations/receipts` | Receipt Library |
 | `/inventory/operations/issue` | Issue Wizard |
 | `/inventory/operations/transfer` | Transfer Wizard |
 | `/inventory/stock/balances` | Balance Inquiry |
 
-Query `?receivingId=` resumes a Draft/InProgress Workbench session.
+Query `?receivingId=` resumes Receiving; `?putawayId=` will resume Putaway.
 
 ---
 
@@ -75,11 +77,12 @@ Query `?receivingId=` resumes a Draft/InProgress Workbench session.
 | Wrong | Right |
 |-------|--------|
 | “Goods Receipts → + New” | **Mal kabul başlat** → Workbench |
-| “Create Warehouse Code” | **Depo yapılandır** / library |
-| Purchasing menu “Create GR” | Inventory **Mal kabul başlat** |
+| KPI Dashboard as home | **Komuta Merkezi** |
+| “Create Warehouse Code” | **Depo yapılandır** |
+| Designing Shipping before Putaway | Follow Design Program order |
 
 ---
 
 # Related
 
-`Inventory_Workspaces.md` · `Inventory_Screens.md` · `INV_Receiving_Workbench.md` · `NOS_SCREEN_MAP.md` § Inventory
+`Inventory_Design_Program.md` · `Inventory_Workspaces.md` · `Inventory_Screens.md` · `NOS_SCREEN_MAP.md`
