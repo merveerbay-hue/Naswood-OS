@@ -64,11 +64,18 @@ Truck arrives
 
 # Goods issue
 
+**UX authority:** `docs/00_Product/Process_Screens/INV_Goods_Issue_Workbench.md`  
+**Spine:** `INV_Issue_Wizard.md`
+
 ```text
-Demand (Production / Sales / Manual)
-→ Create GI (Draft)
-→ Pick lot/serial (existing)
-→ Post → Balance ↓ · Reservation clear
+Business document (Production / Maintenance / Sales / Sample / … / Manual+permission)
+→ Goods Issue Workbench (not Create form)
+→ Load required materials (no material create)
+→ AI recommend WH / location / lot / package (FIFO/FEFO/reservation/quality)
+→ Pick (scan) · Verify · Evidence · Quality gate
+→ Destination (production line / loading dock)
+→ Review · Post
+→ InventoryTransaction · balance ↓ · reservation clear · genealogy link · evidence archive
 ```
 
 ---

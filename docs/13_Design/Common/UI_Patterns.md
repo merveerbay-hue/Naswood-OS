@@ -337,7 +337,7 @@ Multi-pane session for **operational** warehouse desks or **engineering / qualit
 
 ### Used for
 
-- **Receiving Workbench** (truck → OCR → verify → count → inspect → Post)  
+- Receiving / Goods Issue Workbenches (Evidence First / scan-first)  
 - Shipping Workbench (future)  
 - Quality engineering  
 - BOM / routing engineering  
@@ -403,7 +403,8 @@ Task Inbox · Approval Bar · Diff / Summary · Status Badge
 | User says / CTA | Default screen type |
 |-----------------|---------------------|
 | Plan / Release production | Wizard |
-| Receive / Post GR | **Workbench** (`INV_Receiving_Workbench.md`) — Terminal only for scan-count companion |
+| Receive / Post GR | **Workbench** (`INV_Receiving_Workbench.md`) |
+| Issue / Post GI | **Workbench** (`INV_Goods_Issue_Workbench.md`) — Terminal for scan-pick companion |
 | Raise NCR | Wizard |
 | Open maintenance WO | Wizard |
 | Run operation on machine | Terminal |

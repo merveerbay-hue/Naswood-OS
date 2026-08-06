@@ -44,7 +44,7 @@ Inventory
 | Workspace | Primary CTAs (job verbs) | Not allowed |
 |-----------|--------------------------|-------------|
 | Dashboard | **Warehouse Command Center** — queues · exceptions · job CTAs | KPI wall / valuation charts (→ Reports) |
-| **Operations** | **Mal kabul başlat** → Receiving · **Putaway** (next) · Issue · Transfer · Ship | “Yeni Goods Receipt” |
+| **Operations** | **Mal kabul başlat** · **Mal çıkışı** (GI Workbench) · Putaway (next) · Transfer · Ship | “Yeni çıkış / Create GI” |
 | Stock | Warehouse Explorer · Balance · Lot / MI · Reservation · Traceability | Manual Lot / MI create |
 | Counts & Adjustments | Start count · Physical inventory · Post adjustment | Bare Create Adjustment |
 | Master Data | Malzeme tanımla · Depo yapılandır · Lokasyon ekle | Code * Create forms |
@@ -59,7 +59,8 @@ Inventory
 |-----|--------|------|------|
 | Run warehouse today | Command Center | Dashboard | `Inventory_Dashboard.md` |
 | Receive goods | Receiving Workbench | Workbench | `INV_Receiving_Workbench.md` |
-| Putaway | *(next)* | Terminal / Workbench | Design Program |
+| Issue goods | Goods Issue Workbench | Workbench | `INV_Goods_Issue_Workbench.md` |
+| Putaway | *(next in sequence)* | Terminal / Workbench | Design Program |
 
 Purchasing owns PO / supplier; Inventory owns truck-to-stock → putaway chain.
 

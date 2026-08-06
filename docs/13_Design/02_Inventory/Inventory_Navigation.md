@@ -19,6 +19,7 @@
 | Design sequence | `Inventory_Design_Program.md` |
 | Screen types / no Create | `Screen_Types.md` |
 | Receiving UX | `INV_Receiving_Workbench.md` |
+| Goods Issue UX | `INV_Goods_Issue_Workbench.md` |
 | Command Center | `Inventory_Dashboard.md` |
 
 ---
@@ -32,10 +33,10 @@ Inventory
 ├── Komuta Merkezi                    → INV-001 Command Center ✓
 ├── Operations
 │   ├── Mal kabul başlat              → Receiving Workbench ✓
-│   ├── Yerleştir (Putaway)           → INV-027 (next)
+│   ├── Mal çıkışı                    → Goods Issue Workbench ✓
+│   ├── Yerleştir (Putaway)           → INV-027 (next in sequence)
 │   ├── Kabul kayıtları               → Receipt Library
 │   ├── Stok transfer                 → Transfer Wizard
-│   ├── Mal çıkışı                    → Issue Wizard
 │   └── Sevkiyat                      → Shipping (queued)
 ├── Stock
 │   ├── Depo gezgini                  → Warehouse Explorer (queued)
@@ -64,7 +65,7 @@ Inventory
 | `/inventory/operations/receive` | Receiving Workbench |
 | `/inventory/operations/putaway` | Putaway *(next)* |
 | `/inventory/operations/receipts` | Receipt Library |
-| `/inventory/operations/issue` | Issue Wizard |
+| `/inventory/operations/issue` | Goods Issue Workbench |
 | `/inventory/operations/transfer` | Transfer Wizard |
 | `/inventory/stock/balances` | Balance Inquiry |
 

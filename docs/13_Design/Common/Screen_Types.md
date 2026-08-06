@@ -148,7 +148,7 @@ Shared `ResourcePage` / `EntityListScreen` create panels are **forbidden** for r
 | Module | Forbidden CTA | Correct CTA (TR / EN) | Type | Process / Screens |
 |--------|---------------|----------------------|------|-------------------|
 | Inventory | Yeni kabul / Create GR | **Mal kabul başlat** / Receive goods | **Workbench** | [`INV_Receiving_Workbench.md`](../../00_Product/Process_Screens/INV_Receiving_Workbench.md) |
-| Inventory | Yeni çıkış | **Mal çıkışı** / Issue goods | Wizard | [`INV_Issue_Wizard.md`](../../00_Product/Process_Screens/INV_Issue_Wizard.md) |
+| Inventory | Yeni çıkış | **Mal çıkışı** / Issue goods | **Workbench** | [`INV_Goods_Issue_Workbench.md`](../../00_Product/Process_Screens/INV_Goods_Issue_Workbench.md) |
 | Inventory | Yeni transfer | **Stok transfer** / Transfer stock | Wizard | [`INV_Transfer_Wizard.md`](../../00_Product/Process_Screens/INV_Transfer_Wizard.md) |
 | Inventory | Yeni sayım | **Sayım başlat** / Start count | Wizard | [`INV_Cycle_Count_Session.md`](../../00_Product/Process_Screens/INV_Cycle_Count_Session.md) |
 | Inventory | Yeni düzeltme | **Düzeltme onayla** / Post adjustment | Approval / Workbench | `Inventory_Screens.md` |

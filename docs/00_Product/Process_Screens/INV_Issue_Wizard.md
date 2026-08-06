@@ -1,37 +1,48 @@
-# INV-ISS-001 — Issue Goods Wizard
+# INV-ISS-001 — Issue Goods — **rules spine**
 
 **Module:** Inventory · **Workspace:** Operations  
-**Screen type:** Wizard — `Screen_Types.md`  
-**Replaces:** “Yeni çıkış” / Create Goods Issue form
+**Status:** Rules retained · **UX authority:** [`INV_Goods_Issue_Workbench.md`](./INV_Goods_Issue_Workbench.md)  
+**Replaces as UI:** “Yeni çıkış” / Create Goods Issue form
 
-## Job to be done
+---
 
-> Operatör, talebe (üretim / satış / manuel) karşı stoğu **seçilen lot/seri** ile çıkarır ve **Post** ile bakiyeyi düşer.
+## Supersession
 
-**Not the job:** “Create a GoodsIssue row.”
+Full UX = **Goods Issue Workbench** (scan · AI recommend · evidence · Post).  
+This file keeps demand → pick existing Lot/MI → qty → Post gates.
+
+---
+
+## Job
+
+> Operatör, talebe karşı stoğu **tarayarak / doğrulayarak** çıkarır; **Post** ile bakiye düşer. Create formu değil.
 
 ## CTA
 
-**Issue goods** / **Mal çıkışı** — never “Yeni çıkış.”
+**Issue goods** / **Mal çıkışı**
 
-## Steps
+## Spine (Workbench)
 
 ```text
-1. Talep / referans seç (Production · Sales · Manual)
-2. Satırlar & açık miktar
-3. Kaynak depo / lokasyon
-4. Lot / seri seç (mevcut — Numbering mint yok)
-5. Miktar doğrula (≤ available / reserved)
-6. Post
+1 Business document (PO / WO / SO / … / Manual+permission)
+2 Load required materials (no material create)
+3 AI recommend WH / location / lot / package
+4 Pick (scan)
+5 Verify · Quality gate
+6 Evidence (as needed)
+7 Destination (line / dock)
+8 Review → Post
 ```
 
 ## Gates
 
-- Reference or explicit manual policy.  
-- Qty > 0 and ≤ available (policy).  
-- Lot/serial required when material is lot/serial-controlled.  
-- Reservation cleared on post when applicable.
+- Business reason / reference required (Manual = permission + reason).  
+- Qty > 0 and ≤ available / reserved (policy).  
+- Existing Lot / Serial / MI when controlled — select/scan, never type codes.  
+- Quality not blocking.  
+- Reservation cleared on Post when applicable.  
+- GI + inventory txn numbers via Numbering only.
 
 ## Related
 
-`Inventory_Screens.md` · `Inventory_Workflow.md` · FLOW-INV-002 · `Document_Numbering.md` (identity rules only)
+`INV_Goods_Issue_Workbench.md` · `Inventory_Workflow.md` · FLOW-INV-002 · `Document_Numbering.md`

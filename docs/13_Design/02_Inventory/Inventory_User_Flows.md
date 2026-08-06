@@ -51,16 +51,20 @@ Warehouse Command Center / Operations
 
 ---
 
-# FLOW-INV-002 — Issue to production
+# FLOW-INV-002 — Issue goods
 
-**Job:** Issue components to a released production demand.
+**Job:** Issue materials against a business demand so stock decreases under full control.  
+**Authority:** `INV_Goods_Issue_Workbench.md` · spine: `INV_Issue_Wizard.md`
 
 ```text
-Operations → Issue Goods
-→ Select Production reference
-→ Pick lot/serial
-→ Post GI
-→ Reservation cleared · Production may consume
+Command Center / Operations
+→ Issue goods / Mal çıkışı (Goods Issue Workbench — not Create form)
+→ Select business document (Production / Maintenance / Sales / … / Manual+permission)
+→ Load required materials (no material create)
+→ AI recommend pick (WH / location / lot / package)
+→ Scan pick · Verify · Evidence · Quality gate
+→ Destination (line / dock) · Review · Post
+→ Balance ↓ · reservation clear · genealogy · evidence archive
 ```
 
 ---

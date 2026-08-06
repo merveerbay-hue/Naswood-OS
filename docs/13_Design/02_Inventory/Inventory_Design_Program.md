@@ -29,11 +29,11 @@ AI drafts the process PRD only for the **active** row.
 |---|--------------|--------------|----------------------|---------------|
 | 1 | **Dashboard (Operations Center)** | Depo Komuta Merkezi | Dashboard / Command Center | **Done** — `Inventory_Dashboard.md` |
 | 2 | **Receiving** | Mal Kabul | Workbench (Evidence First) | **Done** — `INV_Receiving_Workbench.md` |
-| 3 | **Putaway** | Depolama / Yerleştirme | Terminal / Workbench | **Next** — TBD |
+| 3 | **Putaway** | Depolama / Yerleştirme | Terminal / Workbench | **Next** (ops sequence) — TBD |
 | 4 | **Warehouse Explorer** | Depo Gezgini | Explorer | Queued |
-| 5 | **Stock Transfer** | Stok Transfer | Wizard | Queued — spine exists `INV_Transfer_Wizard.md` (evolve under this program) |
+| 5 | **Stock Transfer** | Stok Transfer | Wizard | Queued — spine `INV_Transfer_Wizard.md` |
 | 6 | **Material Reservation** | Malzeme Rezervasyonu | Desk / Workbench | Queued — INV-030 |
-| 7 | **Goods Issue** | Mal Çıkışı | Wizard / Terminal | Queued — spine `INV_Issue_Wizard.md` |
+| 7 | **Goods Issue** | Mal Çıkışı | **Workbench** | **Done (PA-directed)** — `INV_Goods_Issue_Workbench.md` |
 | 8 | **Cycle Count** | Çevrim Sayımı | Wizard / Session | Queued — spine `INV_Cycle_Count_Session.md` |
 | 9 | **Physical Inventory** | Envanter Sayımı | Session / Workbench | Queued — INV-023 |
 | 10 | **Shipping** | Sevkiyat | Workbench / Console | Queued |
@@ -115,10 +115,11 @@ NOT a CRUD / Create form.
 ## Active focus
 
 ```text
-NEXT → 3. Putaway (Depolama / Yerleştirme)
+NEXT (sequence)     → 3. Putaway
+LAST COMPLETED      → 7. Goods Issue Workbench (Product Architect directed)
 ```
 
-When Putaway is requested, draft `INV_Putaway_Workbench.md` (or Terminal) using the template above, then update `Inventory_Screens.md` · `Inventory_Workflow.md` · `Inventory_Navigation.md`.
+Human may jump the sequence; status table records what is Done.
 
 ---
 

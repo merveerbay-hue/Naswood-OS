@@ -16,7 +16,8 @@ These PRDs replace shared **Create / Yeni** entity forms.
 |------|-----|------|
 | [`INV_Receiving_Workbench.md`](./INV_Receiving_Workbench.md) | Receive goods / Mal kabul başlat | **Workbench** (Evidence First · v1.1) |
 | [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) | *(spine — Depo → Material Identity)* | see Workbench |
-| [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) | Issue goods / Mal çıkışı | Wizard |
+| [`INV_Goods_Issue_Workbench.md`](./INV_Goods_Issue_Workbench.md) | Issue goods / Mal çıkışı | **Workbench** |
+| [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) | *(spine — demand → pick → Post)* | see Workbench |
 | [`INV_Transfer_Wizard.md`](./INV_Transfer_Wizard.md) | Transfer stock / Stok transfer | Wizard |
 | [`INV_Cycle_Count_Session.md`](./INV_Cycle_Count_Session.md) | Start count / Sayım başlat | Wizard |
 | [`PRD_Production_Planning_Wizard.md`](./PRD_Production_Planning_Wizard.md) | Plan production / Üretim planla | Wizard |
