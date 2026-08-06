@@ -41,6 +41,12 @@ The roadmap provides a strategic view of the platform evolution and helps priori
 
 # 4. Product Phases
 
+Phase 0
+
+Architecture Resolution
+
+↓
+
 Phase 1
 
 Foundation
@@ -71,6 +77,34 @@ Enterprise Expansion
 
 ---
 
+# 4.1 Phase 0 — Architecture Resolution
+
+Phase 0 is a mandatory implementation gate.
+
+Deliverables:
+
+- Constitution hierarchy confirmation
+- Canonical module catalog
+- Entity ownership matrix
+- API and event contract alignment
+- Database and transaction standards
+- Authentication and authorization boundaries
+- Workflow ownership and execution contract
+- Documentation contradiction register
+- Business decision queue
+- Architecture readiness review
+
+No source-code implementation may begin for a capability whose architecture,
+business ownership or required documentation remains unresolved.
+
+Reference:
+
+- `Phase_0_Architecture_Resolution.md`
+- `Module_Boundaries_and_Ownership.md`
+- `Phase_0_Canonical_Contracts.md`
+
+---
+
 # 5. Strategic Priorities
 
 - Manufacturing
@@ -92,6 +126,9 @@ Enterprise Expansion
 - Performance
 - Integration Coverage
 - AI Maturity
+- Architecture Readiness
+- Documentation Consistency
+- Contract Compatibility
 
 ---
 
