@@ -1,48 +1,10 @@
 import { useI18n } from '@/i18n';
 import { ProcessWizard } from './ProcessWizard';
+import { ReceivingWorkbench } from '@/modules/inventory/receiving/ReceivingWorkbench';
 
+/** INV-RCV-001 — Receiving Workbench (not Create/CRUD form). */
 export function ReceivingWizardPage() {
-  const { t } = useI18n();
-  return (
-    <ProcessWizard
-      screenId="INV-RCV-001"
-      title={t('wizard.receivingTitle')}
-      description={t('wizard.receivingDesc')}
-      finishLabel={t('wizard.post')}
-      libraryPath="/inventory/operations/goods-receipts"
-      libraryLabel={t('wizard.backToLibrary')}
-      autoCodeHint="GR-… · LOT-…"
-      persistRoute="goods-receipts"
-      mapBody={(v) => ({ warehouseCode: v.wh?.includes('Ana') ? 'WH-RM' : (v.wh || 'WH-RM'), reference: v.po || 'MANUAL', status: 'Draft', notes: `qty=${v.qty||''} loc=${v.loc||''}`, number: '' })}
-      steps={[
-        {
-          title: t('wizard.rcv.po'),
-          hint: t('wizard.rcv.poHint'),
-          fields: [{ key: 'po', label: t('wizard.rcv.po'), placeholder: 'PO-2026-… (referans)' }],
-        },
-        { title: t('wizard.rcv.lines'), hint: t('wizard.rcv.linesHint') },
-        {
-          title: t('wizard.rcv.qty'),
-          hint: t('wizard.rcv.qtyHint'),
-          fields: [{ key: 'qty', label: t('wizard.rcv.qty'), type: 'number' }],
-        },
-        {
-          title: t('wizard.rcv.wh'),
-          hint: t('wizard.rcv.whHint'),
-          fields: [{ key: 'wh', label: t('wizard.rcv.wh'), placeholder: 'Ana Depo' }],
-        },
-        {
-          title: t('wizard.rcv.loc'),
-          hint: t('wizard.rcv.locHint'),
-          fields: [{ key: 'loc', label: t('wizard.rcv.loc'), placeholder: 'A-01' }],
-        },
-        { title: t('wizard.rcv.lot'), hint: t('wizard.rcv.lotHint') },
-        { title: t('wizard.rcv.qi'), hint: t('wizard.rcv.qiHint') },
-        { title: t('wizard.rcv.label'), hint: t('wizard.rcv.labelHint') },
-        { title: t('wizard.rcv.post'), hint: t('wizard.rcv.postHint') },
-      ]}
-    />
-  );
+  return <ReceivingWorkbench />;
 }
 
 export function IssueWizardPage() {
