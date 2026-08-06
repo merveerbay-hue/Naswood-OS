@@ -46,6 +46,18 @@ Engineering masters (BOM, Machine, Routing, …) use **Builder / Designer / Conf
 ✔ Business Object → Business Workspace → Business Designer
 ```
 
+### System generated identifiers + name-first UX
+
+**Authority:** [`Document_Numbering.md`](docs/13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3
+
+```text
+✘  Code *  ________
+✔  System Code — Automatically generated after save / on Release
+✔  Pickers by name (Ürün 🔍 Thermowood Deck …) — not by typed product code
+```
+
+Never generate editable Code / Number / Lot / Warehouse Code fields on data-entry screens.
+
 
 **We design. Cursor applies.**
 

@@ -14,22 +14,22 @@
 
 ```text
 NOS'ta "New" / "Create" diye tek tip ekran YOKTUR.
-```
-
-```text
 NOS'ta Master Data ekranları "Create Form" değildir.
+Kullanıcı kodlarla değil isimlerle çalışır; teknik kimlikler Numbering Service ile üretilir.
 ```
 
 Master Data screens are **Designer · Builder · Planner · Configuration · Workbench** surfaces.  
 The user does not merely create a record — they **define, validate, relate, simulate, and Release** production (or domain) knowledge.
 
+**Identifiers:** Authority `Document_Numbering.md` § System Generated Identifiers · Constitution § 2.3
+
 | Wrong | Right |
 |-------|--------|
 | Shared `Create` ResourcePage for every entity | Screen type chosen per job |
-| Machine Code · Name · Save | **Machine Configuration** (identity · layout · technical · capability · maintenance · documents → Release) |
-| BOM Code · Description · Save | **BOM Builder** (product → tree → alternatives → scrap → ops → Approve → Release) |
-| Routing Code · Save | **Routing Designer** |
-| “Yeni” → same fields + Save | Job CTA → Wizard / Builder / Designer / Terminal / … |
+| `Code *` ________ | System Code — auto after save / on Release (read-only info) |
+| Product Code typed in picker | **Ürün** 🔍 Thermowood Deck 26×140×3000 (name-first) |
+| Machine Code · Name · Save | **Machine Configuration** (business facets → Release; `MC-…` auto) |
+| BOM Code · Description · Save | **BOM Builder** → Release |
 | Entity → Form | **Business Object → Business Workspace → Business Designer** |
 
 Reusable **components** (grid, filter, stepper, tree, canvas) are shared.  
@@ -178,6 +178,24 @@ Historical `docs/14_Implementation/**` TASK wireframes that say `+ New` / `Creat
 | Create · Edit · Delete as the product | Library find + Designer/Builder **Release** |
 
 Finish actions for engineering: **Validate** · **Submit for approval** · **Release** (not bare Save).
+
+---
+
+## 4b. Identifier fields (never editable Code *)
+
+**Authority:** `Document_Numbering.md` § System Generated Identifiers
+
+```text
+❌  Code *
+    _______________
+
+✅  System Code / Identifier
+    Automatically generated after save
+    (or on Release — process-dependent)
+```
+
+Pickers are **name-first**. Internal IDs and codes are not user input.  
+Any generated Create UI with an editable Code/Number/Lot field is a **defect**.
 
 ---
 

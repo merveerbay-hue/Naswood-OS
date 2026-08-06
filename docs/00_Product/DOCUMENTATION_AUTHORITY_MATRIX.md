@@ -62,7 +62,7 @@ Manual entry is prohibited.
 
 | Topic | Authority document | Consumers may only reference (examples) |
 |-------|-------------------|----------------------------------------|
-| **Numbering / business & material IDs** | [`docs/13_Design/99_Shared/Document_Numbering.md`](../13_Design/99_Shared/Document_Numbering.md) *(Core Identity & Numbering Architecture)* | Production/Inventory Screens, User Flows, Workflows, APIs, TASKs |
+| Numbering / all system identifiers (codes, lots, WH, machine, docs) + **name-first UX** | [`docs/13_Design/99_Shared/Document_Numbering.md`](../13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3 | All Screens, Wizards, Builders, FE forms — **no editable Code *** |
 | **Genealogy (parent–child material history)** | [`docs/05_Modules/02_Production/Material_Genealogy.md`](../05_Modules/02_Production/Material_Genealogy.md) + Production Architecture genealogy sections | Production Screens/Flows, Quality Traceability UI, Inventory |
 | **Traceability (forward/backward inquiry UX & QMS view)** | Quality Architecture [`docs/13_Design/06_Quality/Quality_Architecture.md`](../13_Design/06_Quality/Quality_Architecture.md) **and** Inventory Architecture [`docs/13_Design/02_Inventory/Inventory_Architecture.md`](../13_Design/02_Inventory/Inventory_Architecture.md) — *joint; Genealogy owns the graph* | QLT Traceability screens, INV lot/serial inquiry |
 | **Capability Profile** | Product / Master Data — [`docs/05_Modules/01_Master_Data/Products.md`](../05_Modules/01_Master_Data/Products.md) *(until dedicated Product Architecture exists)* | BOM, Production Order, Purchasing, Inventory validations |

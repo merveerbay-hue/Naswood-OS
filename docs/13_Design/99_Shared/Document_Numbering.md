@@ -4,19 +4,21 @@
 
 **Category:** Numbering Strategy
 
-**Version:** 1.0
-
-**Status:** Approved
+**Version:** 1.1  
+**Status:** Approved  
 
 ---
 
 # Purpose
 
-The Document Numbering standard defines how unique business document numbers are generated, formatted and managed across all modules within Naswood OS.
+The Document Numbering standard defines how unique business document numbers
+**and all system identifiers (codes)** are generated, formatted and managed
+across Naswood OS.
 
 A centralized numbering engine ensures consistency, uniqueness, traceability and compliance throughout the platform.
 
-All business documents must receive their identifiers from the shared Numbering Engine.
+All business documents **and master / physical identifiers** must receive their
+codes from the shared Numbering Engine — never from user-typed Code fields.
 
 ---
 
@@ -319,6 +321,100 @@ Import
 
 ---
 
+# System Generated Identifiers (Constitution-level UX law)
+
+**Constitution pointer:** `AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md` § 2.3  
+**This section is authoritative** for which IDs are auto-minted and how UI presents them.
+
+```text
+Business users shall never manually create or edit system identifiers.
+
+All identifiers including codes, document numbers, lot numbers, serial numbers,
+warehouse codes, package IDs, pallet IDs, machine codes and transaction numbers
+shall be generated exclusively by the NOS Numbering Service.
+
+Data entry forms shall capture business information only.
+
+Technical identifiers are assigned automatically during creation or release,
+depending on the business process.
+
+Users work with names — not codes. Codes are display-only when shown.
+```
+
+## What users enter vs what the system assigns
+
+| Object | User enters (business) | System assigns (never typed) | When minted |
+|--------|------------------------|------------------------------|-------------|
+| Material | Ad · Tip · Grup · Ağaç türü · Ölçüler · Birim · Capability · … | `MAT-…` | On save / first persist |
+| Warehouse | Depo adı · Tip · Fabrika · Sorumlu · … | `WH-…` | On save |
+| Location | Ad · Zone · … | `LOC-…` (policy) | On save |
+| Machine | Makine adı · Üretici · Model · … (Configuration facets) | `MC-…` | On save / Release |
+| Production Order | Ürün (by **name**) · qty · dates · … | `PO-2026-…` | On **Release** (draft may show “atanacak”) |
+| Goods Receipt | PO · qty · Depo · … | `GR-…` | On Post / save per policy |
+| Lot / Batch | *(nothing — category drives series)* | `LOT-…` | On GR line / process mint |
+| Serial | *(nothing)* | `SN-…` | On mint |
+| Package | business pack attrs | Package ID | On mint |
+| Pallet | business pallet attrs | Pallet ID | On mint |
+| Sales / Purchase Order | müşteri/tedarikçi (**name**) · lines | `SO-…` / `PO-…` (purchasing) | On Release / policy |
+
+## UI presentation (mandatory)
+
+### Forbidden
+
+```text
+❌  Code *
+    _______________
+
+❌  Warehouse Code
+    _______________
+
+❌  Production Order No
+    _______________
+
+❌  Lot No
+    _______________
+
+❌  Product Code   PRD-001245   (as the primary picker / typed field)
+```
+
+### Required
+
+```text
+✅  System Code / Identifier
+    Automatically generated after save
+    — or —
+    Generated automatically according to numbering rules
+    — or —
+    (Release edilince atanır)   for documents minted on Release
+
+✅  After persist: show read-only  MAT-000012548 · WH-0008 · PO-2026-000145
+```
+
+Corner badge / header may show the code **as information only** once known; never as an editable control.
+
+## Name-first selection (mandatory)
+
+Users select business objects by **human name / description**, not by typing codes.
+
+| Wrong | Right |
+|-------|--------|
+| Product Code → `PRD-001245` | **Ürün** 🔍 `Thermowood Deck 26×140×3000` |
+| Material Code → type `MAT-…` | **Malzeme** 🔍 name · species · dimension |
+| Warehouse Code → type `WH-…` | **Depo** 🔍 `Ana Depo` |
+
+The system stores and uses `ProductId`, `RevisionId`, `MaterialId`, etc. internally.  
+Users do not see or enter those IDs during data entry. Codes may appear in Library grids as secondary columns for search/trace — pickers remain name-first.
+
+## Scope of “manual entry prohibited”
+
+Applies to **all** system identifiers listed above (and series configured in Numbering).  
+Selecting an **existing** Lot/Serial/Package for consumption/issue is allowed.  
+**Minting** a new identity is Numbering Service only — no fallback to free-text.
+
+Admin configuration of **numbering series** (prefixes, pads) is Settings — not end-user forms.
+
+---
+
 # Material & Production Identifiers (authoritative)
 
 This section is the **single source of truth** for physical and production
@@ -326,29 +422,31 @@ identity numbers. Other documents (Screens, User Flows, Workflows, TASKs)
 must **reference** this section — they must not restate or weaken it.
 
 ```text
-Material, Lot, Serial, Package, Pallet and Production identifiers
-are generated exclusively by the NOS Numbering Service as defined
+Material, Lot, Serial, Package, Pallet, Warehouse, Machine, and Production
+identifiers are generated exclusively by the NOS Numbering Service as defined
 in this Core Identity & Numbering Architecture
 (docs/13_Design/99_Shared/Document_Numbering.md).
 
-Manual entry is prohibited.
+Manual entry is prohibited. Users work with names; codes are display-only.
 ```
 
 Applies to (non-exhaustive):
 
-- Material / Product instance identifiers where numbered
-- Lot / Batch numbers
-- Serial numbers
-- Package numbers
-- Pallet numbers
-- Production Order / Work Order / Operation execution numbers (business IDs)
+- Material / Product catalog codes  
+- Warehouse / Location codes  
+- Machine / Work Center / Line codes (where numbered)  
+- Lot / Batch numbers  
+- Serial numbers  
+- Package numbers  
+- Pallet numbers  
+- Production Order / Work Order / Operation execution numbers (business IDs)  
+- Inventory / Purchasing / Sales transaction document numbers
 
 UI and APIs may **display** these identifiers. They must not accept user-typed
 values for creation. Selection of an *existing* Lot/Serial for consumption is
 allowed; minting a new identity is Numbering Service only.
 
-Business documents (PO, SO, GR, Invoice, …) remain under the general rules above
-(automatic by default; manual override only with explicit permission).
+Business documents mint on **create or Release** per process (e.g. Production Order number on Release). Draft UI shows “Numara sistem tarafından atanacaktır” — never an empty Code input.
 
 ### Lot / Batch series by material category (authoritative)
 
@@ -391,9 +489,11 @@ Document Number must be unique.
 
 Prefix must match document type.
 
-Manual numbering requires authorization (business documents only).
+Manual numbering requires authorization — **legacy / exception path only** for rare legal overrides of **business documents**.  
+It does **not** apply to Material, Warehouse, Machine, Lot, Serial, Package, Pallet, or Production Order codes — those are **never** manually entered (see § System Generated Identifiers).
 
-Material / Lot / Serial / Package / Pallet / Production identifiers: **no manual entry**.
+Material / Lot / Serial / Package / Pallet / Warehouse / Machine / Production identifiers: **no manual entry**.
+Name-first pickers; codes display-only.
 
 ---
 

@@ -23,6 +23,7 @@ The answer is the screen — **not** a shared Create form.
 ```text
 NOS'ta "New" diye tek tip ekran yoktur.
 NOS'ta Master Data ekranları "Create Form" değildir.
+Kullanıcı kodlarla değil isimlerle çalışır; kimlikler Numbering Service ile üretilir.
 ```
 
 Not:

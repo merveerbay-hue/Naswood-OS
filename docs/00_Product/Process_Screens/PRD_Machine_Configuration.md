@@ -30,7 +30,7 @@ A real machine definition does not fit Code · Name · Save. Facets:
 
 | Facet | Content |
 |-------|---------|
-| **Kimlik** | Makine tipi · grup · üretici · model · seri no · asset kodu · (system) machine code via Numbering |
+| **Kimlik** | Makine **adı** · tip · grup · üretici · model · seri no · asset kodu · (system) machine code via Numbering — **never a Code * input**; show “Otomatik atanacak” then `MC-…` |
 | **Yerleşim** | Fabrika · bina · hat · work center · pozisyon |
 | **Teknik** | Eksen sayısı · max en / boy / kalınlık · devir · güç · voltaj |
 | **Üretim** | Yapabildiği operasyonlar · desteklenen ağaç türleri · ürünler · tool magazine · setup süresi · cycle time |

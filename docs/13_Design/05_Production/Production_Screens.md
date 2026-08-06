@@ -26,13 +26,15 @@ See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
 
 | Topic | Authority — reference only |
 |-------|----------------------------|
-| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Numbering / system identifiers + name-first UX | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers · Constitution § 2.3 |
 | Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
 | Inventory ownership / stock posting | `docs/13_Design/02_Inventory/Inventory_Architecture.md` |
 | Production execution process | `docs/13_Design/05_Production/Production_Workflow.md` |
 | Job-first naming | `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md` |
+| Screen types | `docs/13_Design/Common/Screen_Types.md` |
 
-Do **not** repeat rules such as “lot number is system-generated” here — link the Numbering authority.
+Do **not** repeat identifier algorithms here — link Numbering.  
+Do **not** design editable `Code *` fields — codes are auto; pickers are name-first (e.g. Ürün 🔍 Thermowood Deck …).
 
 ---
 
@@ -71,6 +73,9 @@ Screen types authority: `docs/13_Design/Common/Screen_Types.md` § 1 · § 2b ·
 Patterns: `docs/13_Design/Common/UI_Patterns.md`  
 CTA ops: **Üretim planla / Plan production** — never bare “Yeni”.  
 CTA engineering: **Build BOM** · **Configure machine** · **Design routing** · **Release**.
+
+**Identifiers (reference Numbering):** Machine/BOM/Order codes auto (`MC-…`, BOM rev, `PO-2026-…` on Release).  
+User enters names and business facets only — never `Code *` ________.
 
 ---
 

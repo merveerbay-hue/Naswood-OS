@@ -187,7 +187,9 @@ Define a rich multi-facet resource (does not fit one page).
 
 - Facets required by policy before Release.  
 - Documents via Platform File Upload (typed roles).  
-- Never reduce to Code · Name · Save.
+- Never reduce to Code · Name · Save.  
+- **No editable Code * field** — System Code shows “Automatically generated…” then read-only minted value (`Document_Numbering.md`).  
+- Related-object pickers are **name-first** (product/material/warehouse by name).
 
 ---
 

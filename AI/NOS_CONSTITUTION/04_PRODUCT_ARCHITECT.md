@@ -71,10 +71,9 @@ Lot numarası sistem tarafından üretilir.
 Example — **right** (reference only):
 
 ```text
-Material, Lot, Serial, Package, Pallet and Production identifiers
-are generated exclusively by the NOS Numbering Service as defined
-in Document_Numbering.md (Core Identity & Numbering Architecture).
-Manual entry is prohibited.
+Identifiers are generated exclusively by the NOS Numbering Service
+as defined in Document_Numbering.md. Manual entry is prohibited.
+Users work with names; codes are display-only.
 ```
 
 ## 2.2 No shared Create / “Yeni” form — and Master Data ≠ Create Form
@@ -96,6 +95,30 @@ NOS'ta Master Data ekranları "Create Form" değildir.
 
 Production engineering: BOM Builder · Routing Designer · Machine Configuration · … (`Production_Screens.md` PRD-501…509).
 
+## 2.3 SYSTEM GENERATED IDENTIFIERS (Constitution)
+
+**Authority (full rules + UX):** [`docs/13_Design/99_Shared/Document_Numbering.md`](../../docs/13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers
+
+```text
+Business users shall never manually create or edit system identifiers.
+
+All identifiers — codes, document numbers, lot / serial / package / pallet IDs,
+warehouse codes, machine codes, transaction numbers — are generated exclusively
+by the NOS Numbering Service.
+
+Data entry captures business information only (names, types, measures, relations).
+Technical identifiers are assigned automatically on create or Release per process.
+Users work with names; codes are informational when shown — never input fields.
+```
+
+| Wrong | Right |
+|-------|--------|
+| `Code *` ________ | System Code — automatically generated after save / on Release |
+| Product Code `PRD-001245` typed or as primary picker | **Ürün** 🔍 Thermowood Deck 26×140×3000 |
+| Lot No ________ for operator | System mints `LOT-…` (operator never types) |
+| Warehouse Code ________ | Depo Adı · Tip · Fabrika · Sorumlu → save → `WH-0008` |
+
+Cursor must not generate Create screens with editable Code / Number / Identifier fields.
 
 ```text
 Design first  →  Document second  →  Cursor implements last

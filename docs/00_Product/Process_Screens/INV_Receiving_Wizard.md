@@ -87,7 +87,9 @@ Depo, lot’tan **önce** seçilir — stok hedefi net olmadan kimlik basılmaz 
 | **Intent** | Her kabul satırı için yeni lot kimliği **malzeme kategorisine / numbering class’a** göre üretilsin. |
 | **Inputs** | Material (from PO line) → Material Category / Numbering class; Company; Plant |
 | **System** | Call Numbering Service → series from material class (see Document_Numbering § Lot/Batch series by material category) |
-| **UI** | **Read-only** Lot ID field + “Yenile” only if material line changed before Post; never a free-text lot box |
+| **UI:** **Read-only** Lot ID field (“Otomatik — malzeme cinsine göre”) + regenerate only if material line changed before Post; **never** a free-text Lot No box  
+**Also:** Material/Warehouse pickers are **name-first**; codes display-only (`Document_Numbering.md` § System Generated Identifiers)
+
 | **Gate** | Mint succeeded; if series missing for category → block with Admin config message |
 | **Also** | GR document number (`GR-…`) minted separately as Goods Receipt document series |
 

@@ -11,14 +11,34 @@
 
 | Topic | Authority |
 |-------|-----------|
-| Numbering (Material, Lot, Serial, Package, Pallet) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Numbering / system identifiers (Material, WH, Lot, Serial, Package, Pallet, GR…) + name-first UX | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers — **reference only** |
 | Inventory ownership / stock truth | `Inventory_Architecture.md` |
 | Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
 | Traceability views | Quality + Inventory Architecture |
 | Process truth | `Inventory_Workflow.md` |
 | Screen IDs | `docs/00_Product/NOS_SCREEN_MAP.md` § Inventory |
+| Screen types | `docs/13_Design/Common/Screen_Types.md` |
 
-Do **not** write “lot number is system-generated” here — reference Numbering.
+Do **not** restate “lot/code is auto-generated” algorithms here — reference Numbering.
+
+---
+
+# Design rules (identifiers & names)
+
+```text
+Identifiers → Numbering Service only. No Code * input.
+Users work with names (Malzeme, Depo) — codes are display-only after mint.
+```
+
+| Screen job | User enters | System shows / assigns |
+|------------|-------------|------------------------|
+| Malzeme tanımla | Ad · Tip · Grup · Ağaç · Ölçü · Birim · Capability · … | `MAT-…` after save (info badge) |
+| Depo ekle / yapılandır | Depo adı · Tip · Fabrika · Sorumlu · … | `WH-…` after save |
+| Mal kabul | PO · miktar · **Depo (name)** · lokasyon · … | Lot `LOT-…` auto by material category; GR number auto |
+| Lot | — (operator never types Lot No) | Minted on receipt / process |
+
+❌ Never: Warehouse Code ________ · Lot No ________ · Material Code *  
+✅ System Code — Automatically generated after save
 
 ---
 
@@ -55,9 +75,9 @@ Inventory
 | INV-021/022 | **Cycle Count Session** | Counts | **Sayım başlat / Start count** — not “Yeni sayım”. Spec: `Process_Screens/INV_Cycle_Count_Session.md` |
 | INV-023 | Physical Inventory | Counts | Plant-wide count event |
 | INV-024 | **Post Adjustment** | Counts | **Düzeltme onayla / Post adjustment** (Approval / Workbench) |
-| INV-004/005 | Material Library | Master Data | **Malzeme ekle / Add material** (Explorer master only) |
-| INV-006/007 | Warehouse Library / Map | Master Data | **Depo ekle / Add warehouse** (Explorer) |
-| INV-008/009 | Location Library | Master Data | **Lokasyon ekle / Add location** (Explorer) |
+| INV-004/005 | Material Library / Define material | Master Data | **Malzeme tanımla** — business fields only; `MAT-…` auto (Numbering). Not Code* form |
+| INV-006/007 | Warehouse Library / Configure warehouse | Master Data | **Depo adı · tip · fabrika…** → `WH-…` auto. Not Warehouse Code input |
+| INV-008/009 | Location Library | Master Data | **Lokasyon ekle** — name-first; code auto |
 | INV-002/003 | Product bridge | Master Data | Jump to Product (`PDT-*`) catalog |
 | INV-025 | Inventory Reports | Reports | Run operational reports |
 | INV-026 | Inventory Analytics | Analytics | Trends / accuracy |
