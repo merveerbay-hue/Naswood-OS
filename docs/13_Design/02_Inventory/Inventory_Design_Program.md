@@ -78,7 +78,8 @@ Finish action (Post / Release / Complete — never bare Save as the job):
 | Genealogy | `Material_Genealogy.md` |
 | Stock truth | `Inventory_Architecture.md` |
 | Screen types / no Create | `Screen_Types.md` |
-| Evidence First (where ops capture proof) | Established on Receiving; apply when process uses photos/docs |
+| Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
+| Evidence First (capture UX) | Workbench PRDs reference the Shared law above — do not restate permanence/export algorithms |
 
 ---
 

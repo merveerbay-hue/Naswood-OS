@@ -9,6 +9,7 @@
 **Companion spine:** [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) — Depo → Location → Material Identity (+ Lot)  
 **Material Identity:** [`Material_Identity_Architecture.md`](../../13_Design/99_Shared/Material_Identity_Architecture.md)  
 **Numbering:** [`Document_Numbering.md`](../../13_Design/99_Shared/Document_Numbering.md)  
+**Evidence / Document Library / Export:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md)  
 **Capability catalog:** `docs/05_Modules/12_Purchasing/Receiving.md` · stock: `Inventory_Architecture.md`
 
 ---
@@ -66,6 +67,7 @@ Entry: Warehouse Command Center · Operations · dock tablet · mobile · deep-l
 |-------|-----------|
 | Material Identity (root · vs Lot · class chain) | `Material_Identity_Architecture.md` |
 | Identifier formats / mint | `Document_Numbering.md` |
+| Evidence Archive · Document Library · permanence · export | `Document_Management_Evidence_and_Export.md` |
 | Genealogy graph | `Material_Genealogy.md` |
 | Stock posting | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
@@ -414,6 +416,6 @@ Tablet / rugged: full Workbench. Scan Terminal: count / label confirm on same Re
 
 ## Related
 
-`INV_Receiving_Wizard.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md`  
+`INV_Receiving_Wizard.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md` · `Document_Management_Evidence_and_Export.md`  
 `Inventory_Workflow.md` · `Inventory_Screens.md` · `Inventory_Dashboard.md` · `Material_Genealogy.md`  
 `docs/05_Modules/12_Purchasing/Receiving.md` · `UI_Patterns.md` § Workbench
