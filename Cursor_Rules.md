@@ -27,16 +27,25 @@ The objective is to ensure consistency, maintainability and enterprise-grade sof
 Before stating any cross-cutting rule in a doc or PR: check the Authority Matrix.  
 **Yes, already defined → reference only. No → edit the authority document.**
 
-### No shared Create screen
+### No shared Create screen — Master Data ≠ Create Form
 
 **Authority:** [`docs/13_Design/Common/Screen_Types.md`](docs/13_Design/Common/Screen_Types.md) · [`UI_Patterns.md`](docs/13_Design/Common/UI_Patterns.md)
 
 ```text
 NOS'ta "New" diye tek tip ekran yoktur.
+NOS'ta Master Data ekranları "Create Form" değildir.
 ```
 
 Never implement “Yeni” as the same entity Create form across modules.  
-Choose **Wizard / Terminal / Console / Explorer / Planner / Dashboard / Workbench / Approval Center**, then process steps from module flows.
+Choose **Wizard / Builder / Designer / Configuration / Terminal / Console / Explorer / Planner / Dashboard / Workbench / Approval Center / Library**, then process steps from module flows.
+
+Engineering masters (BOM, Machine, Routing, …) use **Builder / Designer / Configuration** → **Release** — not Code · Name · Save.
+
+```text
+✘ Entity → Form
+✔ Business Object → Business Workspace → Business Designer
+```
+
 
 **We design. Cursor applies.**
 

@@ -77,16 +77,25 @@ in Document_Numbering.md (Core Identity & Numbering Architecture).
 Manual entry is prohibited.
 ```
 
-## 2.2 No shared Create / “Yeni” form
+## 2.2 No shared Create / “Yeni” form — and Master Data ≠ Create Form
 
 **Authority:** [`docs/13_Design/Common/Screen_Types.md`](../../docs/13_Design/Common/Screen_Types.md)
 
 ```text
 FORBIDDEN:  one Create ResourcePage for every “Yeni” button
-REQUIRED:   pick Screen Type → process-specific Wizard / Terminal / …
+FORBIDDEN:  Master Data as Code · Name · Save
+REQUIRED:   pick Screen Type → Wizard / Builder / Designer / Configuration / Terminal / …
+REQUIRED:   Business Object → Business Workspace → Business Designer
 ```
 
-“Yeni Goods Receipt” ≠ “Yeni Production Order” ≠ “Yeni NCR” — different wizards, different steps.
+```text
+NOS'ta Master Data ekranları "Create Form" değildir.
+```
+
+“Yeni Goods Receipt” ≠ “Yeni Production Order” ≠ “Yeni Machine” — Receiving Wizard · Planning Wizard · **Machine Configuration** (facets → Release).
+
+Production engineering: BOM Builder · Routing Designer · Machine Configuration · … (`Production_Screens.md` PRD-501…509).
+
 
 ```text
 Design first  →  Document second  →  Cursor implements last
