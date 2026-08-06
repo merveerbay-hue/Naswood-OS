@@ -101,11 +101,16 @@ Production engineering: BOM Builder · Routing Designer · **Machine Configurati
 **Authority (full rules + UX):** [`docs/13_Design/99_Shared/Document_Numbering.md`](../../docs/13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers
 
 ```text
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+```
+
+```text
 Business users shall never manually create or edit system identifiers.
 
 All identifiers — codes, document numbers, lot / serial / package / pallet IDs,
 warehouse codes, machine codes, transaction numbers — are generated exclusively
-by the NOS Numbering Service.
+by the NOS Numbering Service (centralized Numbering Architecture).
 
 Data entry captures business information only (names, types, measures, relations).
 Technical identifiers are assigned automatically on create or Release per process.

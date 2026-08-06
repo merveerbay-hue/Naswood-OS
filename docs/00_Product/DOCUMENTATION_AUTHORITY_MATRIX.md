@@ -46,15 +46,13 @@ TASK-021:                "System creates lot number."
 **Required**
 
 ```text
-Material, Lot, Serial, Package, Pallet and Production identifiers
-are generated exclusively by the NOS Numbering Service as defined
-in the Core Identity & Numbering Architecture
-(docs/13_Design/99_Shared/Document_Numbering.md).
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
 
 Manual entry is prohibited.
 ```
 
-(Use that block as a **reference note** only — full rules live in the authority doc.)
+(Use that block as a **reference note** only — full rules live in the authority doc § System Generated Identifiers.)
 
 ---
 

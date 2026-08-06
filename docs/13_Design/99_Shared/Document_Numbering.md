@@ -442,9 +442,8 @@ must **reference** this section — they must not restate or weaken it.
 
 ```text
 Material, Lot, Serial, Package, Pallet, Warehouse, Machine, and Production
-identifiers are generated exclusively by the NOS Numbering Service as defined
-in this Core Identity & Numbering Architecture
-(docs/13_Design/99_Shared/Document_Numbering.md).
+identifiers are generated automatically according to the centralized
+Numbering Architecture (this document).
 
 Manual entry is prohibited. Users work with names; codes are display-only.
 ```

@@ -51,6 +51,11 @@ Engineering masters (BOM, Machine, Routing, …) use **Builder / Designer / Conf
 **Authority:** [`Document_Numbering.md`](docs/13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3
 
 ```text
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+```
+
+```text
 ✘  Code *  ________
 ✔  System Code — Automatically generated after save / on Release
 ✔  Pickers by name (Ürün 🔍 Thermowood Deck …) — not by typed product code
