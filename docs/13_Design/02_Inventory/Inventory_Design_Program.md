@@ -80,6 +80,7 @@ Finish action (Post / Release / Complete — never bare Save as the job):
 | Screen types / no Create | `Screen_Types.md` |
 | Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
 | Evidence First (capture UX) | Workbench PRDs reference the Shared law above — do not restate permanence/export algorithms |
+| **Package Allocation Workspace** (all stock movements) | `Package_Allocation_Workspace.md` — learn once · use on Receiving · Issue · Transfer · Production · Shipping · Count |
 
 ---
 

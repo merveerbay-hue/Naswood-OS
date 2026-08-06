@@ -68,6 +68,7 @@ Entry: Warehouse Command Center · Operations · dock tablet · mobile · deep-l
 | Material Identity (root · vs Lot · class chain) | `Material_Identity_Architecture.md` |
 | Identifier formats / mint | `Document_Numbering.md` |
 | Evidence Archive · Document Library · permanence · export | `Document_Management_Evidence_and_Export.md` |
+| Package Allocation Workspace (verify/count package select — shared UX) | `Package_Allocation_Workspace.md` |
 | Genealogy graph | `Material_Genealogy.md` |
 | Stock posting | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
@@ -244,6 +245,8 @@ Support:
 
 AI OCR → structured qty/lines → operator verifies.
 
+When counting / confirming **packages**, compose the shared **Package Allocation Workspace** (`Package_Allocation_Workspace.md`) — Working Quantity = Counted / Verified; same operator language as Goods Issue.
+
 ```text
 Prefer: Scan > Handwriting OCR > Photo sheet > Manual qty
 ```
@@ -271,6 +274,8 @@ Consolidate comparison across:
 PO · Delivery Note · Packing List · Physical Count · OCR · Photos.
 
 Highlight every remaining mismatch. Name-first material match to catalog.
+
+Package-level verify/match uses the same Allocation Workspace pattern (not a separate CRUD lines grid).
 
 **Gate:** Lines accepted for stock (partial receive allowed by policy).
 
