@@ -2,9 +2,10 @@
 
 **Document:** Screen Types (UX law)  
 **Status:** Official  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Location:** `docs/13_Design/Common/Screen_Types.md`  
 **Companion:** [`UI_Patterns.md`](./UI_Patterns.md)  
+**Process screens:** [`docs/00_Product/Process_Screens/`](../../00_Product/Process_Screens/)  
 **SSOT matrix:** [`docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`](../../00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md)
 
 ---
@@ -96,6 +97,52 @@ Asset → Arıza → Öncelik → Teknisyen → Yedek Parça → Plan → Onay
 ```text
 Kaynak → Ürün → Lot → Problem → Fotoğraf → Root Cause → CAPA
 ```
+
+Full: `docs/00_Product/Process_Screens/QLT_NCR_Wizard.md`
+
+### Maintenance — Open work order
+
+Full: `docs/00_Product/Process_Screens/MNT_Work_Order_Wizard.md`
+
+---
+
+## 3b. Create → Job CTA matrix (authoritative)
+
+Every operational “create” intent maps to a **job CTA** + **screen type**.  
+Shared `ResourcePage` / `EntityListScreen` create panels are **forbidden** for rows marked Wizard / Terminal / Console.
+
+| Module | Forbidden CTA | Correct CTA (TR / EN) | Type | Process / Screens |
+|--------|---------------|----------------------|------|-------------------|
+| Inventory | Yeni kabul / Create GR | **Mal kabul başlat** / Receive goods | Wizard | [`INV_Receiving_Wizard.md`](../../00_Product/Process_Screens/INV_Receiving_Wizard.md) |
+| Inventory | Yeni çıkış | **Mal çıkışı** / Issue goods | Wizard | [`INV_Issue_Wizard.md`](../../00_Product/Process_Screens/INV_Issue_Wizard.md) |
+| Inventory | Yeni transfer | **Stok transfer** / Transfer stock | Wizard | [`INV_Transfer_Wizard.md`](../../00_Product/Process_Screens/INV_Transfer_Wizard.md) |
+| Inventory | Yeni sayım | **Sayım başlat** / Start count | Wizard | [`INV_Cycle_Count_Session.md`](../../00_Product/Process_Screens/INV_Cycle_Count_Session.md) |
+| Inventory | Yeni düzeltme | **Düzeltme onayla** / Post adjustment | Approval / Workbench | `Inventory_Screens.md` |
+| Inventory | Yeni malzeme / depo / lokasyon | **Malzeme ekle** / Add material… | Explorer | Master data only |
+| Production | Yeni emir / Create PO | **Üretim planla** / Plan production | Wizard | [`PRD_Production_Planning_Wizard.md`](../../00_Product/Process_Screens/PRD_Production_Planning_Wizard.md) |
+| Production | Yeni iş emri | **İş emri aç / Dispatch** | Planner / Terminal | `Production_Screens.md` |
+| Production | Yeni teyit / hurda / sarf | **Operatör terminali** jobs | Terminal | `Production_Screens.md` |
+| Quality | Yeni NCR / Create NCR | **NCR aç** / Raise NCR | Wizard | [`QLT_NCR_Wizard.md`](../../00_Product/Process_Screens/QLT_NCR_Wizard.md) |
+| Quality | Yeni CAPA | **CAPA aç** / Open CAPA | Wizard / Workbench | `Quality_Screens.md` |
+| Quality | Yeni muayene | **Muayene başlat** / Start inspection | Terminal / Wizard | `Quality_Screens.md` |
+| Maintenance | Yeni iş emri | **İş emri aç** / Open work order | Wizard | [`MNT_Work_Order_Wizard.md`](../../00_Product/Process_Screens/MNT_Work_Order_Wizard.md) |
+| Maintenance | Yeni talep | **Arıza bildir** / Report breakdown | Wizard / Console | `Maintenance_Screens.md` |
+| Purchasing | Create / Yeni PO | **Sipariş ver** / Place purchase order | Wizard | [`PUR_Purchase_Order_Wizard.md`](../../00_Product/Process_Screens/PUR_Purchase_Order_Wizard.md) |
+| Purchasing | Create PR | **Satınalma talebi aç** / Raise purchase request | Wizard | `Purchasing_Screens.md` |
+| Purchasing | Create RFQ | **Teklif iste** / Request quotation | Wizard | `Purchasing_Screens.md` |
+| Sales / CRM | + New Lead | **Lead kaydet** / Capture lead | Wizard / Workbench | `Sales_Screens.md` |
+| Sales | + New Opportunity | **Fırsat aç** / Open opportunity | Workbench | `Sales_Screens.md` |
+| Sales | + New Quotation | **Teklif hazırla** / Prepare quotation | Wizard | `Sales_Screens.md` |
+| Sales | + New Sales Order | **Sipariş gir** / Enter sales order | Wizard | [`SAL_Sales_Order_Wizard.md`](../../00_Product/Process_Screens/SAL_Sales_Order_Wizard.md) |
+| Sales | + New Shipment | **Sevkiyat planla** / Plan shipment | Wizard / Console | `Sales_Screens.md` |
+| Sales | + New Invoice | **Fatura kes** / Issue invoice | Wizard | `Sales_Screens.md` |
+| Finance | Create journal | **Yevmiye gir** / Post journal | Workbench | Finance Screens *(to author)* |
+| Finance | Period close | **Dönem kapat** / Close period | Wizard | Finance Screens |
+| Platform | Create user | **Kullanıcı ekle** / Add user | Explorer / Admin | Administration |
+
+**Libraries (Explorer)** may use “Add …” only for true master data — never for Goods Receipt, Production Order, NCR, PO, SO, WO, Count, Transfer, Issue.
+
+Historical `docs/14_Implementation/**` TASK wireframes that say `+ New` / `Create X` are **not authority** — follow this matrix.
 
 ---
 

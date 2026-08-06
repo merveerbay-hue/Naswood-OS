@@ -161,17 +161,20 @@ Optional Sparkline
 
 # Quick Actions
 
-Create Material
+Quick actions open **job screens** — never a shared Create form.  
+Authority: `docs/13_Design/Common/Screen_Types.md` § Create → Job CTA matrix.
 
-Receive Goods
+Add material *(Explorer — master only)*
 
-Create Purchase Order
+Receive goods → Receiving Wizard
 
-Create Sales Order
+Place purchase order → PO Wizard
 
-Start Production
+Enter sales order → Sales Order Wizard
 
-Create Work Order
+Plan production → Planning Wizard
+
+Open work order → Maintenance WO Wizard
 
 Open Reports
 

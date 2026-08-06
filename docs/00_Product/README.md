@@ -12,7 +12,8 @@
 **UI patterns:** [`docs/13_Design/Common/UI_Patterns.md`](../13_Design/Common/UI_Patterns.md)  
 **Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)  
 **Job-first design:** [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
-**Exemplar wizards:** [Production Planning](./Process_Screens/PRD_Production_Planning_Wizard.md) · [Receiving](./Process_Screens/INV_Receiving_Wizard.md)
+**Process screens (job Create CTAs):** [`Process_Screens/`](./Process_Screens/) — Planning · Receiving · Issue · Transfer · Count · NCR · Maint WO · PO · SO  
+**Create → Job matrix:** [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § 3b
 
 Before any new rule: *Bu kuralı daha önce tanımlamış mıydık?* → Matrix → reference or extend authority.
 

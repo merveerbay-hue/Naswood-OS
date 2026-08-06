@@ -10,9 +10,12 @@
 |----------|------|
 | [`Quality_Architecture.md`](./Quality_Architecture.md) | Boundaries, aggregates, integrations |
 | [`Quality_Workflow.md`](./Quality_Workflow.md) | Inspection → NCR → CAPA process truth |
+| [`Quality_Screens.md`](./Quality_Screens.md) | Job screens & CTAs — **no shared Create** |
 | [`Quality_Dashboard.md`](./Quality_Dashboard.md) | Cockpit widgets & KPIs |
 | [`Quality_API.md`](./Quality_API.md) | HTTP surface sketch |
 | [`Quality_Mobile.md`](./Quality_Mobile.md) | Inspector / operator mobile jobs |
+
+NCR process screen: [`QLT_NCR_Wizard.md`](../../00_Product/Process_Screens/QLT_NCR_Wizard.md)
 
 ## UX & product map
 

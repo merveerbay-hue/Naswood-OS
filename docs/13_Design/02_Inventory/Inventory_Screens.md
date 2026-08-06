@@ -44,20 +44,20 @@ Inventory
 |----|-------------------|-----------|----------------|
 | INV-001 | Inventory Dashboard | Dashboard | See warehouse health & open queues |
 | INV-RCV-001 / INV-015–016 | **Receiving Wizard** + receipt library | Operations | Finish inbound receipt: **select Depo** → location → **auto lot by material category** → QI → Post — type **Wizard**; not Create form. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` |
-| INV-017/018 | **Issue Goods** | Operations | Finish outbound issue |
-| INV-019/020 | **Transfer Stock** | Operations | Move stock between WH/locations |
+| INV-017/018 | **Issue Goods Wizard** | Operations | **Mal çıkışı / Issue goods** — Wizard; not “Yeni çıkış”. Spec: `Process_Screens/INV_Issue_Wizard.md` |
+| INV-019/020 | **Transfer Stock Wizard** | Operations | **Stok transfer / Transfer stock** — Wizard; not “Yeni transfer”. Spec: `Process_Screens/INV_Transfer_Wizard.md` |
 | INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |
 | INV-028 | Package Management | Operations | Finish pack identity for move/ship |
 | INV-014 | Stock Balance Inquiry | Stock | Answer “what/where/how much?” |
 | INV-010/011 | Lot Library / Lot Trace | Stock | Find lot & open history |
 | INV-012/013 | Serial Library / Detail | Stock | Find serial & status |
 | INV-030 | Reservation Desk | Stock | Allocate / soft-reserve for demand |
-| INV-021/022 | **Cycle Count Session** | Counts | Finish a count & differences |
+| INV-021/022 | **Cycle Count Session** | Counts | **Sayım başlat / Start count** — not “Yeni sayım”. Spec: `Process_Screens/INV_Cycle_Count_Session.md` |
 | INV-023 | Physical Inventory | Counts | Plant-wide count event |
-| INV-024 | **Post Adjustment** | Counts | Finish approved qty correction |
-| INV-004/005 | Material Library | Master Data | Maintain material master |
-| INV-006/007 | Warehouse Library / Map | Master Data | Maintain WH structure |
-| INV-008/009 | Location Library | Master Data | Maintain bins/zones |
+| INV-024 | **Post Adjustment** | Counts | **Düzeltme onayla / Post adjustment** (Approval / Workbench) |
+| INV-004/005 | Material Library | Master Data | **Malzeme ekle / Add material** (Explorer master only) |
+| INV-006/007 | Warehouse Library / Map | Master Data | **Depo ekle / Add warehouse** (Explorer) |
+| INV-008/009 | Location Library | Master Data | **Lokasyon ekle / Add location** (Explorer) |
 | INV-002/003 | Product bridge | Master Data | Jump to Product (`PDT-*`) catalog |
 | INV-025 | Inventory Reports | Reports | Run operational reports |
 | INV-026 | Inventory Analytics | Analytics | Trends / accuracy |

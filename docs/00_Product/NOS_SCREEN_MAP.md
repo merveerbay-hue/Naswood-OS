@@ -39,7 +39,8 @@ NOS
 NOS'ta "New" diye tek tip ekran yoktur.
 ```
 
-→ Exemplars: [Planning Wizard](./Process_Screens/PRD_Production_Planning_Wizard.md) · [Receiving Wizard](./Process_Screens/INV_Receiving_Wizard.md)
+→ Process screens (all job Create CTAs): [`Process_Screens/`](./Process_Screens/) — Planning · Receiving · Issue · Transfer · Count · NCR · Maint WO · PO · SO  
+→ Create → Job matrix: [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § 3b
 
 Entity-titled rows in older indexes are **placeholders to rename** into jobs  
 (e.g. “Production Order” → **Production Planning Wizard** + Plan Library).

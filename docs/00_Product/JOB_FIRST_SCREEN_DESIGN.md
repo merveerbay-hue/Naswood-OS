@@ -37,7 +37,7 @@ But:
 
 ```text
 ✔ Production Planning Wizard — planı oluştur, doğrula, release et
-✔ Receiving Wizard — PO → lot → kalite → depo → post
+✔ Receiving Wizard — PO → miktar → depo → lokasyon → lot (otomatik) → kalite → post
 ✔ Operator Terminal — iş emrini başlat / teyit / hurda
 ✔ Cycle Count Session — sayımı bitir ve farkı kapat
 ✔ NCR Wizard — kaynak → problem → CAPA

@@ -1,3 +1,5 @@
+> **UX authority:** Live receiving UI is [`INV_Receiving_Wizard.md`](../../00_Product/Process_Screens/INV_Receiving_Wizard.md) — Depo select + lot by material category. This TASK is historical.
+
 # TASK-021 — Goods Receipt
 
 **Module:** Inventory

@@ -26,6 +26,9 @@ Components, and Frontend Architecture define **what NOS is**.
 
 `14_Implementation` no longer defines **what to build next**.
 
+**Create / Yeni wireframes in TASK files are not UX authority.**  
+Live rule: [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § Create → Job CTA matrix · [`Process_Screens/`](../00_Product/Process_Screens/).
+
 ---
 
 ## Why frozen

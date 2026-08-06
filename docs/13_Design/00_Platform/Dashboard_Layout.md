@@ -284,23 +284,26 @@ Recent Documents
 
 # Quick Actions
 
-Create Material
+Quick actions open **job screens** — never a shared Create form.  
+Authority: `docs/13_Design/Common/Screen_Types.md` § Create → Job CTA matrix.
 
-Create Purchase Order
+Add material *(Explorer — master only)*
 
-Create Sales Order
+Place purchase order → PO Wizard
 
-Goods Receipt
+Enter sales order → Sales Order Wizard
 
-Goods Issue
+Receive goods → Receiving Wizard
 
-Inventory Count
+Issue goods → Issue Wizard
 
-Production Order
+Start count → Cycle Count Session
 
-Quality Inspection
+Plan production → Planning Wizard
 
-Maintenance Request
+Start inspection → Inspection job
+
+Report breakdown / Open work order → Maintenance Wizard
 
 Customer Search
 

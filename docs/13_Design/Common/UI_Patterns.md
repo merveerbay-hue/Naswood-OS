@@ -34,12 +34,16 @@ Complete a transaction **step by step** with validation gates.
 
 ### Used for
 
-- Production Planning (Production Order release path)  
+Process PRDs: [`docs/00_Product/Process_Screens/`](../../00_Product/Process_Screens/)
+
+- Production Planning  
 - Goods Receipt (Receiving)  
+- Issue / Transfer / Cycle Count  
 - Maintenance Work Order  
 - NCR  
-- Purchase Order (sourcing → order)  
-- Cycle Count Session (when multi-step)
+- Purchase Order · Sales Order  
+
+Never a shared Create ResourcePage — see `Screen_Types.md` § 3b.
 
 ### Anatomy
 

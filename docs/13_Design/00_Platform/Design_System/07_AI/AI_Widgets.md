@@ -173,9 +173,9 @@ Open Record
 
 Generate Report
 
-Create Purchase Request
+Raise purchase request
 
-Create Work Order
+Open work order
 
 Optimize Production
 

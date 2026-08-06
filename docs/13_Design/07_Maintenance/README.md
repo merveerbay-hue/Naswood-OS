@@ -26,7 +26,9 @@ Maintenance
 |----------|------|
 | `Maintenance_Architecture.md` | Boundaries, asset model, integrations |
 | `Maintenance_Workflow.md` | Request → WO → PM → Downtime → Close |
-| `Maintenance_Screens.md` | Job screens (`MNT-*`) |
+| [`Maintenance_Screens.md`](./Maintenance_Screens.md) | Job screens (`MNT-*`) — **no shared Create** |
+
+WO process screen: [`MNT_Work_Order_Wizard.md`](../../00_Product/Process_Screens/MNT_Work_Order_Wizard.md)
 | `Maintenance_User_Flows.md` | Role journeys |
 | `Maintenance_Dashboard.md` | Cockpit |
 | `Maintenance_API.md` | HTTP sketch |
