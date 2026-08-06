@@ -22,9 +22,10 @@ Every inventory operation is fully traceable.
 
 # Philosophy
 
-Inventory never owns Materials.
+Inventory owns Material Master, physical Material identity and stock state.
 
-Materials own Inventory.
+Product Management owns Product definitions. Manufacturing owns transformation
+genealogy and references Inventory Material identifiers.
 
 Inventory represents:
 
