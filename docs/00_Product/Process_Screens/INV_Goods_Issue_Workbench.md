@@ -306,17 +306,18 @@ Operator chooses exactly one path:
 | Control (TR) | Control (EN) | Result |
 |--------------|--------------|--------|
 | **✓ Kabul Et** | **Accept** / Use AI recommendation | Proceed with AI default |
-| **✓ Yoksay** | **Ignore** | Enter Override Mode (Warehouse Explorer) |
+| **✓ Yoksay** | **IGNORE AI** / Ignore | Enter Override Mode (Warehouse Explorer) |
 
-Also acceptable TR labels: **AI Önerisini Kullan** (= Kabul Et) · **Yoksay**.
+Also acceptable TR labels: **AI Önerisini Kullan** (= Kabul Et) · **Yoksay** (= IGNORE AI).  
+IGNORE AI control shall be **clearly visible** (Design Standard § 5).
 
-**Gate:** Each line has **Kabul Et** recorded **or** an audited **Yoksay** override selection.
+**Gate:** Each line has **Kabul Et** recorded **or** an audited **Yoksay / IGNORE AI** override selection.
 
 ---
 
-### Override Mode
+### Override Mode (IGNORE AI)
 
-When **Yoksay** is selected:
+When **Yoksay / IGNORE AI** is selected:
 
 1. Open **Warehouse Explorer** (browse — do not redefine Explorer UX; Design Program #4).  
 2. Operator browses inventory:
