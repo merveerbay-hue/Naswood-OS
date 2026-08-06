@@ -143,7 +143,7 @@ Frozen TASKs never win against Architecture / Workflow / Screen Map.
 | **Material Identity Architecture** | `99_Shared/Material_Identity_Architecture.md` | **Landed** — MI vs Lot; receiving = genealogy root |
 | **Document Management / Evidence Archive / Export** | `99_Shared/Document_Management_Evidence_and_Export.md` | **Landed** — digital file · library · history · search · export; `File_Storage.md` = infra only |
 | **Package Allocation Workspace** | `99_Shared/Package_Allocation_Workspace.md` | **Landed** — shared allocation UX; GI first consumer; Receiving/Transfer/Production/Shipping/Count compose |
-| **Inventory Workbench Design Standard** | `99_Shared/Inventory_Workbench_Design_Standard.md` | **Landed** — COMPLIANCE BY DESIGN v3.0; GI first full consumer; Receiving/ops compose |
+| **Inventory Workbench Design Standard** | `99_Shared/Inventory_Workbench_Design_Standard.md` | **Landed** — COMPLIANCE BY DESIGN v3.1; Manuel Paket Seç · Smart Scan; GI first full consumer |
 | Product Architecture (Capability) | `05_Modules/01_Master_Data/Products.md` | Prefer dedicated Product Architecture when authored; until then Products.md owns Capability |
 | `docs/19_Navigation/*` | Present on UI-architecture branch; Platform `Navigation.md` on main | Converge; matrix points at both until merge |
 
