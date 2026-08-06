@@ -88,6 +88,7 @@ Finish action (Post / Release / Complete — never bare Save as the job):
 | **Inventory Workbench Design Standard** (COMPLIANCE BY DESIGN) | `Inventory_Workbench_Design_Standard.md` — audit · revision · approvals · immutable txns · package grid/status vocabulary · Scan/Verify/Review/Approve |
 | **Measurement & Conversion Engine** (multi-UoM) | `Measurement_Conversion_Engine.md` — enter once · live pcs/lm/m²/m³/kg/t · no manual conversion |
 | **Material Definition Architecture** | `Material_Definition_Architecture.md` — active material rule pack (not passive Master card); Inventory reads Stock UoM / packaging / traceability from Definition |
+| **Inventory Foundation Program** | `Inventory_Foundation_Program.md` — core architecture before more screens; GATE F1 pauses Putaway |
 
 ---
 
