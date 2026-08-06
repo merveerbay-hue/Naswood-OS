@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState, type DragEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource } from '@/api/business';
 import { useI18n } from '@/i18n';
@@ -27,7 +27,7 @@ const STAGES: StageDef[] = [
   { id: 'document', titleKey: 'wb.iss.document', hintKey: 'wb.iss.documentHint' },
   { id: 'materials', titleKey: 'wb.iss.materials', hintKey: 'wb.iss.materialsHint' },
   { id: 'aiPick', titleKey: 'wb.iss.aiPick', hintKey: 'wb.iss.aiPickHint' },
-  { id: 'picking', titleKey: 'wb.iss.picking', hintKey: 'wb.iss.pickingHint' },
+  { id: 'picking', titleKey: 'wb.iss.allocWorkspace', hintKey: 'wb.iss.allocWorkspaceHint' },
   { id: 'verify', titleKey: 'wb.iss.verify', hintKey: 'wb.iss.verifyHint' },
   { id: 'evidence', titleKey: 'wb.iss.evidence', hintKey: 'wb.iss.evidenceHint' },
   { id: 'quality', titleKey: 'wb.iss.quality', hintKey: 'wb.iss.qualityHint' },
@@ -69,7 +69,14 @@ type AllocRow = {
   moisture: string;
   available: number;
   selected: number;
+  /** m³ per piece */
+  unitVolume: number;
+  /** kg per piece */
+  unitWeight: number;
 };
+
+type SortKey = 'code' | 'location' | 'lot' | 'quality' | 'moisture' | 'available' | 'selected';
+type GroupKey = 'none' | 'warehouse' | 'lot' | 'quality';
 
 const REQUIRED_QTY = 50;
 
@@ -86,6 +93,9 @@ const AI_RULES = [
 ];
 
 /** Catalog of pickable packages (Explorer / Add). */
+const UV = 0.0437; // m³ / piece for 26×140×4000 approx
+const UW = 18.5; // kg / piece demo
+
 const PACKAGE_CATALOG: AllocRow[] = [
   {
     code: 'PKG-A-2026-000120',
@@ -99,6 +109,8 @@ const PACKAGE_CATALOG: AllocRow[] = [
     moisture: '%6',
     available: 20,
     selected: 20,
+    unitVolume: UV,
+    unitWeight: UW,
   },
   {
     code: 'PKG-B-2026-000088',
@@ -112,6 +124,8 @@ const PACKAGE_CATALOG: AllocRow[] = [
     moisture: '%6',
     available: 15,
     selected: 15,
+    unitVolume: UV,
+    unitWeight: UW,
   },
   {
     code: 'PKG-C-2026-000091',
@@ -125,6 +139,8 @@ const PACKAGE_CATALOG: AllocRow[] = [
     moisture: '%6',
     available: 15,
     selected: 15,
+    unitVolume: UV,
+    unitWeight: UW,
   },
   {
     code: 'PKG-00254',
@@ -138,6 +154,8 @@ const PACKAGE_CATALOG: AllocRow[] = [
     moisture: '%6',
     available: 120,
     selected: 40,
+    unitVolume: UV,
+    unitWeight: UW,
   },
   {
     code: 'PKG-D-2026-000210',
@@ -151,6 +169,8 @@ const PACKAGE_CATALOG: AllocRow[] = [
     moisture: '%8',
     available: 20,
     selected: 20,
+    unitVolume: 0.0328,
+    unitWeight: 14.2,
   },
 ];
 
@@ -202,6 +222,11 @@ export function GoodsIssueWorkbench() {
   const [mixWaived, setMixWaived] = useState(false);
   const [scanValue, setScanValue] = useState('');
   const [scannedOk, setScannedOk] = useState(false);
+  const [focusedCode, setFocusedCode] = useState<string | null>(null);
+  const [bulkSelected, setBulkSelected] = useState<string[]>([]);
+  const [filterText, setFilterText] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('location');
+  const [groupKey, setGroupKey] = useState<GroupKey>('none');
   const [verifyOk, setVerifyOk] = useState(false);
   const [evidence, setEvidence] = useState<string[]>([]);
   const [qualityOk, setQualityOk] = useState(false);
@@ -213,11 +238,45 @@ export function GoodsIssueWorkbench() {
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
   const selectedTotal = useMemo(() => allocation.reduce((s, r) => s + r.selected, 0), [allocation]);
   const remainingTotal = useMemo(() => allocation.reduce((s, r) => s + remainingOf(r), 0), [allocation]);
+  const selectedVolume = useMemo(
+    () => Number(allocation.reduce((s, r) => s + r.selected * r.unitVolume, 0).toFixed(3)),
+    [allocation],
+  );
+  const selectedWeight = useMemo(
+    () => Number(allocation.reduce((s, r) => s + r.selected * r.unitWeight, 0).toFixed(1)),
+    [allocation],
+  );
+  const remainingVolume = useMemo(
+    () => Number(allocation.reduce((s, r) => s + remainingOf(r) * r.unitVolume, 0).toFixed(3)),
+    [allocation],
+  );
+  const packageCount = useMemo(() => allocation.filter((r) => r.selected > 0).length, [allocation]);
   const warnings = useMemo(() => mixWarnings(allocation), [allocation]);
   const addablePackages = useMemo(
     () => PACKAGE_CATALOG.filter((p) => !allocation.some((a) => a.code === p.code)),
     [allocation],
   );
+  const viewRows = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    let rows = allocation.filter((r) => {
+      if (!q) return true;
+      return (
+        r.code.toLowerCase().includes(q) ||
+        r.lot.toLowerCase().includes(q) ||
+        r.location.toLowerCase().includes(q) ||
+        r.quality.toLowerCase().includes(q) ||
+        r.moisture.toLowerCase().includes(q) ||
+        r.warehouse.toLowerCase().includes(q)
+      );
+    });
+    rows = [...rows].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+      return String(av).localeCompare(String(bv), 'tr');
+    });
+    return rows;
+  }, [allocation, filterText, sortKey]);
 
   const gateMessage = useMemo(() => {
     switch (stage.id) {
@@ -367,20 +426,179 @@ export function GoodsIssueWorkbench() {
 
   function tryScan() {
     const v = scanValue.trim().toUpperCase();
-    const codes = allocation.map((r) => r.code.toUpperCase());
-    const ok = !v || v.includes('PKG') || v.includes('LOT') || codes.some((c) => v === c || v.includes(c.slice(0, 8)));
-    setScannedOk(ok);
-    if (!ok) setError(t('wb.iss.scanMismatch'));
-    else setError(null);
+    if (!v) {
+      setScannedOk(false);
+      return;
+    }
+    const match = allocation.find(
+      (r) => r.code.toUpperCase() === v || r.code.toUpperCase().includes(v) || v.includes(r.code.toUpperCase().slice(0, 10)),
+    );
+    const inCatalog = PACKAGE_CATALOG.find(
+      (r) => r.code.toUpperCase() === v || r.code.toUpperCase().includes(v),
+    );
+    if (match) {
+      setFocusedCode(match.code);
+      setScannedOk(true);
+      setError(null);
+      return;
+    }
+    if (inCatalog) {
+      addPackage(inCatalog.code);
+      setFocusedCode(inCatalog.code);
+      setScannedOk(true);
+      setError(null);
+      return;
+    }
+    setScannedOk(false);
+    setError(t('wb.iss.scanMismatch'));
   }
 
-  function AllocationGrid({ editable }: { editable: boolean }) {
+  function toggleBulk(code: string) {
+    setBulkSelected((s) => (s.includes(code) ? s.filter((c) => c !== code) : [...s, code]));
+  }
+
+  function bulkRemove() {
+    bulkSelected.forEach(removePackage);
+    setBulkSelected([]);
+  }
+
+  function bulkZero() {
+    bulkSelected.forEach((c) => setSelectedQty(c, 0));
+  }
+
+  function onDropPackage(e: DragEvent) {
+    e.preventDefault();
+    const code = e.dataTransfer.getData('text/pkg');
+    if (code) addPackage(code);
+  }
+
+  function LiveTotalsStrip() {
+    const deficit = REQUIRED_QTY - selectedTotal;
     return (
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        {[
+          [t('wb.iss.required'), String(REQUIRED_QTY)],
+          [t('wb.iss.colSelected'), String(selectedTotal)],
+          [t('wb.iss.remaining'), String(Math.max(0, deficit))],
+          [t('wb.iss.metricVolume'), `${selectedVolume} m³`],
+          [t('wb.iss.metricWeight'), `${selectedWeight} kg`],
+          [t('wb.iss.metricPkgCount'), String(packageCount)],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2.5 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{label}</p>
+            <p
+              className={`font-mono text-sm font-semibold tabular-nums ${
+                label === t('wb.iss.colSelected')
+                  ? selectedTotal === REQUIRED_QTY
+                    ? 'text-[var(--color-primary)]'
+                    : 'text-[var(--color-danger)]'
+                  : ''
+              }`}
+            >
+              {value}
+            </p>
+          </div>
+        ))}
+        <p className="col-span-full text-[10px] text-[var(--text-muted)]">
+          {t('wb.iss.remainVolShort')}: {remainingVolume} m³ · {t('wb.iss.inventorySync')}
+        </p>
+      </div>
+    );
+  }
+
+  function PackageAllocationWorkspace({ editable }: { editable: boolean }) {
+    const grouped =
+      groupKey === 'none'
+        ? [{ key: '', rows: viewRows }]
+        : Object.entries(
+            viewRows.reduce<Record<string, AllocRow[]>>((acc, r) => {
+              const k = groupKey === 'warehouse' ? r.warehouse : groupKey === 'lot' ? r.lot : r.quality;
+              (acc[k] ??= []).push(r);
+              return acc;
+            }, {}),
+          ).map(([key, rows]) => ({ key, rows }));
+
+    return (
+      <div
+        className="space-y-3 rounded-lg border-2 border-[var(--color-primary)]/35 bg-[var(--color-surface)] p-3 shadow-sm"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDropPackage}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+              ★ {t('wb.iss.allocWorkspace')}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('wb.iss.allocWorkspaceHint')}</p>
+          </div>
+          <p className="text-[10px] text-[var(--text-muted)]">{t('wb.iss.keyboardHints')}</p>
+        </div>
+
+        <LiveTotalsStrip />
+
+        {editable ? (
+          <div className="flex flex-wrap items-end gap-2 rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)]/40 px-2 py-2">
+            <label className="space-y-0.5 text-[11px]">
+              <span className="text-[var(--text-muted)]">{t('wb.iss.filter')}</span>
+              <Input
+                className="h-8 w-40"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                placeholder={t('wb.iss.filterPh')}
+              />
+            </label>
+            <label className="space-y-0.5 text-[11px]">
+              <span className="text-[var(--text-muted)]">{t('wb.iss.sort')}</span>
+              <select
+                className="h-8 rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+              >
+                <option value="location">{t('wb.iss.loc')}</option>
+                <option value="code">{t('wb.iss.colPkgNo')}</option>
+                <option value="lot">{t('wb.iss.colLot')}</option>
+                <option value="quality">{t('wb.iss.colQuality')}</option>
+                <option value="moisture">{t('wb.iss.colMoisture')}</option>
+                <option value="available">{t('wb.iss.colAvail')}</option>
+                <option value="selected">{t('wb.iss.colSelected')}</option>
+              </select>
+            </label>
+            <label className="space-y-0.5 text-[11px]">
+              <span className="text-[var(--text-muted)]">{t('wb.iss.group')}</span>
+              <select
+                className="h-8 rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                value={groupKey}
+                onChange={(e) => setGroupKey(e.target.value as GroupKey)}
+              >
+                <option value="none">{t('wb.iss.groupNone')}</option>
+                <option value="warehouse">{t('wb.iss.wh')}</option>
+                <option value="lot">{t('wb.iss.colLot')}</option>
+                <option value="quality">{t('wb.iss.colQuality')}</option>
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-1">
+              <Button type="button" variant="secondary" className="h-8" onClick={resetToAi}>
+                {t('wb.iss.resetAi')}
+              </Button>
+              {bulkSelected.length > 0 ? (
+                <>
+                  <Button type="button" variant="secondary" className="h-8" onClick={bulkZero}>
+                    {t('wb.iss.bulkZero')} ({bulkSelected.length})
+                  </Button>
+                  <Button type="button" variant="secondary" className="h-8" onClick={bulkRemove}>
+                    {t('wb.iss.bulkRemove')}
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
-          <table className="w-full min-w-[960px] text-left text-[11px]">
-            <thead className="bg-[var(--color-surface-hover)] text-[var(--text-muted)]">
+          <table className="w-full min-w-[1100px] text-left text-[11px]">
+            <thead className="sticky top-0 bg-[var(--color-surface-hover)] text-[var(--text-muted)]">
               <tr>
+                {editable ? <th className="px-2 py-2 w-8" /> : null}
                 <th className="px-2 py-2">{t('wb.iss.colPkgNo')}</th>
                 <th className="px-2 py-2">{t('wb.iss.wh')}</th>
                 <th className="px-2 py-2">{t('wb.iss.loc')}</th>
@@ -393,48 +611,94 @@ export function GoodsIssueWorkbench() {
                 <th className="px-2 py-2">{t('wb.iss.colAvail')}</th>
                 <th className="px-2 py-2">{t('wb.iss.colSelected')}</th>
                 <th className="px-2 py-2">{t('wb.iss.colRemain')}</th>
+                <th className="px-2 py-2">{t('wb.iss.metricVolume')}</th>
+                <th className="px-2 py-2">{t('wb.iss.metricWeight')}</th>
                 {editable ? <th className="px-2 py-2" /> : null}
               </tr>
             </thead>
             <tbody>
-              {allocation.map((r) => (
-                <tr key={r.code} className="border-t border-[var(--border-default)]">
-                  <td className="px-2 py-1.5 font-mono font-medium">{r.code}</td>
-                  <td className="px-2 py-1.5">{r.warehouse}</td>
-                  <td className="px-2 py-1.5 font-mono">{r.location}</td>
-                  <td className="px-2 py-1.5 font-mono">{r.lot}</td>
-                  <td className="px-2 py-1.5 font-mono text-[10px]">{r.mi}</td>
-                  <td className="px-2 py-1.5">{r.species}</td>
-                  <td className="px-2 py-1.5">{r.dimensions}</td>
-                  <td className="px-2 py-1.5">{r.quality}</td>
-                  <td className="px-2 py-1.5">{r.moisture}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{r.available}</td>
-                  <td className="px-2 py-1.5">
-                    {editable ? (
-                      <Input
-                        type="number"
-                        className="h-7 w-16"
-                        min={0}
-                        max={r.available}
-                        value={r.selected}
-                        onChange={(e) => setSelectedQty(r.code, Number(e.target.value) || 0)}
-                      />
-                    ) : (
-                      <span className="tabular-nums font-medium">{r.selected}</span>
-                    )}
-                  </td>
-                  <td className="px-2 py-1.5 tabular-nums text-[var(--color-primary)]">{remainingOf(r)}</td>
-                  {editable ? (
-                    <td className="px-2 py-1.5">
-                      <Button type="button" variant="secondary" className="h-7 px-2 text-[10px]" onClick={() => removePackage(r.code)}>
-                        {t('wb.iss.removePkg')}
-                      </Button>
-                    </td>
+              {grouped.map((g) => (
+                <Fragment key={g.key || 'all'}>
+                  {g.key ? (
+                    <tr className="bg-[var(--color-primary)]/5">
+                      <td colSpan={editable ? 16 : 14} className="px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                        {g.key}
+                      </td>
+                    </tr>
                   ) : null}
-                </tr>
+                  {g.rows.map((r) => {
+                    const idx = viewRows.findIndex((x) => x.code === r.code);
+                    return (
+                    <tr
+                      key={r.code}
+                      className={`border-t border-[var(--border-default)] ${
+                        focusedCode === r.code ? 'bg-[var(--color-primary)]/15 ring-1 ring-inset ring-[var(--color-primary)]' : ''
+                      } ${bulkSelected.includes(r.code) ? 'bg-[var(--color-primary)]/5' : ''}`}
+                      onClick={() => setFocusedCode(r.code)}
+                    >
+                      {editable ? (
+                        <td className="px-2 py-1">
+                          <input type="checkbox" checked={bulkSelected.includes(r.code)} onChange={() => toggleBulk(r.code)} />
+                        </td>
+                      ) : null}
+                      <td className="px-2 py-1.5 font-mono font-medium">{r.code}</td>
+                      <td className="px-2 py-1.5">{r.warehouse}</td>
+                      <td className="px-2 py-1.5 font-mono">{r.location}</td>
+                      <td className="px-2 py-1.5 font-mono">{r.lot}</td>
+                      <td className="px-2 py-1.5 font-mono text-[10px]">{r.mi}</td>
+                      <td className="px-2 py-1.5">{r.species}</td>
+                      <td className="px-2 py-1.5">{r.dimensions}</td>
+                      <td className="px-2 py-1.5">{r.quality}</td>
+                      <td className="px-2 py-1.5">{r.moisture}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{r.available}</td>
+                      <td className="px-2 py-1.5">
+                        {editable ? (
+                          <Input
+                            type="number"
+                            className="h-7 w-16"
+                            min={0}
+                            max={r.available}
+                            value={r.selected}
+                            autoFocus={focusedCode === r.code}
+                            onChange={(e) => setSelectedQty(r.code, Number(e.target.value) || 0)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                                e.preventDefault();
+                                const next = viewRows[idx + 1] ?? viewRows[0];
+                                if (next) setFocusedCode(next.code);
+                              }
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                const prev = viewRows[idx - 1] ?? viewRows[viewRows.length - 1];
+                                if (prev) setFocusedCode(prev.code);
+                              }
+                              if (e.key === 'Delete') {
+                                e.preventDefault();
+                                removePackage(r.code);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="tabular-nums font-medium">{r.selected}</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 tabular-nums text-[var(--color-primary)]">{remainingOf(r)}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{(r.selected * r.unitVolume).toFixed(3)}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{(r.selected * r.unitWeight).toFixed(1)}</td>
+                      {editable ? (
+                        <td className="px-2 py-1.5">
+                          <Button type="button" variant="secondary" className="h-7 px-2 text-[10px]" onClick={() => removePackage(r.code)}>
+                            {t('wb.iss.removePkg')}
+                          </Button>
+                        </td>
+                      ) : null}
+                    </tr>
+                    );
+                  })}
+                </Fragment>
               ))}
               <tr className="border-t border-[var(--border-default)] bg-[var(--color-surface-hover)] font-medium">
-                <td className="px-2 py-2" colSpan={9}>
+                <td className="px-2 py-2" colSpan={editable ? 10 : 9}>
                   {t('wb.iss.total')} · {t('wb.iss.required')}: {REQUIRED_QTY}
                 </td>
                 <td className="px-2 py-2 tabular-nums">{allocation.reduce((s, r) => s + r.available, 0)}</td>
@@ -444,12 +708,17 @@ export function GoodsIssueWorkbench() {
                   {selectedTotal}
                 </td>
                 <td className="px-2 py-2 tabular-nums">{remainingTotal}</td>
+                <td className="px-2 py-2 tabular-nums">{selectedVolume}</td>
+                <td className="px-2 py-2 tabular-nums">{selectedWeight}</td>
                 {editable ? <td /> : null}
               </tr>
             </tbody>
           </table>
         </div>
         <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.partialAuto')}</p>
+        {editable ? (
+          <p className="text-[10px] text-[var(--text-muted)]">{t('wb.iss.dndHint')}</p>
+        ) : null}
       </div>
     );
   }
@@ -677,18 +946,20 @@ export function GoodsIssueWorkbench() {
                           <button
                             key={p.code}
                             type="button"
+                            draggable
+                            onDragStart={(e) => e.dataTransfer.setData('text/pkg', p.code)}
                             onClick={() => addPackage(p.code)}
-                            className="rounded-md border border-[var(--border-default)] px-3 py-2 text-left text-sm hover:border-[var(--color-primary)]"
+                            className="cursor-grab rounded-md border border-[var(--border-default)] px-3 py-2 text-left text-sm hover:border-[var(--color-primary)] active:cursor-grabbing"
                           >
                             <p className="font-mono text-xs font-medium">{p.code}</p>
                             <p className="text-xs text-[var(--text-muted)]">
                               {p.location} · {p.available} {t('wb.iss.colAvail').toLowerCase()} · {p.lot} · {p.quality} ·{' '}
-                              {p.moisture}
+                              {p.moisture} · {t('wb.iss.dragMe')}
                             </p>
                           </button>
                         ))}
                       </div>
-                      {allocation.length > 0 ? <AllocationGrid editable={false} /> : null}
+                      {allocation.length > 0 ? <PackageAllocationWorkspace editable={false} /> : null}
                       <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.aiValidationOverride')}</p>
                     </div>
                   ) : null}
@@ -712,14 +983,23 @@ export function GoodsIssueWorkbench() {
                         <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.noMorePkg')}</p>
                       ) : (
                         addablePackages.map((p) => (
-                          <Button key={p.code} type="button" variant="secondary" onClick={() => addPackage(p.code)}>
+                          <Button
+                            key={p.code}
+                            type="button"
+                            variant="secondary"
+                            draggable
+                            onDragStart={(e) =>
+                              ((e as unknown as DragEvent).dataTransfer.setData('text/pkg', p.code))
+                            }
+                            onClick={() => addPackage(p.code)}
+                          >
                             + {p.code}
                           </Button>
                         ))
                       )}
                     </div>
                   ) : null}
-                  <AllocationGrid editable />
+                  <PackageAllocationWorkspace editable />
                   {warnings.length > 0 ? (
                     <div className="space-y-2 rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2">
                       <p className="text-xs font-semibold text-[var(--color-danger)]">{t('wb.iss.mixWarnings')}</p>
