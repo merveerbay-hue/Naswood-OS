@@ -48,7 +48,12 @@ export const navigationTree: NavItem[] = [
         id: 'inventory-master-data',
         label: 'Ana Veri',
         children: [
-          { id: 'inventory-materials', label: 'Malzemeler', path: '/inventory/master-data/materials' },
+          { id: 'inventory-materials', label: 'Malzeme Tanımları', path: '/inventory/master-data/materials' },
+          {
+            id: 'inventory-define-material',
+            label: 'Malzeme tanımla',
+            path: '/inventory/master-data/define-material',
+          },
           { id: 'inventory-warehouses', label: 'Depolar', path: '/inventory/master-data/warehouses' },
           { id: 'inventory-locations', label: 'Lokasyonlar', path: '/inventory/master-data/locations' },
         ],

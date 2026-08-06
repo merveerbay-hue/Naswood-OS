@@ -37,7 +37,13 @@ export const inventoryWorkspaces: WorkspaceDefinition[] = [
     id: 'master-data',
     label: 'Ana Veri',
     items: [
-      { id: 'inv-004', label: 'Malzemeler', path: '/inventory/master-data/materials', screenId: 'INV-004' },
+      { id: 'inv-004', label: 'Malzeme Tanımları', path: '/inventory/master-data/materials', screenId: 'INV-004' },
+      {
+        id: 'inv-mat-001',
+        label: 'Malzeme tanımla',
+        path: '/inventory/master-data/define-material',
+        screenId: 'INV-MAT-001',
+      },
       { id: 'inv-006', label: 'Depolar', path: '/inventory/master-data/warehouses', screenId: 'INV-006' },
       { id: 'inv-008', label: 'Lokasyonlar', path: '/inventory/master-data/locations', screenId: 'INV-008' },
     ],

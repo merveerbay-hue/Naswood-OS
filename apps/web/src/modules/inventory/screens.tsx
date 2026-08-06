@@ -1,4 +1,4 @@
-import { useParams } from '@tanstack/react-router';
+import { Link, useParams } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
@@ -103,14 +103,25 @@ export function MaterialDetailPage() {
   const { t } = useI18n();
   const { id } = useParams({ strict: false }) as { id: string };
   return (
-    <EntityDetailScreen
-      screenId="INV-005"
-      title={t('inventory.materialDetail')}
-      route="materials"
-      id={id}
-      listPath="/inventory/master-data/materials"
-      fields={useInvFields().material}
-    />
+    <div className="space-y-3">
+      <EntityDetailScreen
+        screenId="INV-005"
+        title={t('inventory.materialDetail')}
+        route="materials"
+        id={id}
+        listPath="/inventory/master-data/materials"
+        fields={useInvFields().material}
+      />
+      <p className="text-sm text-[var(--text-secondary)]">
+        {t('md.detailHint')}{' '}
+        <Link
+          to="/inventory/master-data/define-material"
+          className="font-medium text-[var(--color-primary)] hover:underline"
+        >
+          {t('md.openDesigner')}
+        </Link>
+      </p>
+    </div>
   );
 }
 

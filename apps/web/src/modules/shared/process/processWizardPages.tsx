@@ -61,42 +61,8 @@ export function CycleCountWizardPage() {
   );
 }
 
-export function MaterialDefinePage() {
-  const { t } = useI18n();
-  return (
-    <ProcessWizard
-      screenId="INV-MAT-001"
-      title={t('wizard.materialTitle')}
-      description={t('wizard.materialDesc')}
-      finishLabel={t('wizard.saveRelease')}
-      libraryPath="/inventory/master-data/materials"
-      libraryLabel={t('wizard.backToLibrary')}
-      autoCodeHint="MAT-…"
-      persistRoute="materials"
-      mapBody={(v) => ({ name: v.name || 'Malzeme', description: v.dims || '', category: v.type || v.group || 'Raw', unitOfMeasure: v.uom || 'm3', status: 'Active', code: '' })}
-      steps={[
-        {
-          title: t('wizard.mat.general'),
-          fields: [
-            { key: 'name', label: t('wizard.mat.name'), placeholder: 'Oak Lamelle 26×140' },
-            { key: 'type', label: t('wizard.mat.type') },
-            { key: 'group', label: t('wizard.mat.group') },
-          ],
-        },
-        {
-          title: t('wizard.mat.species'),
-          fields: [
-            { key: 'species', label: t('wizard.mat.species') },
-            { key: 'dims', label: t('wizard.mat.dims'), placeholder: '26×140×3000' },
-            { key: 'uom', label: t('wizard.mat.uom'), placeholder: 'm³' },
-          ],
-        },
-        { title: t('wizard.mat.capability'), fields: [{ key: 'cap', label: t('wizard.mat.capability') }] },
-        { title: t('wizard.saveRelease') },
-      ]}
-    />
-  );
-}
+/** Material Definition Designer — not a Create/ProcessWizard form. */
+export { MaterialDefinitionDesigner as MaterialDefinePage } from '@/modules/inventory/materials/MaterialDefinitionDesigner';
 
 export function WarehouseDefinePage() {
   const { t } = useI18n();
