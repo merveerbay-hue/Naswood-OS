@@ -360,11 +360,40 @@ Multi-pane session for **operational** warehouse desks or **engineering / qualit
 - Prefer scan / photo / OCR / AI over typing; operators validate.  
 - Identifiers from Numbering Service only (`Document_Numbering.md`).  
 - Receiving mints root **Material Identity** (`Material_Identity_Architecture.md`).  
-- Full receiving UX: `INV_Receiving_Workbench.md` v1.1.
+- Full receiving UX: `INV_Receiving_Workbench.md` v1.1.  
+- When packages are selected/allocated: center = **Package Allocation Workspace** (`Package_Allocation_Workspace.md`) — not a simple table; same language on Issue · Receiving · Transfer · Production · Shipping · Count.
 
 ### Components
 
-Split View · Timeline · Document Viewer · Image Gallery · Attachment Panel · Progress Indicator · Sticky Action Bar · Genealogy Tracer (read) · Master Detail
+Split View · Timeline · Document Viewer · Image Gallery · Attachment Panel · Progress Indicator · Sticky Action Bar · Genealogy Tracer (read) · Master Detail · **Package Allocation Workspace**
+
+---
+
+## 8b. Pattern: Package Allocation Workspace
+
+### Purpose
+
+Interactive package allocation (warehouse planning class) — **one operator language** for every stock movement.
+
+### Authority
+
+[`docs/13_Design/99_Shared/Package_Allocation_Workspace.md`](../99_Shared/Package_Allocation_Workspace.md)
+
+### Used for
+
+- Goods Issue (landed)  
+- Receiving verify / count  
+- Warehouse Transfer package select  
+- Production material consumption  
+- Shipping load plan  
+- Inventory Count comparison  
+
+### Rule
+
+```text
+NOT a simple table. Compose the Shared law.
+Do not invent process-specific parallel grids.
+```
 
 ---
 

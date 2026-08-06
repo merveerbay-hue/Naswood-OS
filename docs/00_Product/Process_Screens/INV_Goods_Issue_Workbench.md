@@ -9,6 +9,7 @@
 **Stock truth:** `Inventory_Architecture.md` · `Inventory_Workflow.md`  
 **Identity:** `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Material_Genealogy.md`  
 **Evidence / Document Library / Export:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md)  
+**Package Allocation Workspace (shared pattern):** [`Package_Allocation_Workspace.md`](../../13_Design/99_Shared/Package_Allocation_Workspace.md) — GI is first consumer; same UX on Receiving · Transfer · Production · Shipping · Count  
 **Package / barcode immutability (format refs):** `Barcode_QR_Model.md` · `Barcode_Strategy.md` · `Naming_Standards.md` · Packaging module  
 **Design program:** `Inventory_Design_Program.md` § 7 (PA-directed ahead of Putaway)
 
@@ -357,7 +358,12 @@ Each allocated package still follows Partial Package Usage (barcode unchanged).
 
 ## Package Allocation Workspace
 
-**Authority surface for picking.** Center of INV-ISS-001. Highest design priority.
+**Shared pattern authority:** [`Package_Allocation_Workspace.md`](../../13_Design/99_Shared/Package_Allocation_Workspace.md)  
+**This PRD owns:** GI-specific demand mapping · Post · issue gates · worked scenarios.  
+**Does not redefine:** workspace capabilities, live metrics, or cross-process UX language.
+
+**Authority surface for picking.** Center of INV-ISS-001. Highest design priority.  
+Strategic: same workspace language lands next on Receiving · Transfer · Production consumption · Shipping · Count.
 
 ```text
 This is NOT a simple table.

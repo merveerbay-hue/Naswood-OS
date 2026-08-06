@@ -68,6 +68,7 @@ Entry: Warehouse Command Center · Operations · dock tablet · mobile · deep-l
 | Material Identity (root · vs Lot · class chain) | `Material_Identity_Architecture.md` |
 | Identifier formats / mint | `Document_Numbering.md` |
 | Evidence Archive · Document Library · permanence · export | `Document_Management_Evidence_and_Export.md` |
+| Package Allocation Workspace (verify/count package select — shared UX) | `Package_Allocation_Workspace.md` |
 | Genealogy graph | `Material_Genealogy.md` |
 | Stock posting | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
