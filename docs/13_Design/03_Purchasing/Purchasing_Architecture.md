@@ -128,9 +128,30 @@ Purchasing does NOT own
 
 - Inventory Balances
 - Material Master
+- Product Definitions
 - Financial Posting
 - Production Orders
 - Sales Orders
+
+---
+
+# Product Contract
+
+Purchasing does not own Product definition or capability behavior.
+
+Purchase Request, RFQ, Supplier Quotation and Purchase Order lines store:
+
+- Product ID
+- Product Revision ID
+- Capability Profile ID
+
+Purchasing validates that Purchasing Mode is `OPTIONAL` or `ENABLED` when a
+line is created or revised. Existing released documents retain the profile they
+validated.
+
+Goods Receipt uses the pinned Product Revision and Capability Profile when
+requesting Inventory to create physical Material. Purchase documents alone do
+not create Material or stock.
 
 ---
 
@@ -260,12 +281,20 @@ Finance
 
 # Module Integrations
 
-## Master Data
+## Product Management
 
 Consumes
 
-- Material
-- Supplier Categories
+- Product
+- Product Revision
+- Capability Profile
+
+---
+
+## Platform and Finance Reference Data
+
+Consumes:
+
 - Units
 - Currency
 
