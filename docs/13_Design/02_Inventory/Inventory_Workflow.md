@@ -72,7 +72,7 @@ Business document (Production / Maintenance / Sales / Sample / … / Manual+perm
 → Goods Issue Workbench v2.0 (not Create form)
 → Load required materials (no material create)
 → AI recommend (FIFO/FEFO/reservation/quality/WH rules/location/package integrity/customer)
-   → Accept Recommendation  OR  Override Recommendation → Warehouse Explorer (logged)
+   → Kabul Et  OR  Yoksay → Warehouse Explorer (logged)
 → Pick (scan) · partial qty · AI Validation always on (incl. Override) · Evidence · Quality
 → Destination (production line / loading dock · vehicle/carrier when sales)
 → Review (+ Override History) · Post

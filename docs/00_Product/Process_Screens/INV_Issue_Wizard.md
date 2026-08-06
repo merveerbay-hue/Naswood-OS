@@ -26,7 +26,7 @@ This file keeps demand → pick existing Lot/MI/Package → qty → Post gates.
 ```text
 1 Business document (PO / WO / SO / … / Manual+permission)
 2 Load required materials (no material create)
-3 AI recommend → Accept Recommendation  OR  Override Recommendation (Explorer)
+3 AI recommend → Kabul Et  OR  Yoksay (Explorer)
 4 Pick / package select (scan · partial qty allowed)
 5 Verify · AI Validation (also in Override) · Quality gate
 6 Evidence (as needed)

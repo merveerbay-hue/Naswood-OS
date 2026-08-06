@@ -61,7 +61,7 @@ Command Center / Operations
 → Issue goods / Mal çıkışı (Goods Issue Workbench v2.0 — not Create form)
 → Select business document (Production / Maintenance / Sales / … / Manual+permission)
 → Load required materials (no material create)
-→ AI recommend → Accept Recommendation OR Override Recommendation (Explorer)
+→ AI recommend → Kabul Et OR Yoksay (Explorer)
 → Scan package · partial qty · AI Validation (also in Override) · Evidence · Quality
 → Destination (line / dock) · Review (+ Override History) · Post
 → Balance ↓ · package remaining updated (+ policy split if configured) · reservation clear · genealogy · evidence archive
