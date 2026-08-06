@@ -43,7 +43,7 @@ Inventory
 | ID | Screen (job name) | Workspace | Job to be done |
 |----|-------------------|-----------|----------------|
 | INV-001 | Inventory Dashboard | Dashboard | See warehouse health & open queues |
-| INV-015/016 | **Receive Goods** (list/detail) | Operations | Finish inbound receipt against reference |
+| INV-RCV-001 / INV-015–016 | **Receiving Wizard** + receipt library | Operations | Finish inbound receipt (PO→lot→QI→WH→Post) — type **Wizard**; not Create form. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` |
 | INV-017/018 | **Issue Goods** | Operations | Finish outbound issue |
 | INV-019/020 | **Transfer Stock** | Operations | Move stock between WH/locations |
 | INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |
@@ -67,9 +67,11 @@ Inventory
 
 # Design rules
 
+- Screen types: `docs/13_Design/Common/Screen_Types.md` — **no shared “Yeni/Create” form**.  
+- CTA **Mal kabul başlat / Receive goods** → Receiving Wizard (not “Yeni Goods Receipt”).  
 - Operational primary entries are **job screens** (Receive, Issue, Transfer, Count Session), not bare entity CRUD.  
-- Libraries find & reopen work.  
-- Compose from shared components (Entity Grid, Master Detail, Warehouse Map, Scan Field).  
+- Libraries (Explorer) find & reopen work.  
+- Compose from shared components; flow is process-specific (`UI_Patterns.md`).  
 - CRUD-only ResourcePages are technical debt.
 
 ---

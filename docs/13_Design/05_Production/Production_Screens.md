@@ -57,10 +57,15 @@ Production screens shall
 Screens must never behave as generic CRUD pages.
 
 ```text
-Primary Planning entry:  Production Planning Wizard
-Secondary:               Plan / Order Library (find & reopen)
-Not the design center:   “New Production Order” entity form
+Primary Planning entry:  Production Planning Wizard  (Screen type: Wizard)
+Secondary:               Plan / Order Library (Explorer — find & reopen)
+Shop floor:              Operator Terminal (Screen type: Terminal)
+Not the design center:   “New Production Order” / shared Create form
 ```
+
+Screen types authority: `docs/13_Design/Common/Screen_Types.md`  
+Patterns: `docs/13_Design/Common/UI_Patterns.md`  
+CTA: **Üretim planla / Plan production** — never bare “Yeni”.
 
 ---
 

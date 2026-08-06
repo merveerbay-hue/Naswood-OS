@@ -27,6 +27,17 @@ The objective is to ensure consistency, maintainability and enterprise-grade sof
 Before stating any cross-cutting rule in a doc or PR: check the Authority Matrix.  
 **Yes, already defined → reference only. No → edit the authority document.**
 
+### No shared Create screen
+
+**Authority:** [`docs/13_Design/Common/Screen_Types.md`](docs/13_Design/Common/Screen_Types.md) · [`UI_Patterns.md`](docs/13_Design/Common/UI_Patterns.md)
+
+```text
+NOS'ta "New" diye tek tip ekran yoktur.
+```
+
+Never implement “Yeni” as the same entity Create form across modules.  
+Choose **Wizard / Terminal / Console / Explorer / Planner / Dashboard / Workbench / Approval Center**, then process steps from module flows.
+
 **We design. Cursor applies.**
 
 ```text

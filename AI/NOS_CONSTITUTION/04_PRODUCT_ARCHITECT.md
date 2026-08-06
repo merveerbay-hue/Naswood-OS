@@ -77,6 +77,17 @@ in Document_Numbering.md (Core Identity & Numbering Architecture).
 Manual entry is prohibited.
 ```
 
+## 2.2 No shared Create / “Yeni” form
+
+**Authority:** [`docs/13_Design/Common/Screen_Types.md`](../../docs/13_Design/Common/Screen_Types.md)
+
+```text
+FORBIDDEN:  one Create ResourcePage for every “Yeni” button
+REQUIRED:   pick Screen Type → process-specific Wizard / Terminal / …
+```
+
+“Yeni Goods Receipt” ≠ “Yeni Production Order” ≠ “Yeni NCR” — different wizards, different steps.
+
 ```text
 Design first  →  Document second  →  Cursor implements last
 ```

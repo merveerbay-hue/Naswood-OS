@@ -12,24 +12,35 @@ Before naming or drawing any screen, answer:
 
 > **Kullanıcı bu ekranda hangi işi bitirmek istiyor?**
 
-The answer is the screen.
+Then:
+
+> **Bu iş hangi ekran tipini kullanır?** (Wizard · Terminal · Explorer · Planner · …)
+
+Authorities: [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md) · [`UI_Patterns.md`](../13_Design/Common/UI_Patterns.md)
+
+The answer is the screen — **not** a shared Create form.
+
+```text
+NOS'ta "New" diye tek tip ekran yoktur.
+```
 
 Not:
 
 ```text
-✘ Entity oluştur
+✘ Entity oluştur / ortak “Yeni” formu
 ✘ Production Order CRUD
 ✘ “TASK-056 ekranı”
-✘ Tablo + Create formu
+✘ Tablo + Create formu (her modülde aynı)
 ```
 
 But:
 
 ```text
 ✔ Production Planning Wizard — planı oluştur, doğrula, release et
-✔ Operator Run — iş emrini başlat / teyit / hurda
+✔ Receiving Wizard — PO → lot → kalite → depo → post
+✔ Operator Terminal — iş emrini başlat / teyit / hurda
 ✔ Cycle Count Session — sayımı bitir ve farkı kapat
-✔ RFQ Compare & Award — tedarikçiyi seç ve PO’ya geç
+✔ NCR Wizard — kaynak → problem → CAPA
 ```
 
 ---
@@ -57,8 +68,10 @@ Copy for every new screen:
 ```text
 Screen ID:
 Screen name:          <Job name — verb/outcome>
+Screen type:          <Wizard | Terminal | Console | Explorer | Planner | Dashboard | Workbench | Approval Center>
 Workspace:
 Primary role:
+Primary CTA:          <Plan production | Receive goods | Raise NCR | … — never bare “Yeni/Create”>
 
 Job to be done:
   <One sentence — what is finished when the user leaves>

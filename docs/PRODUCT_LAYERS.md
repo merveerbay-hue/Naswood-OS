@@ -17,7 +17,9 @@ AI/NOS_CONSTITUTION/
 
 docs/
 ├── 00_Product/               ✅ Product map · Screen Map · Authority Matrix (SSOT)
-├── 13_Design/                ✅ Module design packs (Architecture, Workflow, API, …)
+├── 13_Design/
+│   ├── Common/               ✅ Screen_Types · UI_Patterns (no shared Create)
+│   └── …/                    ✅ Module design packs (Architecture, Workflow, API, …)
 ├── 14_Implementation/        ✅ FROZEN — historical TASK archives only
 ├── 15_UI_Architecture/       Module → Workspace IA
 ├── 15_UI/                    Screen Architecture

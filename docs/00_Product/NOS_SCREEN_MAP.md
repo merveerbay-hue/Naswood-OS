@@ -28,11 +28,18 @@ NOS
   → Code
 ```
 
-**Mandatory question for every screen:**  
-*Kullanıcı bu ekranda hangi işi bitirmek istiyor?*
+**Mandatory questions for every screen:**  
+1. *Kullanıcı bu ekranda hangi işi bitirmek istiyor?*  
+2. *Bu iş hangi ekran tipini kullanır?* (Wizard / Terminal / Explorer / …)
 
-→ See [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
-→ Exemplar: [`Process_Screens/PRD_Production_Planning_Wizard.md`](./Process_Screens/PRD_Production_Planning_Wizard.md)
+→ [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
+→ [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md) · [`UI_Patterns.md`](../13_Design/Common/UI_Patterns.md)  
+
+```text
+NOS'ta "New" diye tek tip ekran yoktur.
+```
+
+→ Exemplars: [Planning Wizard](./Process_Screens/PRD_Production_Planning_Wizard.md) · [Receiving Wizard](./Process_Screens/INV_Receiving_Wizard.md)
 
 Entity-titled rows in older indexes are **placeholders to rename** into jobs  
 (e.g. “Production Order” → **Production Planning Wizard** + Plan Library).

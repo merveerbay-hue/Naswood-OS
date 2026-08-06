@@ -8,9 +8,11 @@
 ## Phase 2 anchor
 
 **SSOT / who owns which rule:** [`DOCUMENTATION_AUTHORITY_MATRIX.md`](./DOCUMENTATION_AUTHORITY_MATRIX.md)  
+**Screen types (no shared Create):** [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md)  
+**UI patterns:** [`docs/13_Design/Common/UI_Patterns.md`](../13_Design/Common/UI_Patterns.md)  
 **Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)  
 **Job-first design:** [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
-**Exemplar process screen:** [`Process_Screens/PRD_Production_Planning_Wizard.md`](./Process_Screens/PRD_Production_Planning_Wizard.md)
+**Exemplar wizards:** [Production Planning](./Process_Screens/PRD_Production_Planning_Wizard.md) · [Receiving](./Process_Screens/INV_Receiving_Wizard.md)
 
 Before any new rule: *Bu kuralı daha önce tanımlamış mıydık?* → Matrix → reference or extend authority.
 
