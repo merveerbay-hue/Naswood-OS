@@ -2,15 +2,19 @@
 
 **Module:** Inventory  
 **Status:** Official — Product Architect  
-**Version:** 1.0.0  
-**Owns:** Design **sequence**, process PRD **question template**, completion status  
-**Does not own:** Screen layouts (each process PRD) · Numbering · Material Identity · stock ledger  
+**Version:** 1.1.0  
+**Owns:** Design **sequence** for ops Workbenches, process PRD **question template**, completion status  
+**Does not own:** Screen layouts (each process PRD) · Numbering · Material Identity · stock ledger · **core foundation authorities** (→ `Inventory_Foundation_Program.md`)
 
 ---
 
 ## Working contract
 
 ```text
+FOUNDATION FIRST — see Inventory_Foundation_Program.md.
+Ops Workbench sequence below is PAUSED until Foundation GATE F1
+(Material Definition · Measurement/Conversion · Material Identity · Compliance).
+
 We design Inventory processes ONE AT A TIME — in the order below.
 We do not invent all screens in parallel.
 We do not generate CRUD / Create forms.
@@ -18,7 +22,7 @@ We answer the question template before drawing UI.
 We extend Architecture / Workflow / Screens — we do not replace them.
 ```
 
-Human (Product Architect) decides the next process.  
+Human (Product Architect) decides the next process **after foundation gates**.  
 AI drafts the process PRD only for the **active** row.
 
 ---
@@ -29,7 +33,7 @@ AI drafts the process PRD only for the **active** row.
 |---|--------------|--------------|----------------------|---------------|
 | 1 | **Dashboard (Operations Center)** | Depo Komuta Merkezi | Dashboard / Command Center | **Done** — `Inventory_Dashboard.md` |
 | 2 | **Receiving** | Mal Kabul | Workbench (Evidence First) | **Done** — `INV_Receiving_Workbench.md` |
-| 3 | **Putaway** | Depolama / Yerleştirme | Terminal / Workbench | **Next** (ops sequence) — TBD |
+| 3 | **Putaway** | Depolama / Yerleştirme | Terminal / Workbench | **Paused** — resume after Foundation GATE F1 · TBD |
 | 4 | **Warehouse Explorer** | Depo Gezgini | Explorer | Queued |
 | 5 | **Stock Transfer** | Stok Transfer | Wizard | Queued — spine `INV_Transfer_Wizard.md` |
 | 6 | **Material Reservation** | Malzeme Rezervasyonu | Desk / Workbench | Queued — INV-030 |
