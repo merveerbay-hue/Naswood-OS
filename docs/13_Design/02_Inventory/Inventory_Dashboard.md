@@ -9,7 +9,33 @@
 **Status:** Approved
 
 ---
+═══════════════════════════════
 
+WAREHOUSE STATUS
+
+═══════════════════════════════
+
+🟢 Hammadde
+
+82%
+
+🟡 Kurutma
+
+71%
+
+🔴 Lamel
+
+98%
+
+🟢 Panel
+
+43%
+
+🟢 Sevkiyat
+
+61%
+
+═══════════════════════════════
 # Purpose
 
 The Inventory Dashboard provides a real-time operational view of warehouse activities, inventory levels, stock movements and inventory health across the organization.
