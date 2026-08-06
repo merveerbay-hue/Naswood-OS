@@ -23,6 +23,7 @@
 | **2.0.1** | **Accept / Override Recommendation** CTAs · AI Validation continues in Override · Partial pick auto-updates remaining · **optional company-policy package split** with full traceability |
 | **2.0.2** | Canonical worked scenarios: SO-250001 multi-package AI pick · **Kabul Et / Yoksay** CTAs · partial PKG-00254 120→40→80 |
 | **2.0.3** | **Multiple Package Picking** · Package Allocation Grid · mix AI Validation (lot/quality/moisture/dims/customer) · edit/add/remove packages |
+| **2.0.4** | **Package Allocation Workspace** = center of Workbench (not a simple table) · live qty/volume/weight/pkg count · barcode · DnD · keyboard · Excel-like · sort/filter/group · bulk · AI/manual · live validation · inventory sync |
 
 v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
 
@@ -157,41 +158,40 @@ Manual requires elevated permission + reason code + audit.
 
 ## Workbench design (not a form)
 
+```text
+The CENTER of the Goods Issue Workbench is the Package Allocation Workspace.
+This is NOT a simple table.
+It is an interactive allocation workspace (professional warehouse planning class).
+Highest design priority — primary operational screen.
+```
+
 Operational command center — compose:
 
 | Surface | Role |
 |---------|------|
-| Cards | Interactive stage content only (not decorative KPI cards) |
-| Timeline / stage rail | 10-step progress |
-| Warehouse Map | AI route + current bin |
-| Material Grid | Demand lines · reserved · available · remaining |
-| AI Recommendation Panel | Default pick proposal |
+| **Package Allocation Workspace** | **MAIN** — multi-package · partial · live calcs · AI/manual |
+| Timeline / stage rail | Session progress (secondary to workspace) |
+| Live totals strip | Required · Selected · Remaining · Volume · Weight · # Packages |
+| Warehouse Map | AI route + current bin (context) |
+| Material demand strip | Required lines · reserved · available |
+| AI Recommendation Panel | Seed / reset allocation |
+| Warehouse Explorer | Drag source / add packages (override) |
 | Evidence Panel | Photos · video · voice · docs |
-| Warehouse Explorer | Override browse: WH → Zone → Rack → Shelf → Bin → Package |
-| Package Preview | Full package card (see § Package Selection) |
 | Document Viewer / Library | Session digital file |
-| Sticky Action Bar | Draft · Back · Next · Ignore AI · NCR · **Post** |
+| Sticky Action Bar | Draft · Back · Next · Kabul Et · Yoksay · NCR · **Post** |
 
-Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan — adapted to NOS laws (demand-backed · Package Identity · Evidence First · no Create form).
+Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan planning grids — adapted to NOS laws.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ INV-ISS-001  Goods Issue Workbench     GI-… (system) · Draft/InProgress  │
-│ Ref: PO-… / WO-… / SO-… · Priority · Required date · Customer/Project    │
-├────────────┬─────────────────────────────────────┬───────────────────────┤
-│ TIMELINE   │ MAIN                                │ CONTEXT               │
-│ 1 Document │ Task · Material Grid                │ AI Recommendations    │
-│ 2 Materials│ Package Preview · Warehouse Map     │ Validation / Warnings │
-│ 3 AI Pick  │ Explorer (override) · Evidence      │ Reservation / Quality │
-│ 4 Picking  │ Document Library · Loading          │ Override History      │
-│ 5 Verify   │                                     │                       │
-│ 6 Evidence │                                     │                       │
-│ 7 Quality  │                                     │                       │
-│ 8 Loading  │                                     │                       │
-│ 9 Review   │                                     │                       │
-│ 10 Post    │                                     │                       │
-├────────────┴─────────────────────────────────────┴───────────────────────┤
-│ STICKY: Draft · Back · Next · Kabul Et · Yoksay · NCR · Post                 │
+│ INV-ISS-001  Goods Issue Workbench     GI-… · SO-… · Live totals strip   │
+├──────────┬───────────────────────────────────────────────┬───────────────┤
+│ TIMELINE │ ★ PACKAGE ALLOCATION WORKSPACE (MAIN)         │ CONTEXT       │
+│ 1–10     │ Toolbar · Filter/Sort/Group · Scan · DnD      │ AI / Validate │
+│          │ Interactive grid · inline qty · bulk select   │ Explorer pool │
+│          │ Live: Qty · Vol · Weight · #Pkg               │ Overrides     │
+├──────────┴───────────────────────────────────────────────┴───────────────┤
+│ STICKY: Draft · Back · Next · Kabul Et · Yoksay · NCR · Post             │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -203,7 +203,7 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 1 Select business document
 2 Load material requirements
 3 AI picking recommendation → Kabul Et  OR  Yoksay (Override → Explorer)
-4 Picking / package selection (scan · partial qty)
+4 Package Allocation Workspace (interactive grid · live calcs · scan/DnD)
 5 Verify material & package  (AI Validation — also in Override)
 6 Evidence collection
 7 Quality validation
@@ -355,32 +355,73 @@ Each allocated package still follows Partial Package Usage (barcode unchanged).
 
 ---
 
-## Package Allocation Grid
+## Package Allocation Workspace
 
-Primary picking surface after AI Accept / Override. **Each row = one package.**
+**Authority surface for picking.** Center of INV-ISS-001. Highest design priority.
+
+```text
+This is NOT a simple table.
+This is an interactive allocation workspace
+similar to professional warehouse planning software.
+```
+
+### Capabilities (shall support)
+
+| Capability | Rule |
+|------------|------|
+| Multi-package allocation | One GI ← many packages |
+| Partial package consumption | Selected ≤ Available; barcode unchanged |
+| Real-time calculations | Every edit recalculates immediately |
+| Inline quantity editing | Selected Quantity cells |
+| Barcode-driven row selection | Scan focuses / selects / confirms row |
+| Drag-and-drop package allocation | From Explorer / pool → workspace |
+| Keyboard shortcuts | Arrow / Tab / Enter / Del (Excel-like) |
+| Excel-like navigation | Cell focus · copy patterns where safe |
+| Sorting | Any column |
+| Filtering | Package · lot · location · quality · moisture · WH |
+| Grouping | By WH · Zone · Lot · Quality (optional) |
+| Bulk package selection | Multi-select → set qty / remove / waive |
+| AI recommendations | Seed grid · Reset to AI · highlight deltas |
+| Manual override | Yoksay / Explorer / DnD / edit |
+| Live validation | Mix + per-row rules as operator types |
+| Inventory sync | Always synchronized with warehouse inventory (available qty live) |
+
+### Live recalculation (every modification)
+
+| Metric | Formula / meaning |
+|--------|-------------------|
+| Required Quantity | Demand line open qty |
+| Selected Quantity | Σ Selected across rows |
+| Remaining Quantity | Per row: Available − Selected · Σ remaining |
+| Volume | Σ (selected × unit volume) / remaining volume |
+| Weight | Σ (selected × unit weight) / remaining weight |
+| Number of Packages | Count of rows with Selected > 0 |
+
+### Columns (each row = one package)
 
 | Column | Content |
 |--------|---------|
-| Package Number | Display-only (scan/pick identity) |
-| Warehouse | Name-first · code display |
-| Location | Zone / rack / shelf / bin display |
+| Package Number | Display-only identity |
+| Warehouse | Name-first |
+| Location | Zone / rack / shelf / bin |
 | Lot | Display-only |
 | Material Identity | Display-only |
-| Species | |
-| Dimensions | |
-| Quality Grade | |
-| Moisture | |
-| Available Quantity | On-hand in package |
-| **Selected Quantity** | Editable — issue qty from this package (may be partial) |
-| Remaining Quantity | Available − Selected (auto) |
+| Species · Dimensions · Quality · Moisture | Spec columns |
+| Available Quantity | Live from inventory |
+| **Selected Quantity** | Inline editable (partial OK) |
+| Remaining Quantity | Auto |
+| Volume / Weight | Auto (selected & remaining) |
+
+### Design priority
 
 ```text
-Grid shall calculate totals in real time:
-  Σ Selected  vs  Required on demand line
-  Σ Remaining across allocated packages
+1. Package Allocation Workspace  ← primary
+2. Live totals + validation
+3. AI seed / Override Explorer
+4. Evidence / Loading / Review / Post
 ```
 
-UI actions on the grid: edit Selected · Remove row · Add package · Reset to AI recommendation.
+Document / materials stages prepare the session; once demand is loaded, the operator lives in the Allocation Workspace until Post.
 
 ---
 
@@ -880,11 +921,11 @@ Tablet / desk: document select · Accept/Override · review · Document Library 
 ## Cursor implementation notes
 
 1. Screen type = **Workbench** — not Issue Create form.  
-2. FE: **Package Allocation Grid** (multi-package) · Kabul Et / Yoksay · edit Selected / Remove / Add.  
-3. Demo: SO-250001 · Thermowood 26×140×4000 · 50 → Paket A/B/C minimum set; real-time totals.  
-4. Mix AI Validation warnings; waive only with authorization.  
-5. Partial per row: barcode unchanged; balances via Inventory Transactions.  
-6. Post → one GI · N inventory txns (per package line) · remaining updates · evidence · genealogy.  
+2. FE: **Package Allocation Workspace** as MAIN (not a simple table) — highest design priority.  
+3. Live strip: Required · Selected · Remaining · Volume · Weight · # Packages.  
+4. Inline qty · barcode row select · DnD from Explorer · keyboard/Excel-like · sort/filter/group · bulk.  
+5. AI seed / manual override · live mix validation · inventory-synced Available.  
+6. Post → one GI · N inventory txns · remaining updates · evidence · genealogy.  
 7. Command Center “Open issues” opens this Workbench.  
 8. Export / permanence → Shared Document Management — reference only.
 
