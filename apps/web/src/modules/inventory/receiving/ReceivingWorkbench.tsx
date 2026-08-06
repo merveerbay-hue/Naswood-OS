@@ -7,12 +7,15 @@ import { useI18n } from '@/i18n';
 
 type StageId =
   | 'truck'
-  | 'documents'
-  | 'ocr'
-  | 'verify'
+  | 'evidence'
+  | 'aiDoc'
+  | 'compare'
   | 'count'
-  | 'inspect'
+  | 'photoAnalysis'
+  | 'materialVerify'
+  | 'quality'
   | 'warehouse'
+  | 'identity'
   | 'labels'
   | 'review'
   | 'post';
@@ -25,19 +28,23 @@ interface StageDef {
 
 const STAGES: StageDef[] = [
   { id: 'truck', titleKey: 'wb.rcv.truck', hintKey: 'wb.rcv.truckHint' },
-  { id: 'documents', titleKey: 'wb.rcv.documents', hintKey: 'wb.rcv.documentsHint' },
-  { id: 'ocr', titleKey: 'wb.rcv.ocr', hintKey: 'wb.rcv.ocrHint' },
-  { id: 'verify', titleKey: 'wb.rcv.verify', hintKey: 'wb.rcv.verifyHint' },
+  { id: 'evidence', titleKey: 'wb.rcv.evidence', hintKey: 'wb.rcv.evidenceHint' },
+  { id: 'aiDoc', titleKey: 'wb.rcv.ocr', hintKey: 'wb.rcv.ocrHint' },
+  { id: 'compare', titleKey: 'wb.rcv.compare', hintKey: 'wb.rcv.compareHint' },
   { id: 'count', titleKey: 'wb.rcv.count', hintKey: 'wb.rcv.countHint' },
-  { id: 'inspect', titleKey: 'wb.rcv.inspect', hintKey: 'wb.rcv.inspectHint' },
+  { id: 'photoAnalysis', titleKey: 'wb.rcv.photoAnalysis', hintKey: 'wb.rcv.photoAnalysisHint' },
+  { id: 'materialVerify', titleKey: 'wb.rcv.materialVerify', hintKey: 'wb.rcv.materialVerifyHint' },
+  { id: 'quality', titleKey: 'wb.rcv.quality', hintKey: 'wb.rcv.qualityHint' },
   { id: 'warehouse', titleKey: 'wb.rcv.warehouse', hintKey: 'wb.rcv.warehouseHint' },
+  { id: 'identity', titleKey: 'wb.rcv.identity', hintKey: 'wb.rcv.identityHint' },
   { id: 'labels', titleKey: 'wb.rcv.labels', hintKey: 'wb.rcv.labelsHint' },
   { id: 'review', titleKey: 'wb.rcv.review', hintKey: 'wb.rcv.reviewHint' },
   { id: 'post', titleKey: 'wb.rcv.post', hintKey: 'wb.rcv.postHint' },
 ];
 
 const PHOTO_SLOTS = ['front', 'rear', 'side', 'cargo', 'seal'] as const;
-const DAMAGE_FLAGS = ['broken', 'wet', 'blueStain', 'crack', 'mold', 'damage'] as const;
+const DAMAGE_FLAGS = ['broken', 'wet', 'blueStain', 'crack', 'mold', 'rot', 'warping', 'mechanical', 'damage'] as const;
+const PHOTO_AI_FLAGS = ['bundles', 'damagedPkg', 'wet', 'mold', 'missingLabel', 'qr'] as const;
 
 const OCR_DEMO = {
   material: 'Thermowood Deck 26×140×3000',
@@ -68,9 +75,12 @@ export function ReceivingWorkbench() {
   const [stageIdx, setStageIdx] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
   const [posted, setPosted] = useState(false);
-  const [minted, setMinted] = useState<{ gr?: string; lot?: string; pkg?: string; pallet?: string }>({});
+  const [minted, setMinted] = useState<{ gr?: string; lot?: string; pkg?: string; pallet?: string; mi?: string }>({});
   const [error, setError] = useState<string | null>(null);
   const [approved, setApproved] = useState(false);
+  const [photoAiAccepted, setPhotoAiAccepted] = useState(false);
+  const [photoAi, setPhotoAi] = useState<Record<string, boolean>>({ bundles: true, qr: true });
+  const [identityAccepted, setIdentityAccepted] = useState(false);
 
   const [truck, setTruck] = useState({
     plate: '34 ABC 123',
@@ -91,7 +101,6 @@ export function ReceivingWorkbench() {
   const [inspectOk, setInspectOk] = useState(true);
   const [warehouse, setWarehouse] = useState('Ana Hammadde Deposu');
   const [location, setLocation] = useState('Rampa A / Bölge 1');
-  const [labelsPrinted, setLabelsPrinted] = useState(false);
 
   const stage = STAGES[stageIdx];
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
@@ -102,16 +111,21 @@ export function ReceivingWorkbench() {
         if (!truck.plate.trim()) return t('wb.rcv.gateNeedPlate');
         if (!truck.supplier.trim()) return t('wb.rcv.gateNeedSupplier');
         return null;
-      case 'documents':
+      case 'evidence':
         return docs.length === 0 ? t('wb.rcv.gateNeedDoc') : null;
-      case 'ocr':
+      case 'aiDoc':
         return !ocrAccepted ? t('wb.rcv.gateNeedOcr') : null;
-      case 'verify':
+      case 'compare':
+      case 'materialVerify':
         return !verifyResolved ? t('wb.rcv.gateNeedVerify') : null;
       case 'count':
         return Number(countQty) <= 0 ? t('wb.rcv.gateNeedCount') : null;
+      case 'photoAnalysis':
+        return !photoAiAccepted ? t('wb.rcv.gateNeedPhotoAi') : null;
       case 'warehouse':
         return !warehouse.trim() || !location.trim() ? t('wb.rcv.gateNeedWh') : null;
+      case 'identity':
+        return !identityAccepted || !minted.mi ? t('wb.rcv.gateNeedIdentity') : null;
       case 'labels':
         return null;
       case 'review':
@@ -127,10 +141,11 @@ export function ReceivingWorkbench() {
     ocrAccepted,
     verifyResolved,
     countQty,
+    photoAiAccepted,
     warehouse,
     location,
-    minted.lot,
-    labelsPrinted,
+    identityAccepted,
+    minted.mi,
     approved,
     t,
   ]);
@@ -167,6 +182,7 @@ export function ReceivingWorkbench() {
       setMinted((m) => ({
         ...m,
         gr,
+        mi: m.mi ?? ('LOG-PINE-' + mintPreview('ID').replace('ID-', '')),
         lot: m.lot ?? mintPreview('LOT'),
         pkg: m.pkg ?? mintPreview('PKG'),
         pallet: m.pallet ?? mintPreview('PAL'),
@@ -178,13 +194,21 @@ export function ReceivingWorkbench() {
   });
 
   function goNext() {
+    if (stage.id === 'identity' && !minted.mi) {
+      setMinted((m) => ({
+        ...m,
+        mi: 'LOG-PINE-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(Math.floor(10000 + Math.random() * 90000)),
+        lot: m.lot ?? mintPreview('LOT'),
+      }));
+      setIdentityAccepted(true);
+    }
     if (stage.id === 'labels' && !minted.lot) {
-      setMinted({
-        lot: mintPreview('LOT'),
+      setMinted((m) => ({
+        ...m,
+        lot: m.lot ?? mintPreview('LOT'),
         pkg: mintPreview('PKG'),
         pallet: mintPreview('PAL'),
-      });
-      setLabelsPrinted(true);
+      }));
     }
     if (stage.id === 'post') {
       persistMutation.mutate();
@@ -212,6 +236,7 @@ export function ReceivingWorkbench() {
           <p className="text-xs font-medium text-[var(--text-muted)]">INV-RCV-001 · {t('wb.rcv.screenType')}</p>
           <h2 className="text-xl font-semibold tracking-tight">{t('wb.rcv.title')}</h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">{t('wb.rcv.desc')}</p>
+          <p className="mt-1 text-xs font-medium text-[var(--color-primary)]">{t('wb.rcv.evidenceFirst')}</p>
           <p className="mt-2 text-xs text-[var(--text-muted)]">
             {truck.plate ? `${t('wb.rcv.truckPlate')}: ${truck.plate}` : t('wb.rcv.noTruckYet')}
             {truck.supplier ? ` · ${truck.supplier}` : ''}
@@ -223,8 +248,8 @@ export function ReceivingWorkbench() {
         <div className="flex flex-col items-end gap-2">
           <div className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 py-2 text-right">
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{t('wizard.systemCode')}</p>
-            <p className="font-mono text-sm font-medium">{minted.gr ?? t('wizard.autoGenerated')}</p>
-            <p className="text-[10px] text-[var(--text-muted)]">GR-… · LOT-… · PKG-…</p>
+            <p className="font-mono text-sm font-medium">{minted.mi ?? minted.gr ?? t('wizard.autoGenerated')}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">MI · GR-… · LOT-…</p>
           </div>
           <Link
             to="/inventory/operations/goods-receipts"
@@ -355,11 +380,11 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
-              {stage.id === 'documents' ? (
+              {stage.id === 'evidence' ? (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.docAttach')}</p>
                   <div className="flex flex-wrap gap-2">
-                    {['deliveryNote', 'packingList', 'purchaseOrder', 'excel', 'photo'].map((kind) => (
+                    {['deliveryNote', 'packingList', 'purchaseOrder', 'excel', 'word', 'photo', 'certificate'].map((kind) => (
                       <Button key={kind} type="button" variant="secondary" onClick={() => addDemoDoc(kind)}>
                         {docs.includes(kind) ? '✓ ' : '+ '}
                         {t(`wb.rcv.doc.${kind}`)}
@@ -385,7 +410,7 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
-              {stage.id === 'ocr' ? (
+              {stage.id === 'aiDoc' ? (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ocrIntro')}</p>
                   <div className="grid gap-2 md:grid-cols-2">
@@ -404,7 +429,7 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
-              {stage.id === 'verify' ? (
+              {stage.id === 'compare' || stage.id === 'materialVerify' ? (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.verifyIntro')}</p>
                   <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
@@ -475,7 +500,7 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
-              {stage.id === 'inspect' ? (
+              {stage.id === 'quality' ? (
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 text-sm font-medium">
                     <input
@@ -515,6 +540,61 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
+              {stage.id === 'photoAnalysis' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.photoAnalysisHint')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PHOTO_AI_FLAGS.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setPhotoAi((p) => ({ ...p, [f]: !p[f] }))}
+                        className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
+                          photoAi[f]
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+                            : 'border-[var(--border-default)] text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        {t(`wb.rcv.photoAi.${f}`)}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={photoAiAccepted} onChange={(e) => setPhotoAiAccepted(e.target.checked)} />
+                    {t('wb.rcv.photoAiAccept')}
+                  </label>
+                </div>
+              ) : null}
+
+              {stage.id === 'identity' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.identityHint')}</p>
+                  <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
+                    <p className="text-[10px] uppercase text-[var(--text-muted)]">Material Identity (root)</p>
+                    <p className="font-mono text-lg font-semibold">{minted.mi ?? 'LOG-PINE-…'}</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">{t('wb.rcv.noManualIds')}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setMinted((m) => ({
+                        ...m,
+                        mi: 'LOG-PINE-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(Math.floor(10000 + Math.random() * 90000)),
+                        lot: m.lot ?? mintPreview('LOT'),
+                      }));
+                      setIdentityAccepted(true);
+                    }}
+                  >
+                    {t('wb.rcv.mintIdentity')}
+                  </Button>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={identityAccepted} onChange={(e) => setIdentityAccepted(e.target.checked)} />
+                    {t('wb.rcv.identityAccept')}
+                  </label>
+                </div>
+              ) : null}
+
               {stage.id === 'warehouse' ? (
                 <div className="space-y-3">
                   <div className="rounded-md border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 px-3 py-2 text-sm">
@@ -543,6 +623,7 @@ export function ReceivingWorkbench() {
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.labelsIntro')}</p>
                   <div className="grid gap-2 sm:grid-cols-3">
                     {[
+                      ['mi', minted.mi ?? 'LOG-…'],
                       ['lot', minted.lot ?? 'LOT-…'],
                       ['pkg', minted.pkg ?? 'PKG-…'],
                       ['pallet', minted.pallet ?? 'PAL-…'],
@@ -563,8 +644,7 @@ export function ReceivingWorkbench() {
                         pkg: mintPreview('PKG'),
                         pallet: mintPreview('PAL'),
                       });
-                      setLabelsPrinted(true);
-                    }}
+                                    }}
                   >
                     {t('wb.rcv.mintAndPrint')}
                   </Button>
@@ -605,12 +685,14 @@ export function ReceivingWorkbench() {
                     <li>{t('wb.rcv.postItem.stock')}</li>
                     <li>{t('wb.rcv.postItem.audit')}</li>
                     <li>{t('wb.rcv.postItem.attachments')}</li>
+                    <li>{t('wb.rcv.postItem.mi')}</li>
+                    <li>{t('wb.rcv.postItem.evidence')}</li>
                   </ul>
                   {posted ? (
                     <p className="text-sm font-medium text-[var(--color-primary)]">
                       {t('wb.rcv.postedBanner')}
+                      {minted.mi ? ` · ${minted.mi}` : ''}
                       {minted.gr ? ` · ${minted.gr}` : ''}
-                      {minted.lot ? ` · ${minted.lot}` : ''}
                       {' — '}
                       {t('wizard.inLibrary')}
                     </p>
