@@ -145,6 +145,7 @@ Entry: Command Center queues · Operations · Production / Maintenance / Sales d
 | Stock / reservations / txn immutability | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
 | Package Allocation Workspace | `Package_Allocation_Workspace.md` |
+| Multi-UoM · pcs / lm / m² / m³ / kg / t | `Measurement_Conversion_Engine.md` |
 | Audit trail engine | `Audit_Log.md` |
 | Electronic approvals | `Approval_Workflow.md` |
 | Package code immutability / QR | `Barcode_QR_Model.md` · `Barcode_Strategy.md` |

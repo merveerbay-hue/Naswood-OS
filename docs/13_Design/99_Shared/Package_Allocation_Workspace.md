@@ -5,7 +5,7 @@
 **Version:** 1.1.0  
 **Location:** `docs/13_Design/99_Shared/Package_Allocation_Workspace.md`  
 **Owns:** Reusable interactive package allocation UX law for all stock movements · live recalculation metrics · operator capabilities · **Take From Package disposition** (Good / Damaged / Quality Hold / Scrap / Rework) · Damage evidence · Scrap txn law · Package Closing Checklist  
-**Does not own:** Process-specific Post artifacts · Evidence Archive permanence (→ `Document_Management_Evidence_and_Export.md`) · Material Identity meaning (→ `Material_Identity_Architecture.md`) · Identifier formats (→ `Document_Numbering.md`) · Stock ledger rules (→ `Inventory_Architecture.md`) · Quality disposition workflow detail (→ Quality) · Screen step copy (each Workbench / Wizard PRD)
+**Does not own:** Process-specific Post artifacts · Evidence Archive permanence (→ `Document_Management_Evidence_and_Export.md`) · Material Identity meaning (→ `Material_Identity_Architecture.md`) · Identifier formats (→ `Document_Numbering.md`) · Stock ledger rules (→ `Inventory_Architecture.md`) · Quantity conversion pcs↔m³↔kg (→ `Measurement_Conversion_Engine.md`) · Quality disposition workflow detail (→ Quality) · Screen step copy (each Workbench / Wizard PRD)
 
 ---
 
@@ -84,6 +84,8 @@ Consumers may **hide** columns that do not apply (e.g. Counted vs Selected) but 
 ---
 
 ## 5. Live recalculation (every modification)
+
+Volume / weight / dimensional equivalents **shall** be computed via [`Measurement_Conversion_Engine.md`](./Measurement_Conversion_Engine.md) — never hard-coded thickness×width×length in the Workbench UI.
 
 | Metric | Meaning |
 |--------|---------|
