@@ -83,6 +83,23 @@ import {
   WorkCentersPage,
   WorkOrderListPage,
 } from './modules/production/screens';
+import { QualityWorkspaceLayout } from './modules/quality/QualityWorkspaceLayout';
+import { QualityDashboardPage } from './modules/quality/overview/QualityDashboardPage';
+import {
+  CapaPage,
+  CertificatesPage,
+  CocPage,
+  HoldDeskPage,
+  InspectionPlansPage,
+  InspectionStartPage,
+  MoistureLabPage,
+  NcrLibraryPage,
+  NcrWizardPage,
+  QualityReportsPage,
+  QualitySettingsPage,
+  SpecsPage,
+  TraceabilityPage,
+} from './modules/quality/screens';
 import {
   BomBuilderPage,
   CalendarPlannerPage,
@@ -366,6 +383,33 @@ const prdReports = createRoute({ getParentRoute: () => productionRoute, path: 'r
 const prdAnalytics = createRoute({ getParentRoute: () => productionRoute, path: 'analytics', component: ProductionAnalyticsPage });
 const prdSettings = createRoute({ getParentRoute: () => productionRoute, path: 'settings', component: ProductionSettingsPage });
 
+const qualityRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/quality',
+  component: QualityWorkspaceLayout,
+});
+const qualityIndexRoute = createRoute({
+  getParentRoute: () => qualityRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/quality/dashboard' });
+  },
+});
+const qltDashboard = createRoute({ getParentRoute: () => qualityRoute, path: 'dashboard', component: QualityDashboardPage });
+const qltInspect = createRoute({ getParentRoute: () => qualityRoute, path: 'operations/inspect', component: InspectionStartPage });
+const qltHold = createRoute({ getParentRoute: () => qualityRoute, path: 'operations/hold-desk', component: HoldDeskPage });
+const qltNcr = createRoute({ getParentRoute: () => qualityRoute, path: 'operations/ncr', component: NcrWizardPage });
+const qltNcrs = createRoute({ getParentRoute: () => qualityRoute, path: 'operations/ncrs', component: NcrLibraryPage });
+const qltCapa = createRoute({ getParentRoute: () => qualityRoute, path: 'operations/capa', component: CapaPage });
+const qltLab = createRoute({ getParentRoute: () => qualityRoute, path: 'laboratory/moisture', component: MoistureLabPage });
+const qltTrace = createRoute({ getParentRoute: () => qualityRoute, path: 'compliance/traceability', component: TraceabilityPage });
+const qltCoc = createRoute({ getParentRoute: () => qualityRoute, path: 'compliance/coc', component: CocPage });
+const qltCert = createRoute({ getParentRoute: () => qualityRoute, path: 'compliance/certificates', component: CertificatesPage });
+const qltPlans = createRoute({ getParentRoute: () => qualityRoute, path: 'plans/inspection-plans', component: InspectionPlansPage });
+const qltSpecs = createRoute({ getParentRoute: () => qualityRoute, path: 'plans/specs', component: SpecsPage });
+const qltReports = createRoute({ getParentRoute: () => qualityRoute, path: 'reports', component: QualityReportsPage });
+const qltSettings = createRoute({ getParentRoute: () => qualityRoute, path: 'settings', component: QualitySettingsPage });
+
 const legacyProductionRedirects = [
   ['/production/boms', '/production/master-data/boms'],
   ['/production/routings', '/production/master-data/routings'],
@@ -505,6 +549,21 @@ const implemented = new Set([
   '/production/finished-goods',
   '/production/scraps',
   '/production/reworks',
+  '/quality',
+  '/quality/dashboard',
+  '/quality/operations/inspect',
+  '/quality/operations/hold-desk',
+  '/quality/operations/ncr',
+  '/quality/operations/ncrs',
+  '/quality/operations/capa',
+  '/quality/laboratory/moisture',
+  '/quality/compliance/traceability',
+  '/quality/compliance/coc',
+  '/quality/compliance/certificates',
+  '/quality/plans/inspection-plans',
+  '/quality/plans/specs',
+  '/quality/reports',
+  '/quality/settings',
 ]);
 const modulePaths = collectNavPaths().filter((path) => !implemented.has(path));
 const moduleRoutes = modulePaths.map((path) =>
@@ -606,6 +665,23 @@ export const routeTree = rootRoute.addChildren([
       prdSettings,
     ]),
     ...legacyProductionRedirects,
+    qualityRoute.addChildren([
+      qualityIndexRoute,
+      qltDashboard,
+      qltInspect,
+      qltHold,
+      qltNcr,
+      qltNcrs,
+      qltCapa,
+      qltLab,
+      qltTrace,
+      qltCoc,
+      qltCert,
+      qltPlans,
+      qltSpecs,
+      qltReports,
+      qltSettings,
+    ]),
     ...moduleRoutes,
   ]),
 ]);

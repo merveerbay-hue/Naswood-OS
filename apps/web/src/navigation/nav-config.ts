@@ -144,7 +144,60 @@ export const navigationTree: NavItem[] = [
       },
     ],
   },
-  { id: 'quality', label: 'Kalite', path: '/quality', icon: 'BadgeCheck' },
+  {
+    id: 'quality',
+    label: 'Kalite',
+    path: '/quality',
+    icon: 'BadgeCheck',
+    children: [
+      {
+        id: 'quality-dashboard',
+        label: 'Gösterge Paneli',
+        children: [{ id: 'quality-dash', label: 'Komuta', path: '/quality/dashboard' }],
+      },
+      {
+        id: 'quality-ops',
+        label: 'Operasyonlar',
+        children: [
+          { id: 'quality-inspect', label: 'Muayene başlat', path: '/quality/operations/inspect' },
+          { id: 'quality-hold', label: 'Hold masası', path: '/quality/operations/hold-desk' },
+          { id: 'quality-ncr', label: 'NCR aç', path: '/quality/operations/ncr' },
+          { id: 'quality-ncrs', label: 'NCR kayıtları', path: '/quality/operations/ncrs' },
+          { id: 'quality-capa', label: 'CAPA aç', path: '/quality/operations/capa' },
+        ],
+      },
+      {
+        id: 'quality-lab',
+        label: 'Laboratuvar',
+        children: [{ id: 'quality-moisture', label: 'Nem / Lab', path: '/quality/laboratory/moisture' }],
+      },
+      {
+        id: 'quality-compliance',
+        label: 'Uyumluluk',
+        children: [
+          { id: 'quality-trace', label: 'İzlenebilirlik', path: '/quality/compliance/traceability' },
+          { id: 'quality-coc', label: 'CoC / FSC-PEFC', path: '/quality/compliance/coc' },
+          { id: 'quality-cert', label: 'Sertifikalar', path: '/quality/compliance/certificates' },
+        ],
+      },
+      {
+        id: 'quality-plans',
+        label: 'Plan & Spek',
+        children: [
+          { id: 'quality-insp-plans', label: 'Muayene planları', path: '/quality/plans/inspection-plans' },
+          { id: 'quality-specs', label: 'Spek / AQL', path: '/quality/plans/specs' },
+        ],
+      },
+      {
+        id: 'quality-insights',
+        label: 'Rapor & Ayarlar',
+        children: [
+          { id: 'quality-reports', label: 'Raporlar', path: '/quality/reports' },
+          { id: 'quality-settings', label: 'Ayarlar', path: '/quality/settings' },
+        ],
+      },
+    ],
+  },
   { id: 'maintenance', label: 'Bakım', path: '/maintenance', icon: 'Wrench' },
   { id: 'finance', label: 'Finans', path: '/finance', icon: 'Wallet' },
   { id: 'analytics', label: 'Analitik', path: '/analytics', icon: 'BarChart3' },
