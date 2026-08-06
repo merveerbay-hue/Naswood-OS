@@ -139,10 +139,12 @@ See `docs/PRODUCT_LAYERS.md`.
 
 ## P1 — NOS as a whole product
 
-Produce / maintain the **NOS Product Map**: every module, its purpose, primary
-roles, and workspace outline — before deep-diving every screen.
+Produce / maintain the **NOS Product Map** and **Screen Map**: every module,
+workspace, screen ID, and shared component outline — before deep-diving every
+screen PRD.
 
-Home: `docs/00_Product/`
+Home: `docs/00_Product/`  
+Screen Map: `docs/00_Product/NOS_SCREEN_MAP.md`
 
 ## P2 — Module on the table (role lenses)
 
