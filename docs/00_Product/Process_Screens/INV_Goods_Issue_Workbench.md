@@ -21,6 +21,7 @@
 | 1.0 | Demand-backed Workbench spine · AI pick · scan/verify · quality · thin loading · Post · Evidence First |
 | **2.0** | Override Mode + Warehouse Explorer · Package Selection detail · **Partial Package Consumption** · Package Identity permanence · expanded Loading · Document Library / Export UX surfaces · Override History · gates table |
 | **2.0.1** | **Accept / Override Recommendation** CTAs · AI Validation continues in Override · Partial pick auto-updates remaining · **optional company-policy package split** with full traceability |
+| **2.0.2** | Canonical worked scenarios: SO-250001 multi-package AI pick · **Kabul Et / Yoksay** CTAs · partial PKG-00254 120→40→80 |
 
 v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
 
@@ -82,7 +83,7 @@ Operator may NOT violate validation rules without explicit authorization.
 | 5 | **AI support?** | FIFO/FEFO · reservation · quality · customer reqs · WH rules · location optimize · package integrity · availability · pick route · wrong material/dims/species/moisture/quality/package/lot detect |
 | 6 | **Auto-generated?** | GI · inventory txn(s) · histories · audit · scan/validation/override history · genealogy · remaining package qty/volume/weight/status · suggested pick |
 | 7 | **Never manual?** | Material Code · Lot · Package · Pallet · WH/Location codes · GI · txn · MI strings · free-hand stock balance edit · **new package number on partial issue** |
-| 8 | **User decisions?** | Which demand · **Accept Recommendation** or **Override Recommendation** (Explorer) · issue qty within package remaining · destination · evidence when needed · **Approve Post** · raise NCR |
+| 8 | **User decisions?** | Which demand · **Kabul Et** or **Yoksay** (Explorer) · issue qty within package remaining · destination · evidence when needed · **Approve Post** · raise NCR |
 
 ---
 
@@ -189,7 +190,7 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 │ 9 Review   │                                     │                       │
 │ 10 Post    │                                     │                       │
 ├────────────┴─────────────────────────────────────┴───────────────────────┤
-│ STICKY: Draft · Back · Next · Accept Recommendation · Override · NCR · Post │
+│ STICKY: Draft · Back · Next · Kabul Et · Yoksay · NCR · Post                 │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -200,7 +201,7 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 ```text
 1 Select business document
 2 Load material requirements
-3 AI picking recommendation → Accept Recommendation  OR  Override Recommendation
+3 AI picking recommendation → Kabul Et  OR  Yoksay (Override → Explorer)
 4 Picking / package selection (scan · partial qty)
 5 Verify material & package  (AI Validation — also in Override)
 6 Evidence collection
@@ -282,32 +283,32 @@ Display:
 
 Operator chooses exactly one path:
 
-| Control | Result |
-|---------|--------|
-| **✓ Accept Recommendation** | Proceed with AI default (scan/confirm along recommended route) |
-| **✓ Override Recommendation** | Enter Override Mode (Warehouse Explorer) |
+| Control (TR) | Control (EN) | Result |
+|--------------|--------------|--------|
+| **✓ Kabul Et** | **Accept** / Use AI recommendation | Proceed with AI default |
+| **✓ Yoksay** | **Ignore** | Enter Override Mode (Warehouse Explorer) |
 
-**Gate:** Each line has **Accept** recorded **or** an audited **Override** selection.
+Also acceptable TR labels: **AI Önerisini Kullan** (= Kabul Et) · **Yoksay**.
+
+**Gate:** Each line has **Kabul Et** recorded **or** an audited **Yoksay** override selection.
 
 ---
 
 ### Override Mode
 
-When **Override Recommendation** is selected:
+When **Yoksay** is selected:
 
 1. Open **Warehouse Explorer** (browse — do not redefine Explorer UX; Design Program #4).  
 2. Operator browses inventory:
 
 ```text
-Warehouse
+Depo / Warehouse
     ↓
 Zone
     ↓
 Rack
     ↓
 Shelf
-    ↓
-Bin
     ↓
 Package
 ```
@@ -317,6 +318,72 @@ Package
 
 **AI Validation continues in Override Mode** (see § AI Validation).  
 Override changes **selection**, not the right to break business rules.
+
+---
+
+## Worked scenarios (canonical)
+
+### Senaryo 1 — AI önerisi (varsayılan)
+
+```text
+Satış Siparişi     SO-250001
+İstenen            Thermowood Deck 26×140×4000
+Miktar             50 Paket
+```
+
+AI stokları tarar ve kurallara göre önerir:
+
+| Paket | Miktar |
+|-------|--------|
+| Paket A | 20 Paket |
+| Paket B | 15 Paket |
+| Paket C | 15 Paket |
+| **Toplam** | **50 Paket** |
+
+Öneri kuralları: FIFO · FEFO · Rezervasyon · Kalite · Lokasyon · Aynı Lot · Aynı Nem · Aynı Kalite · Aynı Üretim Tarihi.
+
+Operatör: **✓ Kabul Et**
+
+→ Tarama / doğrulama yoluna devam (AI Validation açık).
+
+---
+
+### Senaryo 2 — Override (çok kritik)
+
+Operatör sahada biliyor ki:
+
+- **Paket B** üste yakın / forklift orada, **veya**
+- **Paket D** müşteriye daha uygun.
+
+UI net iki seçenek sunar:
+
+```text
+[ AI Önerisini Kullan ]     (= Kabul Et)
+[ Yoksay ]                  (= Override)
+```
+
+**Yoksay** → Warehouse Explorer açılır:
+
+```text
+Depo → Zone → Rack → Shelf → Package
+```
+
+Operatör paketi seçer. Seçim audit’e yazılır. **AI Validation devam eder** (yanlış malzeme / nem / kalite / müşteri speki vb. yetkisiz geçilemez).
+
+---
+
+### Senaryo 3 — Kısmi paket (ahşap sektörü kritik)
+
+```text
+Paket     PKG-00254
+İçerik    120 adet · 5.24 m³
+Satış     40 adet istiyor
+
+Operatör  PKG-00254 → 40 kullan → 80 depoda kalır
+```
+
+Sistem **otomatik** günceller: Remaining Quantity · Volume · Weight · Pieces · Package Status.  
+Aynı barkod / QR fiziksel pakette kalır (varsayılan politika). Yeni paket numarası üretilmez.
 
 ---
 
@@ -545,8 +612,8 @@ unless explicitly authorized.
 
 | Path | AI Validation |
 |------|----------------|
-| Accept Recommendation | On — confirms scan matches recommendation + demand |
-| Override Recommendation | **Still on** — validates manually chosen package against demand / quality / reservation / customer spec |
+| Kabul Et | On — confirms scan matches recommendation + demand |
+| Yoksay (Override) | **Still on** — validates manually chosen package against demand / quality / reservation / customer spec |
 
 Authorization to waive a validation = Supervisor / Quality / policy role · always audited · visible in Override History.
 
@@ -650,7 +717,7 @@ Append-only panel (Context + Final Review), sealed into audit on Post:
 |-------|------|
 | 1 Document | Valid demand (or Manual + permission + reason) |
 | 2 Materials | ≥1 open line with remaining qty |
-| 3 AI | **Accept Recommendation** **or** logged **Override Recommendation** |
+| 3 AI | **Kabul Et** **or** logged **Yoksay** (Explorer override) |
 | 4 Picking | Scan OK · issue qty ≤ available · AI Validation clear (or authorized) |
 | 5 Verify | AI Validation results green or audited waiver |
 | 6 Evidence | Policy-required evidence present |
@@ -663,9 +730,9 @@ Append-only panel (Context + Final Review), sealed into audit on Post:
 
 ## AI features (summary)
 
-Recommend (FIFO/FEFO/reservation/quality/WH rules/location/package integrity/customer) · **Accept** or **Override** · AI Validation always on (incl. Override) · shortage predict · pick route · repeated-override coaching.
+Recommend (FIFO/FEFO/reservation/quality/WH rules/location/same lot/moisture/quality/production date/customer) · **Kabul Et** or **Yoksay** · AI Validation always on · shortage predict · pick route · repeated-override coaching.
 
-AI **recommends and validates**; operator **Accepts** or **Overrides selection** — not business rules.
+AI **recommends and validates**; operator **Kabul Et** or **Yoksay** (selection only) — not business rules.
 
 ---
 
@@ -685,7 +752,7 @@ Partial pick default: **same Package ID**; policy split: Numbering mints **linke
 
 | Role | Focus |
 |------|--------|
-| Warehouse Operator | Scan · **Accept** or **Override** · partial qty · evidence · Post |
+| Warehouse Operator | Scan · **Kabul Et** or **Yoksay** · partial qty · evidence · Post |
 | Supervisor | Authorize validation waivers · unblock |
 | Inventory Controller | Reservation / shortage · Manual GI · package-split policy config (with admin) |
 | Quality | Holds / release (blocks issue until clear) |
@@ -702,9 +769,9 @@ Tablet / desk: document select · Accept/Override · review · Document Library 
 ## Cursor implementation notes
 
 1. Screen type = **Workbench** — not Issue Create form.  
-2. FE CTAs: **Accept Recommendation** · **Override Recommendation** → Explorer.  
-3. AI Validation runs on both paths (material/dims/species/quality/customer/reservation/lot/moisture/package).  
-4. Partial pick: auto-update remaining qty/volume/weight/pieces/status; optional policy split with parent–child traceability.  
+2. FE CTAs: **Kabul Et** · **Yoksay** → Explorer (see Senaryo 1–3).  
+3. Demo demand: SO-250001 · Thermowood Deck 26×140×4000 · 50 paket → Paket A/B/C.  
+4. AI Validation on both paths; partial PKG-00254 120→40→80 automatic remaining.  
 5. Post → inventory txn + package update (+ child PKG if policy) + reservation clear + evidence + genealogy.  
 6. Command Center “Open issues” opens this Workbench.  
 7. Manual GI = permission + reason — audited.  
