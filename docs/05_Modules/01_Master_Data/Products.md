@@ -1,8 +1,8 @@
-# Products Module
+# Product Management Module
 
 **Project:** Naswood OS
 
-**Document:** Products Module
+**Document:** Product Management Module
 
 **Version:** 1.0
 
@@ -14,7 +14,7 @@
 
 ## Module Name
 
-Products
+Product Management
 
 ## Module Code
 
@@ -22,26 +22,29 @@ MOD-PRD
 
 ## Module Category
 
-Master Data
+Product Management
 
 ---
 
 ## Description
 
-The Products module manages all commercial products offered by Naswood.
+Product Management owns the single Product Master used throughout Naswood.
 
-Products represent sellable items defined for quotations, sales orders, production planning and customer deliveries.
+Products may represent Raw Material, Semi Finished, Finished Good, Consumable,
+Packaging, Service, Tool or Spare Part.
 
-Unlike Materials, Products are commercial entities and do not directly participate in manufacturing transformations.
+Each Product revision has an approved Product Type and separate versioned
+Capability Profile controlling its eligibility for Inventory, Production,
+Purchasing, Sales, Quality, Maintenance and Planning.
 
 ---
 
 ## Objectives
 
 - Maintain a centralized product catalog
-- Standardize commercial product definitions
-- Support quotations and sales orders
-- Link commercial products to manufacturing data
+- Standardize enterprise Product definitions
+- Support all capability-enabled modules
+- Maintain Product Type and capability governance
 - Support multiple product families
 - Enable product versioning
 - Support multilingual product information
@@ -58,15 +61,13 @@ Product Classification
 
 Product Families
 
-Commercial Information
+Product Type
 
 Technical Specifications
 
-BOM Assignment
+Capability Management
 
-Routing Assignment
-
-Price Lists
+Classification
 
 Product Images
 
@@ -82,6 +83,14 @@ Customer Specific Products
 
 ## Excluded Functions
 
+Customer-specific Pricing and Discounts
+
+BOM Ownership
+
+Routing Ownership
+
+Material Master and Physical Material
+
 Material Transformations
 
 Inventory Transactions
@@ -96,15 +105,15 @@ Accounting
 
 ## Dependencies
 
-Materials
+Inventory Material Master
 
 Sales
+
+Manufacturing
 
 Production
 
 Inventory
-
-Pricing
 
 Workflow
 
@@ -286,6 +295,10 @@ Short Description
 
 Product Family
 
+Product Type
+
+Current Capability Profile ID
+
 Species
 
 Dimensions
@@ -368,11 +381,27 @@ Every Product shall have a unique Business Code.
 
 Every Product belongs to one Product Family.
 
+Every Product revision shall have one Product Type and one Active versioned
+Capability Profile for an effective instant.
+
+Capabilities are enum-based domain values. Boolean capability fields are
+prohibited.
+
+Product Type defaults follow
+`docs/13_Design/01_Product_Management/Product_Type_and_Capabilities.md`.
+
 Released Products cannot be deleted.
 
 Archived Products remain searchable.
 
-Every Product may reference one or more BOM versions.
+Product creation or release shall never create Material or Inventory
+automatically.
+
+Inventory creates physical Material only from authorized posted physical
+transactions.
+
+Manufacturing owns BOM and Routing. Product Management does not modify those
+aggregates.
 
 ---
 
@@ -414,11 +443,15 @@ ProductArchived
 
 ProductRevisionCreated
 
-PriceChanged
+ProductCapabilityProfileCreated
 
-BOMAssigned
+ProductCapabilityProfileApproved
 
-RoutingAssigned
+ProductCapabilityProfileActivated
+
+ProductCapabilityProfileSuperseded
+
+ProductTypeChanged
 
 ---
 
@@ -428,7 +461,7 @@ Product Approved
 
 Revision Released
 
-Price Updated
+Capabilities Updated
 
 Document Missing
 
@@ -736,14 +769,10 @@ Operational Risks
 
 Monitoring Alerts
 
-- Product without BOM
-- Product without Routing
+- Production-enabled Product without a released BOM
+- Production-enabled Product without a released Routing
 - Expired certification
 - Pending technical review
-
-SLA
-
-Product creation and release < 1 business day
 
 Recovery Procedure
 
@@ -753,8 +782,12 @@ Restore previous product revision using version history and Audit Logs.
 
 # Module Philosophy
 
-Products are commercial entities representing the sellable portfolio of Naswood.
+Product Management maintains one canonical Product Master for every approved
+Product Type.
 
-Products define what is offered to the market, while Materials define what is manufactured.
+Product capabilities determine which modules may use a released Product.
+Product is a definition; Material is physical inventory owned by Inventory.
 
-This separation ensures a clean architecture where commercial processes remain independent from manufacturing transformations while preserving complete traceability through BOM, Routing and Production.
+Manufacturing owns how a Product is made through BOM, Routing and Operation
+definitions. Sales owns customers and sales transactions. No module duplicates
+the Product Master.
