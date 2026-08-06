@@ -1,14 +1,12 @@
 # TASK-046 — Bill of Materials (BOM)
 
-**Module:** Production Master
+**Module:** Manufacturing — Production Master
 
 **Sprint:** Sprint 04 – Production Master
 
 **Category:** Engineering Master Data
 
 **Priority:** Critical
-
-**Estimated Effort:** 10 Days
 
 **Status:** Planned
 
@@ -18,7 +16,10 @@
 
 Develop the Bill of Materials (BOM) module for Naswood OS.
 
-The BOM module defines the complete product structure required for manufacturing finished and semi-finished products. It manages all raw materials, components, consumables and operations required for production while providing full version control and engineering traceability.
+The BOM capability defines the released Product revisions, quantities, units
+and operation context required to manufacture a Product. It provides full
+version control and engineering traceability without owning Product or physical
+Material.
 
 The BOM is the foundation of Production Planning, MRP, Costing, Inventory and Quality.
 
@@ -53,6 +54,8 @@ The BOM module includes
 
 Out of Scope
 
+- Product Master
+- Material Master and Physical Material
 - Production Orders
 - Routing Execution
 - Inventory Transactions
@@ -148,8 +151,8 @@ Each BOM contains
 ## General Information
 
 - BOM Number
-- Product Code
-- Product Name
+- Output Product ID
+- Output Product Revision ID
 - Company
 - Plant
 - BOM Type
@@ -187,31 +190,27 @@ Unit_Conversion.md
 
 Each component contains
 
-- Material Code
-- Material Name
+- Component Product ID
+- Component Product Revision ID
 - Quantity
 - Unit
 - Component Type
-- Warehouse
 - Issue Method
 - Scrap %
-- Alternative Material
+- Alternative Product
+- Operation ID (Optional)
 - Notes
 
 ---
 
-# Component Types
+# Product Type and Component Role
 
-Supports
+Product Type is read from the referenced Product revision.
 
-- Raw Material
-- Semi-Finished Product
-- Purchased Component
-- Packaging
-- Consumable
-- Adhesive
-- Fastener
-- Chemical
+BOM does not define a duplicate Product Type catalog.
+
+Component Role is a Manufacturing-owned BOM classification. Its catalog
+requires separate business approval.
 
 ---
 
@@ -247,9 +246,8 @@ Adhesive
 
 Supports
 
-- Alternative Material
+- Alternative Product
 - Alternative Process
-- Alternative Supplier
 
 Selection based on
 
@@ -303,13 +301,11 @@ Engineering Module
 
 # Cost Rollup
 
-Automatically calculates
+The BOM exposes released component quantities and approved factors to the
+Finance Costing capability.
 
-- Material Cost
-- Component Cost
-- Packaging Cost
-- Waste Cost
-- Standard Cost
+Finance owns prices, valuation layers, cost methods and calculated cost
+results. Manufacturing does not write financial costs into the BOM aggregate.
 
 Reference
 
@@ -372,8 +368,10 @@ Supports
 
 - Material Reservation
 - Component Availability
-- Warehouse Validation
 - Batch Allocation
+
+Inventory resolves physical Material using the Component Product revision.
+BOM never references warehouse, batch, serial or physical Material identifiers.
 
 Reference
 
@@ -511,8 +509,10 @@ Production_API.md
 The system validates
 
 - BOM Number is unique.
-- Product exists.
-- Components exist.
+- Output Product revision exists and is released.
+- Component Product revisions exist and are released.
+- Output Product has Production Capability `OUTPUT_ONLY` or `BOTH`.
+- Component Products have Production Capability `CONSUMPTION_ONLY` or `BOTH`.
 - Component Quantity > 0.
 - Unit is valid.
 - Effective Dates are valid.
@@ -590,7 +590,6 @@ Publishes
 - BOMReleased
 - BOMRevised
 - BOMObsolete
-- BOMExploded
 
 Reference
 
@@ -714,11 +713,14 @@ Finished Product
 
 The BOM module shall
 
+- Be owned exclusively by Manufacturing Production Master.
 - Support multi-level BOM structures.
 - Manage engineering revisions and versions.
 - Support alternative BOMs.
 - Integrate with MRP, Production and Inventory.
-- Calculate standard material costs.
+- Provide versioned component quantities to Finance Costing.
+- Reference Product revisions rather than physical Material.
+- Validate Product capabilities.
 - Maintain complete engineering traceability.
 - Publish BOM lifecycle events.
 - Follow all shared platform standards.
@@ -729,9 +731,8 @@ The BOM module shall
 
 Depends On
 
-- TASK-016_Material.md
-- TASK-017_Warehouse.md
-- TASK-020_Batch.md
+- Product_Management_Architecture.md
+- Product_Type_and_Capabilities.md
 - TASK-012_File_Upload.md
 - Production_API.md
 - Validation_Rules.md
@@ -744,17 +745,17 @@ Production_Architecture.md
 
 Production_API.md
 
+BOM_Architecture.md
+
 Production_Workflow.md
 
 TASK-047_Routing.md
 
-TASK-048_Work_Center.md
+TASK-049_Work_Center.md
 
-TASK-049_Machine.md
+TASK-048_Machine.md
 
-TASK-050_Tool.md
-
-TASK-051_Recipe.md
+TASK-053_Tooling.md
 
 Security.md
 
