@@ -32,16 +32,19 @@ When a flow needs a new Lot / Serial / Package / Pallet ID:
 
 # FLOW-INV-001 — Receive goods
 
-**Job:** Finish inbound receipt so stock is available (or held for QI).
+**Job:** Finish inbound receipt so stock is available (or held for QI).  
+**Authority:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` · `Document_Numbering.md` § Lot series by material category
 
 ```text
 Inventory Dashboard / Operations
-→ Receive Goods
+→ Receive goods / Mal kabul başlat (Wizard)
 → Select reference (PO / Production / Manual)
-→ Confirm WH / Location
-→ Mint or select Lot (Numbering)
-→ Post GR
-→ Balance updated → optional QI trigger
+→ Confirm lines + qty
+→ Select destination warehouse (Depo) — operator chooses
+→ Select location within that warehouse
+→ Lot auto-minted by material category (Numbering Service; read-only — no manual entry)
+→ Quality decision → Label → Post GR
+→ Balance updated in chosen WH → optional QI trigger
 ```
 
 ---

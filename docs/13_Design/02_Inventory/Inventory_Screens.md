@@ -43,7 +43,7 @@ Inventory
 | ID | Screen (job name) | Workspace | Job to be done |
 |----|-------------------|-----------|----------------|
 | INV-001 | Inventory Dashboard | Dashboard | See warehouse health & open queues |
-| INV-RCV-001 / INV-015–016 | **Receiving Wizard** + receipt library | Operations | Finish inbound receipt (PO→lot→QI→WH→Post) — type **Wizard**; not Create form. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` |
+| INV-RCV-001 / INV-015–016 | **Receiving Wizard** + receipt library | Operations | Finish inbound receipt: **select Depo** → location → **auto lot by material category** → QI → Post — type **Wizard**; not Create form. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` |
 | INV-017/018 | **Issue Goods** | Operations | Finish outbound issue |
 | INV-019/020 | **Transfer Stock** | Operations | Move stock between WH/locations |
 | INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |

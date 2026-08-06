@@ -10,9 +10,9 @@
 
 ## Job to be done
 
-> Warehouse finishes inbound receipt so stock is posted (or held for quality) with correct lot, WH, location, and labels.
+> Depocu, gelen malı **seçtiği depoya / lokasyona** kabul eder; lot numarası **malzeme cinsine göre otomatik** oluşur; kalite ve etiket adımlarından sonra **Post** ile stoğa işler.
 
-**Not the job:** “Create a GoodsReceipt row.”
+**Not the job:** “Create a GoodsReceipt row” or type a lot number by hand.
 
 ---
 
@@ -22,39 +22,128 @@
 
 ---
 
-## Steps
+## Authority references
+
+| Topic | Authority |
+|-------|-----------|
+| Lot / GR numbers | `docs/13_Design/99_Shared/Document_Numbering.md` — *Lot series by material category*; manual lot entry **prohibited** |
+| Stock posting | `Inventory_Architecture.md` / `Inventory_Workflow.md` |
+| Screen type | `docs/13_Design/Common/Screen_Types.md` · `UI_Patterns.md` |
 
 ```text
-1. PO Seç
-2. Bekleyen Satırlar
-3. Teslim Miktarı
-4. Lot Oluştur          → NOS Numbering Service (Document_Numbering.md) — manual entry prohibited
-5. Kalite Kararı
-6. Depo
-7. Lokasyon
-8. Etiket
-9. Post
+Material, Lot, Serial, Package, Pallet and Production identifiers
+are generated exclusively by the NOS Numbering Service as defined
+in Document_Numbering.md. Manual entry is prohibited.
 ```
 
 ---
 
-## Gates
+## Steps
+
+```text
+1. PO / referans seç
+2. Bekleyen satırlar
+3. Teslim miktarı
+4. Depo seç                    ← kullanıcı seçer (zorunlu)
+5. Lokasyon seç                ← seçilen depoya bağlı
+6. Lot oluştur (otomatik)      ← malzeme cinsine göre Numbering Service
+7. Kalite kararı
+8. Etiket
+9. Post
+```
+
+Depo, lot’tan **önce** seçilir — stok hedefi net olmadan kimlik basılmaz / post edilmez.
+
+---
+
+### Step 4 — Depo seç
+
+| | |
+|--|--|
+| **Intent** | Malın gireceği **depoyu** kullanıcı seçsin. |
+| **Inputs** | Warehouse list (plant-filtered; Active only) |
+| **Defaults** | PO line default WH if any; else last-used WH for user/plant; else empty |
+| **Gate** | Warehouse required before Location / Lot / Post |
+| **UI** | Warehouse picker (code · name · type); show open capacity hint optional |
+| **Not** | Hard-coded single warehouse; silent default without display |
+
+---
+
+### Step 5 — Lokasyon seç
+
+| | |
+|--|--|
+| **Intent** | Seçilen depo içinde göz / bölge. |
+| **Inputs** | Locations **for selected warehouse only** |
+| **Gate** | Location required (unless WH policy = WH-level balance only) |
+| **UI** | Location picker filtered by Step 4; clear location if WH changes |
+
+---
+
+### Step 6 — Lot oluştur (otomatik, malzeme cinsine göre)
+
+| | |
+|--|--|
+| **Intent** | Her kabul satırı için yeni lot kimliği **malzeme kategorisine / numbering class’a** göre üretilsin. |
+| **Inputs** | Material (from PO line) → Material Category / Numbering class; Company; Plant |
+| **System** | Call Numbering Service → series from material class (see Document_Numbering § Lot/Batch series by material category) |
+| **UI** | **Read-only** Lot ID field + “Yenile” only if material line changed before Post; never a free-text lot box |
+| **Gate** | Mint succeeded; if series missing for category → block with Admin config message |
+| **Also** | GR document number (`GR-…`) minted separately as Goods Receipt document series |
+
+Example (illustrative — series config lives in Numbering):
+
+| Malzeme | Cins | Otomatik Lot |
+|---------|------|----------------|
+| MAT-OAK-RAW | Raw | LOT-RAW-2026-000118 |
+| MAT-PINE-LAM | WIP | LOT-WIP-2026-000042 |
+| MAT-TW-FIN | Finished | LOT-FG-2026-000077 |
+
+---
+
+### Other steps (short)
+
+| Step | Intent |
+|------|--------|
+| 1 PO / referans | Hangi sipariş / ASN / manuel giriş |
+| 2 Bekleyen satırlar | Hangi satırlar kabul edilecek |
+| 3 Teslim miktarı | Fiili miktar (≤ open qty policy) |
+| 7 Kalite kararı | Accept / Hold / Reject → may Inventory-hold |
+| 8 Etiket | Print labels (Barcode strategy — reference) |
+| 9 Post | Stoğa işle — WH + Location + Lot zorunlu |
+
+---
+
+## Gates (summary)
 
 - PO / reference required (or explicit manual inbound policy).  
-- Qty > 0; serialized materials require serial mint/select.  
-- Quality decision may force hold (Inventory hold via Inventory Architecture — not local stock edit).  
-- Post requires WH + Location.
+- Qty > 0.  
+- **Warehouse selected by user** (plant-valid).  
+- Location valid for that warehouse.  
+- **Lot ID auto-minted from material category** — no manual entry.  
+- Quality decision may force hold.  
+- Serialized materials: Serial also via Numbering Service.
 
 ---
 
 ## Finish action
 
-**Post** (not Save). Optional **Save draft** before Post.
+**Post** (not Save). Optional **Save draft** after steps 1–5 (lot may mint on draft or at Post — policy; default mint at first save of line with material+WH).
+
+---
+
+## Cursor implementation note
+
+1. Screen type = **Wizard** — not shared Create form.  
+2. Warehouse = required select control (step 4).  
+3. Lot field = read-only; `NumberingService.MintLot(materialId, company, plant)`.  
+4. Do not hardcode prefixes in FE — load series from Numbering config.  
+5. Changing material or cancelling line voids unused reserved lot numbers per Numbering reservation rules.
 
 ---
 
 ## Related
 
 - `Inventory_Screens.md` · `Inventory_Workflow.md` · `Inventory_User_Flows.md` FLOW-INV-001  
-- Pattern anatomy: `docs/13_Design/Common/UI_Patterns.md` § Wizard  
-- Production contrast: `PRD_Production_Planning_Wizard.md`
+- `Document_Numbering.md` § Material & Production Identifiers · Lot series by material category  
+- `docs/13_Design/Common/UI_Patterns.md` § Wizard  

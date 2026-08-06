@@ -350,6 +350,35 @@ allowed; minting a new identity is Numbering Service only.
 Business documents (PO, SO, GR, Invoice, …) remain under the general rules above
 (automatic by default; manual override only with explicit permission).
 
+### Lot / Batch series by material category (authoritative)
+
+When a **new Lot** (or Batch) is minted — e.g. during **Goods Receipt / Receiving Wizard** —
+the Numbering Service selects the series from the material’s **category / type**
+(and company · plant). The user does **not** type or pick a free-form lot number.
+
+```text
+Material.Category (or MaterialType / numbering class)
+        →  Numbering series (prefix + sequence scope)
+        →  Lot / Batch ID issued automatically
+```
+
+Examples (configurable per plant — not hard-coded in UI):
+
+| Material category (example) | Series prefix (example) | Sample Lot ID |
+|----------------------------|-------------------------|---------------|
+| Raw / Tomruk               | LOT-RAW                 | LOT-RAW-2026-000118 |
+| WIP / Lamelle              | LOT-WIP                 | LOT-WIP-2026-000042 |
+| Finished / Profil          | LOT-FG                  | LOT-FG-2026-000077 |
+| Chemical / Consumable      | LOT-CHM                 | LOT-CHM-2026-000009 |
+
+Rules:
+
+1. Series key = `Company + Plant + MaterialNumberingClass` (class derived from Material Category / Type).  
+2. If class has no series configured → block mint; Admin must configure Numbering (do not fall back to manual entry).  
+3. Goods Receipt **document** number remains `GR-…` (document series). Lot IDs use the material-class series above.  
+4. Receiving UI shows the **proposed** Lot ID (read-only) after material is known; regenerate only if material line changes before Post.  
+5. Screens/Flows must **reference** this section — they must not invent alternate lot formats.
+
 Authority matrix: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
 
 ---

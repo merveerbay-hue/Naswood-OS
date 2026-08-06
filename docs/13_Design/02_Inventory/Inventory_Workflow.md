@@ -42,11 +42,16 @@ All balance changes are **transactions**. No silent updates.
 
 # Goods receipt
 
+**Authority:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md`
+
 ```text
 Reference (PO / Production / Manual)
-→ Create GR (Draft)
-→ Lines + Lot/Serial (mint via Numbering when new)
-→ Post → InventoryBalance update → Available
+→ Receiving Wizard (not shared Create)
+→ Lines + qty
+→ Select warehouse (Depo) — required; operator chooses
+→ Location in that warehouse
+→ Lot/Serial minted via Numbering Service by material category (manual entry prohibited)
+→ Post → InventoryBalance update in chosen WH → Available
 → Optional: Quality Incoming Inspection trigger
 ```
 
