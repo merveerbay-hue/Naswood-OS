@@ -89,7 +89,7 @@ Inventory
 |----|-------------------|-----------|----------------|
 | INV-001 | **Warehouse Command Center** | Dashboard | **Run the warehouse today** — job CTAs, live queues, exceptions, dock board. **Not** a KPI/analytics page. Spec: `Inventory_Dashboard.md` |
 | INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | **Evidence First** truck-to-post Workbench (14 steps · AI · root Material Identity). **Not** Create/CRUD. Spec: `INV_Receiving_Workbench.md` |
-| INV-017/018 | **Goods Issue Workbench** + issue library | Operations | **Mal çıkışı** — demand-backed scan/verify/Post Workbench (AI pick · evidence · genealogy). **Not** “Yeni çıkış”. Spec: `INV_Goods_Issue_Workbench.md` |
+| INV-017/018 | **Goods Issue Workbench** + issue library | Operations | **Mal çıkışı** — demand-backed Workbench v2.0 (AI pick · Override/Explorer · package preview · **partial package same barcode** · evidence · genealogy). **Not** “Yeni çıkış”. Spec: `INV_Goods_Issue_Workbench.md` |
 | INV-019/020 | **Transfer Stock Wizard** | Operations | **Stok transfer / Transfer stock** — Wizard; not “Yeni transfer”. Spec: `Process_Screens/INV_Transfer_Wizard.md` |
 | INV-027 | **Putaway** *(next in Design Program)* | Operations | Directed putaway after receiving — **not** Create. Spec: TBD under `Inventory_Design_Program.md` |
 | INV-028 | Package Management | Operations | Finish pack identity for move/ship |

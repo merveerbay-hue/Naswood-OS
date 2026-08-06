@@ -69,14 +69,18 @@ Truck arrives
 
 ```text
 Business document (Production / Maintenance / Sales / Sample / … / Manual+permission)
-→ Goods Issue Workbench (not Create form)
+→ Goods Issue Workbench v2.0 (not Create form)
 → Load required materials (no material create)
-→ AI recommend WH / location / lot / package (FIFO/FEFO/reservation/quality)
-→ Pick (scan) · Verify · Evidence · Quality gate
-→ Destination (production line / loading dock)
-→ Review · Post
-→ InventoryTransaction · balance ↓ · reservation clear · genealogy link · evidence archive
+→ AI recommend WH / location / package (FIFO/FEFO/reservation/quality/customer/route)
+   OR Ignore AI Recommendation → Warehouse Explorer (logged override)
+→ Pick (scan) · partial package qty (same Package Identity / barcode) · Verify · Evidence · Quality
+→ Destination (production line / loading dock · vehicle/carrier when sales)
+→ Review (+ Override History) · Post
+→ InventoryTransaction(s) · balance ↓ · package remaining/status update
+→ reservation clear · genealogy link · evidence archive
 ```
+
+**Package law:** Partial issue never mints a new Package number or barcode — remaining qty/volume/weight/status only (`INV_Goods_Issue_Workbench.md` v2.0).
 
 ---
 
