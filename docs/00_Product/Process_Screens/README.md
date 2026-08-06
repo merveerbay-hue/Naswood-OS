@@ -10,11 +10,12 @@ NOS'ta Master Data ekranları "Create Form" değildir.
 
 These PRDs replace shared **Create / Yeni** entity forms.
 
-## Operations (Wizard / Terminal)
+## Operations (Wizard / Terminal / Workbench)
 
 | File | CTA | Type |
 |------|-----|------|
-| [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) | Receive goods / Mal kabul başlat | Wizard |
+| [`INV_Receiving_Workbench.md`](./INV_Receiving_Workbench.md) | Receive goods / Mal kabul başlat | **Workbench** |
+| [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) | *(spine gates only — Depo → Lot)* | see Workbench |
 | [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) | Issue goods / Mal çıkışı | Wizard |
 | [`INV_Transfer_Wizard.md`](./INV_Transfer_Wizard.md) | Transfer stock / Stok transfer | Wizard |
 | [`INV_Cycle_Count_Session.md`](./INV_Cycle_Count_Session.md) | Start count / Sayım başlat | Wizard |

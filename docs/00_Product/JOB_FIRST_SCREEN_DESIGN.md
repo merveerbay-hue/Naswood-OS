@@ -43,7 +43,8 @@ But:
 ```text
 ✔ Business Object → Business Workspace → Business Designer
 ✔ Production Planning Wizard — planı oluştur, doğrula, release et
-✔ Receiving Wizard — PO → miktar → depo → lokasyon → lot (otomatik) → kalite → post
+✔ Receiving Workbench — truck → docs → OCR → verify → count → inspect → depo → labels → Post
+✔ Receiving spine — Depo → lokasyon → lot (otomatik) → post (embedded in Workbench)
 ✔ BOM Builder — ürün → ağaç → alternatif → fire → onay → Release
 ✔ Machine Configuration — kimlik → yerleşim → teknik → yetenek → bakım → doküman → Release
 ✔ Routing Designer — operasyon → makine → tool → simülasyon → Release
@@ -60,7 +61,7 @@ But:
 |-----------------------------------|-------------------------------|
 | Production Order | **Production Planning Wizard** |
 | Work Order | **Dispatch & Start Shift** / Operator Run |
-| Goods Receipt | **Receive Against PO / Production** |
+| Goods Receipt | **Receiving Workbench** (Receive goods) |
 | NCR | **Raise & Disposition Non-Conformance** |
 | Machine (Code·Name·Save) | **Machine Configuration** |
 | BOM (Code·Description·Save) | **BOM Builder** |

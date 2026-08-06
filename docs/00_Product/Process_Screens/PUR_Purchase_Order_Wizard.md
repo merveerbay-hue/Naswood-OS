@@ -31,8 +31,8 @@
 - Supplier + ≥1 line.  
 - Price / budget policy may force Approval Center.  
 - PO number via Numbering Service.  
-- Goods receipt later → Receiving Wizard (Inventory) — not this screen.
+- Goods receipt later → Receiving Workbench (Inventory) — not this screen.
 
 ## Related
 
-`Purchasing_Screens.md` · `Purchasing_Workflow.md` · `INV_Receiving_Wizard.md`
+`Purchasing_Screens.md` · `Purchasing_Workflow.md` · `INV_Receiving_Workbench.md`

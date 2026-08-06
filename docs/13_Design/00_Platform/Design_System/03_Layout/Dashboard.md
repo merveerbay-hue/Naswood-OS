@@ -166,7 +166,7 @@ Authority: `docs/13_Design/Common/Screen_Types.md` § Create → Job CTA matrix.
 
 Add material *(Explorer — master only)*
 
-Receive goods → Receiving Wizard
+Receive goods → Receiving Workbench
 
 Place purchase order → PO Wizard
 

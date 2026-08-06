@@ -1,10 +1,25 @@
-# INV-RCV-001 — Receiving Wizard (Goods Receipt)
+# INV-RCV-001 — Receiving Wizard (Goods Receipt) — **rules spine**
 
 **Module:** Inventory  
 **Workspace:** Operations  
-**Screen type:** Wizard — see `docs/13_Design/Common/Screen_Types.md`  
-**Status:** Product Architect draft  
-**Replaces:** “Yeni Goods Receipt” / shared Create form
+**Status:** Rules retained · **UX authority moved**  
+**Primary UX:** [`INV_Receiving_Workbench.md`](./INV_Receiving_Workbench.md) — **Receiving Workbench** (not a Create form)
+
+---
+
+## Supersession notice
+
+```text
+Product UX for inbound receiving is the Receiving Workbench
+(docs/00_Product/Process_Screens/INV_Receiving_Workbench.md).
+
+This file keeps the Depo → Location → Lot mint → QI → Post gates
+so Workflow / Numbering consumers can still cite a short spine.
+Do NOT implement a standalone CRUD “Create Goods Receipt” from this file.
+```
+
+**CTA:** Receive goods / Mal kabul başlat → opens **Receiving Workbench**.  
+**Screen type:** Workbench (stages include former Wizard steps).
 
 ---
 
@@ -16,134 +31,82 @@
 
 ---
 
-## CTA
-
-**Receive goods** / **Mal kabul başlat** — never generic “Yeni” / “Create.”
-
----
-
 ## Authority references
 
 | Topic | Authority |
 |-------|-----------|
+| Full Workbench UX (truck, OCR, verify, count, inspect, labels, review) | [`INV_Receiving_Workbench.md`](./INV_Receiving_Workbench.md) |
 | Lot / GR numbers | `docs/13_Design/99_Shared/Document_Numbering.md` — *Lot series by material category*; manual lot entry **prohibited** |
 | Stock posting | `Inventory_Architecture.md` / `Inventory_Workflow.md` |
 | Screen type | `docs/13_Design/Common/Screen_Types.md` · `UI_Patterns.md` |
 
 ```text
-Material, Lot, Serial, Package, Pallet and Production identifiers
-are generated exclusively by the NOS Numbering Service as defined
-in Document_Numbering.md. Manual entry is prohibited.
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+Manual entry is prohibited.
 ```
 
 ---
 
-## Steps
+## Spine steps (embedded in Workbench stages 4–10)
+
+Former linear Wizard — now **gates inside Workbench**, not a Create form:
 
 ```text
-1. PO / referans seç
-2. Bekleyen satırlar
-3. Teslim miktarı
-4. Depo seç                    ← kullanıcı seçer (zorunlu)
-5. Lokasyon seç                ← seçilen depoya bağlı
-6. Lot oluştur (otomatik)      ← malzeme cinsine göre Numbering Service
-7. Kalite kararı
-8. Etiket
-9. Post
+Reference (PO) / lines / qty     → Workbench stages 2–5
+Select warehouse (Depo)          → Stage 7 — required; operator chooses
+Location in that warehouse       → Stage 7
+Lot mint by material category    → Stage 8 — Numbering Service; read-only
+Quality decision                 → Stage 6 / QI
+Label                            → Stage 8
+Review → Post                    → Stages 9–10
 ```
 
 Depo, lot’tan **önce** seçilir — stok hedefi net olmadan kimlik basılmaz / post edilmez.
 
 ---
 
-### Step 4 — Depo seç
+### Depo seç (retained)
 
 | | |
 |--|--|
 | **Intent** | Malın gireceği **depoyu** kullanıcı seçsin. |
-| **Inputs** | Warehouse list (plant-filtered; Active only) |
-| **Defaults** | PO line default WH if any; else last-used WH for user/plant; else empty |
+| **Inputs** | Warehouse list (plant-filtered; Active only) — **name-first** |
+| **Defaults** | PO line default WH if any; else last-used WH; else system suggestion (Storage Rules) |
 | **Gate** | Warehouse required before Location / Lot / Post |
-| **UI** | Warehouse picker (code · name · type); show open capacity hint optional |
-| **Not** | Hard-coded single warehouse; silent default without display |
+| **Not** | Hard-coded single warehouse; Warehouse Code typed by hand |
 
 ---
 
-### Step 5 — Lokasyon seç
+### Lokasyon seç (retained)
 
 | | |
 |--|--|
 | **Intent** | Seçilen depo içinde göz / bölge. |
 | **Inputs** | Locations **for selected warehouse only** |
 | **Gate** | Location required (unless WH policy = WH-level balance only) |
-| **UI** | Location picker filtered by Step 4; clear location if WH changes |
 
 ---
 
-### Step 6 — Lot oluştur (otomatik, malzeme cinsine göre)
+### Lot oluştur (otomatik — retained)
 
 | | |
 |--|--|
-| **Intent** | Her kabul satırı için yeni lot kimliği **malzeme kategorisine / numbering class’a** göre üretilsin. |
-| **Inputs** | Material (from PO line) → Material Category / Numbering class; Company; Plant |
-| **System** | Call Numbering Service → series from material class (see Document_Numbering § Lot/Batch series by material category) |
-| **UI** | **Read-only** Lot ID (“Otomatik — malzeme cinsine göre”); never free-text Lot No. Material/Warehouse pickers **name-first**; codes display-only (`Document_Numbering.md` § System Generated Identifiers) |
-| **Gate** | Mint succeeded; if series missing for category → block with Admin config message |
-| **Also** | GR document number (`GR-…`) minted separately as Goods Receipt document series |
-
-Example (illustrative — series config lives in Numbering):
-
-| Malzeme | Cins | Otomatik Lot |
-|---------|------|----------------|
-| MAT-OAK-RAW | Raw | LOT-RAW-2026-000118 |
-| MAT-PINE-LAM | WIP | LOT-WIP-2026-000042 |
-| MAT-TW-FIN | Finished | LOT-FG-2026-000077 |
-
----
-
-### Other steps (short)
-
-| Step | Intent |
-|------|--------|
-| 1 PO / referans | Hangi sipariş / ASN / manuel giriş |
-| 2 Bekleyen satırlar | Hangi satırlar kabul edilecek |
-| 3 Teslim miktarı | Fiili miktar (≤ open qty policy) |
-| 7 Kalite kararı | Accept / Hold / Reject → may Inventory-hold |
-| 8 Etiket | Print labels (Barcode strategy — reference) |
-| 9 Post | Stoğa işle — WH + Location + Lot zorunlu |
-
----
-
-## Gates (summary)
-
-- PO / reference required (or explicit manual inbound policy).  
-- Qty > 0.  
-- **Warehouse selected by user** (plant-valid).  
-- Location valid for that warehouse.  
-- **Lot ID auto-minted from material category** — no manual entry.  
-- Quality decision may force hold.  
-- Serialized materials: Serial also via Numbering Service.
+| **Intent** | Her kabul satırı için yeni lot kimliği **malzeme kategorisine** göre. |
+| **System** | Numbering Service — see `Document_Numbering.md` § Lot series by material category |
+| **UI** | **Read-only** Lot ID — never free-text Lot No |
+| **Also** | GR document number minted as Goods Receipt series |
 
 ---
 
 ## Finish action
 
-**Post** (not Save). Optional **Save draft** after steps 1–5 (lot may mint on draft or at Post — policy; default mint at first save of line with material+WH).
-
----
-
-## Cursor implementation note
-
-1. Screen type = **Wizard** — not shared Create form.  
-2. Warehouse = required select control (step 4).  
-3. Lot field = read-only; `NumberingService.MintLot(materialId, company, plant)`.  
-4. Do not hardcode prefixes in FE — load series from Numbering config.  
-5. Changing material or cancelling line voids unused reserved lot numbers per Numbering reservation rules.
+**Post** (not Save). Draft save allowed in Workbench without stock mutation.
 
 ---
 
 ## Related
 
+- **[`INV_Receiving_Workbench.md`](./INV_Receiving_Workbench.md)** — authoritative receiving UX  
 - `Inventory_Screens.md` · `Inventory_Workflow.md` · `Inventory_User_Flows.md` FLOW-INV-001  
-- `Document_Numbering.md` § Material & Production Identifiers · Lot series by material category  
-- `docs/13_Design/Common/UI_Patterns.md` § Wizard  
+- `Document_Numbering.md`

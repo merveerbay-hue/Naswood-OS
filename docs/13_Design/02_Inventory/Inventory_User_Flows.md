@@ -32,19 +32,22 @@ When a flow needs a new Lot / Serial / Package / Pallet ID:
 
 # FLOW-INV-001 — Receive goods
 
-**Job:** Finish inbound receipt so stock is available (or held for QI).  
-**Authority:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` · `Document_Numbering.md` § Lot series by material category
+**Job:** Finish the **entire** inbound truck operation so stock is available (or held for QI).  
+**Authority:** `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md` · spine: `INV_Receiving_Wizard.md` · `Document_Numbering.md` § Lot series by material category
 
 ```text
 Inventory Dashboard / Operations
-→ Receive goods / Mal kabul başlat (Wizard)
-→ Select reference (PO / Production / Manual)
-→ Confirm lines + qty
-→ Select destination warehouse (Depo) — operator chooses
-→ Select location within that warehouse
-→ Lot auto-minted by material category (Numbering Service; read-only — no manual entry)
-→ Quality decision → Label → Post GR
-→ Balance updated in chosen WH → optional QI trigger
+→ Receive goods / Mal kabul başlat (Receiving Workbench — not Create form)
+→ Truck registration + photos
+→ Attach documents (DN / packing list / PO / photos)
+→ AI OCR → operator review
+→ Verify PO ∥ Delivery note ∥ OCR (missing / extra / mismatch)
+→ Physical count (scan or handwritten OCR)
+→ Material inspection + damage photos
+→ Warehouse assignment (Depo required; system suggests; operator confirms)
+→ Auto labels (Lot / Package / Pallet / QR) — no manual numbering
+→ Review summary → Post
+→ Balance updated in chosen WH → optional QI trigger · full audit + attachments
 ```
 
 ---

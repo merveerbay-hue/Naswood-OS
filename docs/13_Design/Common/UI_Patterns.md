@@ -325,26 +325,36 @@ Metric Card · Dashboard Card · Alert List · Chart · Compact Grid
 
 ### Purpose
 
-Analysis / engineering / quality investigation with rich context.
+Multi-pane session for **operational** warehouse desks or **engineering / quality** investigation — rich context, not a Create form.
 
 ### Used for
 
+- **Receiving Workbench** (truck → OCR → verify → count → inspect → Post)  
+- Shipping Workbench (future)  
 - Quality engineering  
 - BOM / routing engineering  
 - CAPA effectiveness review  
-- Cost analysis desks
+- Cost analysis desks  
 
 ### Anatomy
 
 ```text
-┌ Context object
-├ Multi-panel tools (spec, history, genealogy view, attachments)
-└ Actions: Edit master (policy) · Raise NCR · Open CAPA · Export
+┌ Stage rail / timeline (or context object header)
+├ Main surface: Document Viewer · Gallery · Split compare · Cards
+├ Side panel: differences · suggestions · minted IDs (read-only)
+└ Sticky action bar: Save draft · Next · Print · Raise NCR · Post / Release
 ```
+
+### Operational Workbench rules
+
+- Sticky action bar — never Save/Cancel-only form footer.  
+- Prefer scan / photo / OCR over typing.  
+- Identifiers from Numbering Service only (`Document_Numbering.md`).  
+- Full receiving UX: `INV_Receiving_Workbench.md`.
 
 ### Components
 
-Split View · Timeline · Attachment Panel · Genealogy Tracer (read) · Master Detail
+Split View · Timeline · Document Viewer · Image Gallery · Attachment Panel · Progress Indicator · Sticky Action Bar · Genealogy Tracer (read) · Master Detail
 
 ---
 
@@ -383,7 +393,7 @@ Task Inbox · Approval Bar · Diff / Summary · Status Badge
 | User says / CTA | Default screen type |
 |-----------------|---------------------|
 | Plan / Release production | Wizard |
-| Receive / Post GR | Wizard (or Terminal for scan-only post) |
+| Receive / Post GR | **Workbench** (`INV_Receiving_Workbench.md`) — Terminal only for scan-count companion |
 | Raise NCR | Wizard |
 | Open maintenance WO | Wizard |
 | Run operation on machine | Terminal |
@@ -392,6 +402,7 @@ Task Inbox · Approval Bar · Diff / Summary · Status Badge
 | Approve backlog | Approval Center |
 | Plant KPIs | Dashboard |
 | Investigate quality / engineering | Workbench |
+| Run full inbound truck acceptance | Receiving Workbench |
 
 When unsure: ask *“Kullanıcı hangi işi bitiriyor?”* then pick type from [`Screen_Types.md`](./Screen_Types.md).
 

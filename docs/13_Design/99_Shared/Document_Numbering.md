@@ -468,7 +468,7 @@ Business documents mint on **create or Release** per process (e.g. Production Or
 
 ### Lot / Batch series by material category (authoritative)
 
-When a **new Lot** (or Batch) is minted — e.g. during **Goods Receipt / Receiving Wizard** —
+When a **new Lot** (or Batch) is minted — e.g. during **Goods Receipt / Receiving Workbench** —
 the Numbering Service selects the series from the material’s **category / type**
 (and company · plant). The user does **not** type or pick a free-form lot number.
 

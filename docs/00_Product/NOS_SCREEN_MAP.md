@@ -373,8 +373,9 @@ Inventory
 | ID | Screen | Workspace | Maturity |
 |----|--------|-----------|----------|
 | INV-001 | Inventory Dashboard | Dashboard | Spec’d |
-| INV-015 | Goods Receipt List | Operations | Spec’d |
-| INV-016 | Goods Receipt Detail | Operations | Spec’d |
+| INV-RCV-001 | **Receiving Workbench** (Receive goods) | Operations | Spec’d — `INV_Receiving_Workbench.md` |
+| INV-015 | Receipt Library (find & reopen) | Operations | Spec’d |
+| INV-016 | Receiving session / detail (opens Workbench) | Operations | Spec’d |
 | INV-017 | Goods Issue List | Operations | Spec’d |
 | INV-018 | Goods Issue Detail | Operations | Spec’d |
 | INV-019 | Transfer List | Operations | Spec’d |

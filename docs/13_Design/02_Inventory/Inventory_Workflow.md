@@ -42,17 +42,21 @@ All balance changes are **transactions**. No silent updates.
 
 # Goods receipt
 
-**Authority:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md`
+**UX authority:** `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md`  
+**Spine gates:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` (Depo → Lot)
 
 ```text
-Reference (PO / Production / Manual)
-→ Receiving Wizard (not shared Create)
-→ Lines + qty
-→ Select warehouse (Depo) — required; operator chooses
+Truck arrives
+→ Receiving Workbench (not shared Create / not CRUD form)
+→ Truck registration · Documents · AI OCR · Material verification
+→ Physical count (scan / sheet OCR) · Inspection photos
+→ Select warehouse (Depo) — required; operator chooses (system may suggest)
 → Location in that warehouse
-→ Lot/Serial minted via Numbering Service by material category (manual entry prohibited)
-→ Post → InventoryBalance update in chosen WH → Available
+→ Lot/Serial/Package/Pallet minted via Numbering Service (manual entry prohibited)
+→ Labels · Review · Post
+→ InventoryBalance update in chosen WH → Available (or Hold)
 → Optional: Quality Incoming Inspection trigger
+→ Audit trail + attachments on Receiving record
 ```
 
 ---

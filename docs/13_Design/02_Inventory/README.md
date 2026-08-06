@@ -17,10 +17,14 @@
 | [`Inventory_Architecture.md`](./Inventory_Architecture.md) | Ownership & boundaries |
 | [`Inventory_Workflow.md`](./Inventory_Workflow.md) | Process truth |
 | [`Inventory_Screens.md`](./Inventory_Screens.md) | Job screens |
+| [`Inventory_Workspaces.md`](./Inventory_Workspaces.md) | Workspace tree |
+| [`Inventory_Navigation.md`](./Inventory_Navigation.md) | Sidebar & deep links |
 | [`Inventory_User_Flows.md`](./Inventory_User_Flows.md) | Role journeys |
 | [`Inventory_Dashboard.md`](./Inventory_Dashboard.md) | Cockpit |
 | [`Inventory_API.md`](./Inventory_API.md) | HTTP surface |
 | [`Inventory_Mobile.md`](./Inventory_Mobile.md) | Mobile jobs |
+
+Receiving UX: `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md`
 
 SSOT: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`  
 Numbering: `docs/13_Design/99_Shared/Document_Numbering.md`

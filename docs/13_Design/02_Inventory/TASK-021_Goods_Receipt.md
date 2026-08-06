@@ -1,4 +1,4 @@
-> **UX authority:** Live receiving UI is [`INV_Receiving_Wizard.md`](../../00_Product/Process_Screens/INV_Receiving_Wizard.md) — Depo select + lot by material category. This TASK is historical.
+> **UX authority:** Live receiving UI is [`INV_Receiving_Workbench.md`](../../00_Product/Process_Screens/INV_Receiving_Workbench.md) — full truck-to-post Workbench (not CRUD). Spine: Depo select + lot by material category (`INV_Receiving_Wizard.md`). This TASK is historical.
 
 # TASK-021 — Goods Receipt
 

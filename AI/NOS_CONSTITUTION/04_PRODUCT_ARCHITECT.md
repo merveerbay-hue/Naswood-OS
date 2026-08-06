@@ -91,7 +91,7 @@ REQUIRED:   Business Object → Business Workspace → Business Designer
 NOS'ta Master Data ekranları "Create Form" değildir.
 ```
 
-“Yeni Goods Receipt” ≠ “Yeni Production Order” ≠ “Yeni Machine” — Receiving Wizard · Planning Wizard · **Machine Configuration** (facets → Release).
+“Yeni Goods Receipt” ≠ “Yeni Production Order” ≠ “Yeni Machine” — **Receiving Workbench** · Planning Wizard · **Machine Configuration** (facets → Release).
 
 Production engineering: BOM Builder · Routing Designer · **Machine Configuration Studio** · Work Center Designer · Line Designer · … (`Production_Screens.md` § ENGINEERING MASTER DATA PRINCIPLE · PRD-501…509).
 

@@ -34,7 +34,7 @@ Users work with names (Malzeme, Depo) — codes are display-only after mint.
 |------------|-------------|------------------------|
 | Malzeme tanımla | Ad · Tip · Grup · Ağaç · Ölçü · Birim · Capability · … | `MAT-…` after save (info badge) |
 | Depo ekle / yapılandır | Depo adı · Tip · Fabrika · Sorumlu · … | `WH-…` after save |
-| Mal kabul | PO · miktar · **Depo (name)** · lokasyon · … | Lot `LOT-…` auto by material category; GR number auto |
+| Mal kabul (Workbench) | Truck · docs · OCR confirm · count · inspect · **Depo (name)** · … | Lot / Package / Pallet / GR / txn auto — never typed |
 | Lot | — (operator never types Lot No) | Minted on receipt / process |
 
 ❌ Never: Warehouse Code ________ · Lot No ________ · Material Code *  
@@ -43,6 +43,8 @@ Users work with names (Malzeme, Depo) — codes are display-only after mint.
 ---
 
 # Workspaces
+
+Authority: [`Inventory_Workspaces.md`](./Inventory_Workspaces.md) · nav: [`Inventory_Navigation.md`](./Inventory_Navigation.md)
 
 ```text
 Inventory
@@ -63,7 +65,7 @@ Inventory
 | ID | Screen (job name) | Workspace | Job to be done |
 |----|-------------------|-----------|----------------|
 | INV-001 | Inventory Dashboard | Dashboard | See warehouse health & open queues |
-| INV-RCV-001 / INV-015–016 | **Receiving Wizard** + receipt library | Operations | Finish inbound receipt: **select Depo** → location → **auto lot by material category** → QI → Post — type **Wizard**; not Create form. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` |
+| INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | Finish **entire** inbound truck operation (truck → docs → OCR → verify → count → inspect → **Depo** → labels → review → **Post**). Type **Workbench** — **not** Create/CRUD. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md` |
 | INV-017/018 | **Issue Goods Wizard** | Operations | **Mal çıkışı / Issue goods** — Wizard; not “Yeni çıkış”. Spec: `Process_Screens/INV_Issue_Wizard.md` |
 | INV-019/020 | **Transfer Stock Wizard** | Operations | **Stok transfer / Transfer stock** — Wizard; not “Yeni transfer”. Spec: `Process_Screens/INV_Transfer_Wizard.md` |
 | INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |
@@ -88,8 +90,8 @@ Inventory
 # Design rules
 
 - Screen types: `docs/13_Design/Common/Screen_Types.md` — **no shared “Yeni/Create” form**.  
-- CTA **Mal kabul başlat / Receive goods** → Receiving Wizard (not “Yeni Goods Receipt”).  
-- Operational primary entries are **job screens** (Receive, Issue, Transfer, Count Session), not bare entity CRUD.  
+- CTA **Mal kabul başlat / Receive goods** → **Receiving Workbench** (not “Yeni Goods Receipt”, not a Save/Cancel form).  
+- Operational primary entries are **job screens** (Receive Workbench, Issue, Transfer, Count Session), not bare entity CRUD.  
 - Libraries (Explorer) find & reopen work.  
 - Compose from shared components; flow is process-specific (`UI_Patterns.md`).  
 - CRUD-only ResourcePages are technical debt.
@@ -98,4 +100,4 @@ Inventory
 
 # Related
 
-`Inventory_Workflow.md` · `Inventory_User_Flows.md` · `Inventory_Architecture.md` · `Inventory_Dashboard.md`
+`Inventory_Workflow.md` · `Inventory_User_Flows.md` · `Inventory_Architecture.md` · `Inventory_Dashboard.md` · `Inventory_Workspaces.md` · `Inventory_Navigation.md` · `INV_Receiving_Workbench.md`

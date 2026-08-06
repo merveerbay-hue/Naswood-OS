@@ -293,7 +293,7 @@ Place purchase order → PO Wizard
 
 Enter sales order → Sales Order Wizard
 
-Receive goods → Receiving Wizard
+Receive goods → Receiving Workbench
 
 Issue goods → Issue Wizard
 

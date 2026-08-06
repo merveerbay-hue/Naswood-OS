@@ -15,7 +15,7 @@
 | Process | `Purchasing_Workflow.md` |
 | Screen IDs | `NOS_SCREEN_MAP.md` § Purchasing |
 | PO wizard | `docs/00_Product/Process_Screens/PUR_Purchase_Order_Wizard.md` |
-| Goods receipt | Inventory **Receiving Wizard** — not Purchasing Create GR |
+| Goods receipt | Inventory **Receiving Workbench** — not Purchasing Create GR |
 
 ---
 
@@ -34,7 +34,7 @@
 | PUR-RPT | Purchasing Reports | Reports | Explorer | Run reports |
 | PUR-SET | Purchasing Settings | Settings | Explorer | Module parameters |
 
-**Inbound physical receipt** = Inventory CTA **Mal kabul başlat** → `INV_Receiving_Wizard.md` (operator selects Depo; lot by material category).
+**Inbound physical receipt** = Inventory CTA **Mal kabul başlat** → `INV_Receiving_Workbench.md` (truck · OCR · verify · count · inspect · operator selects Depo; lot by material category). **Not** a CRUD Create form.
 
 ---
 
@@ -45,4 +45,4 @@
 
 ## Related
 
-`Purchasing_Workflow.md` · `PUR_Purchase_Order_Wizard.md` · `INV_Receiving_Wizard.md`
+`Purchasing_Workflow.md` · `PUR_Purchase_Order_Wizard.md` · `INV_Receiving_Workbench.md`

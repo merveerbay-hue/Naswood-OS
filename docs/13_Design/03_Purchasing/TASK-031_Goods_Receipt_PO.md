@@ -614,7 +614,7 @@ Notification_System.md
 Typical permissions
 
 - View Goods Receipt
-- **Receive goods** → Inventory Receiving Wizard (`INV_Receiving_Wizard.md`) — not Create GR form
+- **Receive goods** → Inventory Receiving Workbench (`INV_Receiving_Workbench.md`) — not Create GR form
 - Post Goods Receipt
 - Reverse Goods Receipt
 - Receive Purchase Orders

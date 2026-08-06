@@ -2,7 +2,7 @@
 
 **Document:** Screen Types (UX law)  
 **Status:** Official  
-**Version:** 1.2.0  
+**Version:** 1.3.0  
 **Location:** `docs/13_Design/Common/Screen_Types.md`  
 **Companion:** [`UI_Patterns.md`](./UI_Patterns.md)  
 **Process screens:** [`docs/00_Product/Process_Screens/`](../../00_Product/Process_Screens/)  
@@ -57,7 +57,7 @@ Reusable **CRUD create/edit screens** are forbidden as the default — for **ope
 | **Designer** | Design a process / graph / operation sequence with relations & simulation | Routing Designer, Operation Designer, Work Center Layout Designer |
 | **Configuration** | Define a rich multi-facet asset/resource (Studio facets → Release) | Machine Configuration Studio, Line Designer, Product Wizard |
 | **Planner** | Balance time / capacity / resources visually | Capacity, Scheduling, Dispatch, Shift Planner, Calendar Planner, PM calendar |
-| **Workbench** | Knowledge / analysis / multi-object engineering surface | Quality engineering, CAPA analysis, genealogy inquiry |
+| **Workbench** | Multi-pane session for **operational** or **engineering** jobs (context + tools + sticky actions) | **Receiving Workbench**, Shipping Workbench, Quality engineering, CAPA analysis, genealogy inquiry |
 | **Library** | Find & reopen engineering objects — **not** a Create Form | Tool Library Manager, Machine Library → opens Studio |
 | **Explorer** | Find, inspect, navigate hierarchical / catalog data | Warehouse map, Lot library, Product catalog browse |
 
@@ -74,8 +74,10 @@ A Library list CTA never opens “Code · Name · Save”. It opens the matching
 
 ### Inventory — not “New GoodsReceipt entity”
 
-**CTA:** Receive goods / Mal kabul başlat · **Type:** Wizard  
-Full: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md`
+**CTA:** Receive goods / Mal kabul başlat · **Type:** **Workbench**  
+Full: `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md`  
+Spine gates (Depo → Lot): `INV_Receiving_Wizard.md`  
+**Not** a Create/Edit form — truck → documents → OCR → verify → count → inspect → warehouse → labels → review → **Post**.
 
 ### Production planning — not “New ProductionOrder entity”
 
@@ -145,7 +147,7 @@ Shared `ResourcePage` / `EntityListScreen` create panels are **forbidden** for r
 
 | Module | Forbidden CTA | Correct CTA (TR / EN) | Type | Process / Screens |
 |--------|---------------|----------------------|------|-------------------|
-| Inventory | Yeni kabul / Create GR | **Mal kabul başlat** / Receive goods | Wizard | [`INV_Receiving_Wizard.md`](../../00_Product/Process_Screens/INV_Receiving_Wizard.md) |
+| Inventory | Yeni kabul / Create GR | **Mal kabul başlat** / Receive goods | **Workbench** | [`INV_Receiving_Workbench.md`](../../00_Product/Process_Screens/INV_Receiving_Workbench.md) |
 | Inventory | Yeni çıkış | **Mal çıkışı** / Issue goods | Wizard | [`INV_Issue_Wizard.md`](../../00_Product/Process_Screens/INV_Issue_Wizard.md) |
 | Inventory | Yeni transfer | **Stok transfer** / Transfer stock | Wizard | [`INV_Transfer_Wizard.md`](../../00_Product/Process_Screens/INV_Transfer_Wizard.md) |
 | Inventory | Yeni sayım | **Sayım başlat** / Start count | Wizard | [`INV_Cycle_Count_Session.md`](../../00_Product/Process_Screens/INV_Cycle_Count_Session.md) |
