@@ -79,22 +79,35 @@ Before any new product document or implementation, answer in this order:
    Kim kullanıyor? Hangi rol hangi job’u bitiriyor?
    (Üretim Müdürü · Planlamacı · Operatör · Bakım · Kalite · CEO · …)
 
-3. Market reference
+3. Screen job (mandatory for every screen)
+   Kullanıcı bu ekranda hangi işi bitirmek istiyor?
+   → Name the screen after that job (Wizard / Board / Terminal / Cockpit)
+   → Not after the database entity (“Production Order”)
+
+4. Market reference
    SAP / IFS / Dynamics 365 / Infor (ve gerekirse Opcenter) bunu nasıl çözüyor?
-   Workspace? Screen families? Workflow? Permissions?
+   Workspace? Process steps? Permissions?
 
-4. NOS differentiation
+5. NOS differentiation
    NOS bunu nasıl daha iyi çözer?
-   (daha net job, daha az ekran, daha iyi operator UX, AI-native, …)
+   (daha net job, timber-native steps, daha az ekran, AI-native, …)
 
-5. Document
-   Kararı product layer’a yaz (aşağıdaki stack).
+6. Document
+   Kararı product layer’a yaz (job screen PRD + steps).
 
-6. Implement
-   Cursor ancak o zaman Frontend / API uygular.
+7. Implement
+   Cursor ancak o zaman Frontend / API uygular — job screen, not entity CRUD.
 ```
 
-If step 1–4 are empty, **stop**. Do not draft screens or code to fill the void.
+If step 1–3 are empty, **stop**. Do not draft entity screens or code to fill the void.
+
+**Job-first screen design:** `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`  
+**Exemplar:** `docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`
+
+```text
+FORBIDDEN screen default:  Production Order · entity Create form
+REQUIRED screen default:   Production Planning Wizard · process steps · Release
+```
 
 ---
 

@@ -15,20 +15,29 @@
 
 This is the **second major phase** of NOS product architecture:
 
-> Design the full screen map of the ERP/MES — before TASK-driven CRUD.
+> Design the full **job / process** map of the ERP/MES — before TASK-driven CRUD.
 
 ```text
 NOS
   → Module
   → Workspace
-  → Screen
+  → Job Screen (Wizard / Board / Terminal / Cockpit)
   → Component
   → Workflow
   → Permissions
   → Code
 ```
 
-Cursor implements **named slices** from this map.  
+**Mandatory question for every screen:**  
+*Kullanıcı bu ekranda hangi işi bitirmek istiyor?*
+
+→ See [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
+→ Exemplar: [`Process_Screens/PRD_Production_Planning_Wizard.md`](./Process_Screens/PRD_Production_Planning_Wizard.md)
+
+Entity-titled rows in older indexes are **placeholders to rename** into jobs  
+(e.g. “Production Order” → **Production Planning Wizard** + Plan Library).
+
+Cursor implements **named job slices** from this map.  
 This document is **not** a TASK backlog.
 
 ---
@@ -412,12 +421,13 @@ Production
 | ID | Screen | Workspace | Maturity |
 |----|--------|-----------|----------|
 | PRD-001 | Production Dashboard | Dashboard | Spec’d |
-| PRD-010 | Production Order List | Planning | Spec’d |
-| PRD-011 | Production Order Detail | Planning | Spec’d |
-| PRD-012 | Work Order List / Detail | Planning | Spec’d |
-| PRD-021 | Scheduling | Planning | Spec’d |
-| PRD-022 | Capacity Planning | Planning | Spec’d |
-| PRD-023 | Dispatch List | Planning | Spec’d |
+| PRD-PLAN-001 / PRD-101 | **Production Planning Wizard** (job) | Planning | ★ Exemplar |
+| PRD-102 | Plan / Order Library | Planning | Mapped |
+| PRD-010 / PRD-102b | Production Order Detail *(post-release)* | Planning | Spec’d → rename job |
+| PRD-012 | Work Order List / Detail | Planning | Spec’d → job rename pending |
+| PRD-021 / PRD-103 | Scheduling Board | Planning | Spec’d |
+| PRD-022 / PRD-104 | Capacity Load Board | Planning | Spec’d |
+| PRD-023 / PRD-105 | Dispatch Board | Planning | Spec’d |
 | PRD-013 | Operator Terminal | Execution / Shop Floor | Spec’d |
 | PRD-024 | Machine Panel | Execution / Shop Floor | Spec’d |
 | PRD-014 | Material Consumption | Execution | Spec’d |
