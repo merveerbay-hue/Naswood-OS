@@ -19,6 +19,23 @@ Every screen belongs to exactly one Workspace.
 
 ---
 
+# AUTHORITY REFERENCES (do not redefine)
+
+This document owns **UX / job screens** only. Cross-cutting laws live elsewhere.
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Inventory ownership / stock posting | `docs/13_Design/02_Inventory/Inventory_Architecture.md` |
+| Production execution process | `docs/13_Design/05_Production/Production_Workflow.md` |
+| Job-first naming | `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md` |
+
+Do **not** repeat rules such as “lot number is system-generated” here — link the Numbering authority.
+
+---
+
 # SCREEN DESIGN PRINCIPLES
 
 **Job-first (mandatory):**  

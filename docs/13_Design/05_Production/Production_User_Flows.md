@@ -37,6 +37,24 @@ Users never navigate through database entities.
 
 ---
 
+# AUTHORITY REFERENCES (do not redefine)
+
+This document owns **role journeys / flow steps**. Cross-cutting laws live elsewhere.
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Inventory ownership | `docs/13_Design/02_Inventory/Inventory_Architecture.md` |
+| Execution process truth | `Production_Workflow.md` |
+
+When a flow step needs a new Lot / Serial / Package / Pallet / Production ID,
+write: *“Identifier minted by NOS Numbering Service (Document_Numbering.md)”* —
+never “system generates lot” as a local rule.
+
+---
+
 # PRIMARY USER ROLES
 
 - Production Manager
@@ -429,7 +447,8 @@ Assign Location
 
 ↓
 
-Generate Lot
+Mint Lot ID via NOS Numbering Service
+(see Document_Numbering.md — manual entry prohibited)
 
 ↓
 

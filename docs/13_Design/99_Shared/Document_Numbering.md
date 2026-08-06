@@ -309,13 +309,48 @@ Supports
 
 Automatic
 
-Manual Override (Permission Required)
+Manual Override (Permission Required) — **business documents only** (see below)
 
 External Integration
 
 API
 
 Import
+
+---
+
+# Material & Production Identifiers (authoritative)
+
+This section is the **single source of truth** for physical and production
+identity numbers. Other documents (Screens, User Flows, Workflows, TASKs)
+must **reference** this section — they must not restate or weaken it.
+
+```text
+Material, Lot, Serial, Package, Pallet and Production identifiers
+are generated exclusively by the NOS Numbering Service as defined
+in this Core Identity & Numbering Architecture
+(docs/13_Design/99_Shared/Document_Numbering.md).
+
+Manual entry is prohibited.
+```
+
+Applies to (non-exhaustive):
+
+- Material / Product instance identifiers where numbered
+- Lot / Batch numbers
+- Serial numbers
+- Package numbers
+- Pallet numbers
+- Production Order / Work Order / Operation execution numbers (business IDs)
+
+UI and APIs may **display** these identifiers. They must not accept user-typed
+values for creation. Selection of an *existing* Lot/Serial for consumption is
+allowed; minting a new identity is Numbering Service only.
+
+Business documents (PO, SO, GR, Invoice, …) remain under the general rules above
+(automatic by default; manual override only with explicit permission).
+
+Authority matrix: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
 
 ---
 
@@ -327,7 +362,9 @@ Document Number must be unique.
 
 Prefix must match document type.
 
-Manual numbering requires authorization.
+Manual numbering requires authorization (business documents only).
+
+Material / Lot / Serial / Package / Pallet / Production identifiers: **no manual entry**.
 
 ---
 

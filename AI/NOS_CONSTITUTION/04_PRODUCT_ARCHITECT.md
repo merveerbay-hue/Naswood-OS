@@ -47,6 +47,36 @@ work-package IDs.
 | **Product Architect (human)** | Asks role/job questions; decides NOS shape; directs sequence | Hand AI “write TASK-XXX” as the brief |
 | **AI (Cursor)** | Answers with real-world + ERP comparison + NOS proposal; drafts docs; implements last | Invent screens from TASKs; skip roles/workspaces; treat code as product definition |
 
+## 2.1 Single source of truth (mandatory)
+
+**Authority matrix:** [`docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`](../../docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md)
+
+Before writing any business rule into a document:
+
+```text
+1. Bu kuralı daha önce tanımlamış mıydık?  → open the Authority Matrix
+2. Yes → reference only (no restatement)
+3. No  → add the rule to the correct authority document, then reference it
+```
+
+Never create a new markdown file for a single cross-cutting rule.  
+Never redefine Numbering, Genealogy, Inventory ownership, or Capability inside Screens / User Flows.
+
+Example — **wrong** in `Production_Screens.md`:
+
+```text
+Lot numarası sistem tarafından üretilir.
+```
+
+Example — **right** (reference only):
+
+```text
+Material, Lot, Serial, Package, Pallet and Production identifiers
+are generated exclusively by the NOS Numbering Service as defined
+in Document_Numbering.md (Core Identity & Numbering Architecture).
+Manual entry is prohibited.
+```
+
 ```text
 Design first  →  Document second  →  Cursor implements last
 ```
