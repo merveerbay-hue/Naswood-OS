@@ -356,11 +356,13 @@ Multi-pane session for **operational** warehouse desks or **engineering / qualit
 ### Operational Workbench rules
 
 - Sticky action bar — never Save/Cancel-only form footer.  
+- **COMPLIANCE BY DESIGN** — `Inventory_Workbench_Design_Standard.md` (Scan · Verify · Review · Approve; immutable posted txns; audit/revision/approvals).  
 - **Evidence First** — photos/docs/handwriting before forms (`INV_Receiving_Workbench.md`).  
 - Prefer scan / photo / OCR / AI over typing; operators validate.  
 - Identifiers from Numbering Service only (`Document_Numbering.md`).  
 - Receiving mints root **Material Identity** (`Material_Identity_Architecture.md`).  
 - Full receiving UX: `INV_Receiving_Workbench.md` v1.1.  
+- Goods Issue UX: `INV_Goods_Issue_Workbench.md` v3.0.  
 - When packages are selected/allocated: center = **Package Allocation Workspace** (`Package_Allocation_Workspace.md`) — not a simple table; same language on Issue · Receiving · Transfer · Production · Shipping · Count.
 
 ### Components

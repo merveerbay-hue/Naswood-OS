@@ -3,13 +3,15 @@
 **Module:** Inventory  
 **Workspace:** Operations  
 **Screen type:** **Workbench** (warehouse execution) — `Screen_Types.md` · `UI_Patterns.md`  
-**Version:** 2.0 — Master Prompt v2.0 aligned  
+**Version:** 3.0 — Master Prompt v3.0 · **COMPLIANCE BY DESIGN**  
 **Status:** Product Architect — authoritative issue UX  
 **Supersedes as primary UX:** linear [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) (retained as spine)  
+**Inventory Workbench Design Standard:** [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md) — GI is first full consumer of v3.0  
 **Stock truth:** `Inventory_Architecture.md` · `Inventory_Workflow.md`  
 **Identity:** `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Material_Genealogy.md`  
 **Evidence / Document Library / Export:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md)  
 **Package Allocation Workspace (shared pattern):** [`Package_Allocation_Workspace.md`](../../13_Design/99_Shared/Package_Allocation_Workspace.md) — GI is first consumer; same UX on Receiving · Transfer · Production · Shipping · Count  
+**Audit / Approvals:** `Audit_Log.md` · `Approval_Workflow.md`  
 **Package / barcode immutability (format refs):** `Barcode_QR_Model.md` · `Barcode_Strategy.md` · `Naming_Standards.md` · Packaging module  
 **Design program:** `Inventory_Design_Program.md` § 7 (PA-directed ahead of Putaway)
 
@@ -26,12 +28,22 @@
 | **2.0.3** | **Multiple Package Picking** · Package Allocation Grid · mix AI Validation (lot/quality/moisture/dims/customer) · edit/add/remove packages |
 | **2.0.4** | **Package Allocation Workspace** = center of Workbench (not a simple table) · live qty/volume/weight/pkg count · barcode · DnD · keyboard · Excel-like · sort/filter/group · bulk · AI/manual · live validation · inventory sync |
 | **2.0.5** | **Damage & Scrap during picking** · Take From Package (Good/Damaged/Hold/Scrap/Rework) · damage/scrap evidence · separate Scrap/Hold txns · **Package Closing Checklist** · PKG-00254 120→40→37+2+1+80 |
+| **3.0** | Master Prompt v3.0 · **COMPLIANCE BY DESIGN** · composes `Inventory_Workbench_Design_Standard.md` · canonical package grid columns (m³ · dates · supplier · photos · reservation) · package status + Quality Hold / Damaged · Audit Trail · Revision Management · Electronic Approvals · Immutable posted txns (Reverse / Correction) · compliance frameworks (ISO / FSC / PEFC / TSE) |
 
-v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
+v3 **extends** Inventory Architecture / Workflow / Screens / Shared PAW / Evidence / Design Standard — it does not replace stock ledger, numbering, or disposition algorithms.
 
 ---
 
 ## Absolute rules
+
+```text
+COMPLIANCE BY DESIGN (Master Prompt v3.0)
+─────────────────────────────────────────
+Built for real manufacturing · ISO / TSE / FSC / PEFC / customer audits.
+Evidence in the flow · immutable posted history · system-generated IDs ·
+continuous genealogy. Controls are structural — not optional checklists.
+Authority: Inventory_Workbench_Design_Standard.md
+```
 
 ```text
 This is NOT a CRUD screen.
@@ -40,13 +52,14 @@ This is NOT a database editor.
 This is an AI-powered Warehouse Operations Workbench.
 Inventory quantities are NEVER edited directly.
 Every Goods Issue creates Inventory Transaction(s).
+Posted Inventory Transactions are NEVER editable → Reverse / Correction only.
 ```
 
 ```text
+Operator: Scan · Verify · Review · Approve
+System:   Think · Compare · Recommend · Validate · Warn · Generate · Track
 Never allow issuing materials without a business document
 (except permission-controlled Manual Issue).
-AI prepares · Operator scans · reviews · verifies · confirms.
-The system calculates · validates · warns · generates · tracks.
 ```
 
 ```text
@@ -114,11 +127,15 @@ Entry: Command Center queues · Operations · Production / Maintenance / Sales d
 
 | Topic | Authority |
 |-------|-----------|
+| **Compliance by Design · Workbench laws** | [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md) |
 | Identifiers | `Document_Numbering.md` |
 | Material Identity / Lot (Package ≠ MI) | `Material_Identity_Architecture.md` |
 | Genealogy | `Material_Genealogy.md` |
 | Stock / reservations / txn immutability | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
+| Package Allocation Workspace | `Package_Allocation_Workspace.md` |
+| Audit trail engine | `Audit_Log.md` |
+| Electronic approvals | `Approval_Workflow.md` |
 | Package code immutability / QR | `Barcode_QR_Model.md` · `Barcode_Strategy.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
 | Warehouse Explorer (browse alternate bins) | Design Program #4 — **consume when landed**; do not redefine Explorer here |
@@ -406,18 +423,33 @@ similar to professional warehouse planning software.
 
 ### Columns (each row = one package)
 
+Canonical set per [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md) § 7 — show/hide by role/config; GI default shows ops-critical columns first.
+
 | Column | Content |
 |--------|---------|
 | Package Number | Display-only identity |
+| Material Identity | Display-only |
 | Warehouse | Name-first |
 | Location | Zone / rack / shelf / bin |
 | Lot | Display-only |
-| Material Identity | Display-only |
-| Species · Dimensions · Quality · Moisture | Spec columns |
+| Species | Spec |
+| Dimensions | Spec |
+| Quality Grade | Spec |
+| Moisture | Spec |
 | Available Quantity | Live from inventory |
 | **Selected Quantity** | Inline editable (partial OK) |
 | Remaining Quantity | Auto |
-| Volume / Weight | Auto (selected & remaining) |
+| Available m³ | Live / calculated |
+| Selected m³ | Auto |
+| Remaining m³ | Auto |
+| Weight | Selected & remaining |
+| Package Status | Available · Reserved · Picking · … |
+| Production Date | When known |
+| Receiving Date | From receiving root |
+| Supplier | Name-first from receiving / PO |
+| Photos | Thumbnail / open gallery |
+| Reservation Status | Free / reserved / … |
+| Customer Reservation | When bound to customer demand |
 
 ### Design priority
 
@@ -858,12 +890,16 @@ Authorization to waive = Supervisor / Quality / policy role · always audited ·
 
 ### Package Status
 
+Vocabulary per Design Standard § 10 (GI uses the full set):
+
 | Status | Meaning |
 |--------|---------|
 | Available | Pickable |
 | Reserved | Bound to demand |
-| In Picking | Active GI session |
+| Picking | Active GI session |
 | Partially Used | Remaining > 0 after one or more issues |
+| Quality Hold | Blocked for Quality disposition |
+| Damaged | Damaged classification / quarantine path |
 | Consumed | Remaining = 0 (fully issued) |
 | Closed | Business-closed (policy) |
 
@@ -873,15 +909,19 @@ Package ≠ Material Identity. Package **links to** MI (and may contain / repres
 
 ## Traceability
 
+**Authority:** Design Standard § 17 · `Material_Genealogy.md` · MI Architecture.
+
 The system shall always reconstruct:
 
-| Question | Answered by |
-|----------|-------------|
-| Which Receiving created this package / MI? | Receiving root + txn history |
-| Which Supplier delivered it? | Receiving / PO link |
-| Which Production Order consumed it? | GI → demand reference |
-| Which Finished Product contains it? | Genealogy |
-| Which Customer received it? | SO / shipment chain |
+| Node | Answered by |
+|------|-------------|
+| Supplier | Receiving / PO link |
+| Receiving Operation | Receiving root + txn history |
+| Warehouse · Location | Stock position + txn |
+| Package | Package Identity (unchanged on partial) |
+| Production Order | GI → demand reference (when prod) |
+| Finished Product | Genealogy |
+| Shipment · Customer | SO / shipment chain |
 
 ```text
 Receiving root MI → Lot / Package → Reservation (if any) → Goods Issue txn(s) →
@@ -889,9 +929,75 @@ Production Order / WO / SO → (later) FG / Customer shipment
 ```
 
 ```text
+Complete genealogy is mandatory.
 Traceability relies on Inventory Transactions and Material Genealogy.
 NOT by changing Package IDs.
 ```
+
+---
+
+## Audit Trail
+
+**Engine:** `Audit_Log.md` · **Composition:** Design Standard § 13.
+
+Every GI action is recorded; nothing is overwritten. At minimum seal into audit:
+
+| Event |
+|-------|
+| Created By / Created Date |
+| Modified By / Modification Reason (draft) |
+| AI Accept / IGNORE AI (Yoksay) + override detail |
+| Scan / verify / validation waiver |
+| Disposition (Good / Damaged / Hold / Scrap / Rework) |
+| Evidence attach |
+| Electronic approval |
+| Posting / Completion / Archive |
+
+Override History (§ below) is the operator-facing slice of the same append-only truth.
+
+---
+
+## Revision Management
+
+```text
+Existing posted records shall never be edited silently.
+Corrections create revisions and/or Reverse / Correction transactions.
+```
+
+Each revision stores: **Original Value · Corrected Value · Reason · User · Date · Approval** (when required).
+
+Draft Workbench state may change until Post. After Post → § Immutable Transactions.
+
+Compose with `Approval_Workflow.md` Return for Revision when approval is configured.
+
+---
+
+## Electronic Approvals
+
+**Engine:** `Approval_Workflow.md` · Design Standard § 15.
+
+Configurable electronic approvals on Goods Issue (examples):
+
+| Role | Typical gate |
+|------|----------------|
+| Warehouse Operator | Execute pick / request Post |
+| Supervisor | Validation waiver · shortage · override policy |
+| Quality | Hold release · damage disposition path |
+| Warehouse Manager | Manual Issue · high-value / exception Post |
+
+Approval history is permanent and shown on Final Review + Document Library Timeline.
+
+---
+
+## Immutable Transactions
+
+```text
+Posted Inventory Transactions are never editable.
+Mistake → Reverse Transaction and/or Correction Transaction.
+Never modify history. Never Edit Posted GI as a form.
+```
+
+Aligns with `Inventory_Architecture.md`. Workbench UX after Post: open Reverse / Correction **new** controlled flow (permissioned), not silent field overwrite.
 
 ---
 
@@ -909,18 +1015,32 @@ Support (by Shared law — do not redefine): Preview · Download · ZIP · Print
 
 ## Export
 
-Support Excel · CSV · PDF.
+Support Excel · CSV · PDF — **audit-ready** (Design Standard § 12 · Shared Evidence/Export).
 
 Generate from library / reports (formats & columns → Shared law):
 
 | Export |
 |--------|
 | Goods Issue Report |
-| Picking List |
-| Inventory Movement Report |
+| Inventory Transaction Report |
 | Material Consumption Report |
-| Transaction History |
+| Picking Report / Picking List |
 | Difference Report |
+| Inventory History / Transaction History |
+
+---
+
+## Compliance
+
+Compatible with ISO 9001 · ISO 14001 · ISO 45001 · ISO 27001 · FSC Chain of Custody · PEFC · TSE · Customer Quality Audits.
+
+```text
+Every GI session produces records suitable for internal and external audits:
+digital file · Inventory Transactions · disposition evidence · approvals · genealogy.
+```
+
+FSC/PEFC claim rules live in Quality / CoC docs; GI **preserves** certificate evidence and MI/Package links without breaking the chain.  
+Authority: Design Standard § 19.
 
 ---
 
@@ -996,19 +1116,24 @@ Tablet / desk: document select · Accept/Override · review · Document Library 
 
 ## Cursor implementation notes
 
-1. Screen type = **Workbench** — not Issue Create form.  
-2. FE: **Package Allocation Workspace** MAIN + **Take From Package** rail (Good/Damaged/Scrap/Hold/Rework).  
-3. Live strip + disposition totals; Damaged/Scrap require evidence before Post.  
-4. Package Closing Checklist after partial take.  
-5. Post → GI (Good) + Hold txn(s) + Scrap txn(s) + remaining on same PKG · evidence · genealogy.  
-6. Shared pattern: `Package_Allocation_Workspace.md` — do not redefine disposition laws here.  
-7. Command Center “Open issues” opens this Workbench.  
-8. Export / permanence → Shared Document Management — reference only.
+1. Screen type = **Workbench** — not Issue Create form · COMPLIANCE BY DESIGN.  
+2. Compose `Inventory_Workbench_Design_Standard.md` — do not invent a second compliance model.  
+3. FE: **Package Allocation Workspace** MAIN + **Take From Package** rail (Good/Damaged/Scrap/Hold/Rework).  
+4. Canonical grid columns (m³ · dates · supplier · photos · reservation) — show/hide OK.  
+5. Live strip + disposition totals; Damaged/Scrap require evidence before Post.  
+6. Package Closing Checklist after partial take.  
+7. Post → immutable GI (Good) + Hold txn(s) + Scrap txn(s) + remaining on same PKG · evidence · genealogy · audit seal.  
+8. Corrections after Post = Reverse / Correction flows — never Edit Posted.  
+9. Approvals / audit → shared engines; surface history on Review + Library Timeline.  
+10. Shared PAW / Evidence / Numbering / MI — reference only; do not redefine algorithms.  
+11. Command Center “Open issues” opens this Workbench.
 
 ---
 
 ## Related
 
 `INV_Issue_Wizard.md` · `Inventory_Workflow.md` · FLOW-INV-002 · `Inventory_Screens.md`  
-`Inventory_Design_Program.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md`  
-`Document_Management_Evidence_and_Export.md` · `Inventory_Dashboard.md` · `Barcode_QR_Model.md`
+`Inventory_Design_Program.md` · [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md)  
+`Material_Identity_Architecture.md` · `Document_Numbering.md` · `Package_Allocation_Workspace.md`  
+`Document_Management_Evidence_and_Export.md` · `Audit_Log.md` · `Approval_Workflow.md`  
+`Inventory_Dashboard.md` · `Barcode_QR_Model.md`
