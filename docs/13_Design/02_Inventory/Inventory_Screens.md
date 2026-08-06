@@ -66,7 +66,7 @@ Inventory
 | ID | Screen (job name) | Workspace | Job to be done |
 |----|-------------------|-----------|----------------|
 | INV-001 | **Warehouse Command Center** | Dashboard | **Run the warehouse today** — job CTAs, live queues, exceptions, dock board. **Not** a KPI/analytics page. Spec: `Inventory_Dashboard.md` |
-| INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | Finish **entire** inbound truck operation; mint **root Material Identity** (class-aware) + optional Lot; Depo → labels → **Post**. Type **Workbench** — **not** Create/CRUD. Spec: `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` |
+| INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | **Evidence First** truck-to-post Workbench (14 steps · AI · root Material Identity). **Not** Create/CRUD. Spec: `INV_Receiving_Workbench.md` |
 | INV-017/018 | **Issue Goods Wizard** | Operations | **Mal çıkışı / Issue goods** — Wizard; not “Yeni çıkış”. Spec: `Process_Screens/INV_Issue_Wizard.md` |
 | INV-019/020 | **Transfer Stock Wizard** | Operations | **Stok transfer / Transfer stock** — Wizard; not “Yeni transfer”. Spec: `Process_Screens/INV_Transfer_Wizard.md` |
 | INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |

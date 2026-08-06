@@ -33,21 +33,20 @@ When a flow needs a new Lot / Serial / Package / Pallet ID:
 # FLOW-INV-001 — Receive goods
 
 **Job:** Finish the **entire** inbound truck operation so stock is available (or held for QI).  
-**Authority:** `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` · spine: `INV_Receiving_Wizard.md` · `Document_Numbering.md` § Material Identity series
+**Authority:** `INV_Receiving_Workbench.md` (Evidence First · 14 steps) · `Material_Identity_Architecture.md` · spine: `INV_Receiving_Wizard.md` · `Document_Numbering.md`
 
 ```text
-Inventory Command Center / Operations
+Warehouse Command Center / Operations
 → Receive goods / Mal kabul başlat (Receiving Workbench — not Create form)
 → Truck registration + photos
-→ Attach documents (DN / packing list / PO / photos)
-→ AI OCR → operator review
-→ Verify PO ∥ Delivery note ∥ OCR (missing / extra / mismatch)
-→ Physical count (scan or handwritten OCR)
-→ Material inspection + damage photos
-→ Warehouse assignment (Depo required; system suggests; operator confirms)
-→ Auto labels (**Material Identity** primary · Lot / Package / Pallet) — no manual numbering
-→ Review summary → Post
-→ Genealogy **root** + balance updated in chosen WH → optional QI · full audit + attachments
+→ Evidence collection (DN / packing / PO / certificates / camera) — not “attachments”
+→ AI document understanding → document comparison (PO∥DN∥packing∥OCR)
+→ Physical count (scan / handwriting OCR) · Photo analysis
+→ Material verification · Quality pre-check
+→ Warehouse assignment (Depo required)
+→ Root Material Identity (+ optional Lot) · Labels
+→ Review → Post
+→ Genealogy root + stock + Evidence Archive · optional QI
 ```
 
 ---

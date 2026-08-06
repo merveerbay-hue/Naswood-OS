@@ -356,9 +356,11 @@ Multi-pane session for **operational** warehouse desks or **engineering / qualit
 ### Operational Workbench rules
 
 - Sticky action bar — never Save/Cancel-only form footer.  
-- Prefer scan / photo / OCR over typing.  
+- **Evidence First** — photos/docs/handwriting before forms (`INV_Receiving_Workbench.md`).  
+- Prefer scan / photo / OCR / AI over typing; operators validate.  
 - Identifiers from Numbering Service only (`Document_Numbering.md`).  
-- Full receiving UX: `INV_Receiving_Workbench.md`.
+- Receiving mints root **Material Identity** (`Material_Identity_Architecture.md`).  
+- Full receiving UX: `INV_Receiving_Workbench.md` v1.1.
 
 ### Components
 

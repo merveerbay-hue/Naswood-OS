@@ -42,23 +42,22 @@ All balance changes are **transactions**. No silent updates.
 
 # Goods receipt
 
-**UX authority:** `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md`  
-**Spine gates:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` (Depo → Material Identity)  
-**Material Identity:** `docs/13_Design/99_Shared/Material_Identity_Architecture.md`
+**UX authority:** `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md` (v1.1 — Evidence First · 14 steps)  
+**Spine gates:** `INV_Receiving_Wizard.md` (Depo → Material Identity)  
+**Material Identity:** `Material_Identity_Architecture.md`
 
 ```text
 Truck arrives
-→ Receiving Workbench (not shared Create / not CRUD form)
-→ Truck registration · Documents · AI OCR · Material verification
-→ Physical count (scan / sheet OCR) · Inspection photos
-→ Select warehouse (Depo) — required; operator chooses (system may suggest)
-→ Location in that warehouse
-→ Material Identity minted (class-aware root, e.g. LOG) via Numbering + Identity Rules
-  — optional Lot as operational party; Package/Pallet/Serial as applicable
-→ Labels · Review · Post
-→ Genealogy root node + InventoryBalance update in chosen WH → Available (or Hold)
+→ Receiving Workbench (Evidence First — not Create / not CRUD)
+→ Truck registration · Evidence collection (docs/photos = business evidence)
+→ AI document understanding · Document comparison
+→ Physical count (scan / handwriting OCR) · Photo analysis · Material verification
+→ Quality pre-check
+→ Warehouse assignment (Depo required; system suggests; operator confirms)
+→ Material Identity root mint (class-aware) + optional Lot · Labels
+→ Review · Post
+→ Genealogy root + InventoryBalance + Evidence Archive + audit
 → Optional: Quality Incoming Inspection trigger
-→ Audit trail + attachments on Receiving record
 ```
 
 ---

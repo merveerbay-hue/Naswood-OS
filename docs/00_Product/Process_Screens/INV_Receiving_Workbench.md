@@ -2,34 +2,50 @@
 
 **Module:** Inventory  
 **Workspace:** Operations  
-**Screen type:** **Workbench** (operational) — see `docs/13_Design/Common/Screen_Types.md`  
+**Screen type:** **Workbench** (operational) — `Screen_Types.md` · `UI_Patterns.md`  
+**Version:** 1.1 — Master Prompt aligned  
 **Status:** Product Architect — authoritative receiving UX  
-**Supersedes as primary UX:** phased-only “Receiving Wizard” shell  
-**Companion (rules retained):** [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) — Depo → Location → **Material Identity** (+ Lot) mint gates  
-**Material Identity:** [`Material_Identity_Architecture.md`](../../13_Design/99_Shared/Material_Identity_Architecture.md) — receiving creates genealogy **root**
-**Business capability source:** `docs/05_Modules/12_Purchasing/Receiving.md` (lifecycle & AI intents) · stock ownership: `Inventory_Architecture.md`
+**Master intent:** Enterprise AI-powered Receiving Workbench (SAP EWM / Dynamics SCM / Infor WMS / IFS / Manhattan class + NOS AI)  
+**Companion spine:** [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) — Depo → Location → Material Identity (+ Lot)  
+**Material Identity:** [`Material_Identity_Architecture.md`](../../13_Design/99_Shared/Material_Identity_Architecture.md)  
+**Numbering:** [`Document_Numbering.md`](../../13_Design/99_Shared/Document_Numbering.md)  
+**Capability catalog:** `docs/05_Modules/12_Purchasing/Receiving.md` · stock: `Inventory_Architecture.md`
 
 ---
 
-## Absolute rule
+## Absolute rules
 
 ```text
+This is NOT a CRUD page.
 This is NOT a Create / Edit form.
-This is NOT a GoodsReceipt CRUD page.
-This is a complete warehouse receiving operation executed by warehouse operators.
+This is NOT a database editor.
+This is an enterprise Receiving Workbench for warehouse operators
+in real manufacturing environments.
 ```
 
-**Forbidden:** Save / Cancel form · `Code *` / Material Identity / Lot No / Package ID typed by hand · “Yeni Goods Receipt”.  
-**Required:** Workbench session · scan / photo / OCR first · verify · **Post** → **root Material Identity**.
+```text
+NOS does not begin with forms.
+NOS begins with evidence.
+AI converts evidence into structured business data.
+Operators validate instead of typing.
+```
+
+**Forbidden:** Save/Cancel form · typed Material Identity / Lot / WH / Location / Package / Pallet / GR / txn numbers · “Yeni Goods Receipt”  
+**Required:** Evidence-first Workbench · scan / photo / OCR / AI · verify · approve · **Post** → root **Material Identity** + stock + evidence archive
 
 ---
 
 ## Job to be done
 
-> Depocu, kapıya gelen kamyonu **tek Receiving Workbench oturumunda** kayıt eder; evrakları yükler; OCR ve sayımla miktarı doğrular; hasarı belgeler; depo/lokasyon atar; etiket üretir; onaylar; **Post** ile stoğa işler ve malzemenin **kök Material Identity**’sini oluşturur (genealogy root — origin kaybolmaz).
+> Depocu, kapıya gelen kamyonu **tek Receiving Workbench oturumunda** bitirir: kanıt toplar (foto · evrak · el yazısı); AI çıkarır ve karşılaştırır; sayım ve kaliteyi onaylar; depo atar; etiket basar; **Post** ile stok + **kök Material Identity** + audit + evidence archive oluşturur.
 
-**Not the job:** “Create a GoodsReceipt row” or type Warehouse / Material Identity / Lot / Package / Transaction numbers.
+Operator time mix:
 
+| Prefer | Minimize |
+|--------|----------|
+| Scanning · photographing · reviewing · verifying · approving | Typing |
+
+**Not the job:** Create a GoodsReceipt row by filling a form.
 
 ---
 
@@ -40,9 +56,7 @@ This is a complete warehouse receiving operation executed by warehouse operators
 | EN | **Receive goods** / Open Receiving Workbench |
 | TR | **Mal kabul başlat** / Mal Kabul Workbench |
 
-Never: “Yeni” · “Create” · “Add Goods Receipt”.
-
-Entry points: Inventory Dashboard queue · Operations nav · dock tablet · mobile terminal deep-link into the same Workbench session.
+Entry: Warehouse Command Center · Operations · dock tablet · mobile · deep-link `?receivingId=`.
 
 ---
 
@@ -50,13 +64,13 @@ Entry points: Inventory Dashboard queue · Operations nav · dock tablet · mobi
 
 | Topic | Authority |
 |-------|-----------|
-| **Material Identity** (genealogy root · MI vs Lot) | `docs/13_Design/99_Shared/Material_Identity_Architecture.md` |
-| Identifiers / formats (WH, Location, MI, Lot, Serial, Package, Pallet, GR / inventory txn) | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers · Material Identity series · Lot series |
-| Genealogy graph | `docs/05_Modules/02_Production/Material_Genealogy.md` |
-| Stock posting / immutability | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
-| Screen type / no Create form | `Screen_Types.md` · `UI_Patterns.md` § Workbench |
-| Receiving capability catalog | `docs/05_Modules/12_Purchasing/Receiving.md` |
-| Screen index | `Inventory_Screens.md` · `NOS_SCREEN_MAP.md` |
+| Material Identity (root · vs Lot · class chain) | `Material_Identity_Architecture.md` |
+| Identifier formats / mint | `Document_Numbering.md` |
+| Genealogy graph | `Material_Genealogy.md` |
+| Stock posting | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
+| Screen type | `Screen_Types.md` · `UI_Patterns.md` |
+| Command Center entry | `Inventory_Dashboard.md` |
+| Screens index | `Inventory_Screens.md` |
 
 ```text
 Identifiers are generated automatically according to the centralized
@@ -64,439 +78,340 @@ Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
 Manual entry is prohibited. Users work with names; codes are display-only.
 ```
 
-Operators **never** manually create: Warehouse codes · Location codes · **Material Identities** · Lot numbers · Serial numbers · Package IDs · Pallet IDs · Inventory transaction / GR numbers.
+Operators **never** manually enter: Material Code · Warehouse Code · Location Code · Lot · Serial · Package · Pallet · Inventory Transaction Number · Receiving Number · Material Identity.
 
 ---
 
-## MATERIAL IDENTITY (genealogy root)
+## EVIDENCE FIRST PRINCIPLE
 
-```text
-The Receiving Workbench is responsible for creating the first Material Identity.
-This identity becomes the root of the complete material genealogy.
-```
+Evidence is **not** “attachments on a form.”  
+Evidence is the **primary input** of receiving.
 
-**Purpose is not** “mint any unique Lot No.”  
-**Purpose is** to capture **origin** from the first second the material exists in NOS.
+| Evidence | Examples |
+|----------|----------|
+| Photos | Truck · seal · cargo · damage · labels · count sheets |
+| Documents | Delivery note · packing list · PO · Excel · PDF · Word · certificates |
+| Scans | Barcode / QR on packages |
+| Handwriting | Paper lists · tablet ink · mobile ink |
+| Voice / video | Optional future capture |
 
-| Concept | At Receiving |
-|---------|----------------|
-| **Material Identity** | Minted — class-aware (e.g. **LOG** for Tomruk) — **root node** |
-| **Lot / Batch** | Optional / parallel operational party — **not** a substitute for MI |
-| **GR document** | `GR-…` — document only |
-
-Authority: `Material_Identity_Architecture.md` · formats: `Document_Numbering.md`.
-
-### Drivers (no generic-only sequence)
-
-Material Identity shall be generated according to:
-
-- Material Category  
-- Material Family  
-- Material Type / identity class (e.g. LOG)  
-- Material Specification (species, dims, … as rules allow)  
-- Plant  
-- Identity Rules (Numbering)
-
-Example inbound facts → class **LOG**:
-
-| Fact | Example |
-|------|---------|
-| Type | Tomruk |
-| Species | Scots Pine |
-| Length | 4 m |
-| Diameter | 32 cm |
-| Supplier | ABC Forest |
-
-Illustrative MI composition (exact format = Numbering):
-
-```text
-Material Identity → LOG → PINE → 20260806 → 00045
-```
-
-### After receiving — transformations mint NEW identities
-
-```text
-LOG → PRS → DRY → LAM → FJ → PAN → FG
-```
-
-Each arrow = physical transformation = **new** Material Identity + parent–child link.  
-Existing MI is **never overwritten**. Genealogy remains reconstructable from this receiving root to final shipped product.
-
-Lot may remain or change per logistics policy; **Material Identity chain** is the Digital Thread.
-
-### Labels stage
-
-Labels print **Material Identity** (primary) and Lot / Package / Pallet as applicable — all Numbering-minted, read-only.
+**Flow:** Capture evidence → AI structures data → Operator validates → System posts.
 
 ---
 
-## Screen type decision
+## Receiving flow (canonical)
 
-| Candidate | Why not primary |
-|-----------|-----------------|
-| Wizard alone | Too linear; hides document viewer, gallery, split compare, sticky desk actions |
-| Console alone | Continuous multi-truck desk — useful as **outer shell**; single truck session needs richer panes |
-| Terminal alone | Scan-only post — complementary mobile surface, not full acceptance |
-| Create form | Forbidden |
+```text
+Truck Arrival
+    ↓
+1  Truck Registration
+    ↓
+2  Evidence Collection
+    ↓
+3  AI Document Understanding
+    ↓
+4  Document Comparison
+    ↓
+5  Physical Counting
+    ↓
+6  Photo Analysis
+    ↓
+7  Material Verification
+    ↓
+8  Quality Pre-Check
+    ↓
+9  Warehouse Assignment
+    ↓
+10 Identity & Numbering (system — continuous)
+    ↓
+11 Material Identity (root mint)
+    ↓
+12 Label Generation
+    ↓
+13 Review
+    ↓
+14 Posting → Inventory Transaction + Evidence Archive
+```
 
-**Primary type = Operational Workbench:** multi-pane session for **one inbound truck / one Receiving record**, with **Wizard sections** as progress stages, **sticky action bar**, document viewer, galleries, and AI verify panels.
-
-Optional companion: **Receiving Console** (queue of dock trucks) opens this Workbench per truck. Optional **scan Terminal** for counting / putaway lines.
+Stages 10–11 are **system laws** surfaced in UI as read-only identity panels; operator does not “fill codes.”
 
 ---
 
-## Workbench anatomy (enterprise WMS)
+## Workbench concept (UI)
 
-Inspired by SAP EWM / Infor WMS / Dynamics SCM / IFS — adapted to NOS laws.
+AI-powered **operational workspace** — not a form.
+
+Compose:
+
+| Surface | Role |
+|---------|------|
+| Stage rail / Timeline | 14-step progress |
+| Cards | Interactive stage content only |
+| Split panels | PO ∥ DN ∥ Packing ∥ OCR ∥ Count |
+| Document Viewer | Business evidence pages |
+| Image Gallery | Truck · cargo · damage · sheets |
+| OCR Viewer | Extracted fields + confidence |
+| Warehouse Map | Suggest / override location |
+| Material Preview | Name-first material + dims |
+| AI Suggestions | Next action · mismatch tips |
+| Sticky Action Bar | Draft · Next · Print · NCR · **Post** |
+
+Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan — adapted to NOS laws (Evidence First · Material Identity · no Create form).
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ INV-RCV-001  Receiving Workbench          GR-… (system) · Draft/InProgress│
-│ Truck 34 ABC 123 · Supplier · Gate 2 · Progress ●●●●○○○○○○  Stage 4/10   │
-├──────────────┬───────────────────────────────────────────┬───────────────┤
-│ STAGE RAIL   │  MAIN STAGE SURFACE                       │ CONTEXT PANEL │
-│ (timeline)   │  Cards · Split · Viewer · Gallery         │ PO summary    │
-│ 1 Truck      │                                           │ Differences   │
-│ 2 Documents  │                                           │ Capacity hint │
-│ 3 AI OCR     │                                           │ Attachments   │
-│ 4 Verify     │                                           │ Audit peek    │
-│ 5 Count      │                                           │               │
-│ 6 Inspect    │                                           │               │
-│ 7 Assign WH  │                                           │               │
-│ 8 Labels     │                                           │               │
-│ 9 Review     │                                           │               │
-│ 10 Post      │                                           │               │
-├──────────────┴───────────────────────────────────────────┴───────────────┤
-│ STICKY ACTION BAR                                                        │
-│  Save draft · Previous · Next stage · Print labels · Raise NCR · Post    │
+│ INV-RCV-001  Receiving Workbench     GR-… · MI preview · Draft/InProgress│
+│ Truck · Supplier · Gate · Stage n/14                                     │
+│ [Mal kabul] sticky progress                                              │
+├────────────┬──────────────────────────────────────────┬──────────────────┤
+│ TIMELINE   │ MAIN: Viewer · Gallery · Split · OCR     │ CONTEXT          │
+│ 1–14       │ Material Preview · Warehouse Map         │ Diffs · AI hints │
+│            │                                          │ Capacity · PO    │
+├────────────┴──────────────────────────────────────────┴──────────────────┤
+│ STICKY: Save draft · Back · Next · Print labels · Raise NCR · Post       │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Layout rules
-
-| Pattern | Use |
-|---------|-----|
-| **Stage rail / Timeline** | 10 stages; jump allowed only to completed or unlocked stages |
-| **Cards** | Only for interactive stage content (truck fields, verification rows) — not decorative hero cards |
-| **Document Viewer** | Delivery note / packing list / PO / Excel / PDF side-by-side with OCR extract |
-| **Image Gallery** | Truck photos · cargo · seal · damage · count sheets — unlimited |
-| **Split View** | PO ∥ Delivery note ∥ OCR result (Material Verification) |
-| **Side panel** | Live differences, suggested WH/location, minted IDs (read-only) |
-| **Progress indicator** | Stage completion + blocking gates |
-| **Sticky action bar** | Always visible — **Post** is primary when gates pass; never a lone Save/Cancel form footer |
-
-Typing is minimized. Prefer: barcode / QR scan · camera capture · document upload · OCR · AI highlight → operator **confirm**.
-
 ---
 
-## Session object
-
-One Workbench session = one **Receiving record** (header + lines + attachments + inspections + labels).
-
-| Field group | Operator enters / captures | System assigns |
-|-------------|----------------------------|----------------|
-| Identity | — | Receiving / GR number (`Document_Numbering.md`) |
-| Truck | Plate, trailer, driver, supplier (name picker), arrival date/time, gate | — |
-| Documents | Files / photos | Attachment IDs; linked to Receiving |
-| Materials | Confirm OCR / scan / count | Material match to master (name-first) |
-| Warehouse | Override suggestion if needed (name picker) | WH / Location codes display-only |
-| Lots / packs | — | Lot / Serial / Package / Pallet via Numbering |
-| Stock | Approve Post | Inventory transaction + balances |
-
----
-
-## Stages (complete receiving operation)
-
-Stages extend — do not replace — existing Depo → Location → Lot → QI → Post rules from the former Wizard spine.
-
-```text
-1  Truck Registration
-2  Documents
-3  AI OCR
-4  Material Verification
-5  Physical Counting
-6  Material Inspection
-7  Warehouse Assignment
-8  Label Generation
-9  Review
-10 Posting
-```
+## Steps
 
 ### 1 — Truck Registration
 
-**Intent:** Register the arriving vehicle before unload.
+Capture: Truck plate · Trailer plate · Driver · Supplier (name-first) · Arrival date/time · Security gate.
 
-| Capture | Notes |
-|---------|--------|
-| Truck plate | Required |
-| Trailer plate | Optional |
-| Driver | Name / ID as policy |
-| Supplier | Name-first picker (Purchasing supplier) |
-| Arrival date · time | Default now |
-| Gate number | Dock / gate picker |
+**Photos (multi):** Front · Rear · Side · Loaded cargo · Seal — camera preferred.
 
-**Photos (multi):** Front · Rear · Side · Loaded cargo · Seal — gallery; camera preferred on tablet.
-
-**Gate:** Truck plate + supplier + arrival time required before Documents.
+**Gate:** Plate + supplier + arrival required.
 
 ---
 
-### 2 — Documents
+### 2 — Evidence Collection
 
-**Intent:** Attach inbound paperwork to the Receiving record (not orphan uploads).
+Upload / capture **business evidence** (not orphan attachments):
 
-**Accept:** Delivery Note · Packing List · Purchase Order · Excel · PDF · JPG · PNG · HEIC · camera photos.
+Delivery Note · Packing List · Purchase Order · Excel · PDF · Word · JPG · PNG · HEIC · camera photos · Quality / FSC / Moisture certificates.
 
-| Rule | |
-|------|--|
-| Attach to Receiving | Every file belongs to this session |
-| Link PO | Prefer PO from Purchasing when present |
-| Viewer | Open in Document Viewer; multi-doc tabs |
+Support: Drag & drop · camera · mobile upload · multiple files.
 
-**Gate:** At least one delivery document **or** explicit “manual inbound” policy exception.
+Every file is linked to the Receiving session and later **Evidence Archive**.
+
+**Gate:** ≥1 delivery evidence **or** policy “manual inbound” exception.
 
 ---
 
-### 3 — AI OCR
+### 3 — AI Document Understanding
 
-**Intent:** Extract structured line candidates so the operator does not retype the shipment.
+Immediately after upload, AI shall:
 
-After upload, system detects (best effort):
+- Detect document type  
+- Extract: Supplier · Material · Dimensions · Quantity · Species · Bundles · Packages · Moisture · Certificates · PO · Shipment info  
 
-- Material (name / description)  
-- Dimensions  
-- Quantity  
-- Unit  
-- Bundle count  
-- Supplier information  
+No manual re-entry of the full shipment. Operator reviews confidence + corrects sparse fields only.
 
-Operator **reviews** and confirms / corrects fields. Never force full manual re-entry.
-
-OCR confidence shown per field; low confidence highlighted.
-
-**Gate:** Operator acknowledges OCR review (Accept extract / Edit extract) before Verification.
+**Gate:** Operator acknowledges extract review.
 
 ---
 
-### 4 — Material Verification
+### 4 — Document Comparison
 
-**Intent:** Compare three sources in **Split View**.
+Auto-compare:
 
 ```text
-Purchase Order  ∥  Delivery Note  ∥  OCR Result
+Purchase Order  ∥  Delivery Note  ∥  Packing List  ∥  Excel  ∥  OCR
 ```
 
-Highlight:
+Highlight: Missing / Extra material · Wrong qty · Wrong dimensions · Wrong species · Wrong package/bundle count · Missing documents.
 
-| Condition | UI |
-|-----------|-----|
-| Missing | Line on PO not on DN/OCR |
-| Extra | Line on DN/OCR not on PO |
-| Mismatch | Material / UoM conflict |
-| Quantity difference | Ordered vs delivered vs OCR |
-| Dimension difference | Spec / size conflict |
+Operator **validates** results — does not rebuild the grid from scratch.
 
-Operator resolves each row: Accept as received · Hold · Reject · Adjust qty (with reason).
-
-**Gate:** No unresolved **blocking** mismatches (policy: Extra may require supervisor; Missing may allow partial receipt).
+**Gate:** Blocking mismatches resolved per policy.
 
 ---
 
 ### 5 — Physical Counting
 
-**Intent:** Capture physical qty without forcing keyboard entry.
+Support:
 
-Operator may:
+- Handwritten paper (photo)  
+- Photo of handwritten lists  
+- Tablet / mobile handwriting  
+- Barcode / QR scan  
 
-1. **Scan** materials / packages (barcode / QR)  
-2. **Upload** handwritten counting sheets  
-3. **Photograph** handwritten notes → OCR → structured qty  
-
-System converts handwriting to structured data; operator verifies.
+AI OCR → structured qty/lines → operator verifies.
 
 ```text
-Prefer: Scan > Photo OCR > Upload sheet > Manual qty
+Prefer: Scan > Handwriting OCR > Photo sheet > Manual qty
 ```
 
-**Gate:** Counted qty confirmed per line to be received (qty > 0).
+**Gate:** Counted qty confirmed (qty > 0) for lines to receive.
 
 ---
 
-### 6 — Material Inspection
+### 6 — Photo Analysis
 
-**Intent:** Record visual condition before putaway (Inventory hold / QI link as needed).
+AI analyses cargo / package photos:
 
-| Condition flags | |
-|-----------------|--|
-| Visual OK | default |
-| Broken · Wet · Blue stain · Crack · Mold · Damage | multi-select |
+Count bundles · Damaged packages · Broken straps · Wet · Mold · Blue stain · Cracks · Missing labels · Detect QR / barcodes.
 
-**Photos:** Unlimited damage / condition gallery.
+AI proposes; **operator approves**.
 
-Outcomes may set **Accept / Hold / Reject** (aligns with Wizard QI decision; Quality Incoming Inspection may trigger on Post).
-
-**Gate:** Inspection decision recorded per line (or header policy for bulk OK).
+**Gate:** Analysis reviewed (accept / override flags).
 
 ---
 
-### 7 — Warehouse Assignment
+### 7 — Material Verification
 
-**Intent:** Choose destination stock target — **operator selects Depo** (existing law).
+Consolidate comparison across:
 
-System **suggests**:
+PO · Delivery Note · Packing List · Physical Count · OCR · Photos.
 
-- Warehouse  
-- Zone  
-- Location  
+Highlight every remaining mismatch. Name-first material match to catalog.
 
-based on Storage Rules · Capacity · Material Type.
-
-Operator may change the suggestion (name-first warehouse / location pickers).
-
-| Rule (retained) | |
-|-----------------|--|
-| Warehouse required before Location / Lot mint / Post | |
-| Location filtered to selected warehouse | |
-| Codes display-only after selection / mint | |
-
-**Gate:** Warehouse selected; Location valid (unless WH-level balance policy).
+**Gate:** Lines accepted for stock (partial receive allowed by policy).
 
 ---
 
-### 8 — Label Generation
+### 8 — Quality Pre-Check
 
-**Intent:** Produce physical identity labels — no manual numbering.
+Record condition flags: Wet · Broken · Cracked · Blue stain · Mold · Rot · Warping · Mechanical damage · Visual OK.
 
-System generates (Numbering Architecture · Material Identity Architecture):
+Unlimited photos. May set Accept / Hold / Reject → QI / quarantine per Inventory + Quality workflow.
 
-- **Material Identity** (class-aware root, e.g. LOG-…) — primary label  
-- Lot / Batch (operational party — secondary)  
-- Package number  
-- Pallet number  
-- QR · Barcode  
-
-Operator prints labels (printer / Bluetooth / dock station). Preview is read-only IDs.
-
-**Gate:** Material Identity mint succeeded; print optional but recommended before Post.
+**Gate:** Decision per line (or bulk OK policy).
 
 ---
 
-### 9 — Review
+### 9 — Warehouse Assignment
 
-**Intent:** Single approval surface before stock mutation.
+System suggests Warehouse · Zone · Location · Bin from Storage Rules · Capacity · Material Type · Dimensions.
 
-Display summary cards / read-only panes:
+Operator may override (name-first pickers). **Warehouse required** before MI mint / Post (retained law).
 
-| Block | Content |
-|-------|---------|
-| Truck | Plates, driver, gate, photo count |
-| Documents | Attached set |
-| Materials | Lines, qty, UoM |
-| Differences | Verification outcomes |
-| Inspection | Flags + photo count |
-| Warehouse | WH · zone · location (names) |
-| Labels | Minted **Material Identity** · Lot / Package / Pallet (display-only) |
-| Inventory summary | Expected balance delta |
-
-Operator **Approves for Post** (explicit).
-
-**Gate:** Approval checkbox / action; all prior stage gates green.
+**Gate:** WH selected; location valid (unless WH-level balance policy).
 
 ---
 
-### 10 — Posting
+### 10 — Identity & Numbering (system law)
 
-**Intent:** Commit inventory truth **and** establish the genealogy root.
+```text
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+```
 
-**Post** creates / updates (transaction-driven):
+UI shows read-only badges only. Never input fields for codes listed in Absolute rules.
 
-| Artifact | |
-|----------|--|
-| **Material Identity** (root) + optional Lot | |
-| Genealogy root node (no parent, or harvest parent if known) | |
-| Inventory transaction (immutable) — references MI | |
-| Receiving / GR record (Posted) | |
-| Warehouse stock / balance | |
-| Audit trail | |
-| Attachments retained on Receiving (origin evidence) | |
+---
 
-Traceability: truck → documents → lines → **Material Identity (root)** → Lot/package → transaction → balance → later child MIs.
+### 11 — Material Identity (genealogy root)
 
-On success: navigate to receipt library / putaway task (INV-027 future) / print confirmation.
+```text
+Receiving creates the first Material Identity.
+This identity becomes the ROOT of the complete material genealogy.
+```
 
-**Finish action:** **Post** (not Save). **Save draft** allowed after Truck + Documents (and later stages) without mutating stock.
+Mint depends on: Material Category · Family · Type · Specification · Plant · Identity Rules  
+(`Material_Identity_Architecture.md`).
+
+Class-aware (e.g. **LOG** for Tomruk) — **never** generic sequential-only.
+
+Later production: each physical transform → **new** MI + parent–child (LOG→PRS→DRY→LAM→FJ→PAN→FG…).
+
+Optional **Lot/Batch** = operational party attribute — not a substitute for MI.
+
+**Gate:** Root MI minted successfully for accepted lines.
+
+---
+
+### 12 — Label Generation
+
+Auto-generate & print: Material Identity (primary) · Lot · Package · Pallet · QR · Barcode.
+
+No manual numbering.
+
+**Gate:** Mint OK; print recommended before Post.
+
+---
+
+### 13 — Review
+
+Single approval surface:
+
+Truck · Documents · Photos · AI / OCR results · Material list · Differences · Warehouse · Generated labels / MI · Inventory summary.
+
+Operator **Approves for Post**.
+
+**Gate:** Explicit approval; all prior gates green.
+
+---
+
+### 14 — Posting
+
+**Post** (not Save) creates:
+
+| Artifact |
+|----------|
+| Receiving / GR transaction (Posted) |
+| Inventory transaction (immutable) |
+| Warehouse stock / balance |
+| **Material Identity** (root) + optional Lot |
+| Genealogy root node |
+| Audit trail |
+| **Evidence Archive** (all photos, docs, OCR payloads, AI decisions) |
+
+Everything traceable from truck → evidence → MI → stock → later child MIs.
 
 ---
 
 ## Gates (summary)
 
-1. Truck plate + supplier + arrival.  
-2. Documents attached (or policy exception).  
-3. OCR reviewed.  
-4. Verification differences resolved per policy.  
-5. Physical count confirmed.  
-6. Inspection decision set.  
-7. **Warehouse selected by operator**; location valid.  
-8. Required **Material Identity** (+ Lot / Package / Serial as applicable) minted — manual entry prohibited.  
-9. Operator Review approval.  
-10. Post → stock + audit.
-
-Serialized materials: Serial via Numbering Service. Quality Hold may block Available and create quarantine / hold balance per Inventory Workflow.
+1. Truck + supplier + arrival  
+2. Evidence collected  
+3. AI extract reviewed  
+4. Document diffs resolved  
+5. Physical count confirmed  
+6. Photo analysis reviewed  
+7. Material lines accepted  
+8. Quality pre-check decided  
+9. Warehouse (+ location) set by operator  
+10–11. Identifiers / root MI via Numbering — never typed  
+12. Labels available  
+13. Review approved  
+14. Post → stock + MI + archive  
 
 ---
 
 ## Roles
 
-| Role | In Workbench |
-|------|----------------|
-| Warehouse Operator | Primary — all stages except policy overrides |
-| Inventory Controller | Resolve Extra / Missing · override WH suggestion |
-| Quality Inspector | Inspection / Hold / Reject; may open from QI queue |
-| Supervisor | Approve blocking mismatches · manual inbound exception |
+| Role | Focus |
+|------|--------|
+| Warehouse Operator | Evidence · validate · Post |
+| Supervisor | Override WH · unblock diffs |
+| Quality | Pre-check / Hold / NCR |
+| Inventory Controller | MI / Lot exceptions |
 
 ---
 
-## Mobile & scan
+## Mobile
 
-| Surface | Role |
-|---------|------|
-| Tablet / rugged Workbench | Full 10-stage session |
-| Scan Terminal | Stage 5 count / Stage 8 label confirm — same Receiving ID |
-| Camera | Truck · seal · damage · count sheets |
-
-Offline: draft capture of photos/counts; sync before Post (`Inventory_Mobile.md`).
-
----
-
-## What this is not
-
-| Anti-pattern | |
-|--------------|--|
-| ResourcePage Create card for GoodsReceipt | Forbidden |
-| Editable Lot No / Package ID / GR number fields | Forbidden |
-| Save / Cancel as the only actions | Forbidden |
-| Purchasing “Create GR” instead of Inventory Workbench | Forbidden — Purchasing owns PO; Inventory owns physical receipt |
+Tablet / rugged: full Workbench. Scan Terminal: count / label confirm on same Receiving ID. Offline: queue evidence; sync before Post (`Inventory_Mobile.md`).
 
 ---
 
 ## Cursor implementation notes
 
-1. Screen type = **Workbench** — compose Stage rail · Document Viewer · Gallery · Split View · Sticky Action Bar.  
-2. Do **not** generate a CRUD Create/Edit GoodsReceipt form.  
-3. Reuse Numbering Service for all IDs; FE shows read-only badges.  
-4. Warehouse = required name picker (Stage 7); Lot mint after material + WH known.  
-5. Attachments API links files to Receiving ID.  
-6. OCR / Vision = async jobs; UI shows progress + confidence.  
-7. Receipt **Library** (INV-015) finds Posted/Draft sessions — CTA opens Workbench, never Create form.  
-8. FE demo shortcuts may use Wizard shell until Workbench UI ships — product authority remains this document.
+1. Screen type = **Workbench** — Evidence First; never CRUD Create form.  
+2. Domain: `ReceivingEvidence` ≠ generic Attachment.  
+3. AI jobs async: document understanding · compare · handwriting OCR · photo analysis.  
+4. Post order: mint MI → stock txn → genealogy root → archive evidence → GR Posted.  
+5. FE: stage rail 14 · Document Viewer · Gallery · Split · OCR Viewer · sticky **Post**.  
+6. Demo may collapse 10–11 into identity panel; product authority remains this document.  
+7. Command Center dock board opens this Workbench.
 
 ---
 
 ## Related
 
-- [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) — retained Depo / Lot rules (embedded here)  
-- `Inventory_Screens.md` · `Inventory_Workflow.md` · `Inventory_User_Flows.md` FLOW-INV-001  
-- `Inventory_Workspaces.md` · `Inventory_Navigation.md`  
-- `Document_Numbering.md`  
-- `docs/05_Modules/12_Purchasing/Receiving.md`  
-- `UI_Patterns.md` § Workbench · `Screen_Types.md`
+`INV_Receiving_Wizard.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md`  
+`Inventory_Workflow.md` · `Inventory_Screens.md` · `Inventory_Dashboard.md` · `Material_Genealogy.md`  
+`docs/05_Modules/12_Purchasing/Receiving.md` · `UI_Patterns.md` § Workbench
