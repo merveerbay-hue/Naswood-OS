@@ -10,6 +10,7 @@
 
 ---
 ═══════════════════════════════
+Inventory Dashboard is not a KPI page. It is the operational command center of the warehouse.
 
 WAREHOUSE STATUS
 
