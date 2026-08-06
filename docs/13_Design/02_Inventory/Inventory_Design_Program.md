@@ -82,6 +82,7 @@ Finish action (Post / Release / Complete — never bare Save as the job):
 | Evidence First (capture UX) | Workbench PRDs reference the Shared law above — do not restate permanence/export algorithms |
 | **Package Allocation Workspace** (all stock movements) | `Package_Allocation_Workspace.md` — learn once · use on Receiving · Issue · Transfer · Production · Shipping · Count |
 | **Inventory Workbench Design Standard** (COMPLIANCE BY DESIGN) | `Inventory_Workbench_Design_Standard.md` — audit · revision · approvals · immutable txns · package grid/status vocabulary · Scan/Verify/Review/Approve |
+| **Measurement & Conversion Engine** (multi-UoM) | `Measurement_Conversion_Engine.md` — enter once · live pcs/lm/m²/m³/kg/t · no manual conversion |
 
 ---
 

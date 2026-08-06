@@ -542,6 +542,7 @@ Design Program sequence: `Inventory_Design_Program.md`.
 | Material Identity / Lot | `Material_Identity_Architecture.md` |
 | Genealogy graph | `Material_Genealogy.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
+| Multi-UoM · pcs/lm/m²/m³/kg/t | `Measurement_Conversion_Engine.md` |
 | **This standard** | Compliance by Design · Workbench interaction laws · column/status vocabulary · audit/revision/approval composition for Inventory ops |
 
 ---
