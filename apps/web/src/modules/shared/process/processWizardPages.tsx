@@ -1,35 +1,16 @@
 import { useI18n } from '@/i18n';
 import { ProcessWizard } from './ProcessWizard';
 import { ReceivingWorkbench } from '@/modules/inventory/receiving/ReceivingWorkbench';
+import { GoodsIssueWorkbench } from '@/modules/inventory/issuing/GoodsIssueWorkbench';
 
 /** INV-RCV-001 — Receiving Workbench (not Create/CRUD form). */
 export function ReceivingWizardPage() {
   return <ReceivingWorkbench />;
 }
 
+/** INV-ISS-001 — Goods Issue Workbench (not Create/CRUD form). */
 export function IssueWizardPage() {
-  const { t } = useI18n();
-  return (
-    <ProcessWizard
-      screenId="INV-ISS-001"
-      title={t('wizard.issueTitle')}
-      description={t('wizard.issueDesc')}
-      finishLabel={t('wizard.post')}
-      libraryPath="/inventory/operations/goods-issues"
-      libraryLabel={t('wizard.backToLibrary')}
-      autoCodeHint="GI-…"
-      persistRoute="goods-issues"
-      mapBody={(v) => ({ warehouseCode: v.wh || 'WH-RM', reference: v.ref || 'ISSUE', status: 'Draft', notes: `qty=${v.qty||''}`, number: '' })}
-      steps={[
-        { title: t('wizard.iss.ref'), fields: [{ key: 'ref', label: t('wizard.iss.ref') }] },
-        { title: t('wizard.iss.lines') },
-        { title: t('wizard.iss.source'), fields: [{ key: 'wh', label: t('wizard.iss.source'), placeholder: 'Ana Depo' }] },
-        { title: t('wizard.iss.lot'), hint: t('wizard.nameFirstHint') },
-        { title: t('wizard.iss.qty'), fields: [{ key: 'qty', label: t('wizard.iss.qty'), type: 'number' }] },
-        { title: t('wizard.post') },
-      ]}
-    />
-  );
+  return <GoodsIssueWorkbench />;
 }
 
 export function TransferWizardPage() {

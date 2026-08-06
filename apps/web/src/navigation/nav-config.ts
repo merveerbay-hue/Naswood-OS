@@ -23,7 +23,8 @@ export const navigationTree: NavItem[] = [
         children: [
           { id: 'inventory-receive', label: 'Mal kabul başlat', path: '/inventory/operations/receive' },
           { id: 'inventory-goods-receipts', label: 'Kabul kayıtları', path: '/inventory/operations/goods-receipts' },
-          { id: 'inventory-goods-issues', label: 'Mal Çıkış', path: '/inventory/operations/goods-issues' },
+          { id: 'inventory-issue', label: 'Mal çıkışı başlat', path: '/inventory/operations/issue' },
+          { id: 'inventory-goods-issues', label: 'Çıkış kayıtları', path: '/inventory/operations/goods-issues' },
           { id: 'inventory-transfers', label: 'Transfer', path: '/inventory/operations/transfers' },
         ],
       },

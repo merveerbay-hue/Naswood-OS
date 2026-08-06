@@ -12,7 +12,8 @@ export const inventoryWorkspaces: WorkspaceDefinition[] = [
     label: 'Operasyonlar',
     items: [
       { id: 'inv-015', label: 'Mal Kabul', path: '/inventory/operations/goods-receipts', screenId: 'INV-015' },
-      { id: 'inv-017', label: 'Mal Çıkış', path: '/inventory/operations/goods-issues', screenId: 'INV-017' },
+      { id: 'inv-iss-001', label: 'Mal çıkışı başlat', path: '/inventory/operations/issue', screenId: 'INV-ISS-001' },
+      { id: 'inv-017', label: 'Çıkış kayıtları', path: '/inventory/operations/goods-issues', screenId: 'INV-017' },
       { id: 'inv-019', label: 'Transfer', path: '/inventory/operations/transfers', screenId: 'INV-019' },
     ],
   },
