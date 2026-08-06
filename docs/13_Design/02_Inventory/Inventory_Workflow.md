@@ -71,16 +71,18 @@ Truck arrives
 Business document (Production / Maintenance / Sales / Sample / … / Manual+permission)
 → Goods Issue Workbench v2.0 (not Create form)
 → Load required materials (no material create)
-→ AI recommend WH / location / package (FIFO/FEFO/reservation/quality/customer/route)
-   OR Ignore AI Recommendation → Warehouse Explorer (logged override)
-→ Pick (scan) · partial package qty (same Package Identity / barcode) · Verify · Evidence · Quality
+→ AI recommend (FIFO/FEFO/reservation/quality/WH rules/location/package integrity/customer)
+   → Accept Recommendation  OR  Override Recommendation → Warehouse Explorer (logged)
+→ Pick (scan) · partial qty · AI Validation always on (incl. Override) · Evidence · Quality
 → Destination (production line / loading dock · vehicle/carrier when sales)
 → Review (+ Override History) · Post
 → InventoryTransaction(s) · balance ↓ · package remaining/status update
+   (+ child PKG if company-policy split)
 → reservation clear · genealogy link · evidence archive
 ```
 
-**Package law:** Partial issue never mints a new Package number or barcode — remaining qty/volume/weight/status only (`INV_Goods_Issue_Workbench.md` v2.0).
+**Package law:** Default partial pick updates remaining on the same Package Identity/barcode. Company policy may auto-split with complete parent–child traceability (`INV_Goods_Issue_Workbench.md` v2.0.1).  
+**AI Validation law:** Override changes selection only — business rules still enforced unless explicitly authorized.
 
 ---
 
