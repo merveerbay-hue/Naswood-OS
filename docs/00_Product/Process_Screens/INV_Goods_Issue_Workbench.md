@@ -25,6 +25,7 @@
 | **2.0.2** | Canonical worked scenarios: SO-250001 multi-package AI pick · **Kabul Et / Yoksay** CTAs · partial PKG-00254 120→40→80 |
 | **2.0.3** | **Multiple Package Picking** · Package Allocation Grid · mix AI Validation (lot/quality/moisture/dims/customer) · edit/add/remove packages |
 | **2.0.4** | **Package Allocation Workspace** = center of Workbench (not a simple table) · live qty/volume/weight/pkg count · barcode · DnD · keyboard · Excel-like · sort/filter/group · bulk · AI/manual · live validation · inventory sync |
+| **2.0.5** | **Damage & Scrap during picking** · Take From Package (Good/Damaged/Hold/Scrap/Rework) · damage/scrap evidence · separate Scrap/Hold txns · **Package Closing Checklist** · PKG-00254 120→40→37+2+1+80 |
 
 v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
 
@@ -439,9 +440,83 @@ Each package in the allocation **may be partially consumed**.
 Physical package barcode / QR / Package Identity → unchanged.
 Only inventory balances update — via Inventory Transaction(s).
 Remaining Quantity · Volume · Weight · Pieces · Status auto-update per package.
+Picked quantity is classified (Good / Damaged / Hold / Scrap / Rework) — see Damage & Scrap.
 ```
 
-See also § Partial Package Picking (PKG-00254 example) and optional company-policy split.
+Shared law: [`Package_Allocation_Workspace.md`](../../13_Design/99_Shared/Package_Allocation_Workspace.md) § 8–8c.  
+See also § Partial Package Picking (PKG-00254) and optional company-policy split.
+
+---
+
+## Damage & Scrap during picking
+
+**Authority (shared):** `Package_Allocation_Workspace.md` § 8b–8c.  
+**This PRD:** GI Post mapping · worked scenario · gates.
+
+When materials are removed from a package, **not everything picked is Good for the order**.
+
+### Categories
+
+Good · Damaged · Quality Hold · Scrap · Rework  
+
+```text
+Σ categories = Picked quantity (always).
+Package total conserved: Good + Damaged + Hold + Scrap + Rework + Remaining = Original.
+```
+
+### Take From Package (right rail)
+
+```text
+Take From Package          PKG-00254
+Requested                  40
+Picked                     40
+──────────────────────────
+Good                       37   → shipment / demand
+Damaged                     2   → evidence → Damage/Quality Hold
+Scrap                       1   → evidence → Scrap txn
+──────────────────────────
+Remaining In Package       80
+```
+
+### Damage evidence
+
+For every Damaged (and policy: Quality Hold) quantity: Photos · Damage type · Notes · optional Voice/Video.  
+Linked to Goods Issue + Package + MI. Reasons: Broken · Cracked · Wet · Blue Stain · Warped · Forklift / Transport / Packaging Damage · Missing Material · Impact · Other.
+
+### Scrap
+
+```text
+Scrap NEVER returns to the original package.
+Scrap creates a separate Inventory Transaction.
+Preserves: MI · Package Identity · Original Receiving · Operator · Date/Time · Reason · Evidence.
+```
+
+### Inventory / Genealogy outcome (example)
+
+```text
+PKG-00254 (120)
+  ├─ 37  Good      → Sales Order / GI txn
+  ├─ 2   Damaged   → Quality Hold / Damage Hold txn
+  ├─ 1   Scrap     → Scrap txn
+  └─ 80  Remaining → still Available on same Package Identity / barcode
+```
+
+Nothing overwritten. Full audit of shipped · scrapped · damaged · reworked · remained.
+
+---
+
+## Package Closing Checklist
+
+After take-from-package on a physical package (esp. partial), before moving to next package / stage:
+
+| Check |
+|-------|
+| ✅ Remaining material restacked properly? |
+| ✅ Package strap / binding re-applied (if required)? |
+| ✅ Package label still readable? |
+| ✅ Update package photo? (optional capture → current physical state) |
+
+Wood-yard value: next operator sees last package condition days/weeks later.
 
 ---
 
@@ -518,18 +593,20 @@ Operatör paketi seçer. Seçim audit’e yazılır. **AI Validation devam eder*
 
 ---
 
-### Senaryo 3 — Kısmi paket (ahşap sektörü kritik)
+### Senaryo 3 — Kısmi paket + hasar/fire (ahşap sektörü kritik)
 
 ```text
-Paket     PKG-00254
-İçerik    120 adet · 5.24 m³
-Satış     40 adet istiyor
-
-Operatör  PKG-00254 → 40 kullan → 80 depoda kalır
+PKG-00254 · 120 adet
+Operatör paketi açtı · 40 adet seçti (Picked)
+  → 2 adet çatlak (Damaged) + foto + sebep
+  → 1 adet köşe kırık / fire (Scrap) + foto + sebep
+  → 37 adet Good → sevkiyat
+  → 80 adet pakette kaldı (aynı barkod)
+Toplam 37+2+1+80 = 120
 ```
 
-Sistem **otomatik** günceller: Remaining Quantity · Volume · Weight · Pieces · Package Status.  
-Aynı barkod / QR fiziksel pakette kalır (varsayılan politika). Yeni paket numarası üretilmez.
+Take From Package rail + Damage/Scrap evidence + Package Closing Checklist.  
+Sistem Remaining / Hold / Scrap txn’lerini otomatik dengeler — paket kimliği değişmez.
 
 ---
 
@@ -658,17 +735,15 @@ Selection via scan of existing barcode/QR or Explorer pick — never typed Packa
 
 Warehouse operators **shall be able to consume only part of a package**.
 
-### Example
+### Example (with disposition)
 
 ```text
-Package
-120 Pieces
-    ↓
-Issue
-40 Pieces
-    ↓
-Remaining
-80 Pieces
+Package 120
+  → Picked 40
+      → Good 37
+      → Damaged 2
+      → Scrap 1
+  → Remaining 80
 ```
 
 ### Default behavior (same physical package)
@@ -677,22 +752,21 @@ The system **shall automatically update** on the **same** Package Identity:
 
 | Field |
 |-------|
-| Remaining Quantity |
-| Remaining Volume |
-| Remaining Weight |
-| Remaining Pieces |
-| Package Status |
+| Remaining Quantity / Volume / Weight / Pieces |
+| Package Status (Partially Used …) |
+| Separate txns for Good · Damaged/Hold · Scrap |
 
 ```text
 Original barcode / QR stays on the physical package.
 No new barcode is printed for the remainder (default policy).
+Scrap never returns into the package.
 ```
 
 | Field | Example |
 |-------|---------|
-| Original Quantity | 120 |
-| Issued (this GI) | 40 |
-| Remaining Pieces | 80 |
+| Original | 120 |
+| Picked | 40 (Good 37 + Damaged 2 + Scrap 1) |
+| Remaining | 80 |
 | Package Status | → Partially Used |
 
 ### Optional: company-policy package split
@@ -715,18 +789,14 @@ Split policy is an explicit configuration, not the Workbench default.
 
 ### Inventory Transactions
 
-Partial issue **shall** create Inventory Transaction(s):
+Partial issue with disposition **shall** create Inventory Transaction(s) as needed:
 
 ```text
 PKG-… (source)
-    ↓
-Goods Issue (40 Pieces)
-    ↓
-Production Order / Sales Order / …
-    ↓
-Inventory Transaction
-    ↓
-Audit Log
+  ├─ Good qty      → GI / demand txn (shipment or production)
+  ├─ Damaged qty   → Damage Hold / Quality Hold txn + evidence
+  ├─ Scrap qty     → Scrap txn + evidence
+  └─ Remaining     → Available on same Package Identity
 (+ child PKG link if policy split)
 ```
 
@@ -927,11 +997,11 @@ Tablet / desk: document select · Accept/Override · review · Document Library 
 ## Cursor implementation notes
 
 1. Screen type = **Workbench** — not Issue Create form.  
-2. FE: **Package Allocation Workspace** as MAIN (not a simple table) — highest design priority.  
-3. Live strip: Required · Selected · Remaining · Volume · Weight · # Packages.  
-4. Inline qty · barcode row select · DnD from Explorer · keyboard/Excel-like · sort/filter/group · bulk.  
-5. AI seed / manual override · live mix validation · inventory-synced Available.  
-6. Post → one GI · N inventory txns · remaining updates · evidence · genealogy.  
+2. FE: **Package Allocation Workspace** MAIN + **Take From Package** rail (Good/Damaged/Scrap/Hold/Rework).  
+3. Live strip + disposition totals; Damaged/Scrap require evidence before Post.  
+4. Package Closing Checklist after partial take.  
+5. Post → GI (Good) + Hold txn(s) + Scrap txn(s) + remaining on same PKG · evidence · genealogy.  
+6. Shared pattern: `Package_Allocation_Workspace.md` — do not redefine disposition laws here.  
 7. Command Center “Open issues” opens this Workbench.  
 8. Export / permanence → Shared Document Management — reference only.
 

@@ -2,10 +2,10 @@
 
 **Document:** Package Allocation Workspace (cross-process pattern)  
 **Status:** Official — Product Architect  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Location:** `docs/13_Design/99_Shared/Package_Allocation_Workspace.md`  
-**Owns:** Reusable interactive package allocation UX law for all stock movements · live recalculation metrics · operator capabilities (inline edit, barcode, DnD, keyboard, Excel-like, sort/filter/group, bulk, AI seed, manual override, live validation, inventory sync)  
-**Does not own:** Process-specific Post artifacts · Evidence Archive permanence (→ `Document_Management_Evidence_and_Export.md`) · Material Identity meaning (→ `Material_Identity_Architecture.md`) · Identifier formats (→ `Document_Numbering.md`) · Stock ledger rules (→ `Inventory_Architecture.md`) · Screen step copy (each Workbench / Wizard PRD)
+**Owns:** Reusable interactive package allocation UX law for all stock movements · live recalculation metrics · operator capabilities · **Take From Package disposition** (Good / Damaged / Quality Hold / Scrap / Rework) · Damage evidence · Scrap txn law · Package Closing Checklist  
+**Does not own:** Process-specific Post artifacts · Evidence Archive permanence (→ `Document_Management_Evidence_and_Export.md`) · Material Identity meaning (→ `Material_Identity_Architecture.md`) · Identifier formats (→ `Document_Numbering.md`) · Stock ledger rules (→ `Inventory_Architecture.md`) · Quality disposition workflow detail (→ Quality) · Screen step copy (each Workbench / Wizard PRD)
 
 ---
 
@@ -147,6 +147,125 @@ Optional company-policy package split → Numbering mints linked child PKG
 with complete parent–child traceability (see Goods Issue law detail).
 ```
 
+**Wood-yard truth:** Opening a package does **not** mean every removed piece is usable for the demand. Disposition is mandatory (see § 8b).
+
+---
+
+## 8b. Damage & Scrap during picking (Take From Package)
+
+When materials are removed from a package, the operator **shall** classify each removed quantity.
+
+### Categories
+
+| Category | Meaning |
+|----------|---------|
+| **Good** | Usable for the demand / shipment / consumption |
+| **Damaged** | Physical damage — evidence required → Damage Hold / Quality Hold |
+| **Quality Hold** | Suspect / needs QC decision (may overlap policy with Damaged) |
+| **Scrap** | Never returns to the package — separate Scrap Inventory Transaction |
+| **Rework** | Sent to rework path (policy) |
+
+```text
+Good + Damaged + Quality Hold + Scrap + Rework  =  Picked quantity
+(always). Inventory integrity shall always be maintained.
+```
+
+### Take From Package panel (workspace right rail / detail)
+
+```text
+Take From Package
+Requested     40
+Picked        40
+────────────────
+Good          37
+Damaged        2
+Scrap          1
+Quality Hold   0
+Rework         0
+────────────────
+Remaining In Package   80
+```
+
+### Example (canonical)
+
+```text
+PKG-00254 · 120 pieces
+Operator opens package · picks 40
+  → Good 37 (shipment / issue)
+  → Damaged 2 (photos + reason → Damage/Quality Hold)
+  → Scrap 1 (photos + reason → Scrap txn)
+Remaining in package 80
+Total still balances: 37+2+1+80 = 120
+```
+
+### Damage evidence (mandatory for Damaged / Quality Hold qty > 0)
+
+| Capture | Required |
+|---------|----------|
+| Photos | Yes |
+| Damage type / reason | Yes |
+| Notes | Optional |
+| Voice / video | Optional |
+
+**Damage reasons (standard set):** Broken · Cracked · Wet · Blue Stain · Warped · Forklift Damage · Transport Damage · Packaging Damage · Missing Material · Impact Damage · Other  
+
+Every damage record is linked to the parent operational transaction (GI / Transfer / …) and to the Package + Material Identity. Permanence → `Document_Management_Evidence_and_Export.md`.
+
+### Scrap handling
+
+```text
+Scrap shall NEVER return to the original package.
+Scrap creates a separate Inventory Transaction.
+```
+
+Scrap preserves: Material Identity · Package Identity · Original Receiving · Operator · Date · Time · Reason · Evidence.
+
+**Scrap reasons (standard set):** Machine Damage · Transport Damage · Broken Strap · Forklift Damage · Operator Damage · Unknown · (policy extensions)
+
+### Quality Hold
+
+Damaged / hold qty may move automatically to **Quality Hold** or **Quarantine** per company rules.  
+Quality decides later: Release · Rework · Scrap · Supplier Return (Quality workflow — do not redefine here).
+
+### Inventory outcome (integrity)
+
+| Bucket | Example |
+|--------|---------|
+| Package remaining (Available) | 80 |
+| Good → demand / shipment txn | 37 |
+| Damaged → Damage Hold / Quality Hold txn | 2 |
+| Scrap → Scrap txn | 1 |
+| **Sum** | **120** (unchanged package genealogy total) |
+
+### Genealogy / audit
+
+```text
+PKG-00254
+  ├─ 37 → Sales / Production / … (Good)
+  ├─ 2  → Quality Hold / Damage Hold
+  ├─ 1  → Scrap
+  └─ 80 → Remaining in package
+```
+
+Nothing overwritten. Every picked piece is fully traceable (shipped · scrapped · damaged · reworked · remained).
+
+---
+
+## 8c. Package Closing Checklist
+
+After take-from-package (especially partial), present a short **Package Closing Checklist** before leaving the package:
+
+| Check |
+|-------|
+| Remaining material restacked properly? |
+| Package strap / binding re-applied (if required)? |
+| Package label still readable? |
+| Update package photo? (optional capture) |
+
+Optional: operator takes a **closing photo** → stored as current physical state of the package (Evidence Archive / package gallery).  
+
+**Why (wood):** Same package stays in the yard for days/weeks; next operator sees last known physical condition → safety + quality.
+
 ---
 
 ## 9. Design priority inside a Workbench
@@ -155,9 +274,10 @@ When a process uses package selection:
 
 ```text
 1. Package Allocation Workspace   ← primary operational surface
-2. Live totals + validation
-3. AI seed / Override Explorer
-4. Evidence / destination / review / Post (process-specific)
+2. Take From Package disposition + live totals
+3. Damage / Scrap evidence · Package Closing Checklist
+4. AI seed / Override Explorer
+5. Evidence / destination / review / Post (process-specific)
 ```
 
 Do not bury allocation in a secondary “lines” CRUD grid.
@@ -168,10 +288,11 @@ Do not bury allocation in a secondary “lines” CRUD grid.
 
 | Concern | Authority |
 |---------|-----------|
-| Workspace capabilities · live metrics · shared UX language | **This document** |
-| GI demand sources · Post · issue gates | `INV_Goods_Issue_Workbench.md` |
+| Workspace capabilities · live metrics · shared UX · Take From Package disposition | **This document** |
+| GI demand sources · Post · issue gates · worked GI scenarios | `INV_Goods_Issue_Workbench.md` |
 | Receiving Evidence First · MI root mint | `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` |
 | Stock posting / balances | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
+| Quality release / rework / supplier return decisions | Quality Workflow / Architecture |
 | Screen type Workbench shell | `UI_Patterns.md` · `Screen_Types.md` |
 | Evidence permanence / export | `Document_Management_Evidence_and_Export.md` |
 
@@ -179,10 +300,11 @@ Do not bury allocation in a secondary “lines” CRUD grid.
 
 ## 11. Implementation guidance (Cursor)
 
-1. Build **one** FE workspace component family reused by consumers (props: columns · Required source · Working Quantity label · validation profile).  
+1. Build **one** FE workspace component family reused by consumers (props: columns · Required source · Working Quantity label · validation profile · disposition enabled).  
 2. Do not fork a separate “Transfer grid” or “Count grid” look-and-feel.  
-3. Process Workbenches supply stage rails + Post; Allocation Workspace owns the center.  
-4. Inventory sync: Available from stock service; never a stale local-only qty after Post of other sessions (refresh policy).  
+3. Process Workbenches supply stage rails + Post; Allocation Workspace owns the center + Take From Package rail.  
+4. Post may emit **multiple** Inventory Transactions per package line (Good · Hold · Scrap) — sum conserved.  
+5. Inventory sync: Available from stock service; never a stale local-only qty after Post of other sessions (refresh policy).  
 
 ---
 
@@ -190,6 +312,8 @@ Do not bury allocation in a secondary “lines” CRUD grid.
 
 ```text
 One allocation language for every stock movement.
+Picked ≠ all Good — classify Good / Damaged / Hold / Scrap / Rework.
+Package identity stays; remaining Available decreases; scrap never returns.
+Closing checklist keeps the yard honest for the next operator.
 Goods Issue is first. Receiving · Transfer · Production · Shipping · Count follow.
-Operators learn once. NOS stays consistent.
 ```
