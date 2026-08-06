@@ -653,3 +653,26 @@ Performance.md
 Concurrency.md
 
 Security.md
+
+# IDENTITY PRINCIPLES
+
+All inventory identifiers are generated automatically by the centralized
+Numbering Service.
+
+Identifier formats, sequences, prefixes and business rules are defined by the
+NOS Numbering Architecture.
+
+The Inventory module shall never generate numbering rules independently.
+
+Examples include
+
+- Warehouse
+- Location
+- Material
+- Lot
+- Serial
+- Package
+- Pallet
+- Inventory Transaction
+
+Users shall never manually enter or modify system identifiers.
