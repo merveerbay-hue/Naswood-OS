@@ -19,9 +19,13 @@ The objective is to ensure consistency, maintainability and enterprise-grade sof
 # Product Architect Drive (design first — mandatory)
 
 **Canonical:** [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md)  
+**SSOT matrix:** [`docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`](docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md)  
 **Product map:** [`docs/00_Product/`](docs/00_Product/)  
 **Implementation:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
 **Layer map:** [`docs/PRODUCT_LAYERS.md`](docs/PRODUCT_LAYERS.md)
+
+Before stating any cross-cutting rule in a doc or PR: check the Authority Matrix.  
+**Yes, already defined → reference only. No → edit the authority document.**
 
 **We design. Cursor applies.**
 

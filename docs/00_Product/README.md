@@ -7,9 +7,12 @@
 
 ## Phase 2 anchor
 
+**SSOT / who owns which rule:** [`DOCUMENTATION_AUTHORITY_MATRIX.md`](./DOCUMENTATION_AUTHORITY_MATRIX.md)  
 **Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)  
 **Job-first design:** [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
 **Exemplar process screen:** [`Process_Screens/PRD_Production_Planning_Wizard.md`](./Process_Screens/PRD_Production_Planning_Wizard.md)
+
+Before any new rule: *Bu kuralı daha önce tanımlamış mıydık?* → Matrix → reference or extend authority.
 
 ```text
 NOS → Module → Workspace → Job Screen → Component → Workflow → Permissions → Code
