@@ -10,6 +10,23 @@
 
 ---
 
+# Design pack
+
+| Document | Role |
+|----------|------|
+| [`Inventory_Architecture.md`](./Inventory_Architecture.md) | Ownership & boundaries |
+| [`Inventory_Workflow.md`](./Inventory_Workflow.md) | Process truth |
+| [`Inventory_Screens.md`](./Inventory_Screens.md) | Job screens |
+| [`Inventory_User_Flows.md`](./Inventory_User_Flows.md) | Role journeys |
+| [`Inventory_Dashboard.md`](./Inventory_Dashboard.md) | Cockpit |
+| [`Inventory_API.md`](./Inventory_API.md) | HTTP surface |
+| [`Inventory_Mobile.md`](./Inventory_Mobile.md) | Mobile jobs |
+
+SSOT: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`  
+Numbering: `docs/13_Design/99_Shared/Document_Numbering.md`
+
+---
+
 # Overview
 
 The Inventory module is the central warehouse and inventory management component of Naswood OS.

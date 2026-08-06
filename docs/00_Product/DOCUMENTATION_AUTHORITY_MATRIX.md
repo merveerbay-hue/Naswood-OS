@@ -70,7 +70,7 @@ Manual entry is prohibited.
 | **Production execution (how manufacturing runs)** | [`docs/13_Design/05_Production/Production_Workflow.md`](../13_Design/05_Production/Production_Workflow.md) | Screens, User Flows, API, Mobile — process truth |
 | **Production module boundaries / aggregates** | [`docs/13_Design/05_Production/Production_Architecture.md`](../13_Design/05_Production/Production_Architecture.md) | All Production design pack peers |
 | **UI Navigation (menu, workspace chrome, permissions map)** | [`docs/19_Navigation/`](../19_Navigation/) *(target; Platform Navigation until landed)* · [`docs/13_Design/00_Platform/Navigation.md`](../13_Design/00_Platform/Navigation.md) | Module Navigation docs, `nav-config` |
-| **User experience (job screens & flows)** | Module **Screens** + **User Flows** (e.g. `Production_Screens.md`, `Production_User_Flows.md`) | Frontend, Component composition — *not* numbering/genealogy rules |
+| **User experience (job screens & flows)** | Module **Screens** + **User Flows** (e.g. `Production_Screens.md`, `Production_User_Flows.md`, `Inventory_Screens.md`, `Inventory_User_Flows.md`) | Frontend, Component composition — *not* numbering/genealogy rules |
 | **Job-first screen naming** | [`docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md) | All Screens / Screen Map |
 | **NOS module → screen map** | [`docs/00_Product/NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md) | Navigation, FE routes |
 | **Product thinking protocol** | [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](../../AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md) | All design sessions |
