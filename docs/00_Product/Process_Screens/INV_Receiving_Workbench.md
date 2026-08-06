@@ -209,7 +209,9 @@ Immediately after upload, AI shall:
 
 No manual re-entry of the full shipment. Operator reviews confidence + corrects sparse fields only.
 
-**Gate:** Operator acknowledges extract review.
+**UI — Hataları düzelt:** Low-confidence / flagged fields highlight in the OCR Viewer. Primary action **Hataları düzelt** opens inline edit for those fields only (optional “apply suggested fixes”). Operator saves corrections, then **Accept extract**. Accept is blocked while flags remain or while edit mode is open.
+
+**Gate:** Flagged OCR errors cleared · extract accepted.
 
 ---
 
