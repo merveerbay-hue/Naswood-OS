@@ -29,11 +29,12 @@ See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
 
 | Topic | Authority — reference only |
 |-------|----------------------------|
-| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
-| Genealogy graph | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Numbering (Material, **Material Identity**, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| **Material Identity** (lifecycle · MI vs Lot · receiving root) | `docs/13_Design/99_Shared/Material_Identity_Architecture.md` |
+| Genealogy graph (nodes = Material Identities) | `docs/05_Modules/02_Production/Material_Genealogy.md` |
 | Traceability inquiry (joint with Quality) | Quality Architecture + this document (views); Genealogy owns the graph |
 
-Do not restate numbering algorithms or “lot is auto-generated” in Inventory Screens / Flows / Workflow — reference Document_Numbering.md.
+Do not restate numbering algorithms or “lot is auto-generated” in Inventory Screens / Flows / Workflow — reference Document_Numbering.md + Material_Identity_Architecture.md.
 
 ---
 

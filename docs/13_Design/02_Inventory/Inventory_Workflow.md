@@ -43,7 +43,8 @@ All balance changes are **transactions**. No silent updates.
 # Goods receipt
 
 **UX authority:** `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md`  
-**Spine gates:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` (Depo → Lot)
+**Spine gates:** `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md` (Depo → Material Identity)  
+**Material Identity:** `docs/13_Design/99_Shared/Material_Identity_Architecture.md`
 
 ```text
 Truck arrives
@@ -52,9 +53,10 @@ Truck arrives
 → Physical count (scan / sheet OCR) · Inspection photos
 → Select warehouse (Depo) — required; operator chooses (system may suggest)
 → Location in that warehouse
-→ Lot/Serial/Package/Pallet minted via Numbering Service (manual entry prohibited)
+→ Material Identity minted (class-aware root, e.g. LOG) via Numbering + Identity Rules
+  — optional Lot as operational party; Package/Pallet/Serial as applicable
 → Labels · Review · Post
-→ InventoryBalance update in chosen WH → Available (or Hold)
+→ Genealogy root node + InventoryBalance update in chosen WH → Available (or Hold)
 → Optional: Quality Incoming Inspection trigger
 → Audit trail + attachments on Receiving record
 ```
@@ -112,7 +114,8 @@ Draft → Posted → Cancelled
 
 1. Posted transactions are immutable; reverse via compensating transaction.  
 2. Serialized materials require serial on issue/receipt.  
-3. New Lot/Serial/Package/Pallet IDs only from Numbering Service.  
+3. New **Material Identity** / Lot / Serial / Package / Pallet IDs only from Numbering Service.  
+   Material Identity = lifelong genealogy node (`Material_Identity_Architecture.md`); Lot = operational party.  
 4. Production/Quality never write balances except through Inventory transactions.
 
 ---

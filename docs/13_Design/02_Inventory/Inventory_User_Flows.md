@@ -33,7 +33,7 @@ When a flow needs a new Lot / Serial / Package / Pallet ID:
 # FLOW-INV-001 — Receive goods
 
 **Job:** Finish the **entire** inbound truck operation so stock is available (or held for QI).  
-**Authority:** `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md` · spine: `INV_Receiving_Wizard.md` · `Document_Numbering.md` § Lot series by material category
+**Authority:** `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` · spine: `INV_Receiving_Wizard.md` · `Document_Numbering.md` § Material Identity series
 
 ```text
 Inventory Dashboard / Operations
@@ -45,9 +45,9 @@ Inventory Dashboard / Operations
 → Physical count (scan or handwritten OCR)
 → Material inspection + damage photos
 → Warehouse assignment (Depo required; system suggests; operator confirms)
-→ Auto labels (Lot / Package / Pallet / QR) — no manual numbering
+→ Auto labels (**Material Identity** primary · Lot / Package / Pallet) — no manual numbering
 → Review summary → Post
-→ Balance updated in chosen WH → optional QI trigger · full audit + attachments
+→ Genealogy **root** + balance updated in chosen WH → optional QI · full audit + attachments
 ```
 
 ---

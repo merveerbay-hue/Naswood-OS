@@ -370,7 +370,8 @@ Users work with names — not codes. Codes are display-only when shown.
 | Tooling | Takım tipi · uyumlu makineler · ömür · … | `TL-…` | On save |
 | Production Order | Ürün (by **name**) · qty · dates · … | `PO-2026-…` | On **Release** (draft may show “atanacak”) |
 | Goods Receipt | PO · qty · Depo · … | `GR-…` | On Post / save per policy |
-| Lot / Batch | *(nothing — category drives series)* | `LOT-…` | On GR line / process mint |
+| **Material Identity** | *(nothing — Identity Rules / material class)* | Class-aware MI (e.g. `LOG-…`) | On Receiving Post / transformation mint — see `Material_Identity_Architecture.md` |
+| Lot / Batch | *(nothing — operational party)* | `LOT-…` | On GR / process — **not** lifelong MI; may attach to MI |
 | Serial | *(nothing)* | `SN-…` | On mint |
 | Package | business pack attrs | Package ID | On mint |
 | Pallet | business pallet attrs | Pallet ID | On mint |
@@ -391,6 +392,9 @@ Users work with names — not codes. Codes are display-only when shown.
     _______________
 
 ❌  Lot No
+    _______________
+
+❌  Material Identity
     _______________
 
 ❌  Product Code   PRD-001245   (as the primary picker / typed field)
@@ -441,7 +445,7 @@ identity numbers. Other documents (Screens, User Flows, Workflows, TASKs)
 must **reference** this section — they must not restate or weaken it.
 
 ```text
-Material, Lot, Serial, Package, Pallet, Warehouse, Machine, and Production
+Material, Material Identity, Lot, Serial, Package, Pallet, Warehouse, Machine, and Production
 identifiers are generated automatically according to the centralized
 Numbering Architecture (this document).
 
@@ -451,9 +455,10 @@ Manual entry is prohibited. Users work with names; codes are display-only.
 Applies to (non-exhaustive):
 
 - Material / Product catalog codes  
+- **Material Identity** (lifecycle instance — class-aware; see `Material_Identity_Architecture.md`)  
 - Warehouse / Location codes  
 - Machine / Work Center / Line codes (where numbered)  
-- Lot / Batch numbers  
+- Lot / Batch numbers (**operational party** — not a substitute for Material Identity)  
 - Serial numbers  
 - Package numbers  
 - Pallet numbers  
@@ -461,16 +466,52 @@ Applies to (non-exhaustive):
 - Inventory / Purchasing / Sales transaction document numbers
 
 UI and APIs may **display** these identifiers. They must not accept user-typed
-values for creation. Selection of an *existing* Lot/Serial for consumption is
+values for creation. Selection of an *existing* Lot/Serial/MI for consumption is
 allowed; minting a new identity is Numbering Service only.
 
 Business documents mint on **create or Release** per process (e.g. Production Order number on Release). Draft UI shows “Numara sistem tarafından atanacaktır” — never an empty Code input.
+
+### Material Identity vs Lot / Batch (mandatory distinction)
+
+| Concept | Authority | Role |
+|---------|-----------|------|
+| **Material Identity** | `Material_Identity_Architecture.md` | Lifelong physical-state identity; genealogy **node**; receiving = **root** |
+| **Lot / Batch** | this document (series) + MI architecture (meaning) | Operational / logistics party; attribute that may hang on MI |
+
+Receiving Workbench mints the **first Material Identity** (class-aware, e.g. LOG).  
+It may also mint/attach a Lot. **Generic sequential-only IDs without material class are forbidden** for MI.
+
+Every physical transformation mints a **new** Material Identity; parent–child via Genealogy. Lot may stay or change per policy — it does not replace MI.
+
+### Material Identity series by identity class (authoritative)
+
+When a **new Material Identity** is minted — at **Receiving** (root) or on **Transformation** (child) —
+the Numbering Service selects the series from **Identity Rules**:
+
+```text
+Material Category · Family · Type/Class · Spec · Plant · Identity Rules
+        →  Numbering series (class prefix + segments + sequence)
+        →  Material Identity issued automatically
+```
+
+Illustrative classes (timber): `LOG` → `PRS` → `DRY` → `LAM` → `FJ` → `PAN` → `FG`.  
+Exact string format (date segments, species tokens, pads) is **configured in Numbering** — consumers must not hard-code formats in UI.
+
+Rules:
+
+1. Series key includes **identity class** (LOG/PRS/…) — never a plant-wide anonymous counter for MI.  
+2. Receiving Post creates **root** MI; transformations create **child** MI (never overwrite parent).  
+3. Goods Receipt **document** number remains `GR-…`. MI ≠ GR.  
+4. Receiving UI shows **proposed Material Identity** (read-only) after material class is known.  
+5. Screens/Flows reference `Material_Identity_Architecture.md` + this section — do not invent alternate MI formats.
 
 ### Lot / Batch series by material category (authoritative)
 
 When a **new Lot** (or Batch) is minted — e.g. during **Goods Receipt / Receiving Workbench** —
 the Numbering Service selects the series from the material’s **category / type**
 (and company · plant). The user does **not** type or pick a free-form lot number.
+
+Lot is **operational**. It does **not** replace Material Identity as the genealogy root.
 
 ```text
 Material.Category (or MaterialType / numbering class)
@@ -492,10 +533,10 @@ Rules:
 1. Series key = `Company + Plant + MaterialNumberingClass` (class derived from Material Category / Type).  
 2. If class has no series configured → block mint; Admin must configure Numbering (do not fall back to manual entry).  
 3. Goods Receipt **document** number remains `GR-…` (document series). Lot IDs use the material-class series above.  
-4. Receiving UI shows the **proposed** Lot ID (read-only) after material is known; regenerate only if material line changes before Post.  
+4. Receiving UI may show Lot as secondary read-only attribute alongside **Material Identity**.  
 5. Screens/Flows must **reference** this section — they must not invent alternate lot formats.
 
-Authority matrix: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+Authority matrix: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md` · Material Identity: `Material_Identity_Architecture.md`.
 
 ---
 

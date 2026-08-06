@@ -11,7 +11,8 @@
 
 | Topic | Authority |
 |-------|-----------|
-| Numbering / system identifiers (Material, WH, Lot, Serial, Package, Pallet, GR…) + name-first UX | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers — **reference only** |
+| Numbering / system identifiers (Material, WH, **Material Identity**, Lot, Serial, Package, Pallet, GR…) + name-first UX | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers — **reference only** |
+| **Material Identity** (genealogy root · vs Lot) | `docs/13_Design/99_Shared/Material_Identity_Architecture.md` |
 | Inventory ownership / stock truth | `Inventory_Architecture.md` |
 | Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
 | Traceability views | Quality + Inventory Architecture |
@@ -34,8 +35,8 @@ Users work with names (Malzeme, Depo) — codes are display-only after mint.
 |------------|-------------|------------------------|
 | Malzeme tanımla | Ad · Tip · Grup · Ağaç · Ölçü · Birim · Capability · … | `MAT-…` after save (info badge) |
 | Depo ekle / yapılandır | Depo adı · Tip · Fabrika · Sorumlu · … | `WH-…` after save |
-| Mal kabul (Workbench) | Truck · docs · OCR confirm · count · inspect · **Depo (name)** · … | Lot / Package / Pallet / GR / txn auto — never typed |
-| Lot | — (operator never types Lot No) | Minted on receipt / process |
+| Mal kabul (Workbench) | Truck · docs · OCR confirm · count · inspect · **Depo (name)** · … | **Material Identity** (root, class-aware e.g. LOG) + optional Lot · Package / Pallet / GR / txn auto — never typed |
+| Lot | operational party attrs (policy) | Minted / attached — **not** lifelong MI |
 
 ❌ Never: Warehouse Code ________ · Lot No ________ · Material Code *  
 ✅ System Code — Automatically generated after save
@@ -65,7 +66,7 @@ Inventory
 | ID | Screen (job name) | Workspace | Job to be done |
 |----|-------------------|-----------|----------------|
 | INV-001 | Inventory Dashboard | Dashboard | See warehouse health & open queues |
-| INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | Finish **entire** inbound truck operation (truck → docs → OCR → verify → count → inspect → **Depo** → labels → review → **Post**). Type **Workbench** — **not** Create/CRUD. Spec: `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md` |
+| INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | Finish **entire** inbound truck operation; mint **root Material Identity** (class-aware) + optional Lot; Depo → labels → **Post**. Type **Workbench** — **not** Create/CRUD. Spec: `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` |
 | INV-017/018 | **Issue Goods Wizard** | Operations | **Mal çıkışı / Issue goods** — Wizard; not “Yeni çıkış”. Spec: `Process_Screens/INV_Issue_Wizard.md` |
 | INV-019/020 | **Transfer Stock Wizard** | Operations | **Stok transfer / Transfer stock** — Wizard; not “Yeni transfer”. Spec: `Process_Screens/INV_Transfer_Wizard.md` |
 | INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |

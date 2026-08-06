@@ -5,7 +5,8 @@
 **Screen type:** **Workbench** (operational) — see `docs/13_Design/Common/Screen_Types.md`  
 **Status:** Product Architect — authoritative receiving UX  
 **Supersedes as primary UX:** phased-only “Receiving Wizard” shell  
-**Companion (rules retained):** [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) — Depo → Location → Lot mint gates  
+**Companion (rules retained):** [`INV_Receiving_Wizard.md`](./INV_Receiving_Wizard.md) — Depo → Location → **Material Identity** (+ Lot) mint gates  
+**Material Identity:** [`Material_Identity_Architecture.md`](../../13_Design/99_Shared/Material_Identity_Architecture.md) — receiving creates genealogy **root**
 **Business capability source:** `docs/05_Modules/12_Purchasing/Receiving.md` (lifecycle & AI intents) · stock ownership: `Inventory_Architecture.md`
 
 ---
@@ -18,16 +19,17 @@ This is NOT a GoodsReceipt CRUD page.
 This is a complete warehouse receiving operation executed by warehouse operators.
 ```
 
-**Forbidden:** Save / Cancel form · `Code *` / Lot No / Package ID typed by hand · “Yeni Goods Receipt”.  
-**Required:** Workbench session · scan / photo / OCR first · verify · **Post**.
+**Forbidden:** Save / Cancel form · `Code *` / Material Identity / Lot No / Package ID typed by hand · “Yeni Goods Receipt”.  
+**Required:** Workbench session · scan / photo / OCR first · verify · **Post** → **root Material Identity**.
 
 ---
 
 ## Job to be done
 
-> Depocu, kapıya gelen kamyonu **tek Receiving Workbench oturumunda** kayıt eder; evrakları yükler; OCR ve sayımla miktarı doğrular; hasarı belgeler; depo/lokasyon atar; etiket üretir; onaylar; **Post** ile stoka işler.
+> Depocu, kapıya gelen kamyonu **tek Receiving Workbench oturumunda** kayıt eder; evrakları yükler; OCR ve sayımla miktarı doğrular; hasarı belgeler; depo/lokasyon atar; etiket üretir; onaylar; **Post** ile stoğa işler ve malzemenin **kök Material Identity**’sini oluşturur (genealogy root — origin kaybolmaz).
 
-**Not the job:** “Create a GoodsReceipt row” or type Warehouse / Lot / Package / Transaction numbers.
+**Not the job:** “Create a GoodsReceipt row” or type Warehouse / Material Identity / Lot / Package / Transaction numbers.
+
 
 ---
 
@@ -48,7 +50,9 @@ Entry points: Inventory Dashboard queue · Operations nav · dock tablet · mobi
 
 | Topic | Authority |
 |-------|-----------|
-| Identifiers (WH, Location, Lot, Serial, Package, Pallet, GR / inventory txn) | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers · Lot by material category |
+| **Material Identity** (genealogy root · MI vs Lot) | `docs/13_Design/99_Shared/Material_Identity_Architecture.md` |
+| Identifiers / formats (WH, Location, MI, Lot, Serial, Package, Pallet, GR / inventory txn) | `docs/13_Design/99_Shared/Document_Numbering.md` § System Generated Identifiers · Material Identity series · Lot series |
+| Genealogy graph | `docs/05_Modules/02_Production/Material_Genealogy.md` |
 | Stock posting / immutability | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Screen type / no Create form | `Screen_Types.md` · `UI_Patterns.md` § Workbench |
 | Receiving capability catalog | `docs/05_Modules/12_Purchasing/Receiving.md` |
@@ -60,7 +64,69 @@ Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
 Manual entry is prohibited. Users work with names; codes are display-only.
 ```
 
-Operators **never** manually create: Warehouse codes · Location codes · Lot numbers · Serial numbers · Package IDs · Pallet IDs · Inventory transaction / GR numbers.
+Operators **never** manually create: Warehouse codes · Location codes · **Material Identities** · Lot numbers · Serial numbers · Package IDs · Pallet IDs · Inventory transaction / GR numbers.
+
+---
+
+## MATERIAL IDENTITY (genealogy root)
+
+```text
+The Receiving Workbench is responsible for creating the first Material Identity.
+This identity becomes the root of the complete material genealogy.
+```
+
+**Purpose is not** “mint any unique Lot No.”  
+**Purpose is** to capture **origin** from the first second the material exists in NOS.
+
+| Concept | At Receiving |
+|---------|----------------|
+| **Material Identity** | Minted — class-aware (e.g. **LOG** for Tomruk) — **root node** |
+| **Lot / Batch** | Optional / parallel operational party — **not** a substitute for MI |
+| **GR document** | `GR-…` — document only |
+
+Authority: `Material_Identity_Architecture.md` · formats: `Document_Numbering.md`.
+
+### Drivers (no generic-only sequence)
+
+Material Identity shall be generated according to:
+
+- Material Category  
+- Material Family  
+- Material Type / identity class (e.g. LOG)  
+- Material Specification (species, dims, … as rules allow)  
+- Plant  
+- Identity Rules (Numbering)
+
+Example inbound facts → class **LOG**:
+
+| Fact | Example |
+|------|---------|
+| Type | Tomruk |
+| Species | Scots Pine |
+| Length | 4 m |
+| Diameter | 32 cm |
+| Supplier | ABC Forest |
+
+Illustrative MI composition (exact format = Numbering):
+
+```text
+Material Identity → LOG → PINE → 20260806 → 00045
+```
+
+### After receiving — transformations mint NEW identities
+
+```text
+LOG → PRS → DRY → LAM → FJ → PAN → FG
+```
+
+Each arrow = physical transformation = **new** Material Identity + parent–child link.  
+Existing MI is **never overwritten**. Genealogy remains reconstructable from this receiving root to final shipped product.
+
+Lot may remain or change per logistics policy; **Material Identity chain** is the Digital Thread.
+
+### Labels stage
+
+Labels print **Material Identity** (primary) and Lot / Package / Pallet as applicable — all Numbering-minted, read-only.
 
 ---
 
@@ -301,16 +367,17 @@ Operator may change the suggestion (name-first warehouse / location pickers).
 
 **Intent:** Produce physical identity labels — no manual numbering.
 
-System generates (Numbering Architecture):
+System generates (Numbering Architecture · Material Identity Architecture):
 
-- Lot number (by material category)  
+- **Material Identity** (class-aware root, e.g. LOG-…) — primary label  
+- Lot / Batch (operational party — secondary)  
 - Package number  
 - Pallet number  
 - QR · Barcode  
 
 Operator prints labels (printer / Bluetooth / dock station). Preview is read-only IDs.
 
-**Gate:** Mint succeeded for required identities; print optional but recommended before Post.
+**Gate:** Material Identity mint succeeded; print optional but recommended before Post.
 
 ---
 
@@ -328,7 +395,7 @@ Display summary cards / read-only panes:
 | Differences | Verification outcomes |
 | Inspection | Flags + photo count |
 | Warehouse | WH · zone · location (names) |
-| Labels | Minted Lot / Package / Pallet (codes display-only) |
+| Labels | Minted **Material Identity** · Lot / Package / Pallet (display-only) |
 | Inventory summary | Expected balance delta |
 
 Operator **Approves for Post** (explicit).
@@ -339,19 +406,21 @@ Operator **Approves for Post** (explicit).
 
 ### 10 — Posting
 
-**Intent:** Commit inventory truth.
+**Intent:** Commit inventory truth **and** establish the genealogy root.
 
 **Post** creates / updates (transaction-driven):
 
 | Artifact | |
 |----------|--|
-| Inventory transaction (immutable) | |
+| **Material Identity** (root) + optional Lot | |
+| Genealogy root node (no parent, or harvest parent if known) | |
+| Inventory transaction (immutable) — references MI | |
 | Receiving / GR record (Posted) | |
 | Warehouse stock / balance | |
 | Audit trail | |
-| Attachments retained on Receiving | |
+| Attachments retained on Receiving (origin evidence) | |
 
-Traceability: truck → documents → lines → lots/packages → transaction → balance.
+Traceability: truck → documents → lines → **Material Identity (root)** → Lot/package → transaction → balance → later child MIs.
 
 On success: navigate to receipt library / putaway task (INV-027 future) / print confirmation.
 
@@ -368,7 +437,7 @@ On success: navigate to receipt library / putaway task (INV-027 future) / print 
 5. Physical count confirmed.  
 6. Inspection decision set.  
 7. **Warehouse selected by operator**; location valid.  
-8. Required Lot / Package / Serial minted — manual entry prohibited.  
+8. Required **Material Identity** (+ Lot / Package / Serial as applicable) minted — manual entry prohibited.  
 9. Operator Review approval.  
 10. Post → stock + audit.
 

@@ -108,9 +108,13 @@ Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
 ```text
 Business users shall never manually create or edit system identifiers.
 
-All identifiers — codes, document numbers, lot / serial / package / pallet IDs,
+All identifiers — codes, document numbers, **Material Identities**, lot / serial / package / pallet IDs,
 warehouse codes, machine codes, transaction numbers — are generated exclusively
 by the NOS Numbering Service (centralized Numbering Architecture).
+
+**Material Identity** is the lifelong physical-state identity and genealogy node
+(`Material_Identity_Architecture.md`). **Lot / Batch** is operational/logistics —
+not a substitute for Material Identity. Receiving creates the **root** Material Identity.
 
 Data entry captures business information only (names, types, measures, relations).
 Technical identifiers are assigned automatically on create or Release per process.

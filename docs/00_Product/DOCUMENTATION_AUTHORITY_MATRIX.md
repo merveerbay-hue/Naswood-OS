@@ -60,8 +60,9 @@ Manual entry is prohibited.
 
 | Topic | Authority document | Consumers may only reference (examples) |
 |-------|-------------------|----------------------------------------|
-| Numbering / all system identifiers (codes, lots, WH, machine, docs) + **name-first UX** | [`docs/13_Design/99_Shared/Document_Numbering.md`](../13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3 | All Screens, Wizards, Builders, FE forms — **no editable Code *** |
-| **Genealogy (parent–child material history)** | [`docs/05_Modules/02_Production/Material_Genealogy.md`](../05_Modules/02_Production/Material_Genealogy.md) + Production Architecture genealogy sections | Production Screens/Flows, Quality Traceability UI, Inventory |
+| **Material Identity** (lifecycle identity, genealogy root, MI vs Lot) | [`docs/13_Design/99_Shared/Material_Identity_Architecture.md`](../13_Design/99_Shared/Material_Identity_Architecture.md) | Receiving Workbench, Transformations, Genealogy, Inventory/Quality screens — **do not** treat Lot as lifelong identity |
+| Numbering / all system identifiers (codes, MI series, lots, WH, machine, docs) + **name-first UX** | [`docs/13_Design/99_Shared/Document_Numbering.md`](../13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3 | All Screens, Wizards, Builders, FE forms — **no editable Code *** |
+| **Genealogy (parent–child material history)** | [`docs/05_Modules/02_Production/Material_Genealogy.md`](../05_Modules/02_Production/Material_Genealogy.md) + Production Architecture genealogy sections · **nodes = Material Identities** | Production Screens/Flows, Quality Traceability UI, Inventory |
 | **Traceability (forward/backward inquiry UX & QMS view)** | Quality Architecture [`docs/13_Design/06_Quality/Quality_Architecture.md`](../13_Design/06_Quality/Quality_Architecture.md) **and** Inventory Architecture [`docs/13_Design/02_Inventory/Inventory_Architecture.md`](../13_Design/02_Inventory/Inventory_Architecture.md) — *joint; Genealogy owns the graph* | QLT Traceability screens, INV lot/serial inquiry |
 | **Capability Profile** | Product / Master Data — [`docs/05_Modules/01_Master_Data/Products.md`](../05_Modules/01_Master_Data/Products.md) *(until dedicated Product Architecture exists)* | BOM, Production Order, Purchasing, Inventory validations |
 | **Inventory ownership (stock truth)** | [`docs/13_Design/02_Inventory/Inventory_Architecture.md`](../13_Design/02_Inventory/Inventory_Architecture.md) | Production must not post stock except via Inventory transactions |
@@ -136,6 +137,7 @@ Frozen TASKs never win against Architecture / Workflow / Screen Map.
 | Desired name (Product language) | Current authority path | Action |
 |---------------------------------|------------------------|--------|
 | Core Identity & Numbering Architecture | `99_Shared/Document_Numbering.md` | Treat as that architecture; rename/split later only via ADR |
+| **Material Identity Architecture** | `99_Shared/Material_Identity_Architecture.md` | **Landed** — MI vs Lot; receiving = genealogy root |
 | Product Architecture (Capability) | `05_Modules/01_Master_Data/Products.md` | Prefer dedicated Product Architecture when authored; until then Products.md owns Capability |
 | `docs/19_Navigation/*` | Present on UI-architecture branch; Platform `Navigation.md` on main | Converge; matrix points at both until merge |
 

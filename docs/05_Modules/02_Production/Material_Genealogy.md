@@ -41,11 +41,20 @@ Every physical transformation creates a permanent genealogy relationship.
 
 Nothing disappears.
 
-Materials only change identity.
+Materials only change identity — via a **new Material Identity** (never overwrite).
 
 Every transformation extends the genealogy tree.
 
 The genealogy history is immutable.
+
+**Nodes of the tree are Material Identities** — not Lots.
+
+```text
+Authority: docs/13_Design/99_Shared/Material_Identity_Architecture.md
+Receiving creates the root Material Identity.
+Each transformation mints a child Material Identity (LOG → PRS → DRY → LAM → FJ → PAN → FG …).
+Lot / Batch is an operational attribute — not the lifelong identity node.
+```
 
 ---
 
