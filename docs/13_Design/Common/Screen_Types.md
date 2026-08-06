@@ -57,13 +57,15 @@ Reusable **CRUD create screens** are forbidden as the default.
 PO Seç
   → Bekleyen Satırlar
   → Teslim Miktarı
-  → Lot Oluştur          ※ Numbering Service — see Document_Numbering.md
+  → Depo seç             ※ kullanıcı seçer
+  → Lokasyon             ※ seçilen depoya bağlı
+  → Lot Oluştur          ※ malzeme cinsine göre Numbering Service — Document_Numbering.md
   → Kalite Kararı
-  → Depo
-  → Lokasyon
   → Etiket
   → Post
 ```
+
+Full: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md`
 
 ### Production — not “New ProductionOrder entity”
 
