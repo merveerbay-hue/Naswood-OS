@@ -1,5 +1,5 @@
 # ==============================================================================
-# QUALITY WORKSPACES
+# QUALITY SCREENS
 # Naswood Operating System (NOS)
 # Module: Quality
 # Version: 2.0
@@ -7,41 +7,41 @@
 
 # PURPOSE
 
-This document defines the functional Workspaces of the Quality module.
+This document defines all operational and engineering screens of the Quality
+module.
 
-A Workspace represents a complete quality business capability that groups
-related business processes, screens, permissions and components.
+Quality screens are organized by Workspace.
 
-Quality Workspaces are process-oriented.
+Each screen supports a complete quality business process.
 
-Users execute quality assurance processes through dedicated Workspaces rather
-than generic CRUD pages.
+Quality screens are process-oriented rather than CRUD-oriented.
 
-Quality protects every business process from Receiving to Shipment.
+Generic Create / Edit / Delete pages are prohibited.
+
+Quality operations are executed through dedicated Workbenches, Wizards,
+Inspection Consoles and Decision Workflows.
 
 ---
 
-# DESIGN PRINCIPLES
+# SCREEN DESIGN PRINCIPLES
 
-Quality Workspaces shall
+Quality screens shall
 
-- support risk-based quality management
-- follow real manufacturing quality processes
+- follow real quality processes
+- minimize manual typing
+- maximize barcode and QR usage
+- support guided inspections
 - support complete traceability
-- minimize manual data entry
-- integrate seamlessly with Production and Inventory
-- provide guided quality workflows
-- support regulatory compliance
-- support audit readiness
+- provide contextual decisions
+- integrate seamlessly with Inventory and Production
 
-Quality operations are process-driven.
+Quality Engineering screens shall use dedicated configuration workspaces.
 
-Engineering and configuration are performed through dedicated management
-workspaces.
+Quality Execution screens shall use guided operational workflows.
 
 ---
 
-# WORKSPACE HIERARCHY
+# SCREEN HIERARCHY
 
 ```text
 Quality
@@ -71,305 +71,636 @@ Quality
 
 ---
 
-# 1. DASHBOARD
+# DASHBOARD WORKSPACE
+
+## QLT-001 Quality Dashboard
 
 Purpose
 
-Provide a real-time overview of quality performance.
+Real-time quality overview.
 
 Primary Users
 
 - Quality Manager
 - Plant Manager
-- Production Manager
 
-Contains
+Widgets
 
 - Inspection Status
 - Open NCR
 - CAPA Status
-- First Pass Yield
+- FPY
 - PPM
-- Quality Alerts
-- Supplier Quality
+- Supplier Performance
 - Customer Complaints
-
----
-
-# 2. QUALITY PLANNING
-
-Purpose
-
-Manage quality engineering and inspection planning.
-
-Contains
-
-- Inspection Plans
-- Inspection Characteristics
-- Sampling Plans
-- Control Plans
-- Test Methods
-- Acceptance Criteria
-- Quality Standards
-
-Primary Users
-
-- Quality Engineer
-
----
-
-# 3. INCOMING QUALITY
-
-Purpose
-
-Control supplier material quality.
-
-Contains
-
-- Purchase Inspection
-- Incoming Inspection
-- Supplier Quality
-- Material Acceptance
-- Material Rejection
-- Quarantine Decision
-
-Primary Users
-
-- Incoming Inspector
-
----
-
-# 4. IN-PROCESS QUALITY
-
-Purpose
-
-Monitor production quality.
-
-Contains
-
-- Process Inspection
-- Operator Inspection
-- SPC Monitoring
-- Process Measurements
 - Quality Alerts
-- Process Verification
 
-Primary Users
+Primary Actions
 
-- Process Quality Engineer
-- Production Supervisor
+- Start Inspection
+- Open NCR
+- Review CAPA
+- View Traceability
 
 ---
 
-# 5. FINAL INSPECTION
+# QUALITY PLANNING WORKSPACE
+
+## QLT-101 Inspection Plan Designer
 
 Purpose
 
-Approve finished products before inventory or shipment.
+Design and maintain inspection plans.
 
-Contains
+This is an Engineering Workspace.
 
-- Final Inspection
-- Functional Tests
-- Visual Inspection
-- Dimensional Inspection
-- Release Decision
-- Hold Decision
+It is not a Create Form.
 
-Primary Users
+Functions
 
-- Final Inspector
+- Product Selection
+- Revision Selection
+- Characteristics
+- Sampling Plan
+- Test Method
+- Acceptance Rules
+- Revision Management
+- Approval
+- Release
+
+System identifiers are generated automatically.
 
 ---
 
-# 6. NON-CONFORMANCE
+## QLT-102 Control Plan Designer
 
 Purpose
 
-Manage quality issues.
+Configure production quality controls.
 
-Contains
+Functions
 
-- NCR Management
-- Material Segregation
-- Containment Actions
-- Disposition
-- Root Cause Initiation
-
-Primary Users
-
-- Quality Engineer
-- Quality Manager
+- Process Selection
+- Control Characteristics
+- Inspection Frequency
+- Control Method
+- Reaction Plan
+- Approval
 
 ---
 
-# 7. CAPA
+## QLT-103 Inspection Characteristic Designer
+
+Purpose
+
+Manage measurable quality characteristics.
+
+Functions
+
+- Characteristic Definition
+- Target Value
+- Tolerance
+- Measuring Device
+- SPC Rules
+
+---
+
+## QLT-104 Sampling Plan Manager
+
+Purpose
+
+Configure sampling strategies.
+
+---
+
+## QLT-105 Test Method Library
+
+Purpose
+
+Maintain laboratory and production test procedures.
+
+---
+
+# INCOMING QUALITY WORKSPACE
+
+## QLT-201 Incoming Inspection Wizard
+
+Purpose
+
+Execute supplier material inspections.
+
+Workflow
+
+```text
+Purchase Receipt
+
+↓
+
+Material
+
+↓
+
+Lot
+
+↓
+
+Inspection Plan
+
+↓
+
+Measurements
+
+↓
+
+Decision
+
+↓
+
+Accept
+
+or
+
+Reject
+
+or
+
+Quarantine
+```
+
+Actions
+
+- Scan Barcode
+- Capture Photos
+- Record Measurements
+- Generate NCR
+
+---
+
+## QLT-202 Material Acceptance Console
+
+Purpose
+
+Release accepted materials.
+
+---
+
+## QLT-203 Material Rejection Console
+
+Purpose
+
+Reject supplier materials.
+
+---
+
+## QLT-204 Quarantine Workbench
+
+Purpose
+
+Manage quarantined inventory.
+
+Functions
+
+- Hold Material
+- Release
+- Scrap
+- Return Supplier
+- Rework
+
+---
+
+# IN-PROCESS QUALITY WORKSPACE
+
+## QLT-301 Process Inspection Console
+
+Purpose
+
+Execute production inspections.
+
+Workflow
+
+```text
+Production Order
+
+↓
+
+Operation
+
+↓
+
+Measurement
+
+↓
+
+Tolerance Check
+
+↓
+
+Decision
+```
+
+---
+
+## QLT-302 SPC Monitoring
+
+Purpose
+
+Monitor statistical process control.
+
+Displays
+
+- Control Charts
+- Cp
+- Cpk
+- Trends
+- Alerts
+
+---
+
+## QLT-303 Process Measurement Console
+
+Purpose
+
+Capture production measurements.
+
+Supports
+
+- Manual Entry
+- Digital Gauges
+- IoT Devices
+
+---
+
+## QLT-304 Quality Alert Center
+
+Purpose
+
+Monitor active quality issues.
+
+---
+
+# FINAL INSPECTION WORKSPACE
+
+## QLT-401 Final Inspection Wizard
+
+Purpose
+
+Inspect finished products.
+
+Workflow
+
+```text
+Finished Product
+
+↓
+
+Inspection Plan
+
+↓
+
+Measurements
+
+↓
+
+Visual Inspection
+
+↓
+
+Functional Test
+
+↓
+
+Decision
+
+↓
+
+Release
+
+or
+
+Reject
+```
+
+---
+
+## QLT-402 Product Release Console
+
+Purpose
+
+Approve products for inventory or shipment.
+
+---
+
+## QLT-403 Functional Test Console
+
+Purpose
+
+Perform product function tests.
+
+---
+
+## QLT-404 Visual Inspection Console
+
+Purpose
+
+Perform visual quality inspections.
+
+---
+
+# NON-CONFORMANCE WORKSPACE
+
+## QLT-501 NCR Workbench
+
+Purpose
+
+Manage non-conformance cases.
+
+This is a Workbench.
+
+It is not a Create Form.
+
+Workflow
+
+```text
+Issue Detection
+
+↓
+
+Evidence
+
+↓
+
+Containment
+
+↓
+
+Disposition
+
+↓
+
+Root Cause
+
+↓
+
+CAPA
+
+↓
+
+Closure
+```
+
+---
+
+## QLT-502 Material Hold Console
+
+Purpose
+
+Isolate non-conforming material.
+
+---
+
+## QLT-503 Disposition Manager
+
+Purpose
+
+Manage disposition decisions.
+
+Supports
+
+- Use As Is
+- Rework
+- Scrap
+- Return Supplier
+
+---
+
+# CAPA WORKSPACE
+
+## QLT-601 CAPA Workbench
 
 Purpose
 
 Manage corrective and preventive actions.
 
-Contains
+Functions
 
-- Root Cause Analysis
+- Root Cause
 - Corrective Actions
 - Preventive Actions
+- Responsible Persons
+- Due Dates
 - Verification
-- Effectiveness Review
+- Effectiveness
 - Closure
 
-Primary Users
-
-- Quality Manager
-- Process Engineer
-
 ---
 
-# 8. TRACEABILITY
+## QLT-602 Root Cause Analysis
 
 Purpose
 
-Maintain complete product genealogy.
+Perform structured root cause analysis.
 
-Contains
+Supports
 
-- Material Traceability
-- Lot Traceability
-- Serial Traceability
-- Production Genealogy
-- Supplier Traceability
-- Customer Traceability
+- 5 Why
+- Fishbone
+- Fault Tree
 
-Primary Users
+---
 
-- Quality
+## QLT-603 Effectiveness Verification
+
+Purpose
+
+Verify CAPA effectiveness.
+
+---
+
+# TRACEABILITY WORKSPACE
+
+## QLT-701 Traceability Explorer
+
+Purpose
+
+Explore complete product genealogy.
+
+Supports
+
+- Material
+- Lot
+- Serial
 - Production
-- Customer Support
+- Inspection
+- Shipment
 
 ---
 
-# 9. CERTIFICATES
+## QLT-702 Lot Traceability
 
 Purpose
 
-Manage quality documentation.
-
-Contains
-
-- Quality Certificates
-- Test Reports
-- Inspection Reports
-- Compliance Documents
-- Material Certificates
-- Customer Certificates
-
-Primary Users
-
-- Quality Engineer
+Track complete lot lifecycle.
 
 ---
 
-# 10. ANALYTICS
+## QLT-703 Serial Traceability
 
 Purpose
 
-Analyze quality performance.
-
-Contains
-
-- First Pass Yield
-- PPM Analysis
-- Defect Analysis
-- Pareto Analysis
-- SPC Analysis
-- Supplier Performance
-- Customer Complaints
-- Cost of Quality
-
-Primary Users
-
-- Quality Manager
-- Executive Management
+Track serialized products.
 
 ---
 
-# 11. REPORTS
+## QLT-704 Genealogy Explorer
 
 Purpose
 
-Generate operational and management quality reports.
-
-Contains
-
-- Inspection Reports
-- NCR Reports
-- CAPA Reports
-- Supplier Reports
-- Customer Reports
-- Audit Reports
-- Compliance Reports
+Display parent-child relationships.
 
 ---
 
-# CROSS MODULE INTEGRATION
+# CERTIFICATES WORKSPACE
 
-Inventory
+## QLT-801 Certificate Generator
 
-- Incoming Inspection
-- Quarantine Inventory
-- Material Release
-- Material Rejection
+Purpose
 
-Production
+Generate quality certificates.
 
-- In-Process Inspection
-- Final Inspection
-- Process Quality
-- Rework Decision
-- Scrap Decision
+Functions
 
-Purchasing
+- Certificate Selection
+- Product
+- Lot
+- Customer
+- Approval
+- Export
 
-- Supplier Quality
-- Supplier Corrective Action
+---
 
-Sales
+## QLT-802 Test Report Generator
 
-- Customer Complaints
-- Customer Certificates
+Purpose
 
-Maintenance
+Generate laboratory reports.
 
-- Equipment Calibration
-- Measurement Devices
+---
 
-Product
+## QLT-803 Compliance Document Center
 
-- Product Specifications
-- Quality Characteristics
+Purpose
+
+Manage compliance documentation.
+
+---
+
+# ANALYTICS WORKSPACE
+
+## QLT-901 FPY Dashboard
+
+## QLT-902 PPM Dashboard
+
+## QLT-903 Pareto Analysis
+
+## QLT-904 SPC Dashboard
+
+## QLT-905 Supplier Performance
+
+## QLT-906 Customer Complaint Analysis
+
+## QLT-907 Cost of Quality
+
+---
+
+# REPORTS WORKSPACE
+
+## QLT-1001 Inspection Reports
+
+## QLT-1002 NCR Reports
+
+## QLT-1003 CAPA Reports
+
+## QLT-1004 Supplier Reports
+
+## QLT-1005 Audit Reports
+
+## QLT-1006 Compliance Reports
+
+## QLT-1007 Traceability Reports
+
+---
+
+# COMMON SCREEN COMPONENTS
+
+Quality screens may use
+
+- Dashboard Cards
+- KPI Cards
+- Inspection Wizard
+- Inspection Console
+- Workbench
+- Decision Panel
+- Measurement Grid
+- SPC Charts
+- Traceability Explorer
+- Timeline
+- Attachment Panel
+- Audit Timeline
+- Barcode Scanner
+- QR Scanner
+
+---
+
+# SCREEN RELATIONSHIPS
+
+```text
+Inspection Plan
+
+↓
+
+Incoming Inspection
+
+↓
+
+Process Inspection
+
+↓
+
+Final Inspection
+
+↓
+
+Release
+
+or
+
+NCR
+
+↓
+
+CAPA
+
+↓
+
+Verification
+
+↓
+
+Closure
+```
 
 ---
 
 # DESIGN RULES
 
-Every Workspace
-
-- has its own dashboard
-- has its own navigation
-- has its own permissions
-- has its own business workflows
-- may contain Wizards
-- may contain Workbenches
-- may contain Consoles
-- may contain Dashboards
-
-Quality decisions shall always be process-driven.
-
-Generic Create/Edit/Delete screens are prohibited.
-
-Engineering activities shall use dedicated Quality Management Workspaces.
-
-Operational activities shall use guided execution workflows.
+- Every screen belongs to one Workspace.
+- Engineering screens are Designers, not Create Forms.
+- Operational screens are Wizards, Consoles or Workbenches.
+- Generic CRUD pages are prohibited.
+- Manual identifier entry is prohibited.
+- Inspection, NCR and CAPA numbers are generated automatically according to the centralized Numbering Architecture.
+- Every quality decision must be auditable.
+- Every screen supports complete traceability.
 
 ---
 
@@ -377,15 +708,14 @@ Operational activities shall use guided execution workflows.
 
 Frontend implementation shall
 
-- create Workspaces before Screens
-- group screens by quality process
+- generate Workspaces before Screens
+- generate Screens before Components
 - optimize inspector workflows
 - minimize manual typing
-- support barcode and QR scanning where applicable
+- support barcode and QR workflows
+- reuse common UI components
+- support responsive layouts
 - preserve complete audit history
-- preserve full traceability
-- integrate seamlessly with Production, Inventory and Purchasing
+- preserve genealogy and traceability
 
-Quality Workspaces are the primary navigation units of the Quality module.
-
-Screens shall always be generated from quality business processes rather than database entities or implementation tasks.
+Quality Screens shall be generated from Module, Workspace and User Flow definitions rather than from entities or implementation tasks.
