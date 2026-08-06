@@ -57,38 +57,124 @@ const MATERIAL_LINES = [
   },
 ];
 
-/** Senaryo 1 — AI multi-package recommendation for SO-250001 */
-const AI_PACKAGES = [
-  { id: 'A', code: 'PKG-A-2026-000120', qty: 20, loc: 'A-01-02', note: 'FIFO · aynı lot' },
-  { id: 'B', code: 'PKG-B-2026-000088', qty: 15, loc: 'A-01-04', note: 'üste yakın' },
-  { id: 'C', code: 'PKG-C-2026-000091', qty: 15, loc: 'A-02-01', note: 'aynı nem · kalite' },
-];
-
-const AI_RULES = ['FIFO', 'FEFO', 'Rezervasyon', 'Kalite', 'Lokasyon', 'Aynı Lot', 'Aynı Nem', 'Aynı Kalite', 'Aynı Üretim Tarihi'];
-
-const OVERRIDE_PACKAGES = [
-  { code: 'PKG-B-2026-000088', label: 'Paket B — üste yakın / forklift', loc: 'A-01-04', qty: 15 },
-  { code: 'PKG-D-2026-000210', label: 'Paket D — müşteriye daha uygun', loc: 'B-03-01', qty: 20 },
-  { code: 'PKG-A-2026-000120', label: 'Paket A', loc: 'A-01-02', qty: 20 },
-];
-
-/** Senaryo 3 — partial package */
-const PARTIAL_PKG = {
-  code: 'PKG-00254',
-  original: 120,
-  volume: 5.24,
-  issueDefault: 40,
-  unit: 'adet',
+type AllocRow = {
+  code: string;
+  warehouse: string;
+  location: string;
+  lot: string;
+  mi: string;
+  species: string;
+  dimensions: string;
+  quality: string;
+  moisture: string;
+  available: number;
+  selected: number;
 };
 
-const AI_PICK = {
-  warehouse: 'Ana Mamul Deposu',
-  location: 'A-01-02',
-  lot: 'LOT-TW-2026-000042',
-  mi: 'FG-TWDECK-20260801-00012',
-  package: AI_PACKAGES[0].code,
-  rule: AI_RULES.join(' · '),
-};
+const REQUIRED_QTY = 50;
+
+const AI_RULES = [
+  'FIFO/FEFO',
+  'Müşteri',
+  'Rezervasyon',
+  'Kalite',
+  'Lot tutarlılığı',
+  'Nem tutarlılığı',
+  'Ölçü tutarlılığı',
+  'Tür tutarlılığı',
+  'Depo optimizasyonu',
+];
+
+/** Catalog of pickable packages (Explorer / Add). */
+const PACKAGE_CATALOG: AllocRow[] = [
+  {
+    code: 'PKG-A-2026-000120',
+    warehouse: 'Ana Mamul Deposu',
+    location: 'A-01-02',
+    lot: 'LOT-TW-2026-000042',
+    mi: 'FG-TWDECK-20260801-00012',
+    species: 'Pine Thermowood',
+    dimensions: '26×140×4000',
+    quality: 'A',
+    moisture: '%6',
+    available: 20,
+    selected: 20,
+  },
+  {
+    code: 'PKG-B-2026-000088',
+    warehouse: 'Ana Mamul Deposu',
+    location: 'A-01-04',
+    lot: 'LOT-TW-2026-000042',
+    mi: 'FG-TWDECK-20260801-00018',
+    species: 'Pine Thermowood',
+    dimensions: '26×140×4000',
+    quality: 'A',
+    moisture: '%6',
+    available: 15,
+    selected: 15,
+  },
+  {
+    code: 'PKG-C-2026-000091',
+    warehouse: 'Ana Mamul Deposu',
+    location: 'A-02-01',
+    lot: 'LOT-TW-2026-000042',
+    mi: 'FG-TWDECK-20260801-00022',
+    species: 'Pine Thermowood',
+    dimensions: '26×140×4000',
+    quality: 'A',
+    moisture: '%6',
+    available: 15,
+    selected: 15,
+  },
+  {
+    code: 'PKG-00254',
+    warehouse: 'Ana Mamul Deposu',
+    location: 'A-03-02',
+    lot: 'LOT-TW-2026-000042',
+    mi: 'FG-TWDECK-20260801-00030',
+    species: 'Pine Thermowood',
+    dimensions: '26×140×4000',
+    quality: 'A',
+    moisture: '%6',
+    available: 120,
+    selected: 40,
+  },
+  {
+    code: 'PKG-D-2026-000210',
+    warehouse: 'Ana Mamul Deposu',
+    location: 'B-03-01',
+    lot: 'LOT-TW-2026-000099',
+    mi: 'FG-TWDECK-20260715-00008',
+    species: 'Pine Thermowood',
+    dimensions: '26×140×3000',
+    quality: 'B',
+    moisture: '%8',
+    available: 20,
+    selected: 20,
+  },
+];
+
+/** Minimum package set for SO-250001 (50). */
+const AI_ALLOCATION: AllocRow[] = PACKAGE_CATALOG.slice(0, 3).map((p) => ({ ...p }));
+
+function remainingOf(row: AllocRow) {
+  return Math.max(0, row.available - row.selected);
+}
+
+function mixWarnings(rows: AllocRow[]): string[] {
+  if (rows.length === 0) return [];
+  const warns: string[] = [];
+  const lots = new Set(rows.map((r) => r.lot));
+  const qualities = new Set(rows.map((r) => r.quality));
+  const moistures = new Set(rows.map((r) => r.moisture));
+  const dims = new Set(rows.map((r) => r.dimensions));
+  if (lots.size > 1) warns.push('mixLots');
+  if (qualities.size > 1) warns.push('mixQuality');
+  if (moistures.size > 1) warns.push('mixMoisture');
+  if (dims.size > 1) warns.push('mixDimensions');
+  if (rows.some((r) => r.code.startsWith('PKG-D'))) warns.push('mixCustomer');
+  return warns;
+}
 
 function mintPreview(prefix: string) {
   const seq = new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + String(Math.floor(100000 + Math.random() * 900000));
@@ -111,8 +197,9 @@ export function GoodsIssueWorkbench() {
   const [manualReason, setManualReason] = useState('');
   const [aiDecision, setAiDecision] = useState<'none' | 'accept' | 'ignore'>('none');
   const [overrideOpen, setOverrideOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [allocation, setAllocation] = useState<AllocRow[]>([]);
   const [overrideHistory, setOverrideHistory] = useState<string[]>([]);
+  const [mixWaived, setMixWaived] = useState(false);
   const [scanValue, setScanValue] = useState('');
   const [scannedOk, setScannedOk] = useState(false);
   const [verifyOk, setVerifyOk] = useState(false);
@@ -120,13 +207,17 @@ export function GoodsIssueWorkbench() {
   const [qualityOk, setQualityOk] = useState(false);
   const [destType, setDestType] = useState<'production' | 'shipping'>('shipping');
   const [destination, setDestination] = useState('Rampa 2 · Araç 34 ABC 123');
-  const [issueQty, setIssueQty] = useState(PARTIAL_PKG.issueDefault);
-  const remainingQty = Math.max(0, PARTIAL_PKG.original - issueQty);
-  const remainingVolume = Number(((PARTIAL_PKG.volume * remainingQty) / PARTIAL_PKG.original).toFixed(2));
 
   const stage = STAGES[stageIdx];
   const selectedDoc = DOC_OPTIONS.find((d) => d.id === docType) ?? null;
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
+  const selectedTotal = useMemo(() => allocation.reduce((s, r) => s + r.selected, 0), [allocation]);
+  const remainingTotal = useMemo(() => allocation.reduce((s, r) => s + remainingOf(r), 0), [allocation]);
+  const warnings = useMemo(() => mixWarnings(allocation), [allocation]);
+  const addablePackages = useMemo(
+    () => PACKAGE_CATALOG.filter((p) => !allocation.some((a) => a.code === p.code)),
+    [allocation],
+  );
 
   const gateMessage = useMemo(() => {
     switch (stage.id) {
@@ -138,10 +229,13 @@ export function GoodsIssueWorkbench() {
         return null;
       case 'aiPick':
         if (aiDecision === 'none') return t('wb.iss.gateNeedAi');
-        if (aiDecision === 'ignore' && !selectedPackage) return t('wb.iss.gateNeedOverridePkg');
+        if (allocation.length === 0) return t('wb.iss.gateNeedAlloc');
         return null;
       case 'picking':
-        if (issueQty <= 0 || issueQty > PARTIAL_PKG.original) return t('wb.iss.gateNeedPartialQty');
+        if (allocation.length === 0) return t('wb.iss.gateNeedAlloc');
+        if (allocation.some((r) => r.selected <= 0 || r.selected > r.available)) return t('wb.iss.gateNeedPartialQty');
+        if (selectedTotal !== REQUIRED_QTY) return t('wb.iss.gateNeedTotal');
+        if (warnings.length > 0 && !mixWaived) return t('wb.iss.gateNeedMixAuth');
         return !scannedOk ? t('wb.iss.gateNeedScan') : null;
       case 'verify':
         return !verifyOk ? t('wb.iss.gateNeedVerify') : null;
@@ -161,8 +255,10 @@ export function GoodsIssueWorkbench() {
     docType,
     manualReason,
     aiDecision,
-    selectedPackage,
-    issueQty,
+    allocation,
+    selectedTotal,
+    warnings,
+    mixWaived,
     scannedOk,
     verifyOk,
     qualityOk,
@@ -182,12 +278,10 @@ export function GoodsIssueWorkbench() {
         notes: [
           `docType=${docType}`,
           `ai=${aiDecision}`,
-          `pkg=${selectedPackage || AI_PACKAGES.map((p) => p.code).join(',')}`,
-          `partial=${PARTIAL_PKG.code}:${issueQty}/${PARTIAL_PKG.original}`,
-          `remaining=${remainingQty}`,
-          `lot=${AI_PICK.lot}`,
-          `mi=${AI_PICK.mi}`,
-          `loc=${AI_PICK.location}`,
+          `alloc=${allocation.map((r) => `${r.code}:${r.selected}/${r.available}`).join(',')}`,
+          `selectedTotal=${selectedTotal}`,
+          `mix=${warnings.join(',') || 'ok'}`,
+          `mixWaived=${mixWaived}`,
           `dest=${destination}`,
           `scan=${scanValue || 'OK'}`,
           `evidence=${evidence.length}`,
@@ -229,39 +323,135 @@ export function GoodsIssueWorkbench() {
   function acceptAi() {
     setAiDecision('accept');
     setOverrideOpen(false);
-    setSelectedPackage(null);
+    setAllocation(AI_ALLOCATION.map((p) => ({ ...p })));
+    setMixWaived(false);
     setError(null);
   }
 
   function ignoreAi() {
     setAiDecision('ignore');
     setOverrideOpen(true);
-    setSelectedPackage(null);
+    setAllocation([]);
+    setMixWaived(false);
     setError(null);
   }
 
-  function pickOverridePackage(code: string) {
-    setSelectedPackage(code);
-    setOverrideHistory((h) => [
-      ...h,
-      `${new Date().toISOString().slice(11, 19)} Yoksay → ${code} (AI: ${AI_PACKAGES.map((p) => p.id).join('+')})`,
-    ]);
+  function addPackage(code: string) {
+    const src = PACKAGE_CATALOG.find((p) => p.code === code);
+    if (!src || allocation.some((a) => a.code === code)) return;
+    setAllocation((rows) => [...rows, { ...src }]);
+    setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} Add → ${code}`]);
+    setMixWaived(false);
     setError(null);
+  }
+
+  function removePackage(code: string) {
+    setAllocation((rows) => rows.filter((r) => r.code !== code));
+    setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} Remove → ${code}`]);
+    setMixWaived(false);
+  }
+
+  function setSelectedQty(code: string, selected: number) {
+    setAllocation((rows) =>
+      rows.map((r) => (r.code === code ? { ...r, selected: Math.min(Math.max(0, selected), r.available) } : r)),
+    );
+    setMixWaived(false);
+  }
+
+  function resetToAi() {
+    setAiDecision('accept');
+    setAllocation(AI_ALLOCATION.map((p) => ({ ...p })));
+    setOverrideOpen(false);
+    setMixWaived(false);
   }
 
   function tryScan() {
     const v = scanValue.trim().toUpperCase();
-    const target = (selectedPackage || PARTIAL_PKG.code || AI_PICK.package).toUpperCase();
-    const ok =
-      !v ||
-      v.includes('PKG') ||
-      v.includes('LOT') ||
-      v === target ||
-      v === PARTIAL_PKG.code.toUpperCase() ||
-      v === AI_PICK.lot.toUpperCase();
+    const codes = allocation.map((r) => r.code.toUpperCase());
+    const ok = !v || v.includes('PKG') || v.includes('LOT') || codes.some((c) => v === c || v.includes(c.slice(0, 8)));
     setScannedOk(ok);
     if (!ok) setError(t('wb.iss.scanMismatch'));
     else setError(null);
+  }
+
+  function AllocationGrid({ editable }: { editable: boolean }) {
+    return (
+      <div className="space-y-2">
+        <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
+          <table className="w-full min-w-[960px] text-left text-[11px]">
+            <thead className="bg-[var(--color-surface-hover)] text-[var(--text-muted)]">
+              <tr>
+                <th className="px-2 py-2">{t('wb.iss.colPkgNo')}</th>
+                <th className="px-2 py-2">{t('wb.iss.wh')}</th>
+                <th className="px-2 py-2">{t('wb.iss.loc')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colLot')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colMi')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colSpecies')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colDims')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colQuality')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colMoisture')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colAvail')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colSelected')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colRemain')}</th>
+                {editable ? <th className="px-2 py-2" /> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {allocation.map((r) => (
+                <tr key={r.code} className="border-t border-[var(--border-default)]">
+                  <td className="px-2 py-1.5 font-mono font-medium">{r.code}</td>
+                  <td className="px-2 py-1.5">{r.warehouse}</td>
+                  <td className="px-2 py-1.5 font-mono">{r.location}</td>
+                  <td className="px-2 py-1.5 font-mono">{r.lot}</td>
+                  <td className="px-2 py-1.5 font-mono text-[10px]">{r.mi}</td>
+                  <td className="px-2 py-1.5">{r.species}</td>
+                  <td className="px-2 py-1.5">{r.dimensions}</td>
+                  <td className="px-2 py-1.5">{r.quality}</td>
+                  <td className="px-2 py-1.5">{r.moisture}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{r.available}</td>
+                  <td className="px-2 py-1.5">
+                    {editable ? (
+                      <Input
+                        type="number"
+                        className="h-7 w-16"
+                        min={0}
+                        max={r.available}
+                        value={r.selected}
+                        onChange={(e) => setSelectedQty(r.code, Number(e.target.value) || 0)}
+                      />
+                    ) : (
+                      <span className="tabular-nums font-medium">{r.selected}</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-1.5 tabular-nums text-[var(--color-primary)]">{remainingOf(r)}</td>
+                  {editable ? (
+                    <td className="px-2 py-1.5">
+                      <Button type="button" variant="secondary" className="h-7 px-2 text-[10px]" onClick={() => removePackage(r.code)}>
+                        {t('wb.iss.removePkg')}
+                      </Button>
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+              <tr className="border-t border-[var(--border-default)] bg-[var(--color-surface-hover)] font-medium">
+                <td className="px-2 py-2" colSpan={9}>
+                  {t('wb.iss.total')} · {t('wb.iss.required')}: {REQUIRED_QTY}
+                </td>
+                <td className="px-2 py-2 tabular-nums">{allocation.reduce((s, r) => s + r.available, 0)}</td>
+                <td
+                  className={`px-2 py-2 tabular-nums ${selectedTotal === REQUIRED_QTY ? 'text-[var(--color-primary)]' : 'text-[var(--color-danger)]'}`}
+                >
+                  {selectedTotal}
+                </td>
+                <td className="px-2 py-2 tabular-nums">{remainingTotal}</td>
+                {editable ? <td /> : null}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.partialAuto')}</p>
+      </div>
+    );
   }
 
   return (
@@ -424,8 +614,8 @@ export function GoodsIssueWorkbench() {
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.aiPickIntro')}</p>
                   <p className="text-xs text-[var(--text-muted)]">
-                    {selectedDoc?.ref ?? 'SO-250001'} · {MATERIAL_LINES[0].name} · {MATERIAL_LINES[0].required}{' '}
-                    {MATERIAL_LINES[0].unit}
+                    {selectedDoc?.ref ?? 'SO-250001'} · {MATERIAL_LINES[0].name} · {REQUIRED_QTY} ·{' '}
+                    {t('wb.iss.minPackages')}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {AI_RULES.map((r) => (
@@ -437,36 +627,31 @@ export function GoodsIssueWorkbench() {
                       </span>
                     ))}
                   </div>
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.iss.aiSuggestion')}</p>
                   <div className="overflow-x-auto rounded-md border border-[var(--color-primary)]/30">
-                    <table className="w-full min-w-[420px] text-left text-xs">
+                    <table className="w-full min-w-[520px] text-left text-xs">
                       <thead className="bg-[var(--color-primary)]/10 text-[var(--text-muted)]">
                         <tr>
-                          <th className="px-3 py-2">{t('wb.iss.colPackage')}</th>
-                          <th className="px-3 py-2">{t('wb.iss.colRequired')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colPkgNo')}</th>
                           <th className="px-3 py-2">{t('wb.iss.loc')}</th>
-                          <th className="px-3 py-2">{t('wb.iss.aiSuggestion')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colSelected')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colLot')}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {AI_PACKAGES.map((p) => (
-                          <tr key={p.id} className="border-t border-[var(--border-default)]">
-                            <td className="px-3 py-2 font-medium">
-                              {t('wb.iss.packageLabel')} {p.id}{' '}
-                              <span className="font-mono text-[10px] text-[var(--text-muted)]">{p.code}</span>
-                            </td>
-                            <td className="px-3 py-2 tabular-nums">
-                              {p.qty} {MATERIAL_LINES[0].unit}
-                            </td>
-                            <td className="px-3 py-2 font-mono">{p.loc}</td>
-                            <td className="px-3 py-2 text-[var(--text-muted)]">{p.note}</td>
+                        {AI_ALLOCATION.map((p) => (
+                          <tr key={p.code} className="border-t border-[var(--border-default)]">
+                            <td className="px-3 py-2 font-mono font-medium">{p.code}</td>
+                            <td className="px-3 py-2 font-mono">{p.location}</td>
+                            <td className="px-3 py-2 tabular-nums">{p.selected}</td>
+                            <td className="px-3 py-2 font-mono text-[10px]">{p.lot}</td>
                           </tr>
                         ))}
                         <tr className="border-t border-[var(--border-default)] bg-[var(--color-surface-hover)] font-medium">
                           <td className="px-3 py-2">{t('wb.iss.total')}</td>
-                          <td className="px-3 py-2 tabular-nums">
-                            {AI_PACKAGES.reduce((s, p) => s + p.qty, 0)} {MATERIAL_LINES[0].unit}
-                          </td>
-                          <td colSpan={2} />
+                          <td />
+                          <td className="px-3 py-2 tabular-nums">{REQUIRED_QTY}</td>
+                          <td />
                         </tr>
                       </tbody>
                     </table>
@@ -487,25 +672,23 @@ export function GoodsIssueWorkbench() {
                       <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.iss.explorer')}</p>
                       <p className="font-mono text-[11px] text-[var(--text-muted)]">{t('wb.iss.explorerPath')}</p>
                       <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.overrideHint')}</p>
-                      <div className="grid gap-2 sm:grid-cols-1">
-                        {OVERRIDE_PACKAGES.map((p) => (
+                      <div className="grid gap-2">
+                        {addablePackages.map((p) => (
                           <button
                             key={p.code}
                             type="button"
-                            onClick={() => pickOverridePackage(p.code)}
-                            className={`rounded-md border px-3 py-2 text-left text-sm ${
-                              selectedPackage === p.code
-                                ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
-                                : 'border-[var(--border-default)]'
-                            }`}
+                            onClick={() => addPackage(p.code)}
+                            className="rounded-md border border-[var(--border-default)] px-3 py-2 text-left text-sm hover:border-[var(--color-primary)]"
                           >
-                            <p className="font-medium">{p.label}</p>
-                            <p className="font-mono text-xs text-[var(--text-muted)]">
-                              {p.code} · {p.loc} · {p.qty} {MATERIAL_LINES[0].unit}
+                            <p className="font-mono text-xs font-medium">{p.code}</p>
+                            <p className="text-xs text-[var(--text-muted)]">
+                              {p.location} · {p.available} {t('wb.iss.colAvail').toLowerCase()} · {p.lot} · {p.quality} ·{' '}
+                              {p.moisture}
                             </p>
                           </button>
                         ))}
                       </div>
+                      {allocation.length > 0 ? <AllocationGrid editable={false} /> : null}
                       <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.aiValidationOverride')}</p>
                     </div>
                   ) : null}
@@ -514,61 +697,52 @@ export function GoodsIssueWorkbench() {
 
               {stage.id === 'picking' ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.pickingIntro')}</p>
-                  <p className="font-mono text-xs text-[var(--text-muted)]">
-                    {AI_PICK.warehouse} → Zone A → Rack → Shelf →{' '}
-                    {selectedPackage || AI_PACKAGES.map((p) => p.code).join(' + ')}
-                  </p>
-
-                  <div className="rounded-md border border-[var(--border-default)] px-3 py-3 space-y-2">
-                    <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.iss.partialTitle')}</p>
-                    <p className="text-sm">
-                      <span className="font-mono font-medium">{PARTIAL_PKG.code}</span>
-                      {' · '}
-                      {PARTIAL_PKG.original} {PARTIAL_PKG.unit} · {PARTIAL_PKG.volume} m³
-                    </p>
-                    <label className="block max-w-xs space-y-1 text-sm">
-                      <span className="text-[var(--text-secondary)]">{t('wb.iss.issueQty')}</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={PARTIAL_PKG.original}
-                        value={issueQty}
-                        onChange={(e) => setIssueQty(Number(e.target.value) || 0)}
-                      />
-                    </label>
-                    <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                      <div className="rounded-md bg-[var(--color-surface-hover)] px-2 py-1.5">
-                        <dt className="text-[var(--text-muted)]">{t('wb.iss.issued')}</dt>
-                        <dd className="font-medium tabular-nums">
-                          {issueQty} {PARTIAL_PKG.unit}
-                        </dd>
-                      </div>
-                      <div className="rounded-md bg-[var(--color-surface-hover)] px-2 py-1.5">
-                        <dt className="text-[var(--text-muted)]">{t('wb.iss.remaining')}</dt>
-                        <dd className="font-medium tabular-nums text-[var(--color-primary)]">
-                          {remainingQty} {PARTIAL_PKG.unit}
-                        </dd>
-                      </div>
-                      <div className="rounded-md bg-[var(--color-surface-hover)] px-2 py-1.5">
-                        <dt className="text-[var(--text-muted)]">{t('wb.iss.remainingVol')}</dt>
-                        <dd className="font-medium tabular-nums">{remainingVolume} m³</dd>
-                      </div>
-                      <div className="rounded-md bg-[var(--color-surface-hover)] px-2 py-1.5">
-                        <dt className="text-[var(--text-muted)]">{t('wb.iss.pkgStatus')}</dt>
-                        <dd className="font-medium">{t('wb.iss.statusPartial')}</dd>
-                      </div>
-                    </dl>
-                    <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.partialAuto')}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.allocIntro')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" onClick={resetToAi}>
+                      {t('wb.iss.resetAi')}
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => setOverrideOpen(true)}>
+                      {t('wb.iss.addPkg')}
+                    </Button>
                   </div>
-
+                  {overrideOpen ? (
+                    <div className="flex flex-wrap gap-2 rounded-md border border-[var(--border-default)] px-3 py-2">
+                      {addablePackages.length === 0 ? (
+                        <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.noMorePkg')}</p>
+                      ) : (
+                        addablePackages.map((p) => (
+                          <Button key={p.code} type="button" variant="secondary" onClick={() => addPackage(p.code)}>
+                            + {p.code}
+                          </Button>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                  <AllocationGrid editable />
+                  {warnings.length > 0 ? (
+                    <div className="space-y-2 rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2">
+                      <p className="text-xs font-semibold text-[var(--color-danger)]">{t('wb.iss.mixWarnings')}</p>
+                      <ul className="list-inside list-disc text-xs text-[var(--text-secondary)]">
+                        {warnings.map((w) => (
+                          <li key={w}>{t(`wb.iss.warn.${w}`)}</li>
+                        ))}
+                      </ul>
+                      <label className="flex items-center gap-2 text-sm font-medium">
+                        <input type="checkbox" checked={mixWaived} onChange={(e) => setMixWaived(e.target.checked)} />
+                        {t('wb.iss.mixWaive')}
+                      </label>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[var(--color-primary)]">{t('wb.iss.mixOk')}</p>
+                  )}
                   <label className="block max-w-md space-y-1 text-sm">
                     <span className="text-[var(--text-secondary)]">{t('wb.iss.scanLabel')}</span>
                     <div className="flex gap-2">
                       <Input
                         value={scanValue}
                         onChange={(e) => setScanValue(e.target.value)}
-                        placeholder={PARTIAL_PKG.code}
+                        placeholder={allocation[0]?.code ?? 'PKG-…'}
                       />
                       <Button type="button" variant="secondary" onClick={tryScan}>
                         {t('wb.iss.scanValidate')}
@@ -579,7 +753,7 @@ export function GoodsIssueWorkbench() {
                     type="button"
                     variant="secondary"
                     onClick={() => {
-                      setScanValue(PARTIAL_PKG.code);
+                      setScanValue(allocation.map((r) => r.code).join('+'));
                       setScannedOk(true);
                       setError(null);
                     }}
@@ -677,20 +851,20 @@ export function GoodsIssueWorkbench() {
                   <div className="grid gap-2 md:grid-cols-2">
                     {[
                       [t('wb.iss.document'), selectedDoc ? `${t(`wb.iss.docType.${docType!}`)} · ${selectedDoc.ref}` : '—'],
-                      [t('wb.iss.colMaterial'), `${MATERIAL_LINES[0].name} · ${MATERIAL_LINES[0].required} ${MATERIAL_LINES[0].unit}`],
+                      [t('wb.iss.colMaterial'), `${MATERIAL_LINES[0].name} · ${REQUIRED_QTY}`],
                       [
                         t('wb.iss.aiDecision'),
                         aiDecision === 'accept'
                           ? t('wb.iss.acceptAi')
                           : aiDecision === 'ignore'
-                            ? `${t('wb.iss.ignoreAi')} → ${selectedPackage ?? '—'}`
+                            ? t('wb.iss.ignoreAi')
                             : '—',
                       ],
                       [
-                        t('wb.iss.partialTitle'),
-                        `${PARTIAL_PKG.code}: ${issueQty} ↓ · ${remainingQty} ${t('wb.iss.remaining').toLowerCase()}`,
+                        t('wb.iss.allocGrid'),
+                        allocation.map((r) => `${r.code}:${r.selected}`).join(' · ') || '—',
                       ],
-                      [t('wb.iss.wh'), `${AI_PICK.warehouse} · ${AI_PICK.location}`],
+                      [t('wb.iss.total'), `${selectedTotal} / ${REQUIRED_QTY}`],
                       [t('wb.iss.evidence'), `${evidence.length} ${t('wb.iss.evidenceCount')}`],
                       [t('wb.iss.destination'), destination],
                       [
@@ -754,14 +928,20 @@ export function GoodsIssueWorkbench() {
                 </dd>
               </div>
               <div>
-                <dt className="text-[var(--text-muted)]">{t('wb.iss.partialTitle')}</dt>
+                <dt className="text-[var(--text-muted)]">{t('wb.iss.allocGrid')}</dt>
                 <dd className="font-medium tabular-nums">
-                  {PARTIAL_PKG.code}: {remainingQty}/{PARTIAL_PKG.original}
+                  {allocation.length} pkg · Σ {selectedTotal}
                 </dd>
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.iss.validation')}</dt>
-                <dd className="font-medium">{verifyOk && qualityOk ? t('wb.iss.validationOk') : t('wb.iss.validationOpen')}</dd>
+                <dd className="font-medium">
+                  {warnings.length && !mixWaived
+                    ? t('wb.iss.mixWarnings')
+                    : verifyOk && qualityOk
+                      ? t('wb.iss.validationOk')
+                      : t('wb.iss.validationOpen')}
+                </dd>
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.iss.noManualIds')}</dt>
