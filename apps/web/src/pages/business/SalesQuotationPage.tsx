@@ -7,6 +7,7 @@ export function SalesQuotationPage() {
       description="TASK-039 · Sales MVP"
       route="quotations"
       kind="document"
+      createLabel="Teklif hazırla"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'CustomerCode', label: 'CustomerCode', type: 'string' as const },

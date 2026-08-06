@@ -83,6 +83,15 @@ import {
   WorkCentersPage,
   WorkOrderListPage,
 } from './modules/production/screens';
+import {
+  CycleCountWizardPage,
+  IssueWizardPage,
+  PlanningWizardPage,
+  PurchaseOrderWizardPage,
+  ReceivingWizardPage,
+  SalesOrderWizardPage,
+  TransferWizardPage,
+} from './modules/shared/process/processWizardPages';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -181,6 +190,11 @@ const invReceiptsRoute = createRoute({
   path: 'operations/goods-receipts',
   component: GoodsReceiptListPage,
 });
+const invReceiveWizardRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/receive',
+  component: ReceivingWizardPage,
+});
 const invReceiptDetailRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'operations/goods-receipts/$id',
@@ -191,15 +205,30 @@ const invIssuesRoute = createRoute({
   path: 'operations/goods-issues',
   component: GoodsIssueListPage,
 });
+const invIssueWizardRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/issue',
+  component: IssueWizardPage,
+});
 const invTransfersRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'operations/transfers',
   component: TransferListPage,
 });
+const invTransferWizardRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/transfer',
+  component: TransferWizardPage,
+});
 const invCountsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'counts/cycle-counts',
   component: CycleCountListPage,
+});
+const invCountWizardRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'counts/start',
+  component: CycleCountWizardPage,
 });
 const invAdjustmentsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
@@ -238,6 +267,11 @@ const route_11 = createRoute({ getParentRoute: () => authenticatedRoute, path: '
 const route_12 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/rfqs', component: RfqPage });
 const route_13 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/supplier-quotations', component: SupplierQuotationPage });
 const route_14 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/purchase-orders', component: PurchaseOrderPage });
+const route_14b = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/purchasing/purchase-orders/place',
+  component: PurchaseOrderWizardPage,
+});
 const route_15 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/purchase-goods-receipts', component: PurchaseGoodsReceiptPage });
 const route_16 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/purchase-returns', component: PurchaseReturnPage });
 const route_17 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/purchasing/supplier-invoices', component: SupplierInvoicePage });
@@ -248,6 +282,11 @@ const route_21 = createRoute({ getParentRoute: () => authenticatedRoute, path: '
 const route_22 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/opportunities', component: OpportunityPage });
 const route_23 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/quotations', component: SalesQuotationPage });
 const route_24 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/sales-orders', component: SalesOrderPage });
+const route_24b = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/sales/sales-orders/enter',
+  component: SalesOrderWizardPage,
+});
 const route_25 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/shipments', component: ShipmentPage });
 const route_26 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/deliveries', component: DeliveryPage });
 const route_27 = createRoute({ getParentRoute: () => authenticatedRoute, path: '/sales/customer-invoices', component: CustomerInvoicePage });
@@ -267,6 +306,7 @@ const productionIndexRoute = createRoute({
 });
 const prdDashboard = createRoute({ getParentRoute: () => productionRoute, path: 'dashboard', component: ProductionDashboardPage });
 const prdOrders = createRoute({ getParentRoute: () => productionRoute, path: 'planning/orders', component: ProductionOrderListPage });
+const prdPlanWizard = createRoute({ getParentRoute: () => productionRoute, path: 'planning/plan', component: PlanningWizardPage });
 const prdOrderDetail = createRoute({ getParentRoute: () => productionRoute, path: 'planning/orders/$id', component: ProductionOrderDetailPage });
 const prdWorkOrders = createRoute({ getParentRoute: () => productionRoute, path: 'planning/work-orders', component: WorkOrderListPage });
 const prdScheduling = createRoute({ getParentRoute: () => productionRoute, path: 'planning/scheduling', component: SchedulingPage });
@@ -335,9 +375,13 @@ const implemented = new Set([
   '/inventory/stock/balances',
   '/inventory/stock/lots',
   '/inventory/operations/goods-receipts',
+  '/inventory/operations/receive',
   '/inventory/operations/goods-issues',
+  '/inventory/operations/issue',
   '/inventory/operations/transfers',
+  '/inventory/operations/transfer',
   '/inventory/counts/cycle-counts',
+  '/inventory/counts/start',
   '/inventory/counts/adjustments',
   '/inventory/reports',
   '/inventory/materials',
@@ -355,6 +399,7 @@ const implemented = new Set([
   '/purchasing/rfqs',
   '/purchasing/supplier-quotations',
   '/purchasing/purchase-orders',
+  '/purchasing/purchase-orders/place',
   '/purchasing/purchase-goods-receipts',
   '/purchasing/purchase-returns',
   '/purchasing/supplier-invoices',
@@ -365,6 +410,7 @@ const implemented = new Set([
   '/sales/opportunities',
   '/sales/quotations',
   '/sales/sales-orders',
+  '/sales/sales-orders/enter',
   '/sales/shipments',
   '/sales/deliveries',
   '/sales/customer-invoices',
@@ -373,6 +419,7 @@ const implemented = new Set([
   '/production',
   '/production/dashboard',
   '/production/planning/orders',
+  '/production/planning/plan',
   '/production/planning/work-orders',
   '/production/planning/scheduling',
   '/production/planning/capacity',
@@ -438,10 +485,14 @@ export const routeTree = rootRoute.addChildren([
       invBalancesRoute,
       invLotsRoute,
       invReceiptsRoute,
+      invReceiveWizardRoute,
       invReceiptDetailRoute,
       invIssuesRoute,
+      invIssueWizardRoute,
       invTransfersRoute,
+      invTransferWizardRoute,
       invCountsRoute,
+      invCountWizardRoute,
       invAdjustmentsRoute,
       invReportsRoute,
     ]),
@@ -451,6 +502,7 @@ export const routeTree = rootRoute.addChildren([
     route_12,
     route_13,
     route_14,
+    route_14b,
     route_15,
     route_16,
     route_17,
@@ -461,6 +513,7 @@ export const routeTree = rootRoute.addChildren([
     route_22,
     route_23,
     route_24,
+    route_24b,
     route_25,
     route_26,
     route_27,
@@ -470,6 +523,7 @@ export const routeTree = rootRoute.addChildren([
       productionIndexRoute,
       prdDashboard,
       prdOrders,
+      prdPlanWizard,
       prdOrderDetail,
       prdWorkOrders,
       prdScheduling,

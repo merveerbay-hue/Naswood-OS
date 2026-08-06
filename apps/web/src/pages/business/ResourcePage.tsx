@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource, deleteResource, getDashboard, searchResource } from '@/api/business';
@@ -16,6 +17,9 @@ interface ResourcePageProps {
   route: string;
   fields: ResourceField[];
   kind?: 'master' | 'document' | 'dashboard' | 'report';
+  /** Job CTA — for documents, prefer Wizard over inline Create. */
+  createLabel?: string;
+  jobPath?: string;
 }
 
 function toCamelKey(key: string): string {
@@ -29,7 +33,15 @@ function readField(row: Record<string, unknown>, key: string): unknown {
   return undefined;
 }
 
-export function ResourcePage({ title, description, route, fields, kind = 'master' }: ResourcePageProps) {
+export function ResourcePage({
+  title,
+  description,
+  route,
+  fields,
+  kind = 'master',
+  createLabel,
+  jobPath,
+}: ResourcePageProps) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
@@ -37,6 +49,9 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
     Object.fromEntries(fields.map((f) => [f.key, f.key === 'Status' ? 'Active' : ''])),
   );
   const [error, setError] = useState<string | null>(null);
+  const actionLabel = createLabel ?? (kind === 'document' ? t('wizard.startJob') : t('create'));
+  /** Documents never use shared Create form; masters may inline-add. */
+  const useJobWizard = kind === 'document' || Boolean(jobPath);
 
   const listQuery = useQuery({
     queryKey: ['business', route, q],
@@ -109,30 +124,48 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
         <p className="mt-1 text-[var(--text-secondary)]">{description}</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('create')}</CardTitle>
-          <CardDescription>{t('createQuick')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 md:grid-cols-3">
-            {fields.map((field) => (
-              <label key={field.key} className="space-y-1 text-sm">
-                <span className="text-[var(--text-secondary)]">{field.label}</span>
-                <Input
-                  value={form[field.key] ?? ''}
-                  type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                />
-              </label>
-            ))}
-          </div>
-          <Button type="button" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-            {createMutation.isPending ? t('saving') : t('create')}
-          </Button>
-          {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
-        </CardContent>
-      </Card>
+      {useJobWizard ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{actionLabel}</CardTitle>
+            <CardDescription>{t('wizard.jobInsteadOfCreate')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {jobPath ? (
+              <Link to={jobPath}>
+                <Button type="button">{actionLabel}</Button>
+              </Link>
+            ) : (
+              <p className="text-sm text-[var(--text-secondary)]">{t('wizard.configureJobPath')}</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>{actionLabel}</CardTitle>
+            <CardDescription>{t('entity.createHint')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              {fields.map((field) => (
+                <label key={field.key} className="space-y-1 text-sm">
+                  <span className="text-[var(--text-secondary)]">{field.label}</span>
+                  <Input
+                    value={form[field.key] ?? ''}
+                    type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                    onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                  />
+                </label>
+              ))}
+            </div>
+            <Button type="button" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+              {createMutation.isPending ? t('saving') : t('save')}
+            </Button>
+            {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

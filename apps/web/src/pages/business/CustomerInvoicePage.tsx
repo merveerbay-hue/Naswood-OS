@@ -7,6 +7,7 @@ export function CustomerInvoicePage() {
       description="TASK-043 · Sales MVP"
       route="customer-invoices"
       kind="document"
+      createLabel="Fatura kes"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'CustomerCode', label: 'CustomerCode', type: 'string' as const },

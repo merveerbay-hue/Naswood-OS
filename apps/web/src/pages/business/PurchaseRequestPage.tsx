@@ -7,6 +7,7 @@ export function PurchaseRequestPage() {
       description="TASK-027 · Purchasing MVP"
       route="purchase-requests"
       kind="document"
+      createLabel="Satınalma talebi aç"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'Requester', label: 'Requester', type: 'string' as const },

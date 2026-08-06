@@ -7,6 +7,8 @@ export function PurchaseGoodsReceiptPage() {
       description="TASK-031 · Purchasing MVP"
       route="purchase-goods-receipts"
       kind="document"
+      createLabel="Mal kabul başlat"
+      jobPath="/inventory/operations/receive"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'PurchaseOrderNumber', label: 'PurchaseOrderNumber', type: 'string' as const },

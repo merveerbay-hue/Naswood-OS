@@ -7,6 +7,8 @@ export function SalesOrderPage() {
       description="TASK-040 · Sales MVP"
       route="sales-orders"
       kind="document"
+      createLabel="Sipariş gir"
+      jobPath="/sales/sales-orders/enter"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'CustomerCode', label: 'CustomerCode', type: 'string' as const },

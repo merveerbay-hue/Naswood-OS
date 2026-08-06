@@ -20,7 +20,13 @@ interface EntityListScreenProps {
   route: string;
   fields: EntityField[];
   detailPath?: (id: string) => string;
+  /** Job CTA label — never bare “Yeni”. */
   createLabel?: string;
+  /**
+   * When set, CTA navigates to a process Wizard (no shared inline Create form).
+   * Authority: docs/13_Design/Common/Screen_Types.md § Create matrix.
+   */
+  jobPath?: string;
 }
 
 function toCamelKey(key: string): string {
@@ -42,9 +48,11 @@ export function EntityListScreen({
   fields,
   detailPath,
   createLabel,
+  jobPath,
 }: EntityListScreenProps) {
   const { t } = useI18n();
   const actionLabel = createLabel ?? t('new');
+  const isJobCta = Boolean(jobPath);
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -97,12 +105,18 @@ export function EntityListScreen({
           <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>
         </div>
-        <Button type="button" onClick={() => setShowCreate((v) => !v)}>
-          {showCreate ? t('close') : actionLabel}
-        </Button>
+        {isJobCta && jobPath ? (
+          <Link to={jobPath}>
+            <Button type="button">{actionLabel}</Button>
+          </Link>
+        ) : (
+          <Button type="button" onClick={() => setShowCreate((v) => !v)}>
+            {showCreate ? t('close') : actionLabel}
+          </Button>
+        )}
       </div>
 
-      {showCreate ? (
+      {!isJobCta && showCreate ? (
         <Card>
           <CardHeader>
             <CardTitle>{actionLabel}</CardTitle>

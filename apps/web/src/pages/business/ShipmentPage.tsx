@@ -7,6 +7,7 @@ export function ShipmentPage() {
       description="TASK-041 · Sales MVP"
       route="shipments"
       kind="document"
+      createLabel="Sevkiyat planla"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'SalesOrderNumber', label: 'SalesOrderNumber', type: 'string' as const },

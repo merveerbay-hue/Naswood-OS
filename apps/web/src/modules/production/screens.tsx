@@ -86,6 +86,7 @@ export function ProductionOrderListPage() {
       fields={codeNameStatus}
       detailPath={(id) => `/production/planning/orders/${id}`}
       createLabel={t('production.newOrder')}
+      jobPath="/production/planning/plan"
     />
   );
 }
@@ -117,6 +118,7 @@ export function WorkOrderListPage() {
       route="work-orders"
       fields={codeNameStatus}
       createLabel={t('production.newWo')}
+      jobPath="/production/planning/dispatch"
     />
   );
 }
@@ -266,6 +268,7 @@ export function ConsumptionPage() {
       route="material-consumptions"
       fields={codeNameStatus}
       createLabel={t('production.newConsumption')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }
@@ -281,6 +284,7 @@ export function ConfirmationPage() {
       route="production-confirmations"
       fields={codeNameStatus}
       createLabel={t('production.newConfirmation')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }
@@ -296,6 +300,7 @@ export function WipPage() {
       route="wips"
       fields={codeNameStatus}
       createLabel={t('production.newWip')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }
@@ -311,6 +316,7 @@ export function PackagingPage() {
       route="packagings"
       fields={codeNameStatus}
       createLabel={t('production.newPackaging')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }
@@ -326,6 +332,7 @@ export function FinishedGoodsPage() {
       route="finished-goods"
       fields={codeNameStatus}
       createLabel={t('production.newFg')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }
@@ -341,6 +348,7 @@ export function ScrapPage() {
       route="scraps"
       fields={codeNameStatus}
       createLabel={t('production.newScrap')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }
@@ -356,6 +364,7 @@ export function ReworkPage() {
       route="reworks"
       fields={codeNameStatus}
       createLabel={t('production.newRework')}
+      jobPath="/production/execution/operator-terminal"
     />
   );
 }

@@ -7,6 +7,7 @@ export function LeadPage() {
       description="TASK-037 · Sales MVP"
       route="leads"
       kind="master"
+      createLabel="Lead kaydet"
       fields={[
     { key: 'Code', label: 'Code', type: 'string' as const },
     { key: 'Name', label: 'Name', type: 'string' as const },

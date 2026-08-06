@@ -7,6 +7,8 @@ export function PurchaseOrderPage() {
       description="TASK-030 · Purchasing MVP"
       route="purchase-orders"
       kind="document"
+      createLabel="Sipariş ver"
+      jobPath="/purchasing/purchase-orders/place"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'SupplierCode', label: 'SupplierCode', type: 'string' as const },

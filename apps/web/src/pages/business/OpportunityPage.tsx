@@ -7,6 +7,7 @@ export function OpportunityPage() {
       description="TASK-038 · Sales MVP"
       route="opportunities"
       kind="document"
+      createLabel="Fırsat aç"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'CustomerCode', label: 'CustomerCode', type: 'string' as const },

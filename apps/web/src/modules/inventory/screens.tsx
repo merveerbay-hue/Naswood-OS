@@ -196,6 +196,7 @@ export function GoodsReceiptListPage() {
       fields={useInvFields().receipt}
       detailPath={(id) => `/inventory/operations/goods-receipts/${id}`}
       createLabel={t('inventory.newReceipt')}
+      jobPath="/inventory/operations/receive"
     />
   );
 }
@@ -225,6 +226,7 @@ export function GoodsIssueListPage() {
       route="goods-issues"
       fields={useInvFields().issue}
       createLabel={t('inventory.newIssue')}
+      jobPath="/inventory/operations/issue"
     />
   );
 }
@@ -239,6 +241,7 @@ export function TransferListPage() {
       route="transfers"
       fields={useInvFields().transfer}
       createLabel={t('inventory.newTransfer')}
+      jobPath="/inventory/operations/transfer"
     />
   );
 }
@@ -253,6 +256,7 @@ export function CycleCountListPage() {
       route="inventory-counts"
       fields={useInvFields().count}
       createLabel={t('inventory.newCount')}
+      jobPath="/inventory/counts/start"
     />
   );
 }

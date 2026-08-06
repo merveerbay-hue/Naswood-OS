@@ -7,6 +7,7 @@ export function RfqPage() {
       description="TASK-028 · Purchasing MVP"
       route="rfqs"
       kind="document"
+      createLabel="Teklif iste"
       fields={[
     { key: 'Number', label: 'Number', type: 'string' as const },
     { key: 'Title', label: 'Title', type: 'string' as const },
