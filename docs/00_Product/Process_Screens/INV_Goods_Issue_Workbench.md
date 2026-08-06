@@ -3,13 +3,16 @@
 **Module:** Inventory  
 **Workspace:** Operations  
 **Screen type:** **Workbench** (warehouse execution) — `Screen_Types.md` · `UI_Patterns.md`  
-**Version:** 2.0 — Master Prompt v2.0 aligned  
+**Version:** 3.1 — Master Prompt v3.0 + Manual Package Selection / Smart Scan  
+
 **Status:** Product Architect — authoritative issue UX  
 **Supersedes as primary UX:** linear [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) (retained as spine)  
+**Inventory Workbench Design Standard:** [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md) — GI is first full consumer of v3.0  
 **Stock truth:** `Inventory_Architecture.md` · `Inventory_Workflow.md`  
 **Identity:** `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Material_Genealogy.md`  
 **Evidence / Document Library / Export:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md)  
 **Package Allocation Workspace (shared pattern):** [`Package_Allocation_Workspace.md`](../../13_Design/99_Shared/Package_Allocation_Workspace.md) — GI is first consumer; same UX on Receiving · Transfer · Production · Shipping · Count  
+**Audit / Approvals:** `Audit_Log.md` · `Approval_Workflow.md`  
 **Package / barcode immutability (format refs):** `Barcode_QR_Model.md` · `Barcode_Strategy.md` · `Naming_Standards.md` · Packaging module  
 **Design program:** `Inventory_Design_Program.md` § 7 (PA-directed ahead of Putaway)
 
@@ -26,12 +29,23 @@
 | **2.0.3** | **Multiple Package Picking** · Package Allocation Grid · mix AI Validation (lot/quality/moisture/dims/customer) · edit/add/remove packages |
 | **2.0.4** | **Package Allocation Workspace** = center of Workbench (not a simple table) · live qty/volume/weight/pkg count · barcode · DnD · keyboard · Excel-like · sort/filter/group · bulk · AI/manual · live validation · inventory sync |
 | **2.0.5** | **Damage & Scrap during picking** · Take From Package (Good/Damaged/Hold/Scrap/Rework) · damage/scrap evidence · separate Scrap/Hold txns · **Package Closing Checklist** · PKG-00254 120→40→37+2+1+80 |
+| **3.0** | Master Prompt v3.0 · **COMPLIANCE BY DESIGN** · composes `Inventory_Workbench_Design_Standard.md` · canonical package grid columns (m³ · dates · supplier · photos · reservation) · package status + Quality Hold / Damaged · Audit Trail · Revision Management · Electronic Approvals · Immutable posted txns (Reverse / Correction) · compliance frameworks (ISO / FSC / PEFC / TSE) |
+| **3.1** | **Manuel Paket Seç** replaces Yoksay/IGNORE AI as primary CTA · Manual Package Selection = Scan **or** Package Number Search (not warehouse tree) · **Smart Scan** one-screen confirm + **Paketi Kullan** · Warehouse Explorer optional advanced only |
 
-v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
+v3 **extends** Inventory Architecture / Workflow / Screens / Shared PAW / Evidence / Design Standard — it does not replace stock ledger, numbering, or disposition algorithms.
 
 ---
 
 ## Absolute rules
+
+```text
+COMPLIANCE BY DESIGN (Master Prompt v3.0)
+─────────────────────────────────────────
+Built for real manufacturing · ISO / TSE / FSC / PEFC / customer audits.
+Evidence in the flow · immutable posted history · system-generated IDs ·
+continuous genealogy. Controls are structural — not optional checklists.
+Authority: Inventory_Workbench_Design_Standard.md
+```
 
 ```text
 This is NOT a CRUD screen.
@@ -40,13 +54,14 @@ This is NOT a database editor.
 This is an AI-powered Warehouse Operations Workbench.
 Inventory quantities are NEVER edited directly.
 Every Goods Issue creates Inventory Transaction(s).
+Posted Inventory Transactions are NEVER editable → Reverse / Correction only.
 ```
 
 ```text
+Operator: Scan · Verify · Review · Approve
+System:   Think · Compare · Recommend · Validate · Warn · Generate · Track
 Never allow issuing materials without a business document
 (except permission-controlled Manual Issue).
-AI prepares · Operator scans · reviews · verifies · confirms.
-The system calculates · validates · warns · generates · tracks.
 ```
 
 ```text
@@ -66,13 +81,22 @@ never by overwriting Package IDs.
 ```text
 AI VALIDATION LAW
 ─────────────────────────────────────────────────────────────
-Even in Override Mode, AI continues validating business rules.
-Operator may override location / package selection.
+After Manuel Paket Seç (scan or number search), AI continues validating.
+Operator may change package selection.
 Operator may NOT violate validation rules without explicit authorization.
 ```
 
-**Forbidden:** Bare Save form · typed Material / Lot / Package / Pallet / WH / Location / GI / txn / MI codes · orphan issue · reusing package barcodes · bypassing AI validation without authorization  
-**Required:** Business document → load demand → AI pick (default) → **Accept** or **Override** → scan / verify (AI validation always on) → evidence → quality → destination → review (incl. overrides) → **Post**
+```text
+MANUAL SELECTION LAW (v3.1)
+─────────────────────────────────────────────────────────────
+Default manual path is NOT Warehouse Explorer.
+Preferred: Scan barcode/QR at the physical package (Smart Scan).
+Fallback: Search existing Package / Barcode / QR number.
+Browse warehouse tree only if operator explicitly requests it.
+```
+
+**Forbidden:** Bare Save form · inventing Material / Lot / Package / Pallet / WH / Location / GI / txn / MI codes · orphan issue · reusing package barcodes · bypassing AI validation without authorization · forcing warehouse-tree browse after rejecting AI  
+**Required:** Business document → load demand → AI pick (default) → **Kabul Et** or **Manuel Paket Seç** (scan / search + Smart Scan) → verify (AI validation always on) → evidence → quality → destination → review (incl. manual selections) → **Post**
 
 ---
 
@@ -81,21 +105,21 @@ Operator may NOT violate validation rules without explicit authorization.
 | # | Question | Answer |
 |---|----------|--------|
 | 1 | **Who is the user?** | Warehouse Operator (picker) · Warehouse Supervisor · Inventory Controller (exceptions) · optionally Production / Maintenance / Shipping coordinators as request owners |
-| 2 | **Real-life job?** | Takes approved demand, goes to bin, picks correct package/lot/qty (often **partial package**), may override AI via Warehouse Explorer, proves exceptions, confirms issue so stock ↓ and reservation clears — **same physical barcode stays on the package** |
+| 2 | **Real-life job?** | Takes approved demand, forklift to package, **scans barcode** (or types package no. if unreadable), AI validates, picks qty (often **partial**), confirms issue so stock ↓ — **same physical barcode stays on the package** |
 | 3 | **Documents?** | Source: Production Order · Maintenance WO · Sales Order · Sample / R&D / Scrap / Transfer / Internal · Manual GI. Output: GI · picking list · loading note (if ship) · digital file / Document Library |
 | 4 | **Photos?** | Damage / missing / broken package · loading · optional video / voice — Evidence Panel → permanent archive |
 | 5 | **AI support?** | FIFO/FEFO · reservation · quality · customer reqs · WH rules · location optimize · package integrity · availability · pick route · wrong material/dims/species/moisture/quality/package/lot detect |
 | 6 | **Auto-generated?** | GI · inventory txn(s) · histories · audit · scan/validation/override history · genealogy · remaining package qty/volume/weight/status · suggested pick |
-| 7 | **Never manual?** | Material Code · Lot · Package · Pallet · WH/Location codes · GI · txn · MI strings · free-hand stock balance edit · **new package number on partial issue** |
-| 8 | **User decisions?** | Which demand · **Kabul Et** or **Yoksay** (Explorer) · issue qty within package remaining · destination · evidence when needed · **Approve Post** · raise NCR |
+| 7 | **Never manual?** | Inventing Material / Lot / Package / Pallet / WH/Location / GI / txn / MI codes · free-hand stock edit · **new package number on partial issue** — **allowed:** scan; **fallback:** search existing package/barcode/QR number |
+| 8 | **User decisions?** | Which demand · **Kabul Et** or **Manuel Paket Seç** (scan / search) · issue qty · disposition · destination · evidence · **Approve Post** · raise NCR |
 
 ---
 
 ## Job to be done
 
-> Depocu, **iş belgesine** bağlı talebe karşı doğru paketi / lotu tarar; AI önerisini **Accept** eder veya **Override** ile Warehouse Explorer’dan seçer; **kısmi paket** çıkışında kalan miktarı sistem günceller (politika varsa otomatik split + izlenebilirlik); Override’da bile AI validation çalışır; **Post** ile stok ve genealogy güncellenir.
+> Depocu, **iş belgesine** bağlı talebe karşı AI önerisini **Kabul Et** eder veya **Manuel Paket Seç** ile sahada barkodu okutur (okunmuyorsa paket no arar); **Smart Scan** ile tek ekranda doğrular ve **Paketi Kullan** der; **kısmi paket**te kalan miktar güncellenir; manuel seçimde de AI validation çalışır; **Post** ile stok ve genealogy güncellenir.
 
-**Not the job:** Create a GoodsIssue row · type inventory down · bypass validation · invent package codes.
+**Not the job:** Create a GoodsIssue row · browse Depo→Zone→Rack tree after rejecting AI · bypass validation · invent package codes.
 
 ## CTA
 
@@ -114,14 +138,19 @@ Entry: Command Center queues · Operations · Production / Maintenance / Sales d
 
 | Topic | Authority |
 |-------|-----------|
+| **Compliance by Design · Workbench laws** | [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md) |
 | Identifiers | `Document_Numbering.md` |
 | Material Identity / Lot (Package ≠ MI) | `Material_Identity_Architecture.md` |
 | Genealogy | `Material_Genealogy.md` |
 | Stock / reservations / txn immutability | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
 | Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
+| Package Allocation Workspace | `Package_Allocation_Workspace.md` |
+| Audit trail engine | `Audit_Log.md` |
+| Electronic approvals | `Approval_Workflow.md` |
 | Package code immutability / QR | `Barcode_QR_Model.md` · `Barcode_Strategy.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
-| Warehouse Explorer (browse alternate bins) | Design Program #4 — **consume when landed**; do not redefine Explorer here |
+| Manual Package Selection · Smart Scan | `Inventory_Workbench_Design_Standard.md` § 5–5b |
+| Warehouse Explorer (optional advanced browse) | Design Program #4 — **not** the default after rejecting AI |
 | Demand sources | Production / Maintenance / Sales / Quality process docs (reference only) |
 
 ```text
@@ -177,10 +206,11 @@ Operational command center — compose:
 | Warehouse Map | AI route + current bin (context) |
 | Material demand strip | Required lines · reserved · available |
 | AI Recommendation Panel | Seed / reset allocation |
-| Warehouse Explorer | Drag source / add packages (override) |
+| Manual Package Selection / Smart Scan | Scan or number search → one-screen confirm |
+| Warehouse Explorer | Optional advanced browse only (explicit request) |
 | Evidence Panel | Photos · video · voice · docs |
 | Document Viewer / Library | Session digital file |
-| Sticky Action Bar | Draft · Back · Next · Kabul Et · Yoksay · NCR · **Post** |
+| Sticky Action Bar | Draft · Back · Next · Kabul Et · Manuel Paket Seç · NCR · **Post** |
 
 Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan planning grids — adapted to NOS laws.
 
@@ -193,7 +223,7 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 │          │ Interactive grid · inline qty · bulk select   │ Explorer pool │
 │          │ Live: Qty · Vol · Weight · #Pkg               │ Overrides     │
 ├──────────┴───────────────────────────────────────────────┴───────────────┤
-│ STICKY: Draft · Back · Next · Kabul Et · Yoksay · NCR · Post             │
+│ STICKY: Draft · Back · Next · Kabul Et · Manuel Paket Seç · NCR · Post   │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -204,13 +234,13 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 ```text
 1 Select business document
 2 Load material requirements
-3 AI picking recommendation → Kabul Et  OR  Yoksay (Override → Explorer)
-4 Package Allocation Workspace (interactive grid · live calcs · scan/DnD)
-5 Verify material & package  (AI Validation — also in Override)
+3 AI picking recommendation → Kabul Et  OR  Manuel Paket Seç (Scan / Number Search + Smart Scan)
+4 Package Allocation Workspace (interactive grid · live calcs · scan)
+5 Verify material & package  (AI Validation — also after manual select)
 6 Evidence collection
 7 Quality validation
 8 Loading / production destination
-9 Final review (+ Override History)
+9 Final review (+ Manual Selection / Override History)
 10 Posting → Inventory Transaction(s) + history + genealogy + Evidence Archive
 ```
 
@@ -289,38 +319,82 @@ Operator chooses exactly one path:
 | Control (TR) | Control (EN) | Result |
 |--------------|--------------|--------|
 | **✓ Kabul Et** | **Accept** / Use AI recommendation | Proceed with AI default |
-| **✓ Yoksay** | **Ignore** | Enter Override Mode (Warehouse Explorer) |
+| **✓ Manuel Paket Seç** | **Manual Package Selection** | Open Manual Package Selection (scan / search) |
 
-Also acceptable TR labels: **AI Önerisini Kullan** (= Kabul Et) · **Yoksay**.
+Also acceptable: **AI Önerisini Kullan** (= Kabul Et).  
+Do **not** use “Yoksay / IGNORE AI” as the primary button label — **Manuel Paket Seç** is the operator language (Design Standard § 5).
 
-**Gate:** Each line has **Kabul Et** recorded **or** an audited **Yoksay** override selection.
+**Gate:** Each line has **Kabul Et** recorded **or** an audited **Manuel Paket Seç** selection (method: scan | search | optional browse).
 
 ---
 
-### Override Mode
+### Manual Package Selection
 
-When **Yoksay** is selected:
+**Authority:** Design Standard § 5–5b.  
+When AI recommendation is not used, **do not** open Warehouse Explorer by default.
 
-1. Open **Warehouse Explorer** (browse — do not redefine Explorer UX; Design Program #4).  
-2. Operator browses inventory:
+Real life:
 
 ```text
-Depo / Warehouse
-    ↓
-Zone
-    ↓
-Rack
-    ↓
-Shelf
-    ↓
-Package
+Forklift → package → scan barcode → system validates
+OR barcode unreadable → type package number → system finds → validates
 ```
 
-3. Operator may manually choose another package (scan or Explorer pick — name-first; **no typed codes**).  
-4. **Every override shall be logged** in audit history (actor · timestamp · AI proposal · chosen WH/location/package · reason if policy requires).
+UI presents **only two methods**:
 
-**AI Validation continues in Override Mode** (see § AI Validation).  
-Override changes **selection**, not the right to break business rules.
+```text
+┌──────────────────────────────────┐
+│ Paketi Nasıl Seçmek İstiyorsunuz? │
+│ ◉ Barkod / QR Oku                │
+│ ◉ Paket Numarası Ara             │
+└──────────────────────────────────┘
+```
+
+#### 1 — Scan Barcode / QR (preferred)
+
+Operator scans physical package → system retrieves → **Smart Scan** → AI validates Material · Dimensions · Species · Quality · Lot · Reservation · Customer Rules → **Paketi Kullan**.
+
+#### 2 — Search Package Number (fallback)
+
+If barcode cannot be scanned, operator searches by **Package Number · Barcode Number · QR Number** → same retrieval · Smart Scan · validations.
+
+```text
+Operators shall never browse complex warehouse trees unless explicitly requested
+(e.g. link: “Depoyu Gez” — optional advanced, Design Program #4).
+Barcode scanning is always preferred. Manual search is the fallback.
+```
+
+**Every manually selected package** is still validated by the AI engine before issue.  
+**Every manual selection** is logged (actor · timestamp · AI proposal · chosen package · method).
+
+---
+
+### Smart Scan (Akıllı Barkod Tarama)
+
+On successful scan or number search, show **one confirmation screen** (handheld-first) — not a second navigation hop:
+
+```text
+✓ Paket Doğru
+📦 PKG-001245
+🌲 Sarıçam
+📏 26×140×4000
+📦 120 Adet
+📐 5.240 m³
+📍 WH01 / A03 / R05
+🟢 Kalite Uygun
+🟢 Müşteriye Uygun
+🟢 Lot Uygun
+
+[ Paketi Kullan ]
+```
+
+| Outcome | Behavior |
+|---------|----------|
+| All green | **Paketi Kullan** adds package to Package Allocation Workspace |
+| Soft warning (e.g. reserved for other customer) | Show ⚠ · “Devam etmek istiyor musunuz?” · confirm / waiver per policy |
+| Hard fail | Block use until authorized waiver |
+
+Operator adds the package with **one tap** — no list browsing required for the common path.
 
 ---
 
@@ -349,8 +423,8 @@ The operator may:
 | **Accept** the recommendation (**Kabul Et**) |
 | **Modify** package quantities (Selected Quantity on the grid) |
 | **Remove** packages from the allocation |
-| **Add** additional packages (Explorer / scan) |
-| **Ignore** AI recommendations (**Yoksay**) and build the allocation manually |
+| **Add** additional packages (**Manuel Paket Seç** — scan / search / Smart Scan) |
+| Build allocation manually via **Manuel Paket Seç** (not warehouse tree) |
 
 Totals and remaining quantities recalculate in real time.  
 Each allocated package still follows Partial Package Usage (barcode unchanged).
@@ -389,7 +463,7 @@ similar to professional warehouse planning software.
 | Grouping | By WH · Zone · Lot · Quality (optional) |
 | Bulk package selection | Multi-select → set qty / remove / waive |
 | AI recommendations | Seed grid · Reset to AI · highlight deltas |
-| Manual override | Yoksay / Explorer / DnD / edit |
+| Manual override | Manuel Paket Seç · Smart Scan · optional browse |
 | Live validation | Mix + per-row rules as operator types |
 | Inventory sync | Always synchronized with warehouse inventory (available qty live) |
 
@@ -406,18 +480,33 @@ similar to professional warehouse planning software.
 
 ### Columns (each row = one package)
 
+Canonical set per [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md) § 7 — show/hide by role/config; GI default shows ops-critical columns first.
+
 | Column | Content |
 |--------|---------|
 | Package Number | Display-only identity |
+| Material Identity | Display-only |
 | Warehouse | Name-first |
 | Location | Zone / rack / shelf / bin |
 | Lot | Display-only |
-| Material Identity | Display-only |
-| Species · Dimensions · Quality · Moisture | Spec columns |
+| Species | Spec |
+| Dimensions | Spec |
+| Quality Grade | Spec |
+| Moisture | Spec |
 | Available Quantity | Live from inventory |
 | **Selected Quantity** | Inline editable (partial OK) |
 | Remaining Quantity | Auto |
-| Volume / Weight | Auto (selected & remaining) |
+| Available m³ | Live / calculated |
+| Selected m³ | Auto |
+| Remaining m³ | Auto |
+| Weight | Selected & remaining |
+| Package Status | Available · Reserved · Picking · … |
+| Production Date | When known |
+| Receiving Date | From receiving root |
+| Supplier | Name-first from receiving / PO |
+| Photos | Thumbnail / open gallery |
+| Reservation Status | Free / reserved / … |
+| Customer Reservation | When bound to customer demand |
 
 ### Design priority
 
@@ -569,27 +658,34 @@ Operatör: **✓ Kabul Et**
 
 ---
 
-### Senaryo 2 — Override (çok kritik)
+### Senaryo 2 — Manuel Paket Seç + Smart Scan (çok kritik)
 
-Operatör sahada biliyor ki:
-
-- **Paket B** üste yakın / forklift orada, **veya**
-- **Paket D** müşteriye daha uygun.
+Operatör sahada biliyor ki **Paket D** forklift yanında / müşteriye daha uygun.
 
 UI net iki seçenek sunar:
 
 ```text
-[ AI Önerisini Kullan ]     (= Kabul Et)
-[ Yoksay ]                  (= Override)
+[ Kabul Et ]
+[ Manuel Paket Seç ]
 ```
 
-**Yoksay** → Warehouse Explorer açılır:
+**Manuel Paket Seç** → yöntem seçimi (Explorer **açılmaz**):
 
 ```text
-Depo → Zone → Rack → Shelf → Package
+◉ Barkod / QR Oku     ← tercih
+◉ Paket Numarası Ara  ← barkod okunmuyorsa
 ```
 
-Operatör paketi seçer. Seçim audit’e yazılır. **AI Validation devam eder** (yanlış malzeme / nem / kalite / müşteri speki vb. yetkisiz geçilemez).
+Operatör PKG-D barkodunu okutur → **Smart Scan**:
+
+```text
+✓ Paket Doğru · PKG-… · spek · lokasyon · kalite/lot/müşteri bayrakları
+[ Paketi Kullan ]
+```
+
+veya soft uyarı: “Bu paket farklı müşteriye rezervli. Devam?”  
+
+Seçim audit’e yazılır. **AI Validation devam eder**.
 
 ---
 
@@ -612,13 +708,13 @@ Sistem Remaining / Hold / Scrap txn’lerini otomatik dengeler — paket kimliğ
 
 ### 4 — Picking / package selection
 
-Navigate along recommended route (or Explorer path). Support: Barcode · QR · RFID · Scanner · Voice (future).
+Follow AI route **or** use Manual Package Selection at the physical package. Support: Barcode · QR · RFID · Scanner · Voice (future). Prefer **Smart Scan** confirm.
 
-Every scan runs through **AI Validation** against demand + proposal/override + reservation.
+Every scan/search runs through **AI Validation** against demand + proposal/manual selection + reservation.
 
 Operator confirms **issue quantity** (may be less than package available — see Partial Package Picking).
 
-**Gate:** Scans recorded for required identity level; issue qty > 0 and ≤ available (and ≤ reserved when reservation-bound); AI Validation clear or authorized waiver.
+**Gate:** Scans/searches recorded; issue qty > 0 and ≤ available (and ≤ reserved when reservation-bound); AI Validation clear or authorized waiver.
 
 ---
 
@@ -677,7 +773,7 @@ Display:
 | Evidence |
 | Warnings |
 | AI Recommendations |
-| **Override History** |
+| **Manual Selection History** |
 
 Operator confirms.
 
@@ -806,7 +902,7 @@ History is always preserved. Multiple Goods Issues may consume the same package 
 
 ## AI Validation
 
-**Even in Override Mode and after grid edits**, AI **shall continue validating**.
+**Even after Manuel Paket Seç and after grid edits**, AI **shall continue validating**.
 
 ### Per-package / demand checks
 
@@ -841,9 +937,9 @@ but may not violate business validation rules unless explicitly authorized.
 |------|----------------|
 | Kabul Et | On — confirms allocation matches recommendation + demand |
 | Grid modify / add / remove | On — re-validates mix + per-row rules |
-| Yoksay (Override) | **Still on** — validates manually chosen packages |
+| Manuel Paket Seç | **Still on** — validates manually chosen packages |
 
-Authorization to waive = Supervisor / Quality / policy role · always audited · visible in Override History.
+Authorization to waive = Supervisor / Quality / policy role · always audited · visible in Manual Selection History.
 
 ---
 
@@ -858,12 +954,16 @@ Authorization to waive = Supervisor / Quality / policy role · always audited ·
 
 ### Package Status
 
+Vocabulary per Design Standard § 10 (GI uses the full set):
+
 | Status | Meaning |
 |--------|---------|
 | Available | Pickable |
 | Reserved | Bound to demand |
-| In Picking | Active GI session |
+| Picking | Active GI session |
 | Partially Used | Remaining > 0 after one or more issues |
+| Quality Hold | Blocked for Quality disposition |
+| Damaged | Damaged classification / quarantine path |
 | Consumed | Remaining = 0 (fully issued) |
 | Closed | Business-closed (policy) |
 
@@ -873,15 +973,19 @@ Package ≠ Material Identity. Package **links to** MI (and may contain / repres
 
 ## Traceability
 
+**Authority:** Design Standard § 17 · `Material_Genealogy.md` · MI Architecture.
+
 The system shall always reconstruct:
 
-| Question | Answered by |
-|----------|-------------|
-| Which Receiving created this package / MI? | Receiving root + txn history |
-| Which Supplier delivered it? | Receiving / PO link |
-| Which Production Order consumed it? | GI → demand reference |
-| Which Finished Product contains it? | Genealogy |
-| Which Customer received it? | SO / shipment chain |
+| Node | Answered by |
+|------|-------------|
+| Supplier | Receiving / PO link |
+| Receiving Operation | Receiving root + txn history |
+| Warehouse · Location | Stock position + txn |
+| Package | Package Identity (unchanged on partial) |
+| Production Order | GI → demand reference (when prod) |
+| Finished Product | Genealogy |
+| Shipment · Customer | SO / shipment chain |
 
 ```text
 Receiving root MI → Lot / Package → Reservation (if any) → Goods Issue txn(s) →
@@ -889,9 +993,75 @@ Production Order / WO / SO → (later) FG / Customer shipment
 ```
 
 ```text
+Complete genealogy is mandatory.
 Traceability relies on Inventory Transactions and Material Genealogy.
 NOT by changing Package IDs.
 ```
+
+---
+
+## Audit Trail
+
+**Engine:** `Audit_Log.md` · **Composition:** Design Standard § 13.
+
+Every GI action is recorded; nothing is overwritten. At minimum seal into audit:
+
+| Event |
+|-------|
+| Created By / Created Date |
+| Modified By / Modification Reason (draft) |
+| AI Accept / Manuel Paket Seç (scan|search|browse) + Smart Scan confirm |
+| Scan / verify / validation waiver |
+| Disposition (Good / Damaged / Hold / Scrap / Rework) |
+| Evidence attach |
+| Electronic approval |
+| Posting / Completion / Archive |
+
+Manual Selection History (§ below) is the operator-facing slice of the same append-only truth.
+
+---
+
+## Revision Management
+
+```text
+Existing posted records shall never be edited silently.
+Corrections create revisions and/or Reverse / Correction transactions.
+```
+
+Each revision stores: **Original Value · Corrected Value · Reason · User · Date · Approval** (when required).
+
+Draft Workbench state may change until Post. After Post → § Immutable Transactions.
+
+Compose with `Approval_Workflow.md` Return for Revision when approval is configured.
+
+---
+
+## Electronic Approvals
+
+**Engine:** `Approval_Workflow.md` · Design Standard § 15.
+
+Configurable electronic approvals on Goods Issue (examples):
+
+| Role | Typical gate |
+|------|----------------|
+| Warehouse Operator | Execute pick / request Post |
+| Supervisor | Validation waiver · shortage · override policy |
+| Quality | Hold release · damage disposition path |
+| Warehouse Manager | Manual Issue · high-value / exception Post |
+
+Approval history is permanent and shown on Final Review + Document Library Timeline.
+
+---
+
+## Immutable Transactions
+
+```text
+Posted Inventory Transactions are never editable.
+Mistake → Reverse Transaction and/or Correction Transaction.
+Never modify history. Never Edit Posted GI as a form.
+```
+
+Aligns with `Inventory_Architecture.md`. Workbench UX after Post: open Reverse / Correction **new** controlled flow (permissioned), not silent field overwrite.
 
 ---
 
@@ -909,22 +1079,36 @@ Support (by Shared law — do not redefine): Preview · Download · ZIP · Print
 
 ## Export
 
-Support Excel · CSV · PDF.
+Support Excel · CSV · PDF — **audit-ready** (Design Standard § 12 · Shared Evidence/Export).
 
 Generate from library / reports (formats & columns → Shared law):
 
 | Export |
 |--------|
 | Goods Issue Report |
-| Picking List |
-| Inventory Movement Report |
+| Inventory Transaction Report |
 | Material Consumption Report |
-| Transaction History |
+| Picking Report / Picking List |
 | Difference Report |
+| Inventory History / Transaction History |
 
 ---
 
-## Override History
+## Compliance
+
+Compatible with ISO 9001 · ISO 14001 · ISO 45001 · ISO 27001 · FSC Chain of Custody · PEFC · TSE · Customer Quality Audits.
+
+```text
+Every GI session produces records suitable for internal and external audits:
+digital file · Inventory Transactions · disposition evidence · approvals · genealogy.
+```
+
+FSC/PEFC claim rules live in Quality / CoC docs; GI **preserves** certificate evidence and MI/Package links without breaking the chain.  
+Authority: Design Standard § 19.
+
+---
+
+## Manual Selection History
 
 Append-only panel (Context + Final Review), sealed into audit on Post:
 
@@ -934,6 +1118,8 @@ Append-only panel (Context + Final Review), sealed into audit on Post:
 | Who |
 | AI recommendation (WH · location · package · qty) |
 | Operator selection |
+| Method (scan · number search · optional browse) |
+| Smart Scan outcome (ok · soft warning · hard fail / waiver) |
 | Reason (if policy requires) |
 | Authorization (if waiver) |
 
@@ -945,33 +1131,33 @@ Append-only panel (Context + Final Review), sealed into audit on Post:
 |-------|------|
 | 1 Document | Valid demand (or Manual + permission + reason) |
 | 2 Materials | ≥1 open line with remaining qty |
-| 3 AI | **Kabul Et** **or** logged **Yoksay** (Explorer override) |
+| 3 AI | **Kabul Et** **or** logged **Manuel Paket Seç** (scan / search + Smart Scan) |
 | 4 Picking | Scan OK · issue qty ≤ available · AI Validation clear (or authorized) |
 | 5 Verify | AI Validation results green or audited waiver |
 | 6 Evidence | Policy-required evidence present |
 | 7 Quality | No block / hold / quarantine / expired without release |
 | 8 Destination | Required destination assigned |
-| 9 Review | Explicit approve · Override History visible |
+| 9 Review | Explicit approve · Manual Selection History visible |
 | 10 Post | Creates txn(s) · updates package remaining · archive |
 
 ---
 
 ## AI features (summary)
 
-Recommend (FIFO/FEFO/reservation/quality/WH rules/location/same lot/moisture/quality/production date/customer) · **Kabul Et** or **Yoksay** · AI Validation always on · shortage predict · pick route · repeated-override coaching.
+Recommend (FIFO/FEFO/reservation/quality/WH rules/location/same lot/moisture/quality/production date/customer) · **Kabul Et** or **Manuel Paket Seç** · Smart Scan · AI Validation always on · shortage predict · pick route · repeated-manual coaching.
 
-AI **recommends and validates**; operator **Kabul Et** or **Yoksay** (selection only) — not business rules.
+AI **recommends and validates**; operator **Kabul Et** or **Manuel Paket Seç** (selection only) — not business rules.
 
 ---
 
 ## Identity & Numbering
 
-Operator **never** enters:
+Operator **never invents**:
 
-Goods Issue Number · Inventory Transaction Number · Warehouse Code · Location Code · Package Number · Material Code · Lot Number · Material Identity strings.
+Goods Issue Number · Inventory Transaction Number · Warehouse Code · Location Code · Material Code · Lot Number · Material Identity strings · **new** Package Numbers.
 
 All identifiers: Numbering Architecture.  
-Existing Package / Lot / MI: **scan or pick only**.  
+Existing Package: **scan preferred** · **Package / Barcode / QR number search** if unreadable · optional advanced browse.  
 Partial pick default: **same Package ID**; policy split: Numbering mints **linked child** package(s) only.
 
 ---
@@ -980,7 +1166,7 @@ Partial pick default: **same Package ID**; policy split: Numbering mints **linke
 
 | Role | Focus |
 |------|--------|
-| Warehouse Operator | Scan · **Kabul Et** or **Yoksay** · partial qty · evidence · Post |
+| Warehouse Operator | Scan · **Kabul Et** or **Manuel Paket Seç** · Smart Scan · partial qty · evidence · Post |
 | Supervisor | Authorize validation waivers · unblock |
 | Inventory Controller | Reservation / shortage · Manual GI · package-split policy config (with admin) |
 | Quality | Holds / release (blocks issue until clear) |
@@ -989,26 +1175,32 @@ Partial pick default: **same Package ID**; policy split: Numbering mints **linke
 
 ## Mobile / Terminal
 
-Rugged Terminal: steps 4–5 (pick/verify/partial qty) inside the same GI session.  
-Tablet / desk: document select · Accept/Override · review · Document Library · Post.
+Rugged Terminal: **Smart Scan** + pick/verify/partial qty inside the same GI session (primary device for Manuel Paket Seç).  
+Tablet / desk: document select · Kabul Et / Manuel Paket Seç · review · Document Library · Post.
 
 ---
 
 ## Cursor implementation notes
 
-1. Screen type = **Workbench** — not Issue Create form.  
-2. FE: **Package Allocation Workspace** MAIN + **Take From Package** rail (Good/Damaged/Scrap/Hold/Rework).  
-3. Live strip + disposition totals; Damaged/Scrap require evidence before Post.  
-4. Package Closing Checklist after partial take.  
-5. Post → GI (Good) + Hold txn(s) + Scrap txn(s) + remaining on same PKG · evidence · genealogy.  
-6. Shared pattern: `Package_Allocation_Workspace.md` — do not redefine disposition laws here.  
-7. Command Center “Open issues” opens this Workbench.  
-8. Export / permanence → Shared Document Management — reference only.
+1. Screen type = **Workbench** — not Issue Create form · COMPLIANCE BY DESIGN.  
+2. Compose `Inventory_Workbench_Design_Standard.md` § 5–5b — **Manuel Paket Seç** + **Smart Scan**.  
+3. After rejecting AI: **do not** open Warehouse Explorer by default — show Scan vs Package Number Search.  
+4. Smart Scan one-screen confirm → **Paketi Kullan** adds to Package Allocation Workspace.  
+5. FE: **Package Allocation Workspace** MAIN + **Take From Package** rail (Good/Damaged/Scrap/Hold/Rework).  
+6. Live strip + disposition totals; Damaged/Scrap require evidence before Post.  
+7. Package Closing Checklist after partial take.  
+8. Post → immutable GI (Good) + Hold txn(s) + Scrap txn(s) + remaining on same PKG · evidence · genealogy · audit seal.  
+9. Corrections after Post = Reverse / Correction flows — never Edit Posted.  
+10. Approvals / audit → shared engines; surface Manual Selection History on Review.  
+11. Shared PAW / Evidence / Numbering / MI — reference only; do not redefine algorithms.  
+12. Command Center “Open issues” opens this Workbench.
 
 ---
 
 ## Related
 
 `INV_Issue_Wizard.md` · `Inventory_Workflow.md` · FLOW-INV-002 · `Inventory_Screens.md`  
-`Inventory_Design_Program.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md`  
-`Document_Management_Evidence_and_Export.md` · `Inventory_Dashboard.md` · `Barcode_QR_Model.md`
+`Inventory_Design_Program.md` · [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_Shared/Inventory_Workbench_Design_Standard.md)  
+`Material_Identity_Architecture.md` · `Document_Numbering.md` · `Package_Allocation_Workspace.md`  
+`Document_Management_Evidence_and_Export.md` · `Audit_Log.md` · `Approval_Workflow.md`  
+`Inventory_Dashboard.md` · `Barcode_QR_Model.md`

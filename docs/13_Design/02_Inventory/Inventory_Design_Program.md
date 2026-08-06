@@ -33,7 +33,7 @@ AI drafts the process PRD only for the **active** row.
 | 4 | **Warehouse Explorer** | Depo Gezgini | Explorer | Queued |
 | 5 | **Stock Transfer** | Stok Transfer | Wizard | Queued — spine `INV_Transfer_Wizard.md` |
 | 6 | **Material Reservation** | Malzeme Rezervasyonu | Desk / Workbench | Queued — INV-030 |
-| 7 | **Goods Issue** | Mal Çıkışı | **Workbench** | **Done (PA-directed) v2.0** — `INV_Goods_Issue_Workbench.md` (partial package · Override Mode) |
+| 7 | **Goods Issue** | Mal Çıkışı | **Workbench** | **Done (PA-directed) v3.1** — `INV_Goods_Issue_Workbench.md` · Manuel Paket Seç · Smart Scan |
 | 8 | **Cycle Count** | Çevrim Sayımı | Wizard / Session | Queued — spine `INV_Cycle_Count_Session.md` |
 | 9 | **Physical Inventory** | Envanter Sayımı | Session / Workbench | Queued — INV-023 |
 | 10 | **Shipping** | Sevkiyat | Workbench / Console | Queued |
@@ -81,6 +81,7 @@ Finish action (Post / Release / Complete — never bare Save as the job):
 | Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
 | Evidence First (capture UX) | Workbench PRDs reference the Shared law above — do not restate permanence/export algorithms |
 | **Package Allocation Workspace** (all stock movements) | `Package_Allocation_Workspace.md` — learn once · use on Receiving · Issue · Transfer · Production · Shipping · Count |
+| **Inventory Workbench Design Standard** (COMPLIANCE BY DESIGN) | `Inventory_Workbench_Design_Standard.md` — audit · revision · approvals · immutable txns · package grid/status vocabulary · Scan/Verify/Review/Approve |
 
 ---
 

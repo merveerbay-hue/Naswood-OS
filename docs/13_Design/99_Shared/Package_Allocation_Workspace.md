@@ -22,8 +22,9 @@ Reduce training time · raise speed · cut errors.
 The Package Allocation Workspace is **not** a Goods Issue-only widget.  
 It is the **standard operational surface** wherever packages (or equivalent handling units) are selected, partially consumed, verified, moved, counted, or loaded.
 
-Goods Issue is the **first landed consumer** (`INV_Goods_Issue_Workbench.md` v2.0.4+).  
-Other processes **compose** this pattern — they do not invent a second grid language.
+Goods Issue is the **first landed consumer** (`INV_Goods_Issue_Workbench.md` v2.0.4+ / **v3.0** Compliance by Design).  
+Other processes **compose** this pattern — they do not invent a second grid language.  
+Cross-cutting Workbench laws (audit · approvals · immutable txns): `Inventory_Workbench_Design_Standard.md`.
 
 ---
 
@@ -131,7 +132,7 @@ AI recommends a minimum coherent package set (FIFO/FEFO · reservation ·
 quality · lot/moisture/dimension/species consistency · WH optimize ·
 customer / process rules as applicable).
 
-Operator: Accept (Kabul Et)  OR  Override / Yoksay → Explorer / DnD / edit.
+Operator: Accept (Kabul Et)  OR  Manuel Paket Seç → Scan / Package Number Search + Smart Scan (Explorer only if explicitly requested).
 AI Validation remains ON after Override and after grid edits.
 Mix warnings (lots · quality · moisture · dims · customer) → continue only if authorized.
 ```
