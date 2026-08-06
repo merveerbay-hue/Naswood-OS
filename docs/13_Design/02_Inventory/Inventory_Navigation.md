@@ -5,11 +5,14 @@
 **Status:** Active  
 **Owns:** Sidebar / module nav labels and deep-link targets for Inventory  
 **Workspaces:** `Inventory_Workspaces.md`  
-**Screens:** `Inventory_Screens.md`
+**Design program:** [`Inventory_Design_Program.md`](./Inventory_Design_Program.md)
 
 ---
 
-# Authority references
+# Sidebar (job-oriented labels)
+
+Prefer **verbs / outcomes** over entity plurals for operations.  
+Ops order follows Design Program: Command Center → Receiving → Putaway → … → Shipping → Traceability → Analytics.
 
 | Topic | Authority |
 |-------|-----------|

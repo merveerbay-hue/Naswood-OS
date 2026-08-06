@@ -21,6 +21,7 @@
 | [`Inventory_Navigation.md`](./Inventory_Navigation.md) | Sidebar & deep links |
 | [`Inventory_User_Flows.md`](./Inventory_User_Flows.md) | Role journeys |
 | [`Inventory_Dashboard.md`](./Inventory_Dashboard.md) | **Warehouse Command Center** (not KPI page) |
+| [`Inventory_Design_Program.md`](./Inventory_Design_Program.md) | **Design sequence + question template** (one process at a time) |
 | [`Inventory_API.md`](./Inventory_API.md) | HTTP surface |
 | [`Inventory_Mobile.md`](./Inventory_Mobile.md) | Mobile jobs |
 

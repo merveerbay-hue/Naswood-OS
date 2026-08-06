@@ -3,9 +3,31 @@
 **Module:** Inventory  
 **Version:** 1.0  
 **Status:** Active  
-**Job-first:** `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`
+**Job-first:** `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`  
+**Design program (sequence + questions):** [`Inventory_Design_Program.md`](./Inventory_Design_Program.md)
 
 ---
+
+# Design program order
+
+Design Inventory **operations** in this order only (see Design Program for status):
+
+```text
+1 Dashboard (Command Center)     ✓
+2 Receiving                      ✓
+3 Putaway                        ← next
+4 Warehouse Explorer
+5 Stock Transfer
+6 Material Reservation
+7 Goods Issue
+8 Cycle Count
+9 Physical Inventory
+10 Shipping
+11 Material Traceability
+12 Analytics & Reports
+```
+
+Each process PRD must answer the **8 questions** in `Inventory_Design_Program.md`.
 
 # Authority references (do not redefine)
 
@@ -69,7 +91,7 @@ Inventory
 | INV-RCV-001 / INV-015–016 | **Receiving Workbench** + receipt library | Operations | **Evidence First** truck-to-post Workbench (14 steps · AI · root Material Identity). **Not** Create/CRUD. Spec: `INV_Receiving_Workbench.md` |
 | INV-017/018 | **Issue Goods Wizard** | Operations | **Mal çıkışı / Issue goods** — Wizard; not “Yeni çıkış”. Spec: `Process_Screens/INV_Issue_Wizard.md` |
 | INV-019/020 | **Transfer Stock Wizard** | Operations | **Stok transfer / Transfer stock** — Wizard; not “Yeni transfer”. Spec: `Process_Screens/INV_Transfer_Wizard.md` |
-| INV-027 | Putaway / Picking *(future)* | Operations | Directed warehouse tasks |
+| INV-027 | **Putaway** *(next in Design Program)* | Operations | Directed putaway after receiving — **not** Create. Spec: TBD under `Inventory_Design_Program.md` |
 | INV-028 | Package Management | Operations | Finish pack identity for move/ship |
 | INV-014 | Stock Balance Inquiry | Stock | Answer “what/where/how much?” |
 | INV-010/011 | Lot Library / Lot Trace | Stock | Find lot & open history |
