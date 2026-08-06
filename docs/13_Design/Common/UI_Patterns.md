@@ -362,7 +362,7 @@ Multi-pane session for **operational** warehouse desks or **engineering / qualit
 - Identifiers from Numbering Service only (`Document_Numbering.md`).  
 - Receiving mints root **Material Identity** (`Material_Identity_Architecture.md`).  
 - Full receiving UX: `INV_Receiving_Workbench.md` v1.1.  
-- Goods Issue UX: `INV_Goods_Issue_Workbench.md` v3.0.  
+- Goods Issue UX: `INV_Goods_Issue_Workbench.md` v3.1 — **Manuel Paket Seç** (scan / number search) + **Smart Scan**; Warehouse Explorer optional only.  
 - When packages are selected/allocated: center = **Package Allocation Workspace** (`Package_Allocation_Workspace.md`) — not a simple table; same language on Issue · Receiving · Transfer · Production · Shipping · Count.
 
 ### Components

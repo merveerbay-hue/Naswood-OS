@@ -132,7 +132,7 @@ AI recommends a minimum coherent package set (FIFO/FEFO · reservation ·
 quality · lot/moisture/dimension/species consistency · WH optimize ·
 customer / process rules as applicable).
 
-Operator: Accept (Kabul Et)  OR  Override / Yoksay → Explorer / DnD / edit.
+Operator: Accept (Kabul Et)  OR  Manuel Paket Seç → Scan / Package Number Search + Smart Scan (Explorer only if explicitly requested).
 AI Validation remains ON after Override and after grid edits.
 Mix warnings (lots · quality · moisture · dims · customer) → continue only if authorized.
 ```

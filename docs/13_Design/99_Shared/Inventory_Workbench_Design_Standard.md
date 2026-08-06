@@ -2,10 +2,10 @@
 
 **Document:** Inventory Workbench Design Standard  
 **Status:** Official — Product Architect  
-**Version:** 3.0.0  
+**Version:** 3.1.0  
 **Location:** `docs/13_Design/99_Shared/Inventory_Workbench_Design_Standard.md`  
-**Owns:** COMPLIANCE BY DESIGN philosophy for Inventory / Warehouse Operations Workbenches · operator vs system roles · demand-backed movement law · AI recommend + IGNORE AI · audit / revision / electronic approval composition for ops · immutable posted transaction UX law · canonical package grid column set · package status vocabulary · Evidence First / Scan–Verify–Review–Approve interaction model  
-**Does not own:** Stock ledger algorithms (→ `Inventory_Architecture.md` · `Inventory_Workflow.md`) · Package Allocation Workspace interaction capabilities (→ `Package_Allocation_Workspace.md`) · Evidence permanence / Document Library / Export columns (→ `Document_Management_Evidence_and_Export.md`) · Identifier formats (→ `Document_Numbering.md`) · Material Identity meaning (→ `Material_Identity_Architecture.md`) · Audit engine payloads (→ `Audit_Log.md`) · Approval engine routing (→ `Approval_Workflow.md`) · Process-specific Post artifacts (each Workbench PRD)
+**Owns:** COMPLIANCE BY DESIGN philosophy for Inventory / Warehouse Operations Workbenches · operator vs system roles · demand-backed movement law · AI recommend + **Manual Package Selection** (scan-first · number search fallback) · **Smart Scan** one-tap confirm · audit / revision / electronic approval composition for ops · immutable posted transaction UX law · canonical package grid column set · package status vocabulary · Evidence First / Scan–Verify–Review–Approve interaction model  
+**Does not own:** Stock ledger algorithms (→ `Inventory_Architecture.md` · `Inventory_Workflow.md`) · Package Allocation Workspace interaction capabilities (→ `Package_Allocation_Workspace.md`) · Evidence permanence / Document Library / Export columns (→ `Document_Management_Evidence_and_Export.md`) · Identifier formats (→ `Document_Numbering.md`) · Material Identity meaning (→ `Material_Identity_Architecture.md`) · Audit engine payloads (→ `Audit_Log.md`) · Approval engine routing (→ `Approval_Workflow.md`) · Process-specific Post artifacts (each Workbench PRD) · Warehouse Explorer browse tree UX (Design Program #4 — optional advanced only)
 
 ---
 
@@ -51,7 +51,7 @@ System:     Think · Compare · Recommend · Validate · Warn · Generate · Tra
 ```
 
 Primary interaction is **not** Save / Cancel.  
-Primary interaction is **Accept AI** / **IGNORE AI** / **Post** (with sticky action bar).
+Primary interaction is **Kabul Et (Accept AI)** / **Manuel Paket Seç (Manual Package Selection)** / **Post** (with sticky action bar).
 
 ---
 
@@ -59,14 +59,17 @@ Primary interaction is **Accept AI** / **IGNORE AI** / **Post** (with sticky act
 
 | Actor | Responsibility |
 |-------|----------------|
-| **Operator** | Scan packages · accept or override AI · classify take (Good/Damaged/…) · capture evidence when required · complete closing checklist · request / confirm approval · Post |
+| **Operator** | Scan packages · accept AI or manual-select · classify take (Good/Damaged/…) · capture evidence when required · complete closing checklist · request / confirm approval · Post |
 | **System** | Recommend WH / location / package / qty / route · validate FIFO/FEFO/reservation/quality/customer/WH rules · live recalculate · mint identifiers · write Inventory Transactions · seal audit · preserve Document Library · maintain genealogy |
 
-Operators **never** manually enter:
+Operators **never mint or invent**:
 
-Material Codes · Package Numbers · Lot Numbers · Warehouse Codes · Location Codes · Goods Issue / GR / Transfer Numbers · Inventory Transaction Numbers · Material Identity strings.
+Material Codes · Lot Numbers · Warehouse Codes · Location Codes · Goods Issue / GR / Transfer Numbers · Inventory Transaction Numbers · Material Identity strings · **new** Package Numbers.
 
 They work with **names**, **scans**, and **display-only** codes.  
+
+**Allowed typed lookup (fallback only):** when a physical barcode/QR cannot be scanned, the operator may **search an existing** Package Number / Barcode Number / QR Number so the system retrieves the package. This is identity **lookup**, not code creation. Prefer scan always.
+
 Authority: `Document_Numbering.md`.
 
 ---
@@ -94,7 +97,17 @@ Stock truth and posting rules remain in `Inventory_Architecture.md` / `Inventory
 
 ---
 
-## 5. AI picking & IGNORE AI
+## 5. AI picking & Manual Package Selection
+
+### Real-life operator model
+
+```text
+Forklift → go to package → scan barcode → system validates
+OR (barcode unreadable) → type package number → system finds package → validates
+
+Operators do NOT want to browse warehouse trees after rejecting AI.
+Warehouse Explorer is optional advanced browse — never the default manual path.
+```
 
 ### AI shall recommend
 
@@ -106,20 +119,102 @@ FIFO · FEFO · Reservation · Customer Rules · Warehouse Rules · Quality Stat
 
 (and process-specific constraints in the Workbench PRD).
 
-### IGNORE AI (required control)
+### Primary CTAs after AI recommendation
+
+| Control (TR) | Control (EN) | Result |
+|--------------|--------------|--------|
+| **Kabul Et** | Accept | Use AI picking recommendation |
+| **Manuel Paket Seç** | Manual Package Selection | Open Manual Package Selection workflow |
 
 ```text
-Provide a clearly visible IGNORE AI control
-(locale: EN “Ignore AI” · TR “Yoksay” — process PRD may pair with Accept / “Kabul Et”).
-
-When selected:
-→ Open Warehouse Explorer (or equivalent browse pool)
-→ Allow manual package selection
-→ All overrides SHALL be logged (who · when · AI proposal · operator choice · reason when required)
+Do NOT label the secondary path “Ignore AI” / “Yoksay” as the primary UX.
+“Manuel Paket Seç” is clearer for warehouse operators.
+Legacy “Yoksay” may appear as synonym in audit text only if needed — UI shows Manuel Paket Seç.
 ```
 
-AI **Validation continues** after IGNORE AI.  
-Operator may override **selection**; operator may **not** silently violate hard validation without authorized waiver.
+### Manual Package Selection (required workflow)
+
+When the operator chooses not to use the AI Picking Recommendation, the system shall provide a **simple Manual Package Selection** workflow — **not** a warehouse location tree by default.
+
+```text
+┌──────────────────────────────┐
+│ Paketi Nasıl Seçmek İstiyorsunuz? │
+│ ◉ Barkod / QR Oku              │
+│ ◉ Paket Numarası Ara           │
+└──────────────────────────────┘
+```
+
+#### Method 1 — Scan Barcode / QR (preferred)
+
+1. Operator scans the physical package (forklift / handheld).  
+2. System retrieves package immediately.  
+3. System runs **Smart Scan** confirmation (§ 5b) + AI validation.  
+4. Operator confirms **Paketi Kullan** (Use Package) → package enters allocation.
+
+Validates: Material · Dimensions · Species · Quality · Lot · Reservation · Customer Rules (and process rules).
+
+#### Method 2 — Search Package Number (fallback)
+
+If the barcode cannot be scanned, the operator may search by:
+
+| Lookup key |
+|------------|
+| Package Number |
+| Barcode Number |
+| QR Number |
+
+System retrieves the package and performs the **same** validations + Smart Scan confirm.
+
+#### Warehouse Explorer (optional only)
+
+```text
+The operator shall never browse complex warehouse trees unless explicitly requested
+(e.g. “Depoyu Gez” / Browse Warehouse — advanced).
+Barcode scanning is always preferred. Manual search is the fallback.
+```
+
+### Validation law (manual = same as AI path)
+
+```text
+Every manually selected package SHALL still be validated by the AI engine
+before it can be issued.
+Operator may change selection; may NOT silently violate hard rules without waiver.
+Every manual selection SHALL be logged (who · when · AI proposal · chosen package · method: scan|search|browse).
+```
+
+---
+
+## 5b. Smart Scan (Akıllı Barkod Tarama)
+
+On scan (or successful number search), the system shall **not** only open a raw package record.
+
+It shall present a **single confirmation surface** so the operator adds the package with one action — critical for handheld / rugged terminals.
+
+```text
+✓ Paket Doğru                    (or ⚠ warning banner)
+📦 PKG-001245
+🌲 Species (e.g. Sarıçam)
+📏 Dimensions (e.g. 26×140×4000)
+📦 Available qty (e.g. 120 Adet)
+📐 Available m³ (e.g. 5.240 m³)
+📍 Warehouse / Location
+🟢 Kalite Uygun / ⚠ …
+🟢 Müşteriye Uygun / ⚠ …
+🟢 Lot Uygun / ⚠ …
+
+[ Paketi Kullan ]                 (= Use Package → add to allocation)
+```
+
+| Outcome | UI |
+|---------|-----|
+| All checks green | **Paketi Kullan** enabled |
+| Soft warning (e.g. reserved for other customer) | Warning copy · “Devam etmek istiyor musunuz?” · continue requires confirm / waiver per policy |
+| Hard fail (wrong material / quality block) | **Paketi Kullan** blocked until authorized waiver |
+
+```text
+No second navigation screen required to add the package.
+Eliminates list-search and tree-navigation for the common path.
+```
 
 ---
 
@@ -181,7 +276,7 @@ System recommends the **minimum number of packages** while respecting:
 
 FIFO · Reservation · Quality · Species · Dimensions · Moisture · Lot · Customer Rules  
 
-Operator may: **Accept · Modify · Remove · Add · IGNORE AI**.
+Operator may: **Accept · Modify · Remove · Add · Manuel Paket Seç** (scan / search).
 
 ---
 
@@ -270,7 +365,7 @@ Examples (non-exhaustive):
 | Created By / Created Date |
 | Modified By / Modification Reason |
 | AI recommendation accepted |
-| IGNORE AI / override selection |
+| Manuel Paket Seç / Smart Scan / manual selection |
 | Scan / verify outcomes |
 | Disposition classification |
 | Evidence attach |
@@ -411,8 +506,10 @@ System time: recommending · validating · generating · tracking.
 | Evidence First | Capture photos/docs/voice when the exception happens |
 | Scan First | Barcode / QR drives row focus and confirmation |
 | AI First pick | Default path is Accept recommendation |
-| OVERRIDE visible | IGNORE AI is first-class, logged |
-| Sticky actions | Draft · Next · Accept · Ignore AI · NCR · Post — not Save/Cancel form |
+| Manual select visible | **Manuel Paket Seç** — scan-first · number search fallback · logged |
+| Smart Scan | One-screen validate + **Paketi Kullan** after scan/search |
+| No tree by default | Warehouse Explorer only if operator explicitly requests browse |
+| Sticky actions | Draft · Next · Kabul Et · Manuel Paket Seç · NCR · Post — not Save/Cancel form |
 | Audit ready | Every Post produces digital file + txn + genealogy + approval history |
 
 ---
@@ -453,7 +550,7 @@ Design Program sequence: `Inventory_Design_Program.md`.
 
 1. Do **not** implement Inventory ops as Create/Edit CRUD forms.  
 2. Center package flows on Package Allocation Workspace.  
-3. Wire IGNORE AI → Warehouse Explorer + override audit.  
+3. Wire **Manuel Paket Seç** → Scan / Package Number Search + **Smart Scan** + audit (Explorer only as optional advanced browse).  
 4. Post → immutable Inventory Transaction(s); corrections = reverse/correction flows.  
 5. Evidence / Export / permanence → Shared Document Management — reference only.  
 6. Approvals / audit → shared engines — Workbench shows history, does not invent a second ledger.  

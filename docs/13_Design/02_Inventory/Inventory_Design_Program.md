@@ -33,7 +33,7 @@ AI drafts the process PRD only for the **active** row.
 | 4 | **Warehouse Explorer** | Depo Gezgini | Explorer | Queued |
 | 5 | **Stock Transfer** | Stok Transfer | Wizard | Queued — spine `INV_Transfer_Wizard.md` |
 | 6 | **Material Reservation** | Malzeme Rezervasyonu | Desk / Workbench | Queued — INV-030 |
-| 7 | **Goods Issue** | Mal Çıkışı | **Workbench** | **Done (PA-directed) v3.0** — `INV_Goods_Issue_Workbench.md` · COMPLIANCE BY DESIGN · Design Standard |
+| 7 | **Goods Issue** | Mal Çıkışı | **Workbench** | **Done (PA-directed) v3.1** — `INV_Goods_Issue_Workbench.md` · Manuel Paket Seç · Smart Scan |
 | 8 | **Cycle Count** | Çevrim Sayımı | Wizard / Session | Queued — spine `INV_Cycle_Count_Session.md` |
 | 9 | **Physical Inventory** | Envanter Sayımı | Session / Workbench | Queued — INV-023 |
 | 10 | **Shipping** | Sevkiyat | Workbench / Console | Queued |
