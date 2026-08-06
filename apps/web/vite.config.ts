@@ -12,16 +12,21 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: 5173,
+    // Cursor / cloud port-forward previews send a non-localhost Host header.
+    // Without this, Vite returns 403 and login shows a connection error.
+    allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5080',
+        target: 'http://127.0.0.1:5080',
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://localhost:5080',
+        target: 'http://127.0.0.1:5080',
         changeOrigin: true,
       },
     },
   },
 });
+
