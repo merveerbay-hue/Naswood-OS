@@ -119,10 +119,6 @@ Sales
 
 ├── Customer
 
-├── Lead
-
-├── Opportunity
-
 ├── Quotation
 
 ├── Sales Order
@@ -137,6 +133,25 @@ Sales
 
 └── Reports
 ```
+
+Lead, Opportunity, activities and interactions are owned by CRM and referenced
+through versioned contracts.
+
+---
+
+# Product Contract
+
+Sales does not own Product definition or capability behavior.
+
+Every Quotation and Sales Order line stores:
+
+- Product ID
+- Product Revision ID
+- Capability Profile ID
+
+Sales validates that Sales Mode is `OPTIONAL` or `ENABLED` when the line is
+created or revised. Existing released documents retain the profile they
+validated; later profile activation does not rewrite historical eligibility.
 
 ---
 

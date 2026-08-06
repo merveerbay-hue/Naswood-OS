@@ -8,6 +8,10 @@
 
 **Status:** Approved
 
+**Domain Status:** Candidate (Not Canonical)
+
+See `Inventory_Canonicalization_Candidate.md` for freeze gates.
+
 ---
 
 # Purpose
@@ -79,10 +83,7 @@ The Inventory module follows these principles:
 # Domain Architecture
 
 ```
-                        Master Data
-                              │
-                              ▼
-                        Material Master
+                  Inventory Material Master
                               │
                               ▼
                         Warehouse Structure
@@ -113,6 +114,8 @@ Goods Receipt   Goods Issue   Stock Transfer   Count
 
 Inventory owns:
 
+- Material Master
+- Physical Material Identity
 - Warehouses
 - Locations
 - Stock
@@ -123,7 +126,8 @@ Inventory owns:
 
 Inventory does NOT own:
 
-- Material Definitions
+- Product Definitions
+- Material Genealogy
 - Purchase Orders
 - Sales Orders
 - Production Orders

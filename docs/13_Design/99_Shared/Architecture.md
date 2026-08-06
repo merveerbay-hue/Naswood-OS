@@ -66,16 +66,15 @@ Application Layer
 
 ↓
 
-Business Layer
+Domain Layer
 
-↓
-
-Data Layer
-
-↓
+↑
 
 Infrastructure Layer
 ```
+
+Dependencies point inward. The Domain Layer has no dependency on presentation,
+database, messaging, transport, cloud provider or framework implementations.
 
 ---
 
@@ -155,31 +154,33 @@ Background Jobs
 
 ---
 
-## Business Layer
+## Domain Layer
 
 Contains
 
+Entities
+
+Value Objects
+
+Aggregates
+
 Business Rules
 
-Services
+Domain Services
 
 Calculations
 
-Approval Logic
+Domain Events
 
-Workflow Engine
-
-AI Services
-
-Digital Twin Logic
+Business Invariants
 
 ---
 
-## Data Layer
+## Infrastructure Layer
 
 Responsible for
 
-Repositories
+Repository Implementations
 
 ORM
 
@@ -190,12 +191,6 @@ Database Access
 Search
 
 Caching
-
----
-
-## Infrastructure Layer
-
-Includes
 
 Authentication
 
@@ -219,7 +214,9 @@ AI Providers
 
 # Core Platform Modules
 
-Master Data
+Platform
+
+Product Management
 
 CRM
 
@@ -229,27 +226,39 @@ Purchasing
 
 Inventory
 
-Warehouse
+Planning
 
 Production
 
-MES
+Manufacturing
 
 Quality
 
 Maintenance
 
+Logistics
+
 Finance
 
-Documents
+HR
+
+Document Management
+
+Workflow Engine
 
 Analytics
 
-AI
+AI Copilot
 
 Digital Twin
 
-Administration
+IoT
+
+Public APIs
+
+Master Data is a platform-wide governance capability. Each master entity has
+exactly one owning business module as defined by
+`Module_Boundaries_and_Ownership.md`.
 
 ---
 
@@ -351,9 +360,7 @@ IoT Platforms
 
 # Database
 
-Supports
-
-SQL Server
+Primary transactional database
 
 PostgreSQL
 
@@ -561,7 +568,7 @@ Backend
 
 Database
 
-SQL Server
+PostgreSQL
 
 API
 
@@ -597,7 +604,7 @@ Clean Architecture
 
 SOLID
 
-CQRS (Where Appropriate)
+CQRS
 
 Repository Pattern
 
