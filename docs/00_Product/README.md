@@ -7,11 +7,16 @@
 
 ## Phase 2 anchor
 
-**Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)
+**Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)  
+**Job-first design:** [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
+**Exemplar process screen:** [`Process_Screens/PRD_Production_Planning_Wizard.md`](./Process_Screens/PRD_Production_Planning_Wizard.md)
 
 ```text
-NOS → Module → Workspace → Screen → Component → Workflow → Permissions → Code
+NOS → Module → Workspace → Job Screen → Component → Workflow → Permissions → Code
 ```
+
+**Every screen:** *Kullanıcı bu ekranda hangi işi bitirmek istiyor?*  
+Not: *Hangi entity’yi CRUD’larız?*
 
 ---
 

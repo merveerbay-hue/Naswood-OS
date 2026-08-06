@@ -21,11 +21,16 @@ Every screen belongs to exactly one Workspace.
 
 # SCREEN DESIGN PRINCIPLES
 
+**Job-first (mandatory):**  
+Before any screen: *Kullanıcı bu ekranda hangi işi bitirmek istiyor?*  
+Name the screen after that job — not after the entity.  
+See `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`.
+
 Production screens shall
 
-- Follow manufacturing workflows
+- Follow manufacturing workflows (Wizard / Board / Terminal)
 - Be role-oriented
-- Be process-driven
+- Be process-driven (steps, gates, release)
 - Support desktop and tablet
 - Minimize user interaction
 - Display contextual KPIs
@@ -33,6 +38,12 @@ Production screens shall
 - Support drill-down navigation
 
 Screens must never behave as generic CRUD pages.
+
+```text
+Primary Planning entry:  Production Planning Wizard
+Secondary:               Plan / Order Library (find & reopen)
+Not the design center:   “New Production Order” entity form
+```
 
 ---
 
