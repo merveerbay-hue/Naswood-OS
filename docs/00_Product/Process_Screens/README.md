@@ -1,9 +1,16 @@
-# Process Screens (job wizards & terminals)
+# Process Screens (job & engineering surfaces)
 
-**Authority for screen type:** [`docs/13_Design/Common/Screen_Types.md`](../../13_Design/Common/Screen_Types.md) § Create → Job CTA matrix  
+**Authority for screen type:** [`docs/13_Design/Common/Screen_Types.md`](../../13_Design/Common/Screen_Types.md)  
 **Job-first template:** [`JOB_FIRST_SCREEN_DESIGN.md`](../JOB_FIRST_SCREEN_DESIGN.md)
 
-These PRDs replace shared **Create / Yeni** entity forms for operational jobs.
+```text
+NOS'ta "New" diye tek tip ekran yoktur.
+NOS'ta Master Data ekranları "Create Form" değildir.
+```
+
+These PRDs replace shared **Create / Yeni** entity forms.
+
+## Operations (Wizard / Terminal)
 
 | File | CTA | Type |
 |------|-----|------|
@@ -17,4 +24,14 @@ These PRDs replace shared **Create / Yeni** entity forms for operational jobs.
 | [`PUR_Purchase_Order_Wizard.md`](./PUR_Purchase_Order_Wizard.md) | Place purchase order / Sipariş ver | Wizard |
 | [`SAL_Sales_Order_Wizard.md`](./SAL_Sales_Order_Wizard.md) | Enter sales order / Sipariş gir | Wizard |
 
-**FE rule:** CTA navigates here — never opens a shared `ResourcePage` / `EntityListScreen` create panel.
+## Engineering (Builder / Designer / Configuration)
+
+| File | CTA | Type | Screen ID |
+|------|-----|------|-----------|
+| [`PRD_BOM_Builder.md`](./PRD_BOM_Builder.md) | Build BOM / BOM oluştur | Builder | PRD-501 |
+| [`PRD_Machine_Configuration.md`](./PRD_Machine_Configuration.md) | Configure machine / Makine yapılandır | Configuration | PRD-503 |
+
+Further engineering surfaces (Routing Designer, WC Designer, Line Configuration, Operation Designer, Shift/Calendar Planner, Tool Library) are indexed in `Production_Screens.md` — full PRDs follow the same pattern.
+
+**FE rule:** CTA navigates here — never opens a shared `ResourcePage` / `EntityListScreen` create panel.  
+**Mental model:** Business Object → Business Workspace → Business Designer.

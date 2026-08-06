@@ -39,8 +39,10 @@ NOS
 NOS'ta "New" diye tek tip ekran yoktur.
 ```
 
-→ Process screens (all job Create CTAs): [`Process_Screens/`](./Process_Screens/) — Planning · Receiving · Issue · Transfer · Count · NCR · Maint WO · PO · SO  
-→ Create → Job matrix: [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § 3b
+→ Process screens: [`Process_Screens/`](./Process_Screens/) — ops Wizards + engineering **BOM Builder** · **Machine Configuration**  
+→ Create / Engineering matrix: [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § 3a · § 3b  
+→ Law: *Master Data ekranları Create Form değildir.*
+
 
 Entity-titled rows in older indexes are **placeholders to rename** into jobs  
 (e.g. “Production Order” → **Production Planning Wizard** + Plan Library).
@@ -410,7 +412,9 @@ Inventory
 **Real life:** Plan the order, dispatch the floor, confirm output, watch OEE.  
 **Roles:** Production Manager, Planner, Operator, Supervisor.  
 **ERP ref:** SAP PP/ME / Opcenter / IFS Manufacturing / Infor LN+MES.  
-**NOS better:** Planning vs Execution vs Shop Floor vs Monitoring separated; Operator Terminal is a first-class screen, not a CRUD form.
+**NOS better:** Planning vs Execution vs Shop Floor vs Monitoring separated; Operator Terminal is a first-class screen, not a CRUD form.  
+**Engineering (Master Data):** BOM Builder · Routing Designer · Machine Configuration — not Code·Name·Save.  
+Law: `Screen_Types.md` — *Master Data ekranları Create Form değildir.*
 
 ```text
 Production
@@ -420,7 +424,7 @@ Production
 ├── Shop Floor
 ├── Monitoring
 ├── Industry (Timber / Kiln / Thermowood)
-├── Master Data
+├── Engineering (Master Data)     ← Designers / Builders / Configurations
 ├── Reports
 ├── Analytics
 └── Settings
@@ -453,22 +457,21 @@ Production
 | PRD-042 | Kiln Schedule / Batch | Industry | Mapped |
 | PRD-043 | Kiln Monitoring | Industry | Mapped |
 | PRD-044 | Thermowood Batch / Curves | Industry | Mapped |
-| PRD-002 | BOM List | Master Data | Spec’d |
-| PRD-003 | BOM Detail | Master Data | Spec’d |
-| PRD-004 | Routing List | Master Data | Spec’d |
-| PRD-005 | Routing Detail | Master Data | Spec’d |
-| PRD-025 | Operations Master | Master Data | Spec’d |
-| PRD-006 | Work Center | Master Data | Spec’d |
-| PRD-007 | Machine | Master Data | Spec’d |
-| PRD-026 | Production Line | Master Data | Spec’d |
-| PRD-008 | Shift | Master Data | Spec’d |
-| PRD-009 | Production Calendar | Master Data | Spec’d |
-| PRD-033 | Tooling / Knife Library | Master Data | Mapped |
+| PRD-501 | **BOM Builder** (+ Library) | Engineering | ★ Spec — replaces BOM List/Detail CRUD |
+| PRD-502 | **Routing Designer** (+ Library) | Engineering | Spec — replaces Routing CRUD |
+| PRD-503 | **Machine Configuration** (+ Library) | Engineering | ★ Spec — replaces Machine CRUD |
+| PRD-504 | **Work Center Designer** | Engineering | Spec — Layout Builder |
+| PRD-505 | **Line Configuration** | Engineering | Spec |
+| PRD-506 | **Operation Designer** | Engineering | Spec |
+| PRD-507 | **Shift Planner** | Engineering | Spec |
+| PRD-508 | **Calendar Planner** | Engineering | Spec |
+| PRD-509 | **Tool Library** | Engineering | Mapped |
 | PRD-020 | Production Reports | Reports | Spec’d |
 | PRD-019 | Production Analytics | Analytics | Spec’d |
 | PRD-029 | Production Settings | Settings | Spec’d |
 
-**Primary components:** Scheduler, Kanban/Dispatch Board, Operator Terminal layout, Machine Status, OEE Chart, Entity Grid, Master Detail, Timeline.
+**Primary components:** Scheduler, Kanban/Dispatch Board, Operator Terminal, Tree (BOM Builder), Process canvas (Routing Designer), Configuration facets (Machine), Machine Status, OEE Chart, Timeline.  
+**Not primary:** Entity Grid + Create Form for BOM / Machine / Routing.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Document:** Screen Types (UX law)  
 **Status:** Official  
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Location:** `docs/13_Design/Common/Screen_Types.md`  
 **Companion:** [`UI_Patterns.md`](./UI_Patterns.md)  
 **Process screens:** [`docs/00_Product/Process_Screens/`](../../00_Product/Process_Screens/)  
@@ -10,106 +10,144 @@
 
 ---
 
-## 1. Absolute rule
+## 1. Absolute rules
 
 ```text
 NOS'ta "New" / "Create" diye tek tip ekran YOKTUR.
 ```
 
-The label **Yeni** (or any “create” CTA) never means “open the shared entity form.”
+```text
+NOS'ta Master Data ekranları "Create Form" değildir.
+```
 
-**Yeni** means: start the **job** for that capability — and that job uses a **screen type**
-(Wizard, Terminal, Console, …) whose flow is defined by the process.
+Master Data screens are **Designer · Builder · Planner · Configuration · Workbench** surfaces.  
+The user does not merely create a record — they **define, validate, relate, simulate, and Release** production (or domain) knowledge.
 
 | Wrong | Right |
 |-------|--------|
 | Shared `Create` ResourcePage for every entity | Screen type chosen per job |
-| “Yeni” → same fields + Save | “Yeni” → Receiving Wizard / Planning Wizard / NCR Wizard / … |
-| Cursor copies Inventory create into Production | Cursor reads Screen Type → then module process steps |
+| Machine Code · Name · Save | **Machine Configuration** (identity · layout · technical · capability · maintenance · documents → Release) |
+| BOM Code · Description · Save | **BOM Builder** (product → tree → alternatives → scrap → ops → Approve → Release) |
+| Routing Code · Save | **Routing Designer** |
+| “Yeni” → same fields + Save | Job CTA → Wizard / Builder / Designer / Terminal / … |
+| Entity → Form | **Business Object → Business Workspace → Business Designer** |
 
-Reusable **components** (grid, filter, card, timeline) are shared.  
-Reusable **CRUD create screens** are forbidden as the default.
+Reusable **components** (grid, filter, stepper, tree, canvas) are shared.  
+Reusable **CRUD create/edit screens** are forbidden as the default — for **operations and master/engineering data**.
 
 ---
 
 ## 2. Screen type catalog
 
+### 2a. Transaction & operations
+
 | Screen type | Purpose | Typical jobs |
 |-------------|---------|--------------|
 | **Wizard** | Finish a multi-step business transaction with gates | Production Planning, Goods Receipt, Maintenance WO, NCR, Purchase Order |
 | **Console** | Run a continuous operational desk (many short actions) | Receiving desk, Shipping desk, Shop-floor supervisor console |
-| **Explorer** | Find, inspect, navigate hierarchical / catalog data | Warehouse, Lot, Machine, Asset, Product |
-| **Planner** | Balance time / capacity / resources visually | Capacity, Scheduling, Dispatch, PM calendar |
-| **Dashboard** | See status, KPIs, exceptions; drill into jobs | Module / executive cockpits |
-| **Workbench** | Knowledge / engineering / quality analysis surface | Quality engineering, BOM engineering, CAPA analysis |
-| **Approval Center** | Decide pending approvals across documents | PO / NCR / Release / Adjustment approvals |
 | **Terminal** | Execute a single focused operational job (often touch / scan) | Operator Terminal, Receiving scan terminal, Shipping terminal |
+| **Approval Center** | Decide pending approvals across documents | PO / NCR / Release / Adjustment approvals |
+| **Dashboard** | See status, KPIs, exceptions; drill into jobs | Module / executive cockpits |
+
+### 2b. Engineering & master knowledge (not Create Form)
+
+| Screen type | Purpose | Typical jobs |
+|-------------|---------|--------------|
+| **Builder** | Construct a structured engineering object (tree / structure) with validate & Release | BOM Builder, Package structure |
+| **Designer** | Design a process / graph / operation sequence with relations & simulation | Routing Designer, Operation Designer, Work Center Layout Designer |
+| **Configuration** | Define a rich multi-facet asset/resource (tabs/sections → Release) | Machine Configuration, Line Configuration, Product Wizard |
+| **Planner** | Balance time / capacity / resources visually | Capacity, Scheduling, Dispatch, Shift Planner, Calendar Planner, PM calendar |
+| **Workbench** | Knowledge / analysis / multi-object engineering surface | Quality engineering, CAPA analysis, genealogy inquiry |
+| **Library** | Find & reopen engineering objects — **not** a Create Form | Tool Library, Machine Library → opens Configuration |
+| **Explorer** | Find, inspect, navigate hierarchical / catalog data | Warehouse map, Lot library, Product catalog browse |
+
+```text
+Library / Explorer  =  find & reopen
+Builder / Designer / Configuration / Planner  =  define knowledge → Release
+```
+
+A Library list CTA never opens “Code · Name · Save”. It opens the matching **Builder / Designer / Configuration**.
 
 ---
 
-## 3. “Yeni” means different jobs (examples)
+## 3. Operational “Yeni” examples
 
 ### Inventory — not “New GoodsReceipt entity”
 
-**CTA:** Receive goods / Mal kabul başlat  
-**Type:** **Wizard** (Receiving Wizard)
-
-```text
-PO Seç
-  → Bekleyen Satırlar
-  → Teslim Miktarı
-  → Depo seç             ※ kullanıcı seçer
-  → Lokasyon             ※ seçilen depoya bağlı
-  → Lot Oluştur          ※ malzeme cinsine göre Numbering Service — Document_Numbering.md
-  → Kalite Kararı
-  → Etiket
-  → Post
-```
-
+**CTA:** Receive goods / Mal kabul başlat · **Type:** Wizard  
 Full: `docs/00_Product/Process_Screens/INV_Receiving_Wizard.md`
 
-### Production — not “New ProductionOrder entity”
+### Production planning — not “New ProductionOrder entity”
 
-**CTA:** Plan production / Üretim planla  
-**Type:** **Wizard** (Production Planning Wizard)
-
-```text
-Talep → Ürün → Revizyon → BOM → Routing
-  → Ölçüler → Ağaç Türü → Hat → Kapasite → Termin → Release
-```
-
+**CTA:** Plan production / Üretim planla · **Type:** Wizard  
 Full: `docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`
 
-### Maintenance — not “New WorkOrder entity”
+### Quality / Maintenance
 
-**CTA:** Open work order / İş emri aç  
-**Type:** **Wizard**
-
-```text
-Asset → Arıza → Öncelik → Teknisyen → Yedek Parça → Plan → Onay
-```
-
-### Quality — not “New NCR entity”
-
-**CTA:** Raise NCR / NCR aç  
-**Type:** **Wizard**
-
-```text
-Kaynak → Ürün → Lot → Problem → Fotoğraf → Root Cause → CAPA
-```
-
-Full: `docs/00_Product/Process_Screens/QLT_NCR_Wizard.md`
-
-### Maintenance — Open work order
-
-Full: `docs/00_Product/Process_Screens/MNT_Work_Order_Wizard.md`
+**Raise NCR** → Wizard · `QLT_NCR_Wizard.md`  
+**Open work order** → Wizard · `MNT_Work_Order_Wizard.md`
 
 ---
 
-## 3b. Create → Job CTA matrix (authoritative)
+## 3a. Master Data / Engineering examples (Production)
+
+### Not “New Machine” (Code · Name · Save)
+
+**CTA:** Configure machine / Makine yapılandır  
+**Type:** **Configuration**  
+**Screen:** PRD-503 Machine Configuration
+
+```text
+Kimlik → Tip / Grup → Üretici / Model / Seri / Asset
+  → Yerleşim (Fabrika · Bina · Hat · Work Center · Pozisyon)
+  → Teknik (eksen · max ölçü · devir · güç · voltaj)
+  → Üretim yetenekleri (operasyonlar · ağaç türleri · ürünler · tool magazine · setup · cycle)
+  → Bakım (PM · yağlama · sensörler · sayaçlar)
+  → Doküman (PDF · Manual · CAD · Fotoğraf)
+  → Validate → Release
+```
+
+Full: `docs/00_Product/Process_Screens/PRD_Machine_Configuration.md`
+
+### Not “New BOM” (Code · Description · Save)
+
+**CTA:** Build BOM / BOM oluştur  
+**Type:** **Builder**  
+**Screen:** PRD-501 BOM Builder
+
+```text
+Ürün → Revizyon → Malzeme ağacı → Alternatifler → Fire
+  → Operasyon bağlantıları → Onay → Release
+```
+
+Full: `docs/00_Product/Process_Screens/PRD_BOM_Builder.md`
+
+### Production engineering matrix (authoritative)
+
+| Entity (data) | Forbidden UI | Screen | Type | CTA |
+|---------------|--------------|--------|------|-----|
+| Product *(catalog)* | Create Product form | Product Wizard | Configuration / Wizard | Define product |
+| BOM | BOM CRUD | **PRD-501 BOM Builder** | Builder | Build BOM |
+| Routing | Routing CRUD | **PRD-502 Routing Designer** | Designer | Design routing |
+| Machine | Machine CRUD | **PRD-503 Machine Configuration** | Configuration | Configure machine |
+| Work Center | WC CRUD | **PRD-504 Work Center Designer** | Designer | Design work center layout |
+| Production Line | Line CRUD | **PRD-505 Line Configuration** | Configuration | Configure line |
+| Operation | Operation CRUD | **PRD-506 Operation Designer** | Designer | Design operation |
+| Shift | Shift CRUD | **PRD-507 Shift Planner** | Planner | Plan shifts |
+| Calendar | Calendar CRUD | **PRD-508 Calendar Planner** | Planner | Plan calendar |
+| Tooling | Tooling CRUD | **PRD-509 Tool Library** | Library → Configuration | Manage tooling |
+
+None of these are Create · Edit · Delete screens.  
+Libraries reopen work; Designers/Builders/Configurations **author and Release** knowledge.
+
+Authority for Production screen index: `docs/13_Design/05_Production/Production_Screens.md`.
+
+---
+
+## 3b. Create → Job CTA matrix (operations)
 
 Every operational “create” intent maps to a **job CTA** + **screen type**.  
-Shared `ResourcePage` / `EntityListScreen` create panels are **forbidden** for rows marked Wizard / Terminal / Console.
+Shared `ResourcePage` / `EntityListScreen` create panels are **forbidden** for rows marked Wizard / Terminal / Console / Builder / Designer / Configuration.
 
 | Module | Forbidden CTA | Correct CTA (TR / EN) | Type | Process / Screens |
 |--------|---------------|----------------------|------|-------------------|
@@ -118,58 +156,50 @@ Shared `ResourcePage` / `EntityListScreen` create panels are **forbidden** for r
 | Inventory | Yeni transfer | **Stok transfer** / Transfer stock | Wizard | [`INV_Transfer_Wizard.md`](../../00_Product/Process_Screens/INV_Transfer_Wizard.md) |
 | Inventory | Yeni sayım | **Sayım başlat** / Start count | Wizard | [`INV_Cycle_Count_Session.md`](../../00_Product/Process_Screens/INV_Cycle_Count_Session.md) |
 | Inventory | Yeni düzeltme | **Düzeltme onayla** / Post adjustment | Approval / Workbench | `Inventory_Screens.md` |
-| Inventory | Yeni malzeme / depo / lokasyon | **Malzeme ekle** / Add material… | Explorer | Master data only |
-| Production | Yeni emir / Create PO | **Üretim planla** / Plan production | Wizard | [`PRD_Production_Planning_Wizard.md`](../../00_Product/Process_Screens/PRD_Production_Planning_Wizard.md) |
+| Inventory | Yeni malzeme | **Malzeme tanımla** (Configuration — not Code·Name·Save) | Configuration | Inventory Screens *(evolve)* |
+| Production | Yeni emir | **Üretim planla** / Plan production | Wizard | [`PRD_Production_Planning_Wizard.md`](../../00_Product/Process_Screens/PRD_Production_Planning_Wizard.md) |
+| Production | Yeni BOM / makine / rota… | See **§ 3a engineering matrix** | Builder / Designer / Configuration | `Production_Screens.md` |
 | Production | Yeni iş emri | **İş emri aç / Dispatch** | Planner / Terminal | `Production_Screens.md` |
-| Production | Yeni teyit / hurda / sarf | **Operatör terminali** jobs | Terminal | `Production_Screens.md` |
-| Quality | Yeni NCR / Create NCR | **NCR aç** / Raise NCR | Wizard | [`QLT_NCR_Wizard.md`](../../00_Product/Process_Screens/QLT_NCR_Wizard.md) |
-| Quality | Yeni CAPA | **CAPA aç** / Open CAPA | Wizard / Workbench | `Quality_Screens.md` |
-| Quality | Yeni muayene | **Muayene başlat** / Start inspection | Terminal / Wizard | `Quality_Screens.md` |
+| Quality | Yeni NCR | **NCR aç** / Raise NCR | Wizard | [`QLT_NCR_Wizard.md`](../../00_Product/Process_Screens/QLT_NCR_Wizard.md) |
 | Maintenance | Yeni iş emri | **İş emri aç** / Open work order | Wizard | [`MNT_Work_Order_Wizard.md`](../../00_Product/Process_Screens/MNT_Work_Order_Wizard.md) |
-| Maintenance | Yeni talep | **Arıza bildir** / Report breakdown | Wizard / Console | `Maintenance_Screens.md` |
-| Purchasing | Create / Yeni PO | **Sipariş ver** / Place purchase order | Wizard | [`PUR_Purchase_Order_Wizard.md`](../../00_Product/Process_Screens/PUR_Purchase_Order_Wizard.md) |
-| Purchasing | Create PR | **Satınalma talebi aç** / Raise purchase request | Wizard | `Purchasing_Screens.md` |
-| Purchasing | Create RFQ | **Teklif iste** / Request quotation | Wizard | `Purchasing_Screens.md` |
-| Sales / CRM | + New Lead | **Lead kaydet** / Capture lead | Wizard / Workbench | `Sales_Screens.md` |
-| Sales | + New Opportunity | **Fırsat aç** / Open opportunity | Workbench | `Sales_Screens.md` |
-| Sales | + New Quotation | **Teklif hazırla** / Prepare quotation | Wizard | `Sales_Screens.md` |
+| Purchasing | Create PO | **Sipariş ver** / Place purchase order | Wizard | [`PUR_Purchase_Order_Wizard.md`](../../00_Product/Process_Screens/PUR_Purchase_Order_Wizard.md) |
 | Sales | + New Sales Order | **Sipariş gir** / Enter sales order | Wizard | [`SAL_Sales_Order_Wizard.md`](../../00_Product/Process_Screens/SAL_Sales_Order_Wizard.md) |
-| Sales | + New Shipment | **Sevkiyat planla** / Plan shipment | Wizard / Console | `Sales_Screens.md` |
-| Sales | + New Invoice | **Fatura kes** / Issue invoice | Wizard | `Sales_Screens.md` |
-| Finance | Create journal | **Yevmiye gir** / Post journal | Workbench | Finance Screens *(to author)* |
-| Finance | Period close | **Dönem kapat** / Close period | Wizard | Finance Screens |
 | Platform | Create user | **Kullanıcı ekle** / Add user | Explorer / Admin | Administration |
 
-**Libraries (Explorer)** may use “Add …” only for true master data — never for Goods Receipt, Production Order, NCR, PO, SO, WO, Count, Transfer, Issue.
-
-Historical `docs/14_Implementation/**` TASK wireframes that say `+ New` / `Create X` are **not authority** — follow this matrix.
+Historical `docs/14_Implementation/**` TASK wireframes that say `+ New` / `Create X` are **not authority**.
 
 ---
 
-## 4. CTA naming (replace Create/New)
+## 4. CTA naming
 
 | Avoid | Prefer (examples) |
 |-------|-------------------|
-| Yeni / Create / New | **Plan production** · **Receive goods** · **Raise NCR** · **Open work order** · **Start count** |
-| Save (as the only outcome) | **Post** · **Release** · **Submit for approval** · **Complete** |
+| Yeni / Create / New / Save | **Plan production** · **Receive goods** · **Build BOM** · **Configure machine** · **Design routing** · **Release** |
+| Create · Edit · Delete as the product | Library find + Designer/Builder **Release** |
 
-Entity **libraries** (Explorer) may have “Add master…” only for true master-data jobs — still not a shared Create chrome across modules.
+Finish actions for engineering: **Validate** · **Submit for approval** · **Release** (not bare Save).
 
 ---
 
 ## 5. How Cursor must choose a screen type
 
-Before generating any UI for a “new / create” intent:
-
 ```text
 1. What job is the user finishing?          (JOB_FIRST_SCREEN_DESIGN)
-2. Which screen type fits that job?        (this document)
-3. What process steps / gates apply?       (module Workflow + User Flows)
-4. Which components compose the type?      (UI_Patterns + Component Library)
-5. Which laws are reference-only?          (Authority Matrix — Numbering, Inventory, …)
+2. Is this a transaction or engineering knowledge?
+3. Which screen type fits?                  (this document §2)
+4. What sections / steps / gates?           (module Screens + Process_Screens)
+5. Which laws are reference-only?           (Authority Matrix)
 ```
 
-If step 2 is skipped → defaulting to Entity Grid + Create form is a **defect**.
+If step 2–3 are skipped → defaulting to Entity Grid + Create form is a **defect**.  
+If Master Data is generated as Code · Name · Save → **defect**.
+
+Mental model:
+
+```text
+✘  Entity  →  Form
+✔  Business Object  →  Business Workspace  →  Business Designer
+```
 
 ---
 
@@ -177,20 +207,20 @@ If step 2 is skipped → defaulting to Entity Grid + Create form is a **defect**
 
 | Layer | Shared across modules? | Customized per process? |
 |-------|------------------------|-------------------------|
-| Screen **type** (Wizard, Terminal, …) | Pattern yes | Steps, gates, CTAs **always** process-specific |
-| **Components** (Grid, Card, Stepper, Scan) | Yes | Configuration / slots |
-| **Entity** (PO, GR, NCR) | Data only | Never defines the screen alone |
+| Screen **type** | Pattern yes | Steps, facets, CTAs **always** process-specific |
+| **Components** (Grid, Tree, Canvas, Stepper, File) | Yes | Configuration / slots |
+| **Entity** (Machine, BOM, PO) | Data only | Never defines the screen alone |
 
 ---
 
 ## 7. Authority
 
-This file is the **authority for screen type selection**.  
+This file is the **authority for screen type selection** (including Master Data ≠ Create Form).  
 Module Screens / User Flows **reference** a type and define process steps — they do not invent a parallel “Create” pattern.
 
 Related:
 
-- [`UI_Patterns.md`](./UI_Patterns.md) — pattern anatomy  
-- [`JOB_FIRST_SCREEN_DESIGN.md`](../../00_Product/JOB_FIRST_SCREEN_DESIGN.md) — job question  
-- Module Workflow / Screens — process steps  
-- `Document_Numbering.md` — identity minting inside wizards (reference only)
+- [`UI_Patterns.md`](./UI_Patterns.md) — pattern anatomy (Builder / Designer / Configuration)  
+- [`JOB_FIRST_SCREEN_DESIGN.md`](../../00_Product/JOB_FIRST_SCREEN_DESIGN.md)  
+- `Production_Screens.md` — PRD-501…509 engineering surfaces  
+- `Document_Numbering.md` — identity minting (reference only)

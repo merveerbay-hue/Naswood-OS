@@ -12,8 +12,13 @@
 **UI patterns:** [`docs/13_Design/Common/UI_Patterns.md`](../13_Design/Common/UI_Patterns.md)  
 **Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)  
 **Job-first design:** [`JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md)  
-**Process screens (job Create CTAs):** [`Process_Screens/`](./Process_Screens/) — Planning · Receiving · Issue · Transfer · Count · NCR · Maint WO · PO · SO  
-**Create → Job matrix:** [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § 3b
+**Process screens:** [`Process_Screens/`](./Process_Screens/) — ops Wizards + **BOM Builder** · **Machine Configuration**  
+**Create / Engineering matrix:** [`Screen_Types.md`](../13_Design/Common/Screen_Types.md) § 3a · § 3b  
+
+```text
+NOS'ta Master Data ekranları "Create Form" değildir.
+```
+
 
 Before any new rule: *Bu kuralı daha önce tanımlamış mıydık?* → Matrix → reference or extend authority.
 

@@ -2,7 +2,7 @@
 # PRODUCTION SCREENS
 # Naswood Operating System (NOS)
 # Module: Production
-# Version: 1.0
+# Version: 1.1
 # ==============================================================================
 
 # PURPOSE
@@ -45,9 +45,9 @@ See `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`.
 
 Production screens shall
 
-- Follow manufacturing workflows (Wizard / Board / Terminal)
-- Be role-oriented
-- Be process-driven (steps, gates, release)
+- Follow manufacturing workflows (Wizard / Builder / Designer / Configuration / Terminal / Planner)
+- Be role-oriented (especially Production Engineer for Engineering workspace)
+- Be process-driven (steps, facets, gates, release)
 - Support desktop and tablet
 - Minimize user interaction
 - Display contextual KPIs
@@ -57,15 +57,20 @@ Production screens shall
 Screens must never behave as generic CRUD pages.
 
 ```text
-Primary Planning entry:  Production Planning Wizard  (Screen type: Wizard)
-Secondary:               Plan / Order Library (Explorer — find & reopen)
-Shop floor:              Operator Terminal (Screen type: Terminal)
-Not the design center:   “New Production Order” / shared Create form
+Primary Planning entry:     Production Planning Wizard  (Wizard)
+Shop floor:                 Operator Terminal (Terminal)
+Engineering (Master Data):  Builder / Designer / Configuration / Planner — NOT Create Form
+Not the design center:      “New Machine” / “New BOM” / Code · Name · Save
 ```
 
-Screen types authority: `docs/13_Design/Common/Screen_Types.md`  
+```text
+NOS'ta Master Data ekranları "Create Form" değildir.
+```
+
+Screen types authority: `docs/13_Design/Common/Screen_Types.md` § 1 · § 2b · § 3a  
 Patterns: `docs/13_Design/Common/UI_Patterns.md`  
-CTA: **Üretim planla / Plan production** — never bare “Yeni”.
+CTA ops: **Üretim planla / Plan production** — never bare “Yeni”.  
+CTA engineering: **Build BOM** · **Configure machine** · **Design routing** · **Release**.
 
 ---
 
@@ -84,12 +89,14 @@ Production
 │
 ├── Monitoring
 │
-├── Master Data
+├── Engineering          ← was “Master Data”; knowledge Designers (not CRUD)
 │
 ├── Analytics
 │
 └── Reports
 ```
+
+*(Navigation may still label the workspace “Master Data”; product name = **Engineering**.)*
 
 ---
 
@@ -484,77 +491,139 @@ Display
 
 ---
 
-# MASTER DATA WORKSPACE
+# ENGINEERING WORKSPACE
 
-## PRD-501 BOM Management
+> **Law:** Master Data screens are not Create Forms.  
+> They are **Builder · Designer · Configuration · Planner · Library** surfaces.  
+> User **defines, validates, relates, simulates, and Releases** production knowledge.  
+> Authority: `docs/13_Design/Common/Screen_Types.md` § 1 · § 3a.
 
-Purpose
+Primary role: **Production Engineer** (also Process Engineer, Maintenance for machine facets).
 
-Manage BOM revisions.
+| ID | Screen | Type | CTA | Replaces |
+|----|--------|------|-----|----------|
+| PRD-501 | **BOM Builder** | Builder | Build BOM / BOM oluştur | BOM Management CRUD |
+| PRD-502 | **Routing Designer** | Designer | Design routing / Rota tasarla | Routing Management CRUD |
+| PRD-503 | **Machine Configuration** | Configuration | Configure machine / Makine yapılandır | Machine Management CRUD |
+| PRD-504 | **Work Center Designer** | Designer | Design work center / WC yerleştir | Work Center Management CRUD |
+| PRD-505 | **Line Configuration** | Configuration | Configure line / Hat yapılandır | Production Lines CRUD |
+| PRD-506 | **Operation Designer** | Designer | Design operation / Operasyon tasarla | Operations CRUD |
+| PRD-507 | **Shift Planner** | Planner | Plan shifts / Vardiya planla | Shifts CRUD |
+| PRD-508 | **Calendar Planner** | Planner | Plan calendar / Takvim planla | Calendars CRUD |
+| PRD-509 | **Tool Library** | Library → Configuration | Manage tooling / Takım yönet | Tooling CRUD |
 
----
-
-## PRD-502 Routing Management
-
-Purpose
-
-Manage Routings.
-
----
-
-## PRD-503 Machine Management
-
-Purpose
-
-Manage production machines.
-
----
-
-## PRD-504 Work Center Management
-
-Purpose
-
-Manage Work Centers.
+Each Engineering object also has a **Library** view (find & reopen) — Library never hosts Code · Name · Save.
 
 ---
 
-## PRD-505 Production Lines
+## PRD-501 BOM Builder
 
-Purpose
+**Type:** Builder  
+**Job:** Üretim mühendisi, ürün revizyonu için malzeme ağacını kurar, alternatif/fire/operasyon bağlarını doğrular ve **Release** eder.  
+**Not the job:** “Create BOM row” (Code · Description · Save).  
+**Spec:** `docs/00_Product/Process_Screens/PRD_BOM_Builder.md`
 
-Manage Production Lines.
-
----
-
-## PRD-506 Operations
-
-Purpose
-
-Manage Operations.
+```text
+Ürün → Revizyon → Malzeme Ağacı → Alternatif Malzemeler
+  → Fire → Operasyon Bağlantıları → Onay → Release
+```
 
 ---
 
-## PRD-507 Shifts
+## PRD-502 Routing Designer
 
-Purpose
+**Type:** Designer  
+**Job:** Proses rotasını operasyon → makine → tool → süre → işçilik → QC → paralellik ile tasarlar; simüle eder; Release eder.  
+**Not the job:** Routing CRUD.
 
-Manage Shifts.
-
----
-
-## PRD-508 Calendars
-
-Purpose
-
-Manage Production Calendars.
+```text
+Operasyon → Makine → Tool → Cycle Time → Labor → QC
+  → Paralel Operasyon → Simülasyon → Release
+```
 
 ---
 
-## PRD-509 Tooling
+## PRD-503 Machine Configuration
 
-Purpose
+**Type:** Configuration  
+**Job:** Makineyi kimlik, yerleşim, teknik, üretim yeteneği, bakım ve dokümanlarıyla tanımlar; Validate → Release.  
+**Not the job:** Machine Code · Name · Save.  
+**Spec:** `docs/00_Product/Process_Screens/PRD_Machine_Configuration.md`
 
-Manage production tooling.
+```text
+Kimlik (Tip · Grup · Üretici · Model · Seri · Asset)
+  → Yerleşim (Fabrika · Bina · Hat · Work Center · Pozisyon)
+  → Teknik (Eksen · Max En/Boy/Kalınlık · Devir · Güç · Voltaj)
+  → Üretim (Operasyonlar · Ağaç türleri · Ürünler · Tool Magazine · Setup · Cycle)
+  → Bakım (PM · Yağlama · Sensörler · Sayaçlar)
+  → Doküman (PDF · Manual · CAD · Fotoğraf)
+  → Validate → Release
+```
+
+This does **not** fit on one flat form — Configuration uses facets / sections.
+
+---
+
+## PRD-504 Work Center Designer
+
+**Type:** Designer (Layout)  
+**Job:** Work Center yerleşimini ve kapasite bağlamını tasarla — Layout Builder.  
+**Not the job:** Work Center CRUD.
+
+```text
+Work Center kimliği → Kapasite profili → Makine atamaları
+  → Yerleşim / layout → Kuyruk kuralları → Release
+```
+
+---
+
+## PRD-505 Line Configuration
+
+**Type:** Configuration  
+**Job:** Production Line’ı istasyonlar, akış ve kısıtlarla yapılandır.  
+**Not the job:** Line CRUD.
+
+```text
+Hat kimliği → İstasyon sırası → Makine / WC bağları
+  → Akış kuralları → Kısıtlar → Release
+```
+
+---
+
+## PRD-506 Operation Designer
+
+**Type:** Designer  
+**Job:** Standart operasyonu parametreler, QC noktaları ve makine uygunluğu ile tasarla.  
+**Not the job:** Operation CRUD.
+
+```text
+Operasyon kimliği → Parametreler → Makine uygunluğu
+  → Tool / setup → QC noktaları → Release
+```
+
+---
+
+## PRD-507 Shift Planner
+
+**Type:** Planner  
+**Job:** Vardiya şablonlarını ve atamaları planla.  
+**Not the job:** Shift CRUD.
+
+---
+
+## PRD-508 Calendar Planner
+
+**Type:** Planner  
+**Job:** Çalışma / tatil / bakım takvimini planla.  
+**Not the job:** Calendar CRUD.
+
+---
+
+## PRD-509 Tool Library
+
+**Type:** Library → opens Tool Configuration  
+**Job:** Takım / bıçak kütüphanesinde bul, yapılandır, ömür ve magazine ilişkisini yönet.  
+**Not the job:** Tooling Code · Name · Save form as the product.
 
 ---
 

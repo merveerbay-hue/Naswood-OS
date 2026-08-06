@@ -99,12 +99,95 @@ Inspect and navigate **master / stock / asset** data; open related jobs.
 
 ### Behavior rules
 
-- Primary job CTAs launch the correct **Wizard / Terminal**, not inline Create.  
-- Master-data “Add…” allowed only for true catalog maintenance (still Explorer + Master Detail, not shared Create chrome).
+- Primary job CTAs launch the correct **Wizard / Terminal / Builder / Designer / Configuration**, not inline Create.  
+- Engineering Library “Add…” opens the matching **Builder / Designer / Configuration** — never Code · Name · Save.  
+- Master Data ≠ Create Form (`Screen_Types.md` § 1).
 
 ### Components
 
 Entity Grid · Tree · Master Detail · Filter Bar · Status Badge · Warehouse Map
+
+---
+
+## 3b. Pattern: Builder
+
+### Purpose
+
+Construct a structured engineering object (tree / structure) with validation and **Release**.
+
+### Used for
+
+- BOM Builder  
+- Nested package / kit structures
+
+### Anatomy
+
+```text
+┌ Context (Product · Revision)
+├ Structure canvas / tree
+├ Property inspector
+├ Validation panel
+└ Actions: Validate · Submit · Release
+```
+
+### Behavior rules
+
+- Not a header-only form.  
+- Release publishes knowledge for Planning / Execution.
+
+---
+
+## 3c. Pattern: Designer
+
+### Purpose
+
+Design a process graph or layout with relations and optional simulation.
+
+### Used for
+
+- Routing Designer  
+- Operation Designer  
+- Work Center Layout Designer
+
+### Anatomy
+
+```text
+┌ Canvas (nodes / stations / ops)
+├ Palette (operations · machines · tools)
+├ Inspector (cycle · labor · QC)
+├ Simulation / conflict strip (optional)
+└ Actions: Validate · Release
+```
+
+---
+
+## 3d. Pattern: Configuration
+
+### Purpose
+
+Define a rich multi-facet resource (does not fit one page).
+
+### Used for
+
+- Machine Configuration  
+- Line Configuration  
+- Product Wizard (catalog)
+
+### Anatomy
+
+```text
+┌ Identity header (sticky)
+├ Facet navigation (Kimlik · Yerleşim · Teknik · …)
+├ Facet body
+├ Completeness / gate checklist
+└ Actions: Validate · Release
+```
+
+### Behavior rules
+
+- Facets required by policy before Release.  
+- Documents via Platform File Upload (typed roles).  
+- Never reduce to Code · Name · Save.
 
 ---
 

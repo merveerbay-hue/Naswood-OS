@@ -70,7 +70,7 @@ Manual entry is prohibited.
 | **Production execution (how manufacturing runs)** | [`docs/13_Design/05_Production/Production_Workflow.md`](../13_Design/05_Production/Production_Workflow.md) | Screens, User Flows, API, Mobile — process truth |
 | **Production module boundaries / aggregates** | [`docs/13_Design/05_Production/Production_Architecture.md`](../13_Design/05_Production/Production_Architecture.md) | All Production design pack peers |
 | **UI Navigation (menu, workspace chrome, permissions map)** | [`docs/19_Navigation/`](../19_Navigation/) *(target; Platform Navigation until landed)* · [`docs/13_Design/00_Platform/Navigation.md`](../13_Design/00_Platform/Navigation.md) | Module Navigation docs, `nav-config` |
-| **Screen types (Wizard / Terminal / …)** | [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md) | All module Screens, FE “Yeni” CTAs — **no shared Create** |
+| **Screen types (Wizard / Builder / Designer / Configuration / Terminal / …)** | [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md) | All module Screens, FE CTAs — **no shared Create**; **Master Data ≠ Create Form** |
 | **UI patterns (pattern anatomy)** | [`docs/13_Design/Common/UI_Patterns.md`](../13_Design/Common/UI_Patterns.md) | Screen PRDs compose patterns; steps stay in module flows |
 | **User experience (job screens & flows)** | Module **Screens** + **User Flows** (e.g. `Production_Screens.md`, `Inventory_Screens.md`) | Frontend — *not* numbering/genealogy; *not* a global Create form |
 | **Job-first screen naming** | [`docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`](./JOB_FIRST_SCREEN_DESIGN.md) | All Screens / Screen Map |

@@ -14,7 +14,7 @@ Before naming or drawing any screen, answer:
 
 Then:
 
-> **Bu iş hangi ekran tipini kullanır?** (Wizard · Terminal · Explorer · Planner · …)
+> **Bu iş hangi ekran tipini kullanır?** (Wizard · Builder · Designer · Configuration · Terminal · Planner · …)
 
 Authorities: [`docs/13_Design/Common/Screen_Types.md`](../13_Design/Common/Screen_Types.md) · [`UI_Patterns.md`](../13_Design/Common/UI_Patterns.md)
 
@@ -22,22 +22,30 @@ The answer is the screen — **not** a shared Create form.
 
 ```text
 NOS'ta "New" diye tek tip ekran yoktur.
+NOS'ta Master Data ekranları "Create Form" değildir.
 ```
 
 Not:
 
 ```text
 ✘ Entity oluştur / ortak “Yeni” formu
+✘ Machine Code · Name · Save
+✘ BOM Code · Description · Save
 ✘ Production Order CRUD
 ✘ “TASK-056 ekranı”
 ✘ Tablo + Create formu (her modülde aynı)
+✘ Entity → Form
 ```
 
 But:
 
 ```text
+✔ Business Object → Business Workspace → Business Designer
 ✔ Production Planning Wizard — planı oluştur, doğrula, release et
 ✔ Receiving Wizard — PO → miktar → depo → lokasyon → lot (otomatik) → kalite → post
+✔ BOM Builder — ürün → ağaç → alternatif → fire → onay → Release
+✔ Machine Configuration — kimlik → yerleşim → teknik → yetenek → bakım → doküman → Release
+✔ Routing Designer — operasyon → makine → tool → simülasyon → Release
 ✔ Operator Terminal — iş emrini başlat / teyit / hurda
 ✔ Cycle Count Session — sayımı bitir ve farkı kapat
 ✔ NCR Wizard — kaynak → problem → CAPA
@@ -53,11 +61,14 @@ But:
 | Work Order | **Dispatch & Start Shift** / Operator Run |
 | Goods Receipt | **Receive Against PO / Production** |
 | NCR | **Raise & Disposition Non-Conformance** |
-| Asset | **Register Asset & Maintenance Profile** *(master — allowed when job is master data)* |
+| Machine (Code·Name·Save) | **Machine Configuration** |
+| BOM (Code·Description·Save) | **BOM Builder** |
+| Routing CRUD | **Routing Designer** |
+| Work Center CRUD | **Work Center Designer** |
+| Asset | **Register Asset & Maintenance Profile** *(Configuration — allowed when job is master knowledge)* |
 
-Master Data may still use List + Detail — but the **primary operational surfaces** are job / process screens (Wizard, Board, Terminal, Cockpit).
-
-Entity libraries (lists) exist to **find and reopen work**, not to define the product.
+Master / Engineering primary surfaces are **Builder / Designer / Configuration / Planner** — not List + Create Form.  
+Entity **libraries** exist to **find and reopen** work, then open the Designer.
 
 ---
 
