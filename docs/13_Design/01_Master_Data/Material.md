@@ -2,7 +2,11 @@
 
 ## Purpose
 
-Material Master stores every raw material, semi-finished product and finished product used within Naswood OS.
+Material Definition (legacy name: Material Master) stores every raw material, semi-finished product and finished product used within Naswood OS — as an **active rule pack**, not a passive card.
+
+**Architecture authority:** [`Material_Definition_Architecture.md`](../99_Shared/Material_Definition_Architecture.md)  
+Composes Identity · Measurement · Conversion · Packaging · Numbering · Quality · Traceability · Costing.  
+Physical instances → `Material_Identity_Architecture.md`.
 
 ---
 
@@ -16,7 +20,7 @@ Material Master stores every raw material, semi-finished product and finished pr
 - Materials may be serial tracked.
 - Materials may be active or inactive.
 
-# Material Master
+# Material Master (= Material Definition)
 
 **Module:** Master Data
 
@@ -26,15 +30,19 @@ Material Master stores every raw material, semi-finished product and finished pr
 
 **Status:** Approved
 
+**Product language:** Prefer **Material Definition**. “Material Master” in this file is the legacy synonym for the same object.  
+**UX:** Material Definition Designer / Builder — not a Create Form (`Screen_Types.md`).  
+**Authority:** [`Material_Definition_Architecture.md`](../99_Shared/Material_Definition_Architecture.md)
+
 ---
 
 # Purpose
 
-The Material Master defines the official structure, lifecycle and business rules for all materials managed within Naswood OS.
+The Material Definition (documented historically as Material Master) defines the official structure, lifecycle and business rules for all materials managed within Naswood OS.
 
-Every physical or virtual item used throughout purchasing, inventory, production, sales, quality, maintenance and finance shall exist as a Material Master record.
+Every physical or virtual item used throughout purchasing, inventory, production, sales, quality, maintenance and finance shall exist as a **Material Definition** record.
 
-Material Master is the single source of truth for all material-related information.
+Material Definition is the single source of truth for all material-related **catalog knowledge and rule packs**.
 
 ---
 
@@ -728,6 +736,12 @@ Digital Twin integration is supported.
 ---
 
 # Related Documents
+
+[`Material_Definition_Architecture.md`](../99_Shared/Material_Definition_Architecture.md)
+
+[`Material_Identity_Architecture.md`](../99_Shared/Material_Identity_Architecture.md)
+
+[`Measurement_Conversion_Engine.md`](../99_Shared/Measurement_Conversion_Engine.md)
 
 Supplier.md
 

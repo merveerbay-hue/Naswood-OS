@@ -15,6 +15,9 @@
 ```text
 NOS'ta "New" / "Create" diye tek tip ekran YOKTUR.
 NOS'ta Master Data ekranları "Create Form" değildir.
+
+**Material knowledge** = **Material Definition** Designer/Builder — not a passive Material Master card  
+(`Material_Definition_Architecture.md`).
 Kullanıcı kodlarla değil isimlerle çalışır; teknik kimlikler Numbering Service ile üretilir.
 ```
 

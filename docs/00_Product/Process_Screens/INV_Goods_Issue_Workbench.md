@@ -497,10 +497,10 @@ Canonical set per [`Inventory_Workbench_Design_Standard.md`](../../13_Design/99_
 | Available Quantity | Live from inventory |
 | **Selected Quantity** | Inline editable (partial OK) |
 | Remaining Quantity | Auto |
-| Available m³ | Live / calculated |
-| Selected m³ | Auto |
-| Remaining m³ | Auto |
-| Weight | Selected & remaining |
+| Available m³ | Live via Measurement & Conversion Engine |
+| Selected m³ | Auto via engine |
+| Remaining m³ | Auto via engine |
+| Weight | Selected & remaining via engine |
 | Package Status | Available · Reserved · Picking · … |
 | Production Date | When known |
 | Receiving Date | From receiving root |

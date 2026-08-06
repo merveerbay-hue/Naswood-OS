@@ -5,7 +5,7 @@
 **Version:** 1.0.0  
 **Location:** `docs/13_Design/99_Shared/Measurement_Conversion_Engine.md`  
 **Owns:** Material-centric multi-unit conversion service used by all NOS modules · enter-once / display-all quantity law · stock vs purchase / production / sales / costing UoM roles · dimensional · density · package · custom formula conversion composition · equivalent quantity display set (pcs · lm · m² · m³ · kg · t) · prohibition of module-local manual conversion math  
-**Does not own:** SI unit catalog / precision defaults (→ `Measurement_System.md`) · generic unit-pair factor tables & packaging factor primitives (→ `Unit_Conversion.md`) · Material master field UI (→ Master Data / Products) · Inventory stock ledger posting (→ `Inventory_Architecture.md`) · Costing valuation methods (→ Costing) · Package Allocation Workspace interaction (→ `Package_Allocation_Workspace.md`)
+**Does not own:** SI unit catalog / precision defaults (→ `Measurement_System.md`) · generic unit-pair factor tables & packaging factor primitives (→ `Unit_Conversion.md`) · Material Definition composition / Designer UX (→ `Material_Definition_Architecture.md`) · Inventory stock ledger posting (→ `Inventory_Architecture.md`) · Costing valuation methods (→ Costing) · Package Allocation Workspace interaction (→ `Package_Allocation_Workspace.md`)
 
 ---
 
@@ -76,7 +76,7 @@ Future modules that handle material quantities **shall** call this engine — th
 | Units · precision · SI storage model | `Measurement_System.md` | What a measurable value is; canonical storage; display prefs |
 | Unit-pair factors · packaging factors · wood factor primitives | `Unit_Conversion.md` | How mm↔m, pallet↔package, density↔mass primitives work |
 | **Material multi-UoM business engine** | **This document** | Which UoM roles a material has; dimensional/package/custom formula path; enter-once UX; module API contract |
-| Material dimensions / density / type | Master Data (Products / Materials) | Source attributes the engine reads |
+| Material dimensions / density / type / UoM roles | `Material_Definition_Architecture.md` (Material Definition) | Source attributes & conversion bindings the engine reads |
 | Package contents rules | Packaging + Inventory | Pieces per package, remaining after partial issue |
 
 ```text
@@ -252,9 +252,11 @@ Replay uses the sealed conversion snapshot or reverse/correction flows.
 
 ---
 
-## 11. Configuration (Master Data)
+## 11. Configuration (Material Definition)
 
-Material / Product shall provide (minimum for dimensional wood):
+**Authority for the catalog object:** `Material_Definition_Architecture.md`.
+
+Material Definition shall provide (minimum for dimensional wood):
 
 | Attribute | Use |
 |-----------|-----|
@@ -301,7 +303,7 @@ Suitable for internal and external quantity audits.
 3. Package Allocation Workspace and Inventory Workbenches inject the engine for live m³/kg.  
 4. Persist conversion snapshot on Post.  
 5. Compose `Measurement_System.md` + `Unit_Conversion.md` for factors/precision.  
-6. Master Data owns attributes; this engine owns the calculation contract.  
+6. Material Definition owns attributes & UoM role bindings; this engine owns the calculation contract.  
 7. Prohibited: Excel-like manual dual entry of pcs and m³ as independent truths.
 
 ---
@@ -331,4 +333,4 @@ Package PKG-00254 remaining after partial issue updates pcs **and** m³ through 
 
 ## Related
 
-`Measurement_System.md` · `Unit_Conversion.md` · `Package_Allocation_Workspace.md` · `Inventory_Workbench_Design_Standard.md` · `Inventory_Architecture.md` · `Document_Numbering.md` · Master Data Products / Materials · Costing · Sales · Purchasing · Production · Quality · Shipping design packs
+`Measurement_System.md` · `Unit_Conversion.md` · `Material_Definition_Architecture.md` · `Package_Allocation_Workspace.md` · `Inventory_Workbench_Design_Standard.md` · `Inventory_Architecture.md` · `Document_Numbering.md` · Materials / Products modules · Costing · Sales · Purchasing · Production · Quality · Shipping design packs
