@@ -2202,6 +2202,7 @@ NOS is composed of independent business modules.
 Examples include:
 
 - Platform
+- Product Management
 - Inventory
 - Purchasing
 - Sales

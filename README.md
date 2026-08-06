@@ -397,3 +397,12 @@ When contributing to this project:
 Internal Project
 
 © Naswood
+
+## Source Code
+
+Backend solution lives under `src/Naswood.OS.sln`.
+
+- Architecture: Clean Architecture + DDD + Hexagonal + CQRS
+- First vertical slice: Platform Health Check (`GET /health`, `/health/live`, `/health/ready`)
+- See `src/README.md` and `docs/13_Design/00_Platform/Platform_Engineering_Foundation.md`
+
