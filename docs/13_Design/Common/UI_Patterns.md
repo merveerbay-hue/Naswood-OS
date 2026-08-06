@@ -297,27 +297,35 @@ Scheduler · Kanban · Capacity Chart · Risk Badge · Filter Bar
 
 ### Purpose
 
-Management visibility and drill-down into jobs.
+Operational **command center** and management visibility — drill into jobs.  
+**Not** a substitute for Reports / Analytics.
 
 ### Used for
 
+- **Inventory Warehouse Command Center** (queues · exceptions · job CTAs)  
 - Module dashboards  
-- Executive / plant cockpits
+- Executive / plant cockpits  
 
 ### Anatomy
 
 ```text
-KPI row → Queues / boards → Alerts → Shortcuts into Wizard / Console / Planner
+Action bar (job CTAs)
+→ Live queues / boards
+→ Exceptions / alerts
+→ Thin status (optional)
+→ Shortcuts into Wizard / Workbench / Console / Terminal / Planner
 ```
 
 ### Behavior rules
 
-- Every KPI/queue links to a job screen type.  
-- Dashboard is never the place to “Create entity.”
+- Every queue / exception links to a job screen type.  
+- Dashboard is never the place to “Create entity.”  
+- Inventory: **not** a KPI page — see `Inventory_Dashboard.md`.  
+- Charts and valuation trends belong in Reports / Analytics unless they directly unblock today’s work.
 
 ### Components
 
-Metric Card · Dashboard Card · Alert List · Chart · Compact Grid
+Action Chip / Button · Queue List · Exception List · Metric Strip (secondary) · Compact Grid · Alert List
 
 ---
 

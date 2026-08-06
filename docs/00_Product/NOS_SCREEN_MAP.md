@@ -77,7 +77,7 @@ NOS
 
 | Name | Meaning | Not |
 |------|---------|-----|
-| **Dashboard** | Shell home + executive / plant cockpit (cross-module) | Not “every module’s KPI page” only |
+| Dashboard | Shell home + **operational command centers** / plant cockpits | Not “every module’s KPI page” only — Inventory = warehouse command center |
 | **Product** | Sellable / catalog product master (SKU, family, specs) | **Not** Production (MES) |
 | **Production** | Plan → execute → monitor manufacturing (MES + mfg master) | Not commercial Product |
 | **CRM** | Relationship & pipeline (accounts, leads, opportunities) | Separate from Sales order-to-cash |
@@ -372,7 +372,7 @@ Inventory
 
 | ID | Screen | Workspace | Maturity |
 |----|--------|-----------|----------|
-| INV-001 | Inventory Dashboard | Dashboard | Spec’d |
+| INV-001 | **Warehouse Command Center** | Dashboard | Spec’d — `Inventory_Dashboard.md` (not KPI page) |
 | INV-RCV-001 | **Receiving Workbench** (Receive goods) | Operations | Spec’d — `INV_Receiving_Workbench.md` |
 | INV-015 | Receipt Library (find & reopen) | Operations | Spec’d |
 | INV-016 | Receiving session / detail (opens Workbench) | Operations | Spec’d |

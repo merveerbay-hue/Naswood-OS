@@ -26,7 +26,7 @@ Prefer **verbs / outcomes** over entity plurals for operations.
 
 ```text
 Inventory
-├── Dashboard
+├── Komuta Merkezi / Command Center   → INV-001 (not KPI page)
 ├── Operations
 │   ├── Mal kabul başlat          → Receiving Workbench
 │   ├── Mal çıkışı                → Issue Wizard
@@ -56,7 +56,7 @@ Inventory
 
 | Path (logical) | Target |
 |----------------|--------|
-| `/inventory` | Dashboard |
+| `/inventory` | **Warehouse Command Center** (INV-001) |
 | `/inventory/operations/receive` | **Receiving Workbench** (new session or resume draft) |
 | `/inventory/operations/receipts` | Receipt Library |
 | `/inventory/operations/issue` | Issue Wizard |

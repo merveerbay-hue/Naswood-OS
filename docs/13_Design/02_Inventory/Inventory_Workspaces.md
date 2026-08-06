@@ -41,7 +41,7 @@ Inventory
 
 | Workspace | Primary CTAs (job verbs) | Not allowed |
 |-----------|--------------------------|-------------|
-| Dashboard | Open queue item → job screen | Create entity forms |
+| Dashboard | **Warehouse Command Center** — queues · exceptions · job CTAs | KPI wall / valuation charts (→ Reports) |
 | **Operations** | **Mal kabul başlat** → Receiving Workbench · Issue · Transfer | “Yeni Goods Receipt” |
 | Stock | Balance inquiry · Lot / Serial library · Reservation desk | Manual Lot No create |
 | Counts & Adjustments | Start count · Post adjustment | Bare Create Adjustment |

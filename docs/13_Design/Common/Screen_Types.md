@@ -47,7 +47,7 @@ Reusable **CRUD create/edit screens** are forbidden as the default — for **ope
 | **Console** | Run a continuous operational desk (many short actions) | Receiving desk, Shipping desk, Shop-floor supervisor console |
 | **Terminal** | Execute a single focused operational job (often touch / scan) | Operator Terminal, Receiving scan terminal, Shipping terminal |
 | **Approval Center** | Decide pending approvals across documents | PO / NCR / Release / Adjustment approvals |
-| **Dashboard** | See status, KPIs, exceptions; drill into jobs | Module / executive cockpits |
+| **Dashboard** | See status, exceptions, queues; drill into jobs — **module command centers** (not analytics KPI walls) | Inventory Command Center, Production cockpits, executive plant overview |
 
 ### 2b. Engineering & master knowledge (not Create Form)
 

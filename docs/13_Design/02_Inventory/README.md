@@ -20,7 +20,7 @@
 | [`Inventory_Workspaces.md`](./Inventory_Workspaces.md) | Workspace tree |
 | [`Inventory_Navigation.md`](./Inventory_Navigation.md) | Sidebar & deep links |
 | [`Inventory_User_Flows.md`](./Inventory_User_Flows.md) | Role journeys |
-| [`Inventory_Dashboard.md`](./Inventory_Dashboard.md) | Cockpit |
+| [`Inventory_Dashboard.md`](./Inventory_Dashboard.md) | **Warehouse Command Center** (not KPI page) |
 | [`Inventory_API.md`](./Inventory_API.md) | HTTP surface |
 | [`Inventory_Mobile.md`](./Inventory_Mobile.md) | Mobile jobs |
 

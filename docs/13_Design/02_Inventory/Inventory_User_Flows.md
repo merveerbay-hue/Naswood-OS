@@ -36,7 +36,7 @@ When a flow needs a new Lot / Serial / Package / Pallet ID:
 **Authority:** `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` · spine: `INV_Receiving_Wizard.md` · `Document_Numbering.md` § Material Identity series
 
 ```text
-Inventory Dashboard / Operations
+Inventory Command Center / Operations
 → Receive goods / Mal kabul başlat (Receiving Workbench — not Create form)
 → Truck registration + photos
 → Attach documents (DN / packing list / PO / photos)
