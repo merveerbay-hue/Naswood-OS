@@ -245,6 +245,8 @@ Support:
 
 AI OCR → structured qty/lines → operator verifies.
 
+When counting / confirming **packages**, compose the shared **Package Allocation Workspace** (`Package_Allocation_Workspace.md`) — Working Quantity = Counted / Verified; same operator language as Goods Issue.
+
 ```text
 Prefer: Scan > Handwriting OCR > Photo sheet > Manual qty
 ```
@@ -272,6 +274,8 @@ Consolidate comparison across:
 PO · Delivery Note · Packing List · Physical Count · OCR · Photos.
 
 Highlight every remaining mismatch. Name-first material match to catalog.
+
+Package-level verify/match uses the same Allocation Workspace pattern (not a separate CRUD lines grid).
 
 **Gate:** Lines accepted for stock (partial receive allowed by policy).
 

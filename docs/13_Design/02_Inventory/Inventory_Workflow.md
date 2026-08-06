@@ -16,6 +16,7 @@
 | Genealogy | `Material_Genealogy.md` (created on transformations / receipts as applicable) |
 | Quality holds | Quality Workflow + this module’s hold transactions |
 | UX steps | `Inventory_Screens.md` · `Inventory_User_Flows.md` |
+| Package select / allocate UX (all movements) | `Package_Allocation_Workspace.md` — Issue · Receiving · Transfer · Production · Shipping · Count |
 
 ---
 
@@ -37,6 +38,8 @@ Reserve / Allocate ──► Soft commit
 ```
 
 All balance changes are **transactions**. No silent updates.
+
+**UX law:** Wherever operators select or verify packages, compose the shared **Package Allocation Workspace** (`Package_Allocation_Workspace.md`) — one language across inbound, outbound, transfer, production consumption, shipping, and count.
 
 ---
 
