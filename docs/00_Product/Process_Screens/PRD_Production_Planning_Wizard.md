@@ -40,7 +40,10 @@
 | **D365** | Production order create guided + scheduling workspace |
 | **Infor / Opcenter** | Plan → schedule → release; often wizard or guided panel for complex make-to-order |
 
-**NOS better (timber-native):** Wizard steps include **ölçü**, **ağaç türü**, **revizyon** before generic BOM pick — so the planner finishes a *wood manufacturing plan*, not an abstract order header.
+**NOS better (timber-native):** Wizard carries **ölçü + detay çizim + kesit** as a first-class *technical package* (not an afterthought attachment), and can **print a shop packet** on release — so the floor gets dimensions and drawings with the order.
+
+File storage / versioning: reference only → `docs/13_Design/00_Platform/File_Upload.md`  
+Screen type: **Wizard** → `docs/13_Design/Common/Screen_Types.md`
 
 ---
 
@@ -51,13 +54,14 @@ Production Planning Wizard
 ├── 1. Ürün seçimi
 ├── 2. Revizyon seçimi
 ├── 3. Ölçü seçimi
-├── 4. Ağaç türü seçimi
-├── 5. Hammadde uygunluğu
-├── 6. Hat seçimi
-├── 7. Kapasite kontrolü
-├── 8. Termin planı
-├── 9. Maliyet simülasyonu
-└── 10. Onay ve Release
+├── 4. Teknik paket (detay çizim · kesit · ekler)
+├── 5. Ağaç türü seçimi
+├── 6. Hammadde uygunluğu
+├── 7. Hat seçimi
+├── 8. Kapasite kontrolü
+├── 9. Termin planı
+├── 10. Maliyet simülasyonu
+└── 11. Onay, Release ve çıktı
 ```
 
 Each step: **intent · inputs · system checks · gate · UI regions · components**.
@@ -94,16 +98,37 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 | | |
 |--|--|
-| **Intent** | Sipariş / reçete ölçüleri (kalınlık × genişlik × boy, paket, adet) netleşsin. |
-| **Inputs** | Dimension set / cut list profile / package size (timber-aware) |
-| **System** | Validate against product dimension rules; yield hint |
-| **Gate** | Required dimensions complete per product family rules |
-| **UI** | Dimension form; presets from Product; yield preview |
-| **Components** | Attribute Panel, Calculator strip |
+| **Intent** | Sipariş / reçete ölçüleri netleşsin; saha ve kesim bu sayılara güvensin. |
+| **Inputs** | Kalınlık × genişlik × boy; adet / paket; kesim listesi (cut list) satırları; tolerans |
+| **System** | Product dimension rules; yield hint; optional link to SO dimension lines |
+| **Gate** | Zorunlu ölçü alanları dolu (ürün ailesi kuralına göre) |
+| **UI** | Ölçü formu; preset’ler; cut-list grid; özet şerit |
+| **Components** | Attribute Panel, Calculator strip, Entity Grid (cut list) |
+| **Print later** | Ölçü kartı / cut list sayfası shop packet’e girer (§5) |
 
 ---
 
-### Step 4 — Ağaç türü seçimi
+### Step 4 — Teknik paket (detay çizim · kesit · ekler)
+
+| | |
+|--|--|
+| **Intent** | Üretim emriyle birlikte **görsel / teknik bağlam** tamamlansın — sadece sayı değil, çizim ve kesit de taşınsın. |
+| **Inputs** | |
+| | • **Detay çizim** (PDF / DWG / DXF / görüntü — müşteri veya mühendislik) |
+| | • **Kesit** (cross-section) çizimi veya şablon |
+| | • Opsiyonel: montaj / profil / etiket şablonu, not sayfası |
+| | • Her ek için: tip etiketi (`DetailDrawing` · `CrossSection` · `Other`), açıklama, revizyon notu |
+| **System** | Dosyalar Platform File Upload / DMS’e bağlanır (`File_Upload.md`); plan/emir kaydına **link** edilir — dosya Production’da kopyalanmaz |
+| **Gate** | Policy: ürün ailesi “çizim zorunlu” ise en az bir `DetailDrawing`; “kesit zorunlu” ise en az bir `CrossSection`. Aksi halde soft warn |
+| **UI** | Ek listesi + sürükle-bırak; tip seçici; önizleme (PDF/görüntü); “ürün varsayılan çizimini getir” |
+| **Components** | Attachment Panel, Drawing / PDF Preview, File picker |
+| **Integrations** | Platform File Upload · Product default drawings (optional) |
+
+Teknik paket, Release sonrası **Production Order Detail → Documents / Technical package** altında da yönetilir (ekleme / yeni revizyon).
+
+---
+
+### Step 5 — Ağaç türü seçimi
 
 | | |
 |--|--|
@@ -116,7 +141,7 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 ---
 
-### Step 5 — Hammadde uygunluğu
+### Step 6 — Hammadde uygunluğu
 
 | | |
 |--|--|
@@ -130,7 +155,7 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 ---
 
-### Step 6 — Hat seçimi
+### Step 7 — Hat seçimi
 
 | | |
 |--|--|
@@ -143,7 +168,7 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 ---
 
-### Step 7 — Kapasite kontrolü
+### Step 8 — Kapasite kontrolü
 
 | | |
 |--|--|
@@ -157,7 +182,7 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 ---
 
-### Step 8 — Termin planı
+### Step 9 — Termin planı
 
 | | |
 |--|--|
@@ -170,7 +195,7 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 ---
 
-### Step 9 — Maliyet simülasyonu
+### Step 10 — Maliyet simülasyonu
 
 | | |
 |--|--|
@@ -184,93 +209,141 @@ Each step: **intent · inputs · system checks · gate · UI regions · componen
 
 ---
 
-### Step 10 — Onay ve Release
+### Step 11 — Onay, Release ve çıktı
 
 | | |
 |--|--|
-| **Intent** | Planı **bitir**: kaydet (Draft) veya **Release**. |
-| **Inputs** | Summary of steps 1–9; notes; approver if dual-control |
-| **System** | Create/update Production Order; explode WO if policy; reserve materials if policy; emit events |
-| **Gate** | All hard gates passed; `Production.Release` permission |
-| **UI** | Read-only summary; **Save draft** · **Submit for approval** · **Release** |
-| **Components** | Wizard summary, Approval Bar |
+| **Intent** | Planı **bitir** ve sahaya / arşive **çıktı** verebil. |
+| **Inputs** | Summary of steps 1–10; notes; approver if dual-control; **print options** |
+| **System** | Create/update Production Order; explode WO if policy; reserve materials if policy; emit events; queue print jobs |
+| **Gate** | All hard gates passed; `Production.Release` permission; technical-package policy gates from step 4 |
+| **UI** | Read-only summary (ölçü + teknik paket küçük önizleme); **Save draft** · **Submit for approval** · **Release** · **Release & print shop packet** |
+| **Components** | Wizard summary, Approval Bar, Print options checklist |
 | **Outcome states** | `Draft` · `PendingApproval` · `Released` |
 
 ---
 
-## 5. Wizard chrome (all steps)
+## 5. Teknik paket & çıktı (print / export)
+
+Ölçü + çizim + kesit, emrin **üretime giden dili**dir. Release yalnızca durum değiştirmez; istenirse **shop packet** üretir.
+
+### 5.1 Technical package contents
+
+| Artifact | Role | Typical formats |
+|----------|------|-----------------|
+| Dimension / cut list | Kesim ve kontrol ölçüleri | Structured fields + PDF sayfası |
+| Detail drawing | Detay çizim | PDF, DWG, DXF, PNG/JPG |
+| Cross-section (kesit) | Kesit görünümü | PDF, DWG, DXF, PNG/JPG |
+| Other | Montaj, etiket şablonu, müşteri notu | PDF, image |
+
+Storage authority: Platform **File Upload / DMS** — Production only stores **links + typed roles** on the plan/order.
+
+### 5.2 Print / export jobs (selectable)
+
+| Output | Includes | When |
+|--------|----------|------|
+| **Shop packet (PDF)** | Cover (PO id, product, qty, due) · Ölçü / cut list · Detay çizim · Kesit · Routing özeti · Hat / termin | Release veya Detail → Print |
+| **Dimension card** | Ölçü + tolerans (+ barkod/emir no) | Ayrı veya packet içinde |
+| **Drawing set** | Yalnız çizim + kesit sayfaları | Atölye / tedarikçi |
+| **Work order sheet** | WO listesi + op özeti (policy) | Release sonrası |
+| **Labels** | Emir / paket etiketleri | Barcode strategy — reference `Barcode_Strategy.md` |
+
+Actions (CTA — not “Create”):
+
+- **Print shop packet** / **Saha paketi yazdır**  
+- **Export PDF**  
+- **Download drawings**  
+
+Operator Terminal and Dispatch may **open/print** the same packet (read-only); they do not author drawings.
+
+### 5.3 Permissions (print / package)
+
+| Action | Permission |
+|--------|------------|
+| Attach / replace technical files | `Production.Planning.Attachments` |
+| Print shop packet | `Production.Print.ShopPacket` |
+| Print labels | `Production.Print.Labels` |
+
+---
+
+## 6. Wizard chrome (all steps)
 
 | Element | Behavior |
 |---------|----------|
-| Stepper | 10 steps; completed / current / locked |
-| Context header | Product · qty · due · plant (sticky) |
+| Stepper | 11 steps; completed / current / locked |
+| Context header | Product · qty · due · plant · “teknik paket: n ek” (sticky) |
 | Exit | Confirm discard if dirty |
-| Save draft | Allowed from step 5+ (policy) |
-| Permissions | Step 10 Release may require Manager |
+| Save draft | Allowed from step 4+ (policy) — keeps files linked |
+| Permissions | Step 11 Release may require Manager |
 
 **Primary component:** Wizard (shared library).
 
 ---
 
-## 6. Secondary screens (not the job center)
+## 7. Secondary screens (not the job center)
 
 | Screen | Role vs Wizard |
 |--------|----------------|
-| Plan / Order Library (list) | Find draft/released plans; **Open in wizard** or **Open detail** |
-| Production Order Detail | Post-release monitoring, documents, genealogy — not create path |
-| Scheduling Board | Multi-order balancing after/beside wizard |
-| Capacity Board | Plant-wide; wizard embeds a slice at steps 7–8 |
+| Plan / Order Library (Explorer) | Find draft/released plans; **Open in wizard** or **Open detail** |
+| Production Order Detail | Post-release: Overview · **Technical package** · Materials · Routing · Schedule · History; **Print shop packet** |
+| Scheduling / Capacity boards | Multi-order balancing; open packet read-only |
 
 ---
 
-## 7. Permissions (sketch)
+## 8. Permissions (sketch)
 
 | Action | Permission |
 |--------|------------|
 | Open wizard / save draft | `Production.Planning.Create` |
+| Technical package attach | `Production.Planning.Attachments` |
 | Override capacity / shortage | `Production.Planning.Override` |
 | Submit approval | `Production.Planning.Submit` |
 | Release | `Production.Release` |
+| Print shop packet / labels | `Production.Print.*` |
 | Cancel released | `Production.Cancel` (separate job) |
 
 ---
 
-## 8. Events (outcome)
+## 9. Events (outcome)
 
 - `ProductionPlanDraftSaved`
 - `ProductionPlanSubmitted`
+- `ProductionOrderTechnicalPackageUpdated`
 - `ProductionOrderReleased`
+- `ProductionShopPacketRequested`
 - `MaterialReservationRequested` *(if policy)*
 - `WorkOrderPackageGenerated` *(if policy)*
 
 ---
 
-## 9. Explicitly not this screen
+## 10. Explicitly not this screen
 
-- Operator start/complete (Operator Terminal)
-- Shop-floor scrap/rework
-- Master data BOM edit (BOM Detail job)
-- Full plant scheduling of all orders (Scheduling Board)
+- Operator start/complete (Operator Terminal)  
+- Authoring CAD in-app (external CAD → upload)  
+- Master data BOM structure edit  
+- Full plant scheduling of all orders  
 
 ---
 
-## 10. Cursor implementation note
+## 11. Cursor implementation note
 
 When implementing:
 
-1. Build **Wizard steps 1→10**, not a single `ProductionOrder` create form.  
-2. Persist draft between steps.  
-3. List library is secondary navigation.  
-4. Do **not** title the feature “Production Order CRUD”.
+1. Build **Wizard steps 1→11**, not a single `ProductionOrder` create form.  
+2. Step 4 = typed attachments via Platform file APIs — do not reinvent DMS.  
+3. Step 11 offers **Release & print shop packet** (PDF compose from ölçü + drawings).  
+4. Detail screen reuses the same technical package + print actions.  
+5. Do **not** title the feature “Production Order CRUD”.
 
 ---
 
-## 11. Product Architect checklist
+## 12. Product Architect checklist
 
 - [x] Job named (not entity)  
-- [x] Steps mirror real timber planning  
-- [x] Gates & integrations listed  
+- [x] Steps mirror timber planning **including çizim / kesit**  
+- [x] Print / shop packet defined  
+- [x] File storage referenced (not redefined)  
 - [x] Library vs wizard separated  
 - [ ] Role walkthrough with Production Manager (session)  
-- [ ] Align `Production_Screens.md` Planning section IDs (`PRD-101` → wizard-first)  
-- [ ] Align `15_UI` PRD-010/011 family to wizard + library split  
+- [ ] FE: Wizard + Attachment Panel + PDF packet compose  
+
