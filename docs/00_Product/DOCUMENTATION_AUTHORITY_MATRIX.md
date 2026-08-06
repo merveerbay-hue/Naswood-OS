@@ -72,6 +72,9 @@ Manual entry is prohibited.
 | Numbering / all system identifiers (codes, MI series, lots, WH, machine, docs) + **name-first UX** | [`docs/13_Design/99_Shared/Document_Numbering.md`](../13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3 | All Screens, Wizards, Builders, FE forms — **no editable Code *** |
 | **Genealogy (parent–child material history)** | [`docs/05_Modules/02_Production/Material_Genealogy.md`](../05_Modules/02_Production/Material_Genealogy.md) + Production Architecture genealogy sections · **nodes = Material Identities** | Production Screens/Flows, Quality Traceability UI, Inventory |
 | **Traceability (forward/backward inquiry UX & QMS view)** | Quality Architecture [`docs/13_Design/06_Quality/Quality_Architecture.md`](../13_Design/06_Quality/Quality_Architecture.md) **and** Inventory Architecture [`docs/13_Design/02_Inventory/Inventory_Architecture.md`](../13_Design/02_Inventory/Inventory_Architecture.md) — *joint; Genealogy owns the graph* | QLT Traceability screens, INV lot/serial inquiry |
+| **Quality Foundation Program** (Quality core sequence · consumes Inventory/Shared backbone) | [`docs/13_Design/06_Quality/Quality_Foundation_Program.md`](../13_Design/06_Quality/Quality_Foundation_Program.md) | Quality Design Program · QLT screens — **do not** invent parallel MI/Conversion/Audit |
+| **Quality Hold & Disposition** | [`docs/13_Design/06_Quality/Quality_Hold_Disposition_Architecture.md`](../13_Design/06_Quality/Quality_Hold_Disposition_Architecture.md) | Hold Desk · NCR · GI damage/hold — Inventory posts stock effects |
+| **Chain of Custody (FSC/PEFC)** | [`docs/13_Design/99_Shared/Chain_of_Custody_Architecture.md`](../13_Design/99_Shared/Chain_of_Custody_Architecture.md) | Quality · Inventory · Production · Shipping — unbroken MI/Package chain + certificates |
 | **Capability Profile** | Product / Master Data — [`docs/05_Modules/01_Master_Data/Products.md`](../05_Modules/01_Master_Data/Products.md) *(until dedicated Product Architecture exists)* | BOM, Production Order, Purchasing, Inventory validations |
 | **Inventory ownership (stock truth)** | [`docs/13_Design/02_Inventory/Inventory_Architecture.md`](../13_Design/02_Inventory/Inventory_Architecture.md) | Production must not post stock except via Inventory transactions |
 | **Production execution (how manufacturing runs)** | [`docs/13_Design/05_Production/Production_Workflow.md`](../13_Design/05_Production/Production_Workflow.md) | Screens, User Flows, API, Mobile — process truth |
@@ -156,6 +159,8 @@ Frozen TASKs never win against Architecture / Workflow / Screen Map.
 | **Compliance Architecture** | `99_Shared/Compliance_Architecture.md` | **Landed v1.0** — Foundation #4 |
 | **Inventory Foundation Program** | `02_Inventory/Inventory_Foundation_Program.md` | **Landed** — Aşama 1 sequence; ops screens paused |
 | Warehouse / Transaction Engine / Package Architecture | `Warehouse_Architecture.md` · `Inventory_Transaction_Engine.md` · `Package_Architecture.md` | **Skeleton** — Foundation #5–#7 queued |
+| **Quality Foundation / Architecture v2** | `06_Quality/Quality_Foundation_Program.md` · `Quality_Architecture.md` | **Landed** — Hold/Disposition · CoC · Design Program |
+| **Chain of Custody Architecture** | `99_Shared/Chain_of_Custody_Architecture.md` | **Landed** — FSC/PEFC continuity |
 | Product Architecture (Capability) | `05_Modules/01_Master_Data/Products.md` | Prefer dedicated Product Architecture when authored; until then Products.md owns Capability; Products **link to** Material Definitions |
 | `docs/19_Navigation/*` | Present on UI-architecture branch; Platform `Navigation.md` on main | Converge; matrix points at both until merge |
 
