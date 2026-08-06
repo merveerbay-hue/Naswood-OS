@@ -71,9 +71,9 @@ Lot numarası sistem tarafından üretilir.
 Example — **right** (reference only):
 
 ```text
-Identifiers are generated exclusively by the NOS Numbering Service
-as defined in Document_Numbering.md. Manual entry is prohibited.
-Users work with names; codes are display-only.
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+Manual entry is prohibited. Users work with names; codes are display-only.
 ```
 
 ## 2.2 No shared Create / “Yeni” form — and Master Data ≠ Create Form

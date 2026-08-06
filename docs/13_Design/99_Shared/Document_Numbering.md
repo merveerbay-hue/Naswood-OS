@@ -326,12 +326,24 @@ Import
 **Constitution pointer:** `AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md` § 2.3  
 **This section is authoritative** for which IDs are auto-minted and how UI presents them.
 
+## Canonical statement (cite this — do not rephrase)
+
+```text
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+
+Manual entry is prohibited. Users work with names; codes are display-only.
+```
+
+Screens, Flows, Wizards, Builders, and APIs **reference** this statement only.
+
 ```text
 Business users shall never manually create or edit system identifiers.
 
 All identifiers including codes, document numbers, lot numbers, serial numbers,
 warehouse codes, package IDs, pallet IDs, machine codes and transaction numbers
-shall be generated exclusively by the NOS Numbering Service.
+shall be generated exclusively by the NOS Numbering Service
+(centralized Numbering Architecture — this document).
 
 Data entry forms shall capture business information only.
 
