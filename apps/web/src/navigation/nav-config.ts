@@ -16,12 +16,13 @@ export const navigationTree: NavItem[] = [
     path: '/inventory/dashboard',
     icon: 'Package',
     children: [
-      { id: 'inventory-dashboard', label: 'Gösterge Paneli', path: '/inventory/dashboard' },
+      { id: 'inventory-dashboard', label: 'Komuta Merkezi', path: '/inventory/dashboard' },
       {
         id: 'inventory-operations',
         label: 'Operasyonlar',
         children: [
-          { id: 'inventory-goods-receipts', label: 'Mal Kabul', path: '/inventory/operations/goods-receipts' },
+          { id: 'inventory-receive', label: 'Mal kabul başlat', path: '/inventory/operations/receive' },
+          { id: 'inventory-goods-receipts', label: 'Kabul kayıtları', path: '/inventory/operations/goods-receipts' },
           { id: 'inventory-goods-issues', label: 'Mal Çıkış', path: '/inventory/operations/goods-issues' },
           { id: 'inventory-transfers', label: 'Transfer', path: '/inventory/operations/transfers' },
         ],
