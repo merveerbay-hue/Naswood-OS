@@ -37,6 +37,24 @@ Users never navigate through database entities.
 
 ---
 
+# AUTHORITY REFERENCES (do not redefine)
+
+This document owns **role journeys / flow steps**. Cross-cutting laws live elsewhere.
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Inventory ownership | `docs/13_Design/02_Inventory/Inventory_Architecture.md` |
+| Execution process truth | `Production_Workflow.md` |
+
+When a flow step needs a new Lot / Serial / Package / Pallet / Production ID,
+write: *“Identifier minted by NOS Numbering Service (Document_Numbering.md)”* —
+never “system generates lot” as a local rule.
+
+---
+
 # PRIMARY USER ROLES
 
 - Production Manager
@@ -59,61 +77,45 @@ Production Planner
 
 Goal
 
-Create and release a Production Order.
+**Finish a releasable production plan** (not “create a Production Order row”).
+
+Primary screen
+
+Production Planning Wizard  
+(`docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`)
 
 ```text
 Dashboard
-
-↓
-
+    ↓
 Planning Workspace
-
-↓
-
-Production Orders
-
-↓
-
-Create Production Order Wizard
-
-↓
-
-Demand Selection
-
-↓
-
-BOM Selection
-
-↓
-
-Routing Selection
-
-↓
-
-Capacity Check
-
-↓
-
-Material Availability
-
-↓
-
-Schedule Production
-
-↓
-
-Review
-
-↓
-
-Release Production Order
+    ↓
+Plan production  →  Production Planning Wizard
+    ↓
+1  Ürün seçimi
+2  Revizyon seçimi
+3  Ölçü seçimi
+4  Ağaç türü seçimi
+5  Hammadde uygunluğu
+6  Hat seçimi
+7  Kapasite kontrolü
+8  Termin planı
+9  Maliyet simülasyonu
+10 Onay ve Release
+    ↓
+Released Production Order  (+ optional WO package / reservations)
 ```
+
+Secondary
+
+- Plan / Order Library — find & reopen drafts  
+- Scheduling / Capacity boards — multi-order balancing  
 
 Integrations
 
-- Product
-- Inventory
-- Planning
+- Product (catalog, revision, dimensions, species)
+- Inventory (availability, reservation)
+- Finance (cost simulation)
+- Maintenance (downtime on capacity)
 - Scheduling
 
 ---
@@ -445,7 +447,8 @@ Assign Location
 
 ↓
 
-Generate Lot
+Mint Lot ID via NOS Numbering Service
+(see Document_Numbering.md — manual entry prohibited)
 
 ↓
 

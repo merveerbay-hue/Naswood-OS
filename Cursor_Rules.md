@@ -4,7 +4,7 @@
 
 **Document:** Cursor Rules
 
-**Version:** 1.0
+**Version:** 1.3
 
 ---
 
@@ -13,6 +13,71 @@
 These rules define how Cursor AI shall operate while developing Naswood OS.
 
 The objective is to ensure consistency, maintainability and enterprise-grade software quality across the entire project.
+
+---
+
+# Product Architect Drive (design first — mandatory)
+
+**Canonical:** [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md)  
+**SSOT matrix:** [`docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`](docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md)  
+**Product map:** [`docs/00_Product/`](docs/00_Product/)  
+**Implementation:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
+**Layer map:** [`docs/PRODUCT_LAYERS.md`](docs/PRODUCT_LAYERS.md)
+
+Before stating any cross-cutting rule in a doc or PR: check the Authority Matrix.  
+**Yes, already defined → reference only. No → edit the authority document.**
+
+**We design. Cursor applies.**
+
+```text
+NOS → Module → Workspace → Navigation → Screen → Component → Workflow → Permissions → Code
+```
+
+### Thinking ladder (before docs or code)
+
+1. Real life — factory behavior  
+2. User / roles — who sees what?  
+3. Market — SAP / IFS / Dynamics / Infor  
+4. NOS better — our product choice  
+5. Document — product layers  
+6. Implement — named workspace / screens only  
+
+### Absolute rules
+
+1. **Never** start from “TASK-XXX yaz / yap”.
+2. **Never** generate a screen from a TASK (or TASK habit).
+3. **Always** reconstruct the complete module first (roles + workspaces).
+4. Prefer **“Üretim Müdürü Production’da ne görmeli?”** / **“Maintenance Workspace’i oluştur”**, not **“TASK-078’i yap”**.
+
+`docs/14_Implementation` is **FROZEN** — no new TASK files.
+
+### Mandatory read order
+
+```text
+1. Product Architect Drive     AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md
+2. AI Execution Constitution   AI/NOS_CONSTITUTION/00_AI_EXECUTION.md
+3. NOS Product Map             docs/00_Product/
+4. Foundation / Engineering / Platform
+5. Module Architecture · Workflow · API · Dashboard · Mobile
+6. UI Architecture             docs/15_UI_Architecture/
+7. Navigation / Permissions    docs/19_Navigation/
+8. Screen Architecture         docs/15_UI/
+9. User Flows                  docs/17_User_Flows/
+10. Component Library          docs/18_Component_Library/
+11. Design System              docs/16_Design_System/
+12. Frontend Architecture      docs/20_Frontend_Architecture/
+```
+
+### Forbidden default
+
+```text
+TASK-078 → Asset CRUD
+next TASK → another ResourcePage
+new file under 14_Implementation/
+“TASK yazalım” as a product brief
+```
+
+If product docs are missing, **run the thinking ladder and author the product layer** — do not invent a TASK.
 
 ---
 
@@ -48,6 +113,31 @@ Every new feature shall include:
 - API Changes
 - Database Changes
 - Related Documents
+
+---
+
+# Product UI Hierarchy (mandatory)
+
+```text
+Product Architect Drive → AI Execution Constitution → Constitution → Architecture
+    → NOS Product Map (00_Product)
+    → Module Design (Architecture / Workflow / API / Dashboard / Mobile)
+    → UI Architecture (15_UI_Architecture)
+    → Navigation + Permissions (19_Navigation)
+    → Screen Architecture (15_UI)
+    → Components (18) → Workflow / User Flows (17) → Design System (16)
+    → Frontend Architecture (20)
+    → Source Code
+
+14_Implementation = FROZEN (historical only)
+```
+
+### Critical rules
+
+- Open design with **roles and jobs**, not TASK IDs.
+- Open implementation with **workspace / screen / flow**, never with a new TASK file.
+- Before coding business UI, open the **screen PRD** and compose from Component Library.
+- Current flat CRUD nav/pages are **technical MVP debt**; converge to product workspaces.
 
 ---
 

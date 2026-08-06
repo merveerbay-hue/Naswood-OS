@@ -19,13 +19,35 @@ Every screen belongs to exactly one Workspace.
 
 ---
 
+# AUTHORITY REFERENCES (do not redefine)
+
+This document owns **UX / job screens** only. Cross-cutting laws live elsewhere.
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Genealogy | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Inventory ownership / stock posting | `docs/13_Design/02_Inventory/Inventory_Architecture.md` |
+| Production execution process | `docs/13_Design/05_Production/Production_Workflow.md` |
+| Job-first naming | `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md` |
+
+Do **not** repeat rules such as “lot number is system-generated” here — link the Numbering authority.
+
+---
+
 # SCREEN DESIGN PRINCIPLES
+
+**Job-first (mandatory):**  
+Before any screen: *Kullanıcı bu ekranda hangi işi bitirmek istiyor?*  
+Name the screen after that job — not after the entity.  
+See `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`.
 
 Production screens shall
 
-- Follow manufacturing workflows
+- Follow manufacturing workflows (Wizard / Board / Terminal)
 - Be role-oriented
-- Be process-driven
+- Be process-driven (steps, gates, release)
 - Support desktop and tablet
 - Minimize user interaction
 - Display contextual KPIs
@@ -33,6 +55,12 @@ Production screens shall
 - Support drill-down navigation
 
 Screens must never behave as generic CRUD pages.
+
+```text
+Primary Planning entry:  Production Planning Wizard
+Secondary:               Plan / Order Library (find & reopen)
+Not the design center:   “New Production Order” entity form
+```
 
 ---
 
@@ -94,99 +122,101 @@ Primary Actions
 
 # PLANNING WORKSPACE
 
-## PRD-101 Production Orders
+## PRD-101 Production Planning Wizard  ★ primary
 
-Purpose
+**Job to be done:** Planlamacı üretilebilir bir planı kurar ve Release eder.
 
-Manage production planning.
+Full spec: `docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`
 
-Features
+Steps
 
-- Order List
-- Filters
-- Search
-- Bulk Actions
+1. Ürün seçimi  
+2. Revizyon seçimi  
+3. Ölçü seçimi  
+4. Ağaç türü seçimi  
+5. Hammadde uygunluğu  
+6. Hat seçimi  
+7. Kapasite kontrolü  
+8. Termin planı  
+9. Maliyet simülasyonu  
+10. Onay ve Release  
 
-Actions
+Primary Users
 
-- New Production Order
-- Schedule
-- Release
-- Cancel
-- Archive
+- Production Planner  
+- Production Manager (approve / release)
+
+Outcome
+
+- Draft plan saved, or Production Order **Released**
+
+Components
+
+- Wizard · Availability Panel · Capacity chart · Approval Bar
 
 ---
 
-## PRD-102 Production Order Workspace
+## PRD-102 Plan / Order Library
 
-Purpose
+**Job to be done:** Draft / released planları bul, aç, izle (wizard’ın ikincil yüzeyi).
 
-Manage a single production order.
+Features
 
-Sections
-
-- Overview
-- Materials
-- Routing
-- Scheduling
-- Capacity
-- History
-- Documents
+- Plan list (Draft · PendingApproval · Released · …)
+- Filters · Search · Bulk actions
 
 Actions
 
-- Schedule
-- Release
-- Print
-- Duplicate
+- **Plan production** → opens PRD-101 Wizard  
+- Open in Wizard (draft)  
+- Open Detail (released)  
+- Cancel · Archive  
+
+---
+
+## PRD-102b Production Order Detail
+
+**Job to be done:** Release sonrası tek planı izle / belgele (oluşturma yolu değil).
+
+Sections
+
+- Overview · Materials · Routing · Schedule · Capacity · History · Documents
+
+Actions
+
+- Reschedule (policy) · Print · Duplicate → Wizard · Cancel
 
 ---
 
 ## PRD-103 Scheduling Board
 
-Purpose
-
-Visual planning board.
+**Job to be done:** Çoklu emirleri zaman/kaynak ekseninde dengele; çatışmaları çöz.
 
 Display
 
-- Timeline
-- Machines
-- Capacity
-- Work Orders
-- Conflicts
+- Timeline · Machines · Capacity · Work Orders · Conflicts
 
 Supports Drag & Drop.
 
 ---
 
-## PRD-104 Capacity Planning
+## PRD-104 Capacity Load Board
 
-Purpose
-
-Capacity balancing.
+**Job to be done:** Hat / WC yükünü gör; darboğazı bul; plana geri dön.
 
 Display
 
-- Available Capacity
-- Planned Capacity
-- Bottlenecks
-- Utilization
+- Available vs Planned · Bottlenecks · Utilization
 
 ---
 
 ## PRD-105 Dispatch Board
 
-Purpose
-
-Production dispatch.
+**Job to be done:** Sahaya verilecek işi önceliklendir ve sevk et.
 
 Display
 
-- Ready Orders
-- Running Orders
-- Delayed Orders
-- Priorities
+- Ready · Running · Delayed · Priorities
 
 ---
 

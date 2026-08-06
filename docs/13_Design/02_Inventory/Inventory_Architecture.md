@@ -22,6 +22,21 @@ This document establishes the domain boundaries, core entities, workflows and in
 
 ---
 
+# Authority references (do not redefine)
+
+This document owns **inventory ownership and stock truth**. Cross-cutting laws live elsewhere.
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Genealogy graph | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Traceability inquiry (joint with Quality) | Quality Architecture + this document (views); Genealogy owns the graph |
+
+Do not restate numbering algorithms or “lot is auto-generated” in Inventory Screens / Flows / Workflow — reference Document_Numbering.md.
+
+---
+
 # Objectives
 
 - Provide a single source of truth for inventory.
