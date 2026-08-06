@@ -20,6 +20,7 @@
 |---------|-------------|
 | 1.0 | Demand-backed Workbench spine · AI pick · scan/verify · quality · thin loading · Post · Evidence First |
 | **2.0** | Override Mode + Warehouse Explorer · Package Selection detail · **Partial Package Consumption** · Package Identity permanence · expanded Loading · Document Library / Export UX surfaces · Override History · gates table |
+| **2.0.1** | **Accept / Override Recommendation** CTAs · AI Validation continues in Override · Partial pick auto-updates remaining · **optional company-policy package split** with full traceability |
 
 v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
 
@@ -47,18 +48,26 @@ The system calculates · validates · warns · generates · tracks.
 PACKAGE IDENTITY LAW (wood manufacturing — Master Prompt v2.0)
 ─────────────────────────────────────────────────────────────
 Packages are physical objects.
-Package Identity never changes.
-Package Barcode never changes.
-Package QR Code never changes.
-As long as the physical package exists, its identity is unchanged.
-Partial consumption updates quantities / status only —
-it does NOT mint a new package number and does NOT print a new barcode.
+Default partial pick: same Package Identity / Barcode / QR remain;
+system updates Remaining Quantity · Volume · Weight · Pieces · Status.
+Optional: if company policy requires automatic package split,
+Numbering mints child package(s) while preserving complete traceability
+(parent → child · Inventory Transactions · Genealogy).
+Never silently rename or reuse a barcode.
 Traceability = Inventory Transactions + Material Genealogy —
-never by changing Package IDs.
+never by overwriting Package IDs.
 ```
 
-**Forbidden:** Bare Save form · typed Material / Lot / Package / Pallet / WH / Location / GI / txn / MI codes · orphan issue · inventing a new `PKG-…` on partial consume · reusing package barcodes  
-**Required:** Business document → load demand → AI pick (default) → scan / verify → evidence → quality → destination → review (incl. overrides) → **Post**
+```text
+AI VALIDATION LAW
+─────────────────────────────────────────────────────────────
+Even in Override Mode, AI continues validating business rules.
+Operator may override location / package selection.
+Operator may NOT violate validation rules without explicit authorization.
+```
+
+**Forbidden:** Bare Save form · typed Material / Lot / Package / Pallet / WH / Location / GI / txn / MI codes · orphan issue · reusing package barcodes · bypassing AI validation without authorization  
+**Required:** Business document → load demand → AI pick (default) → **Accept** or **Override** → scan / verify (AI validation always on) → evidence → quality → destination → review (incl. overrides) → **Post**
 
 ---
 
@@ -73,15 +82,15 @@ never by changing Package IDs.
 | 5 | **AI support?** | FIFO/FEFO · reservation · quality · customer reqs · WH rules · location optimize · package integrity · availability · pick route · wrong material/dims/species/moisture/quality/package/lot detect |
 | 6 | **Auto-generated?** | GI · inventory txn(s) · histories · audit · scan/validation/override history · genealogy · remaining package qty/volume/weight/status · suggested pick |
 | 7 | **Never manual?** | Material Code · Lot · Package · Pallet · WH/Location codes · GI · txn · MI strings · free-hand stock balance edit · **new package number on partial issue** |
-| 8 | **User decisions?** | Which demand · approve AI pick **or** Ignore AI + Explorer select · issue qty within package remaining · destination · evidence when needed · **Approve Post** · raise NCR |
+| 8 | **User decisions?** | Which demand · **Accept Recommendation** or **Override Recommendation** (Explorer) · issue qty within package remaining · destination · evidence when needed · **Approve Post** · raise NCR |
 
 ---
 
 ## Job to be done
 
-> Depocu, **iş belgesine** bağlı talebe karşı doğru paketi / lotu tarar; AI önerisini onaylar veya **Ignore AI Recommendation** ile Warehouse Explorer’dan seçer; **kısmi paket** çıkışında aynı barkodu koruyarak miktarı düşer; kalite ve rezervasyon kapılarını geçer; kanıt ekler; **Post** ile stok ve genealogy güncellenir.
+> Depocu, **iş belgesine** bağlı talebe karşı doğru paketi / lotu tarar; AI önerisini **Accept** eder veya **Override** ile Warehouse Explorer’dan seçer; **kısmi paket** çıkışında kalan miktarı sistem günceller (politika varsa otomatik split + izlenebilirlik); Override’da bile AI validation çalışır; **Post** ile stok ve genealogy güncellenir.
 
-**Not the job:** Create a GoodsIssue row · type inventory down · print a new package barcode for every partial pick.
+**Not the job:** Create a GoodsIssue row · type inventory down · bypass validation · invent package codes.
 
 ## CTA
 
@@ -180,7 +189,7 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 │ 9 Review   │                                     │                       │
 │ 10 Post    │                                     │                       │
 ├────────────┴─────────────────────────────────────┴───────────────────────┤
-│ STICKY: Save draft · Back · Next · Ignore AI Recommendation · NCR · Post │
+│ STICKY: Draft · Back · Next · Accept Recommendation · Override · NCR · Post │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -191,9 +200,9 @@ Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan 
 ```text
 1 Select business document
 2 Load material requirements
-3 AI picking recommendation  (+ Override Mode → Warehouse Explorer)
+3 AI picking recommendation → Accept Recommendation  OR  Override Recommendation
 4 Picking / package selection (scan · partial qty)
-5 Verify material & package
+5 Verify material & package  (AI Validation — also in Override)
 6 Evidence collection
 7 Quality validation
 8 Loading / production destination
@@ -246,11 +255,22 @@ Name-first display; codes secondary / display-only.
 
 ### 3 — AI picking recommendation
 
-Automatically recommend inventory using:
+The system **shall automatically recommend** inventory according to:
 
-FIFO · FEFO · Reservation · Quality Status · Customer Requirements · Warehouse Rules · Location Optimization · Package Integrity · Material Availability.
+| Driver |
+|--------|
+| FIFO |
+| FEFO |
+| Reservation |
+| Quality Status |
+| Warehouse Rules |
+| Location Optimization |
+| Package Integrity |
+| Customer Requirements |
 
-Display (default option):
+The recommendation is the **default option**.
+
+Display:
 
 | Recommendation |
 |----------------|
@@ -260,33 +280,43 @@ Display (default option):
 | Recommended Quantity |
 | Recommended Route |
 
-Operator **approves** the recommendation (default path) **or** enters Override Mode.
+Operator chooses exactly one path:
 
-**Gate:** Each line has an approved pick proposal **or** an audited override selection.
+| Control | Result |
+|---------|--------|
+| **✓ Accept Recommendation** | Proceed with AI default (scan/confirm along recommended route) |
+| **✓ Override Recommendation** | Enter Override Mode (Warehouse Explorer) |
+
+**Gate:** Each line has **Accept** recorded **or** an audited **Override** selection.
 
 ---
 
 ### Override Mode
 
-Clearly visible control:
-
-```text
-[ Ignore AI Recommendation ]
-```
-
-When selected:
+When **Override Recommendation** is selected:
 
 1. Open **Warehouse Explorer** (browse — do not redefine Explorer UX; Design Program #4).  
-2. Allow navigation:
+2. Operator browses inventory:
 
 ```text
-Warehouse → Zone → Rack → Shelf → Bin → Package
+Warehouse
+    ↓
+Zone
+    ↓
+Rack
+    ↓
+Shelf
+    ↓
+Bin
+    ↓
+Package
 ```
 
-3. Operator manually selects another package (still subject to quality / reservation / authorization rules).  
-4. **Every override is logged** (actor · timestamp · AI proposal · chosen package · reason if required by policy).
+3. Operator may manually choose another package (scan or Explorer pick — name-first; **no typed codes**).  
+4. **Every override shall be logged** in audit history (actor · timestamp · AI proposal · chosen WH/location/package · reason if policy requires).
 
-Override does **not** allow typing Package / Location / WH codes. Selection is scan or Explorer pick (name-first).
+**AI Validation continues in Override Mode** (see § AI Validation).  
+Override changes **selection**, not the right to break business rules.
 
 ---
 
@@ -294,21 +324,19 @@ Override does **not** allow typing Package / Location / WH codes. Selection is s
 
 Navigate along recommended route (or Explorer path). Support: Barcode · QR · RFID · Scanner · Voice (future).
 
-Every scan validated against proposal / override / reservation.
+Every scan runs through **AI Validation** against demand + proposal/override + reservation.
 
-Operator confirms **issue quantity** (may be less than package available — see Partial Package Consumption).
+Operator confirms **issue quantity** (may be less than package available — see Partial Package Picking).
 
-**Gate:** Scans recorded for required identity level; issue qty > 0 and ≤ available (and ≤ reserved when reservation-bound).
+**Gate:** Scans recorded for required identity level; issue qty > 0 and ≤ available (and ≤ reserved when reservation-bound); AI Validation clear or authorized waiver.
 
 ---
 
 ### 5 — Verify material
 
-Check: Correct material · dimensions · species · moisture · quality · package · lot · qty · reservation · expiry.
+Operator review surface for AI Validation results (Accept and Override paths).
 
-Detect and **block until resolved** (or authorized waiver): Wrong material / dims / species / moisture / quality / package / lot · Blocked · Quarantine · Inspection hold · Expired · Mixed lots (policy).
-
-**Gate:** All lines green or supervisor waiver (audited).
+**Gate:** All lines green or explicitly authorized waiver (audited).
 
 ---
 
@@ -326,23 +354,7 @@ Surfaces: Evidence Panel · Photo Gallery · Document Viewer — capabilities pe
 
 ### 7 — Quality validation
 
-Validate automatically:
-
-| Check |
-|-------|
-| Wrong Material |
-| Wrong Dimensions |
-| Wrong Species |
-| Wrong Moisture |
-| Wrong Quality |
-| Wrong Package |
-| Wrong Lot |
-| Blocked Inventory |
-| Quarantine |
-| Inspection Hold |
-| Expired Material |
-
-Operator may override **package selection** (Override Mode) but **cannot violate business rules** without authorization (Quality / Supervisor release).
+Hard quality state checks (Blocked · Quarantine · Inspection Hold · Expired · Rejected) plus AI Validation rules.
 
 **Gate:** Quality clear for all issue lines (or authorized release recorded).
 
@@ -429,45 +441,71 @@ Selection via scan of existing barcode/QR or Explorer pick — never typed Packa
 
 ---
 
-## Partial Package Consumption
+## Partial Package Picking
 
-Warehouse operators **may consume only part of a package**.
+Warehouse operators **shall be able to consume only part of a package**.
 
 ### Example
 
 ```text
-Package          PKG-00254
-Contains         120 Pieces · 5.240 m³
-Sales Order asks 40 Pieces
-
-Operator selects 40 Pieces
+Package
+120 Pieces
+    ↓
+Issue
+40 Pieces
+    ↓
+Remaining
+80 Pieces
 ```
 
-### Absolute behavior
+### Default behavior (same physical package)
+
+The system **shall automatically update** on the **same** Package Identity:
+
+| Field |
+|-------|
+| Remaining Quantity |
+| Remaining Volume |
+| Remaining Weight |
+| Remaining Pieces |
+| Package Status |
 
 ```text
-The system SHALL NOT generate a new package number.
-The system SHALL NOT print a new barcode / QR for the remainder.
-The original barcode remains attached to the physical package.
+Original barcode / QR stays on the physical package.
+No new barcode is printed for the remainder (default policy).
 ```
-
-Instead, update on the **same** Package Identity:
 
 | Field | Example |
 |-------|---------|
 | Original Quantity | 120 |
 | Issued (this GI) | 40 |
-| Remaining Quantity | 80 |
-| Remaining Volume | (recalculated) |
-| Remaining Weight | (recalculated) |
-| Package Status | → Partially Used (see statuses) |
+| Remaining Pieces | 80 |
+| Package Status | → Partially Used |
+
+### Optional: company-policy package split
+
+```text
+If company policy requires,
+the system may automatically split the package
+while preserving complete traceability.
+```
+
+| Rule | Detail |
+|------|--------|
+| When | Configured company / plant policy only — not operator whim |
+| How | Numbering Service mints **child** Package Identity for the remainder and/or issued handling unit (policy decides which side keeps the original barcode) |
+| Traceability | Parent ↔ child package link · Inventory Transactions · Material Genealogy · audit — **complete chain** |
+| Forbidden | Silent rename · barcode reuse · orphan remainder without link |
+
+Default wood-yard policy: **no split** — one physical package keeps one barcode until fully consumed.  
+Split policy is an explicit configuration, not the Workbench default.
 
 ### Inventory Transactions
 
 Partial issue **shall** create Inventory Transaction(s):
 
 ```text
-PKG-00254
+PKG-… (source)
     ↓
 Goods Issue (40 Pieces)
     ↓
@@ -476,14 +514,41 @@ Production Order / Sales Order / …
 Inventory Transaction
     ↓
 Audit Log
+(+ child PKG link if policy split)
 ```
 
-History is always preserved. Multiple Goods Issues may consume the same package over time until remaining reaches zero / Consumed / Closed.
+History is always preserved. Multiple Goods Issues may consume the same package over time until remaining reaches zero / Consumed / Closed (unless split moved remainder to a child package).
 
-### When is a new Package minted?
+---
 
-**Not** on ordinary partial issue.  
-Only when a **physical handling split** policy explicitly requires a new handling unit (rare; Numbering Service mints a **new** Package; parent links via genealogy / package contents rules — never by renaming the original). Default wood-yard rule: **one physical package = one immutable barcode until fully consumed.**
+## AI Validation
+
+**Even in Override Mode**, AI **shall continue validating**:
+
+| Check |
+|-------|
+| Wrong Material |
+| Wrong Dimension |
+| Wrong Species |
+| Wrong Quality |
+| Wrong Customer Specification |
+| Wrong Reservation |
+| Wrong Lot |
+| Wrong Moisture Class |
+| Wrong Package |
+
+```text
+The operator may override location / package selection,
+but may not violate business validation rules
+unless explicitly authorized.
+```
+
+| Path | AI Validation |
+|------|----------------|
+| Accept Recommendation | On — confirms scan matches recommendation + demand |
+| Override Recommendation | **Still on** — validates manually chosen package against demand / quality / reservation / customer spec |
+
+Authorization to waive a validation = Supervisor / Quality / policy role · always audited · visible in Override History.
 
 ---
 
@@ -491,11 +556,10 @@ Only when a **physical handling split** policy explicitly requires a new handlin
 
 | Property | Rule |
 |----------|------|
-| Package Identity | Never changes |
-| Package Barcode | Never changes |
-| Package QR | Never changes |
+| Package Identity | Immutable for that physical unit; child packages only via **policy split** (new ID, linked) |
+| Package Barcode / QR | Never reused; default partial pick keeps original on physical package |
 | Lifetime | While physical package exists |
-| May change | Available Quantity · Available Volume · Available Weight · Remaining Pieces · **Status** |
+| May change without new ID | Remaining Quantity · Volume · Weight · Pieces · **Status** |
 
 ### Package Status
 
@@ -586,9 +650,9 @@ Append-only panel (Context + Final Review), sealed into audit on Post:
 |-------|------|
 | 1 Document | Valid demand (or Manual + permission + reason) |
 | 2 Materials | ≥1 open line with remaining qty |
-| 3 AI / Override | Approved proposal **or** logged Explorer override |
-| 4 Picking | Scan OK · issue qty ≤ available (and reservation policy) |
-| 5 Verify | All checks green or audited waiver |
+| 3 AI | **Accept Recommendation** **or** logged **Override Recommendation** |
+| 4 Picking | Scan OK · issue qty ≤ available · AI Validation clear (or authorized) |
+| 5 Verify | AI Validation results green or audited waiver |
 | 6 Evidence | Policy-required evidence present |
 | 7 Quality | No block / hold / quarantine / expired without release |
 | 8 Destination | Required destination assigned |
@@ -599,9 +663,9 @@ Append-only panel (Context + Final Review), sealed into audit on Post:
 
 ## AI features (summary)
 
-Recommend best package/location · FIFO/FEFO · Detect wrong material/dims/species/moisture/quality/package/lot/qty/mixed · Predict shortage · Suggest pick route · Detect repeated operator mistakes · Coach / supervisor alert on frequent overrides.
+Recommend (FIFO/FEFO/reservation/quality/WH rules/location/package integrity/customer) · **Accept** or **Override** · AI Validation always on (incl. Override) · shortage predict · pick route · repeated-override coaching.
 
-AI **prepares**; operator **approves** or **Ignore AI Recommendation** (logged).
+AI **recommends and validates**; operator **Accepts** or **Overrides selection** — not business rules.
 
 ---
 
@@ -613,7 +677,7 @@ Goods Issue Number · Inventory Transaction Number · Warehouse Code · Location
 
 All identifiers: Numbering Architecture.  
 Existing Package / Lot / MI: **scan or pick only**.  
-Partial issue: **no new Package number**.
+Partial pick default: **same Package ID**; policy split: Numbering mints **linked child** package(s) only.
 
 ---
 
@@ -621,9 +685,9 @@ Partial issue: **no new Package number**.
 
 | Role | Focus |
 |------|--------|
-| Warehouse Operator | Scan · approve AI or Override · partial qty · evidence · Post |
-| Supervisor | Authorize overrides / waivers · unblock |
-| Inventory Controller | Reservation / shortage · Manual GI permission |
+| Warehouse Operator | Scan · **Accept** or **Override** · partial qty · evidence · Post |
+| Supervisor | Authorize validation waivers · unblock |
+| Inventory Controller | Reservation / shortage · Manual GI · package-split policy config (with admin) |
 | Quality | Holds / release (blocks issue until clear) |
 
 ---
@@ -631,19 +695,20 @@ Partial issue: **no new Package number**.
 ## Mobile / Terminal
 
 Rugged Terminal: steps 4–5 (pick/verify/partial qty) inside the same GI session.  
-Tablet / desk: document select · AI/Override · review · Document Library · Post.
+Tablet / desk: document select · Accept/Override · review · Document Library · Post.
 
 ---
 
 ## Cursor implementation notes
 
 1. Screen type = **Workbench** — not Issue Create form.  
-2. FE must support: AI default · **Ignore AI Recommendation** → Explorer · Package Preview · **partial qty on same PKG** · Override History · Document Library surfaces.  
-3. Post → inventory txn + **package remaining update (same ID)** + reservation clear + evidence archive + genealogy.  
-4. Never mint/print new package barcode on partial consume.  
-5. Command Center “Open issues” opens this Workbench.  
-6. Manual GI = permission + reason — audited.  
-7. Export / permanence algorithms → Shared Document Management — reference only.
+2. FE CTAs: **Accept Recommendation** · **Override Recommendation** → Explorer.  
+3. AI Validation runs on both paths (material/dims/species/quality/customer/reservation/lot/moisture/package).  
+4. Partial pick: auto-update remaining qty/volume/weight/pieces/status; optional policy split with parent–child traceability.  
+5. Post → inventory txn + package update (+ child PKG if policy) + reservation clear + evidence + genealogy.  
+6. Command Center “Open issues” opens this Workbench.  
+7. Manual GI = permission + reason — audited.  
+8. Export / permanence → Shared Document Management — reference only.
 
 ---
 
