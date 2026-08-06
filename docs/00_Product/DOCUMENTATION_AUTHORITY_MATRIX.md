@@ -61,6 +61,7 @@ Manual entry is prohibited.
 | Topic | Authority document | Consumers may only reference (examples) |
 |-------|-------------------|----------------------------------------|
 | **Material Identity** (lifecycle identity, genealogy root, MI vs Lot) | [`docs/13_Design/99_Shared/Material_Identity_Architecture.md`](../13_Design/99_Shared/Material_Identity_Architecture.md) | Receiving Workbench, Transformations, Genealogy, Inventory/Quality screens — **do not** treat Lot as lifelong identity |
+| **Document Management · Evidence Archive · Export** (complete digital file, Document Library, history chain, ops search, Excel/CSV/PDF) | [`docs/13_Design/99_Shared/Document_Management_Evidence_and_Export.md`](../13_Design/99_Shared/Document_Management_Evidence_and_Export.md) | Receiving / Goods Issue Workbenches, Inventory Reports, File Library — **do not** redefine permanence or export columns in Screens; infra stays in `File_Storage.md` |
 | Numbering / all system identifiers (codes, MI series, lots, WH, machine, docs) + **name-first UX** | [`docs/13_Design/99_Shared/Document_Numbering.md`](../13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3 | All Screens, Wizards, Builders, FE forms — **no editable Code *** |
 | **Genealogy (parent–child material history)** | [`docs/05_Modules/02_Production/Material_Genealogy.md`](../05_Modules/02_Production/Material_Genealogy.md) + Production Architecture genealogy sections · **nodes = Material Identities** | Production Screens/Flows, Quality Traceability UI, Inventory |
 | **Traceability (forward/backward inquiry UX & QMS view)** | Quality Architecture [`docs/13_Design/06_Quality/Quality_Architecture.md`](../13_Design/06_Quality/Quality_Architecture.md) **and** Inventory Architecture [`docs/13_Design/02_Inventory/Inventory_Architecture.md`](../13_Design/02_Inventory/Inventory_Architecture.md) — *joint; Genealogy owns the graph* | QLT Traceability screens, INV lot/serial inquiry |
@@ -138,6 +139,7 @@ Frozen TASKs never win against Architecture / Workflow / Screen Map.
 |---------------------------------|------------------------|--------|
 | Core Identity & Numbering Architecture | `99_Shared/Document_Numbering.md` | Treat as that architecture; rename/split later only via ADR |
 | **Material Identity Architecture** | `99_Shared/Material_Identity_Architecture.md` | **Landed** — MI vs Lot; receiving = genealogy root |
+| **Document Management / Evidence Archive / Export** | `99_Shared/Document_Management_Evidence_and_Export.md` | **Landed** — digital file · library · history · search · export; `File_Storage.md` = infra only |
 | Product Architecture (Capability) | `05_Modules/01_Master_Data/Products.md` | Prefer dedicated Product Architecture when authored; until then Products.md owns Capability |
 | `docs/19_Navigation/*` | Present on UI-architecture branch; Platform `Navigation.md` on main | Converge; matrix points at both until merge |
 

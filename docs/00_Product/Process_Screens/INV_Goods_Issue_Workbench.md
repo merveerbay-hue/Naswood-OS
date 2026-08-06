@@ -8,6 +8,7 @@
 **Supersedes as primary UX:** linear [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) (retained as spine)  
 **Stock truth:** `Inventory_Architecture.md` · `Inventory_Workflow.md`  
 **Identity:** `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Material_Genealogy.md`  
+**Evidence / Document Library / Export:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md)  
 **Design program:** `Inventory_Design_Program.md` § 7 (PA-directed ahead of Putaway)
 
 ---
@@ -275,6 +276,8 @@ AI **prepares**; operator **approves**.
 Preserve (immutable archive on Post): Photos · Documents · Issue notes · Operator comments · AI analysis · Scan history · Validation history · Approval history.
 
 Nothing overwritten.
+
+**Authority (do not redefine):** Document Library · Evidence Archive capabilities · history chain · search · export → [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md).
 
 ---
 
