@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { getDashboard } from '@/api/business';
+import { useI18n } from '@/i18n';
 
 interface ProductionDashboardDto {
   openProductionOrders?: number;
@@ -19,36 +20,51 @@ function metric(data: ProductionDashboardDto | undefined, camel: keyof Productio
 }
 
 export function ProductionDashboardPage() {
+  const { t } = useI18n();
   const query = useQuery({
     queryKey: ['business', 'production/dashboard'],
     queryFn: () => getDashboard<ProductionDashboardDto>('production/dashboard'),
   });
   const data = query.data;
 
+  const kpis = [
+    { camel: 'openProductionOrders' as const, pascal: 'OpenProductionOrders' as const, label: t('production.openOrders'), path: '/production/planning/orders' },
+    { camel: 'activeWorkOrders' as const, pascal: 'ActiveWorkOrders' as const, label: t('production.activeWos'), path: '/production/planning/work-orders' },
+    { camel: 'wipQuantity' as const, pascal: 'WipQuantity' as const, label: t('production.wipQty'), path: '/production/execution/wip' },
+    { camel: 'scrapRate' as const, pascal: 'ScrapRate' as const, label: t('production.scrapRate'), path: '/production/execution/scrap' },
+  ];
+
+  const planning = [
+    [t('production.productionOrders'), '/production/planning/orders'],
+    [t('production.workOrders'), '/production/planning/work-orders'],
+    [t('production.dispatch'), '/production/planning/dispatch'],
+    [t('production.scheduling'), '/production/planning/scheduling'],
+  ] as const;
+
+  const execution = [
+    [t('production.operatorTerminal'), '/production/execution/operator-terminal'],
+    [t('production.machinePanel'), '/production/execution/machine-panel'],
+    [t('production.confirmation'), '/production/execution/confirmation'],
+    [t('production.wip'), '/production/execution/wip'],
+  ] as const;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-[var(--text-muted)]">PRD-001</p>
-          <h2 className="text-xl font-semibold tracking-tight">Production Dashboard</h2>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Plant cockpit — open work, WIP, scrap signal, shortcuts into Planning and Execution.
-          </p>
+          <h2 className="text-xl font-semibold tracking-tight">{t('production.dashTitle')}</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('production.dashDesc')}</p>
         </div>
         <Button type="button" variant="secondary" onClick={() => void query.refetch()} disabled={query.isFetching}>
-          Refresh
+          {t('refresh')}
         </Button>
       </div>
 
       {query.isError ? <p className="text-sm text-[var(--color-danger)]">{(query.error as Error).message}</p> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { camel: 'openProductionOrders' as const, pascal: 'OpenProductionOrders' as const, label: 'Open orders', path: '/production/planning/orders' },
-          { camel: 'activeWorkOrders' as const, pascal: 'ActiveWorkOrders' as const, label: 'Active WOs', path: '/production/planning/work-orders' },
-          { camel: 'wipQuantity' as const, pascal: 'WipQuantity' as const, label: 'WIP qty', path: '/production/execution/wip' },
-          { camel: 'scrapRate' as const, pascal: 'ScrapRate' as const, label: 'Scrap rate', path: '/production/execution/scrap' },
-        ].map((item) => (
+        {kpis.map((item) => (
           <Link key={item.pascal} to={item.path} className="block transition hover:-translate-y-0.5">
             <Card>
               <CardHeader>
@@ -65,15 +81,10 @@ export function ProductionDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Planning</CardTitle>
+            <CardTitle>{t('production.planning')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {[
-              ['Production Orders', '/production/planning/orders'],
-              ['Work Orders', '/production/planning/work-orders'],
-              ['Dispatch', '/production/planning/dispatch'],
-              ['Scheduling', '/production/planning/scheduling'],
-            ].map(([label, path]) => (
+            {planning.map(([label, path]) => (
               <Link
                 key={path}
                 to={path}
@@ -86,15 +97,10 @@ export function ProductionDashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Execution</CardTitle>
+            <CardTitle>{t('production.execution')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {[
-              ['Operator Terminal', '/production/execution/operator-terminal'],
-              ['Machine Panel', '/production/execution/machine-panel'],
-              ['Confirmation', '/production/execution/confirmation'],
-              ['WIP', '/production/execution/wip'],
-            ].map(([label, path]) => (
+            {execution.map(([label, path]) => (
               <Link
                 key={path}
                 to={path}

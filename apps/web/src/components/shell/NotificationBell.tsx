@@ -1,10 +1,16 @@
 import { Bell } from 'lucide-react';
 import { Button, cn } from '@naswood/ui';
+import { useI18n } from '@/i18n';
 import { useNotifications } from '@/notifications/useNotifications';
 import { NotificationPanel } from './NotificationPanel';
 
 export function NotificationBell() {
+  const { t } = useI18n();
   const { unreadCount, panelOpen, setPanelOpen } = useNotifications();
+  const aria =
+    unreadCount > 0
+      ? t('notificationsUnread').replace('{count}', String(unreadCount))
+      : t('notifications');
 
   return (
     <div className="relative">
@@ -12,7 +18,7 @@ export function NotificationBell() {
         type="button"
         variant="ghost"
         size="sm"
-        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+        aria-label={aria}
         aria-expanded={panelOpen}
         aria-haspopup="dialog"
         onClick={() => setPanelOpen(!panelOpen)}

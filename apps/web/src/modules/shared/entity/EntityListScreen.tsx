@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource, deleteResource, searchResource } from '@/api/business';
+import { useI18n } from '@/i18n';
 import { StatusBadge } from '@/modules/shared/entity/StatusBadge';
 
 export interface EntityField {
@@ -40,8 +41,10 @@ export function EntityListScreen({
   route,
   fields,
   detailPath,
-  createLabel = 'New',
+  createLabel,
 }: EntityListScreenProps) {
+  const { t } = useI18n();
+  const actionLabel = createLabel ?? t('new');
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -95,15 +98,15 @@ export function EntityListScreen({
           <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>
         </div>
         <Button type="button" onClick={() => setShowCreate((v) => !v)}>
-          {showCreate ? 'Close' : createLabel}
+          {showCreate ? t('close') : actionLabel}
         </Button>
       </div>
 
       {showCreate ? (
         <Card>
           <CardHeader>
-            <CardTitle>{createLabel}</CardTitle>
-            <CardDescription>Creates a draft/master record. Workflow post actions live on Detail screens.</CardDescription>
+            <CardTitle>{actionLabel}</CardTitle>
+            <CardDescription>{t('entity.createHint')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-3 md:grid-cols-3">
@@ -119,7 +122,7 @@ export function EntityListScreen({
               ))}
             </div>
             <Button type="button" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Saving…' : 'Save'}
+              {createMutation.isPending ? t('saving') : t('save')}
             </Button>
             {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
           </CardContent>
@@ -128,7 +131,7 @@ export function EntityListScreen({
 
       <Card>
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>Library</CardTitle>
+          <CardTitle>{t('entity.library')}</CardTitle>
           <form
             className="flex gap-2"
             onSubmit={(e) => {
@@ -136,17 +139,19 @@ export function EntityListScreen({
               void listQuery.refetch();
             }}
           >
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className="max-w-sm" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} className="max-w-sm" />
             <Button type="submit" variant="secondary">
-              Search
+              {t('search')}
             </Button>
           </form>
         </CardHeader>
         <CardContent>
           {listQuery.isLoading ? (
-            <p className="text-sm text-[var(--text-secondary)]">Loading…</p>
+            <p className="text-sm text-[var(--text-secondary)]">{t('loading')}</p>
           ) : (listQuery.data?.items?.length ?? 0) === 0 ? (
-            <p className="text-sm text-[var(--text-secondary)]">No records. Use {createLabel} to add the first row.</p>
+            <p className="text-sm text-[var(--text-secondary)]">
+              {t('entity.noRecords').replace('{action}', actionLabel)}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-left text-sm">
@@ -157,7 +162,7 @@ export function EntityListScreen({
                         {c.label}
                       </th>
                     ))}
-                    <th className="px-2 py-2 font-medium">Actions</th>
+                    <th className="px-2 py-2 font-medium">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -181,11 +186,11 @@ export function EntityListScreen({
                           <div className="flex flex-wrap gap-2">
                             {detailPath && id ? (
                               <Link to={detailPath(id)} className="text-sm font-medium text-[var(--color-primary)] hover:underline">
-                                Open
+                                {t('open')}
                               </Link>
                             ) : null}
                             <Button type="button" size="sm" variant="danger" onClick={() => deleteMutation.mutate(id)}>
-                              Delete
+                              {t('delete')}
                             </Button>
                           </div>
                         </td>
@@ -197,7 +202,7 @@ export function EntityListScreen({
             </div>
           )}
           <p className="mt-3 text-xs text-[var(--text-muted)]">
-            {listQuery.data?.totalCount ?? 0} records · Entity Grid pattern (docs/18_Component_Library)
+            {listQuery.data?.totalCount ?? 0} {t('entity.records')} · {t('entity.entityGridHint')}
           </p>
         </CardContent>
       </Card>

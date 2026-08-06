@@ -24,6 +24,7 @@ import {
   navigationTree,
   type NavItem,
 } from '@/navigation/nav-config';
+import { useI18n } from '@/i18n';
 import { useShell } from './useShell';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -137,6 +138,7 @@ function NavNode({
 
 export function AppSidebar() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const { collapsed, mobileOpen, setMobileOpen } = useShell();
   const items = useMemo(
     () => filterNavigationByRoles(navigationTree, user?.roles ?? []),
@@ -162,7 +164,7 @@ export function AppSidebar() {
           collapsed ? 'w-[72px]' : 'w-[280px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
-        aria-label="Primary"
+        aria-label={t('primaryNav')}
       >
         <div
           className={cn(
@@ -175,13 +177,16 @@ export function AppSidebar() {
           </div>
           {!collapsed ? (
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight">Naswood OS</p>
-              <p className="truncate text-xs text-[var(--text-muted)]">Platform</p>
+              <p className="truncate text-sm font-semibold tracking-tight">{t('appName')}</p>
+              <p className="truncate text-xs text-[var(--text-muted)]">{t('platform')}</p>
             </div>
           ) : null}
         </div>
 
-        <nav className={cn('flex-1 space-y-1 overflow-y-auto p-3', collapsed && 'flex flex-col items-center')}>
+        <nav
+          className={cn('flex-1 space-y-1 overflow-y-auto p-3', collapsed && 'flex flex-col items-center')}
+          aria-label={t('primaryNav')}
+        >
           {items.map((item) => (
             <NavNode
               key={item.id}
@@ -195,10 +200,10 @@ export function AppSidebar() {
 
         {!collapsed ? (
           <div className="border-t border-[var(--border-default)] p-3 text-xs text-[var(--text-muted)]">
-            <p className="font-medium text-[var(--text-secondary)]">Favorites</p>
-            <p className="mt-1">Coming soon</p>
-            <p className="mt-3 font-medium text-[var(--text-secondary)]">Recent</p>
-            <p className="mt-1">Coming soon</p>
+            <p className="font-medium text-[var(--text-secondary)]">{t('favorites')}</p>
+            <p className="mt-1">{t('comingSoon')}</p>
+            <p className="mt-3 font-medium text-[var(--text-secondary)]">{t('recent')}</p>
+            <p className="mt-1">{t('comingSoon')}</p>
           </div>
         ) : null}
       </aside>

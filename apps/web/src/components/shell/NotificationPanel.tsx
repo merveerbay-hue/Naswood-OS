@@ -1,17 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { Button, cn } from '@naswood/ui';
+import { useI18n } from '@/i18n';
 import { useNotifications } from '@/notifications/useNotifications';
 import type { AppNotification, NotificationFilter } from '@/notifications/types';
 
-function formatRelative(iso: string): string {
+function formatRelative(iso: string, t: (path: string) => string): string {
   const deltaMs = Date.now() - Date.parse(iso);
   const minutes = Math.floor(deltaMs / 60_000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t('notify.justNow');
+  if (minutes < 60) return t('notify.minutesAgo').replace('{n}', String(minutes));
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('notify.hoursAgo').replace('{n}', String(hours));
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('notify.daysAgo').replace('{n}', String(days));
 }
 
 function priorityClass(priority: AppNotification['priority']): string {
@@ -27,13 +28,8 @@ function priorityClass(priority: AppNotification['priority']): string {
   }
 }
 
-const FILTERS: { id: NotificationFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'unread', label: 'Unread' },
-  { id: 'read', label: 'Read' },
-];
-
 export function NotificationPanel() {
+  const { t } = useI18n();
   const {
     panelOpen,
     setPanelOpen,
@@ -45,6 +41,12 @@ export function NotificationPanel() {
     markAllRead,
   } = useNotifications();
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const filters: { id: NotificationFilter; label: string }[] = [
+    { id: 'all', label: t('notify.all') },
+    { id: 'unread', label: t('notify.unread') },
+    { id: 'read', label: t('notify.read') },
+  ];
 
   useEffect(() => {
     if (!panelOpen) {
@@ -76,14 +78,16 @@ export function NotificationPanel() {
     <div
       ref={panelRef}
       role="dialog"
-      aria-label="Notification center"
+      aria-label={t('notificationCenter')}
       className="absolute right-0 z-50 mt-2 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--color-background)] shadow-xl"
     >
       <div className="flex items-center justify-between border-b border-[var(--border-default)] px-4 py-3">
         <div>
-          <p className="text-sm font-semibold">Notifications</p>
+          <p className="text-sm font-semibold">{t('notify.title')}</p>
           <p className="text-xs text-[var(--text-muted)]">
-            {unreadCount === 0 ? 'You are up to date' : `${unreadCount} unread`}
+            {unreadCount === 0
+              ? t('notify.upToDate')
+              : t('notify.unreadCount').replace('{count}', String(unreadCount))}
           </p>
         </div>
         <Button
@@ -93,12 +97,12 @@ export function NotificationPanel() {
           disabled={unreadCount === 0}
           onClick={markAllRead}
         >
-          Mark all read
+          {t('notify.markAllRead')}
         </Button>
       </div>
 
       <div className="flex gap-1 border-b border-[var(--border-default)] px-2 py-2">
-        {FILTERS.map((item) => (
+        {filters.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -118,7 +122,7 @@ export function NotificationPanel() {
       <ul className="max-h-80 overflow-y-auto">
         {filteredItems.length === 0 ? (
           <li className="px-4 py-8 text-center text-sm text-[var(--text-muted)]">
-            No notifications
+            {t('notify.empty')}
           </li>
         ) : (
           filteredItems.map((item) => (
@@ -139,7 +143,7 @@ export function NotificationPanel() {
                   <span className="flex items-start justify-between gap-2">
                     <span className="truncate text-sm font-medium">{item.title}</span>
                     <span className="shrink-0 text-[10px] text-[var(--text-muted)]">
-                      {formatRelative(item.createdAt)}
+                      {formatRelative(item.createdAt, t)}
                     </span>
                   </span>
                   <span className="mt-0.5 block text-xs text-[var(--text-secondary)]">
@@ -158,7 +162,7 @@ export function NotificationPanel() {
       </ul>
 
       <div className="border-t border-[var(--border-default)] px-4 py-2 text-[10px] text-[var(--text-muted)]">
-        Local stub — realtime delivery lands with notification service
+        {t('comingSoon')}
       </div>
     </div>
   );

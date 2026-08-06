@@ -5,10 +5,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button, Input, Label } from '@naswood/ui';
 import { ApiClientError } from '@/api/types';
 import { useAuth } from '@/auth/useAuth';
+import { useI18n } from '@/i18n';
 import { loginFormSchema, mapAuthErrorMessage, type LoginFormValues } from '@/lib/validation';
 
 export function LoginPage() {
   const { login } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [formError, setFormError] = useState<string | null>(null);
   const [requireTenant, setRequireTenant] = useState(false);
@@ -47,7 +49,7 @@ export function LoginPage() {
         setFormError(mapAuthErrorMessage(error.code, error.message));
         return;
       }
-      setFormError('Unable to sign in. Check your connection and try again.');
+      setFormError(t('login.connectionError'));
     }
   });
 
@@ -64,8 +66,8 @@ export function LoginPage() {
 
       <section className="relative z-10 w-full max-w-md animate-[fade-up_420ms_ease-out]">
         <div className="mb-8 text-center text-white">
-          <p className="text-4xl font-semibold tracking-tight sm:text-5xl">Naswood OS</p>
-          <p className="mt-3 text-sm text-white/75">Sign in to continue to the platform</p>
+          <p className="text-4xl font-semibold tracking-tight sm:text-5xl">{t('appName')}</p>
+          <p className="mt-3 text-sm text-white/75">{t('login.subtitle')}</p>
         </div>
 
         <form
@@ -75,7 +77,7 @@ export function LoginPage() {
         >
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t('login.username')}</Label>
               <Input
                 id="username"
                 autoComplete="username"
@@ -88,7 +90,7 @@ export function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('login.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -104,11 +106,12 @@ export function LoginPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="companyId">
-                  Company{requireTenant ? ' *' : ''}
+                  {t('login.companyId')}
+                  {requireTenant ? ' *' : ''}
                 </Label>
                 <Input
                   id="companyId"
-                  placeholder={requireTenant ? 'Required for your account' : 'Optional'}
+                  placeholder={requireTenant ? t('required') : t('optional')}
                   autoComplete="organization"
                   aria-required={requireTenant}
                   {...register('companyId')}
@@ -116,11 +119,12 @@ export function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="plantId">
-                  Plant{requireTenant ? ' *' : ''}
+                  {t('login.plantId')}
+                  {requireTenant ? ' *' : ''}
                 </Label>
                 <Input
                   id="plantId"
-                  placeholder={requireTenant ? 'Required for your account' : 'Optional'}
+                  placeholder={requireTenant ? t('required') : t('optional')}
                   aria-required={requireTenant}
                   {...register('plantId')}
                 />
@@ -133,7 +137,7 @@ export function LoginPage() {
                 className="size-4 rounded border-[var(--border-default)] accent-[var(--color-primary)]"
                 {...register('rememberMe')}
               />
-              Remember me
+              {t('login.rememberMe')}
             </label>
 
             {formError ? (
@@ -146,37 +150,13 @@ export function LoginPage() {
             ) : null}
 
             <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
+              {isSubmitting ? t('login.submitting') : t('login.submit')}
             </Button>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
-            <button
-              type="button"
-              className="text-[var(--text-secondary)] underline-offset-2 hover:underline disabled:opacity-50"
-              disabled
-              title="Password reset is out of scope for TASK-000"
-            >
-              Forgot password
-            </button>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                className="text-[var(--text-secondary)] underline-offset-2 hover:underline disabled:opacity-50"
-                disabled
-                title="Localization lands in a later task"
-              >
-                Language
-              </button>
-              <button
-                type="button"
-                className="text-[var(--text-secondary)] underline-offset-2 hover:underline disabled:opacity-50"
-                disabled
-                title="Help center not available yet"
-              >
-                Help
-              </button>
-            </div>
+            <span className="text-[var(--text-muted)]">{t('turkish')}</span>
+            <span className="text-[var(--text-secondary)]">admin · Naswood!Admin1</span>
           </div>
         </form>
       </section>

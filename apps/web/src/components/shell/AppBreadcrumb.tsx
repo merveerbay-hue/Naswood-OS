@@ -1,8 +1,10 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
+import { useI18n } from '@/i18n';
 import { findNavTrail } from '@/navigation/nav-config';
 
 export function AppBreadcrumb() {
+  const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const trail = findNavTrail(pathname);
 
@@ -11,7 +13,7 @@ export function AppBreadcrumb() {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-sm text-[var(--text-secondary)]">
+    <nav aria-label={t('breadcrumb')} className="flex flex-wrap items-center gap-1 text-sm text-[var(--text-secondary)]">
       {trail.map((item, index) => {
         const isLast = index === trail.length - 1;
         return (

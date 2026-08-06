@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { getDashboard } from '@/api/business';
+import { useI18n } from '@/i18n';
 
 interface InventoryDashboardDto {
   materialCount?: number;
@@ -32,21 +33,8 @@ function metric(data: InventoryDashboardDto | undefined, camel: keyof InventoryD
   return data?.[camel] ?? data?.[pascal] ?? 0;
 }
 
-const KPI = [
-  { camel: 'quantityOnHand', pascal: 'QuantityOnHand', label: 'On hand', path: '/inventory/stock/balances' },
-  { camel: 'quantityReserved', pascal: 'QuantityReserved', label: 'Reserved', path: '/inventory/stock/balances' },
-  { camel: 'quantityAvailable', pascal: 'QuantityAvailable', label: 'Available', path: '/inventory/stock/balances' },
-  { camel: 'balanceRows', pascal: 'BalanceRows', label: 'Balance rows', path: '/inventory/stock/balances' },
-] as const;
-
-const QUEUES = [
-  { camel: 'openGoodsReceipts', pascal: 'OpenGoodsReceipts', label: 'Open goods receipts', path: '/inventory/operations/goods-receipts' },
-  { camel: 'openGoodsIssues', pascal: 'OpenGoodsIssues', label: 'Open goods issues', path: '/inventory/operations/goods-issues' },
-  { camel: 'openTransfers', pascal: 'OpenTransfers', label: 'Open transfers', path: '/inventory/operations/transfers' },
-  { camel: 'openCounts', pascal: 'OpenCounts', label: 'Open counts', path: '/inventory/counts/cycle-counts' },
-] as const;
-
 export function InventoryDashboardPage() {
+  const { t } = useI18n();
   const query = useQuery({
     queryKey: ['business', 'inventory/dashboard'],
     queryFn: () => getDashboard<InventoryDashboardDto>('inventory/dashboard'),
@@ -54,18 +42,38 @@ export function InventoryDashboardPage() {
 
   const data = query.data;
 
+  const kpi = [
+    { camel: 'quantityOnHand' as const, pascal: 'QuantityOnHand' as const, label: t('inventory.onHand'), path: '/inventory/stock/balances' },
+    { camel: 'quantityReserved' as const, pascal: 'QuantityReserved' as const, label: t('inventory.reserved'), path: '/inventory/stock/balances' },
+    { camel: 'quantityAvailable' as const, pascal: 'QuantityAvailable' as const, label: t('inventory.available'), path: '/inventory/stock/balances' },
+    { camel: 'balanceRows' as const, pascal: 'BalanceRows' as const, label: t('inventory.balanceRows'), path: '/inventory/stock/balances' },
+  ];
+
+  const queues = [
+    { camel: 'openGoodsReceipts' as const, pascal: 'OpenGoodsReceipts' as const, label: t('inventory.openGoodsReceipts'), path: '/inventory/operations/goods-receipts' },
+    { camel: 'openGoodsIssues' as const, pascal: 'OpenGoodsIssues' as const, label: t('inventory.openGoodsIssues'), path: '/inventory/operations/goods-issues' },
+    { camel: 'openTransfers' as const, pascal: 'OpenTransfers' as const, label: t('inventory.openTransfers'), path: '/inventory/operations/transfers' },
+    { camel: 'openCounts' as const, pascal: 'OpenCounts' as const, label: t('inventory.openCounts'), path: '/inventory/counts/cycle-counts' },
+  ];
+
+  const shortcuts = [
+    [t('inventory.stockBalance'), '/inventory/stock/balances'],
+    [t('inventory.lots'), '/inventory/stock/lots'],
+    [t('inventory.goodsReceipt'), '/inventory/operations/goods-receipts'],
+    [t('inventory.cycleCount'), '/inventory/counts/cycle-counts'],
+    [t('inventory.reports'), '/inventory/reports'],
+  ] as const;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-[var(--text-muted)]">INV-001</p>
-          <h2 className="text-xl font-semibold tracking-tight">Inventory Dashboard</h2>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Warehouse health cockpit — KPIs, operations queues, shortcuts into workspaces.
-          </p>
+          <h2 className="text-xl font-semibold tracking-tight">{t('inventory.dashTitle')}</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('inventory.dashDesc')}</p>
         </div>
         <Button type="button" variant="secondary" onClick={() => void query.refetch()} disabled={query.isFetching}>
-          Refresh
+          {t('refresh')}
         </Button>
       </div>
 
@@ -74,7 +82,7 @@ export function InventoryDashboardPage() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {KPI.map((item) => (
+        {kpi.map((item) => (
           <Link key={item.pascal} to={item.path} className="block transition hover:-translate-y-0.5">
             <Card>
               <CardHeader>
@@ -91,10 +99,10 @@ export function InventoryDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Operations queues</CardTitle>
+            <CardTitle>{t('inventory.operationsQueues')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {QUEUES.map((item) => (
+            {queues.map((item) => (
               <Link
                 key={item.pascal}
                 to={item.path}
@@ -111,28 +119,22 @@ export function InventoryDashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Master data footprint</CardTitle>
+            <CardTitle>{t('inventory.masterFootprint')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-3">
-            <MetricLink label="Materials" value={metric(data, 'materialCount', 'MaterialCount')} path="/inventory/master-data/materials" loading={query.isLoading} />
-            <MetricLink label="Warehouses" value={metric(data, 'warehouseCount', 'WarehouseCount')} path="/inventory/master-data/warehouses" loading={query.isLoading} />
-            <MetricLink label="Locations" value={metric(data, 'locationCount', 'LocationCount')} path="/inventory/master-data/locations" loading={query.isLoading} />
+            <MetricLink label={t('inventory.materials')} value={metric(data, 'materialCount', 'MaterialCount')} path="/inventory/master-data/materials" loading={query.isLoading} />
+            <MetricLink label={t('inventory.warehouses')} value={metric(data, 'warehouseCount', 'WarehouseCount')} path="/inventory/master-data/warehouses" loading={query.isLoading} />
+            <MetricLink label={t('inventory.locations')} value={metric(data, 'locationCount', 'LocationCount')} path="/inventory/master-data/locations" loading={query.isLoading} />
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Workspace shortcuts</CardTitle>
+          <CardTitle>{t('inventory.shortcuts')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {[
-            ['Stock Balance', '/inventory/stock/balances'],
-            ['Lots', '/inventory/stock/lots'],
-            ['Goods Receipt', '/inventory/operations/goods-receipts'],
-            ['Cycle Count', '/inventory/counts/cycle-counts'],
-            ['Reports', '/inventory/reports'],
-          ].map(([label, path]) => (
+          {shortcuts.map(([label, path]) => (
             <Link
               key={path}
               to={path}

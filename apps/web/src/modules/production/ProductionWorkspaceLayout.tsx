@@ -5,7 +5,7 @@ import { productionWorkspaces } from './production-workspaces';
 export function ProductionWorkspaceLayout() {
   return (
     <WorkspaceShell
-      moduleLabel="Production"
+      moduleLabel="Üretim"
       moduleHomePath="/production/dashboard"
       workspaces={productionWorkspaces}
     >

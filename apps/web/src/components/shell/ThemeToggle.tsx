@@ -1,17 +1,19 @@
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { Button } from '@naswood/ui';
+import { useI18n } from '@/i18n';
 import { useTheme } from '@/theme/useTheme';
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const { preference, resolved, cyclePreference } = useTheme();
 
   const Icon = preference === 'system' ? Monitor : resolved === 'dark' ? Moon : Sun;
   const label =
     preference === 'system'
-      ? 'Theme: System'
+      ? t('themeLabels.system')
       : preference === 'dark'
-        ? 'Theme: Dark'
-        : 'Theme: Light';
+        ? t('themeLabels.dark')
+        : t('themeLabels.light');
 
   return (
     <Button
@@ -20,7 +22,7 @@ export function ThemeToggle() {
       size="sm"
       onClick={cyclePreference}
       aria-label={label}
-      title={`${label} (click to cycle light → dark → system)`}
+      title={t('themeCycle')}
     >
       <Icon className="size-4" />
     </Button>

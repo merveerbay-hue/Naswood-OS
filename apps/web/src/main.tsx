@@ -5,6 +5,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { AuthProvider } from './auth/AuthProvider';
 import { NotificationsProvider } from './notifications/NotificationsProvider';
 import { ThemeProvider } from './theme/ThemeProvider';
+import { LocaleProvider } from './i18n/LocaleProvider';
 import { createAppRouter } from './router';
 import './index.css';
 
@@ -28,13 +29,15 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <NotificationsProvider>
-            <RouterProvider router={router} />
-          </NotificationsProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <LocaleProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <NotificationsProvider>
+              <RouterProvider router={router} />
+            </NotificationsProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </LocaleProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

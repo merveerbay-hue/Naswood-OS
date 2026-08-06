@@ -5,7 +5,7 @@ import { inventoryWorkspaces } from './inventory-workspaces';
 export function InventoryWorkspaceLayout() {
   return (
     <WorkspaceShell
-      moduleLabel="Inventory"
+      moduleLabel="Envanter"
       moduleHomePath="/inventory/dashboard"
       workspaces={inventoryWorkspaces}
     >

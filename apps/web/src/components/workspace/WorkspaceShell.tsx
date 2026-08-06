@@ -1,5 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { cn } from '@naswood/ui';
+import { useI18n } from '@/i18n';
 
 export interface WorkspaceNavItem {
   id: string;
@@ -22,6 +23,7 @@ interface WorkspaceShellProps {
 }
 
 export function WorkspaceShell({ moduleLabel, moduleHomePath, workspaces, children }: WorkspaceShellProps) {
+  const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const activeWorkspace =
@@ -40,7 +42,7 @@ export function WorkspaceShell({ moduleLabel, moduleHomePath, workspaces, childr
             to={moduleHomePath}
             className="text-sm text-[var(--color-primary)] hover:underline"
           >
-            Module home
+            {t('moduleHome')}
           </Link>
         </div>
 

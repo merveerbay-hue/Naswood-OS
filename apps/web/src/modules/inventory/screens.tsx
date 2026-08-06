@@ -1,277 +1,290 @@
 import { useParams } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
+import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
 import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
 
-const materialFields: EntityField[] = [
-  { key: 'Code', label: 'Code' },
-  { key: 'Name', label: 'Name' },
-  { key: 'Description', label: 'Description' },
-  { key: 'Category', label: 'Category' },
-  { key: 'UnitOfMeasure', label: 'UoM' },
-  { key: 'Status', label: 'Status', status: true },
-];
-
-const warehouseFields: EntityField[] = [
-  { key: 'Code', label: 'Code' },
-  { key: 'Name', label: 'Name' },
-  { key: 'WarehouseType', label: 'Type' },
-  { key: 'Status', label: 'Status', status: true },
-];
-
-const locationFields: EntityField[] = [
-  { key: 'WarehouseCode', label: 'Warehouse' },
-  { key: 'Code', label: 'Code' },
-  { key: 'Name', label: 'Name' },
-  { key: 'LocationType', label: 'Type' },
-  { key: 'Status', label: 'Status', status: true },
-];
-
-const balanceFields: EntityField[] = [
-  { key: 'MaterialCode', label: 'Material' },
-  { key: 'WarehouseCode', label: 'Warehouse' },
-  { key: 'LocationCode', label: 'Location' },
-  { key: 'BatchNumber', label: 'Lot' },
-  { key: 'QuantityOnHand', label: 'On hand', type: 'number' },
-  { key: 'QuantityReserved', label: 'Reserved', type: 'number' },
-  { key: 'Status', label: 'Status', status: true },
-];
-
-const batchFields: EntityField[] = [
-  { key: 'BatchNumber', label: 'Lot' },
-  { key: 'MaterialCode', label: 'Material' },
-  { key: 'Quantity', label: 'Qty', type: 'number' },
-  { key: 'ExpiryDate', label: 'Expiry', type: 'date' },
-  { key: 'Status', label: 'Status', status: true },
-];
-
-const receiptFields: EntityField[] = [
-  { key: 'Number', label: 'Number' },
-  { key: 'WarehouseCode', label: 'Warehouse' },
-  { key: 'Reference', label: 'Reference' },
-  { key: 'Status', label: 'Status', status: true },
-  { key: 'Notes', label: 'Notes' },
-];
-
-const issueFields: EntityField[] = [
-  { key: 'Number', label: 'Number' },
-  { key: 'WarehouseCode', label: 'Warehouse' },
-  { key: 'Reference', label: 'Reference' },
-  { key: 'Status', label: 'Status', status: true },
-  { key: 'Notes', label: 'Notes' },
-];
-
-const transferFields: EntityField[] = [
-  { key: 'Number', label: 'Number' },
-  { key: 'FromWarehouseCode', label: 'From WH' },
-  { key: 'ToWarehouseCode', label: 'To WH' },
-  { key: 'Status', label: 'Status', status: true },
-  { key: 'Notes', label: 'Notes' },
-];
-
-const countFields: EntityField[] = [
-  { key: 'Number', label: 'Number' },
-  { key: 'WarehouseCode', label: 'Warehouse' },
-  { key: 'Status', label: 'Status', status: true },
-  { key: 'Notes', label: 'Notes' },
-];
-
-const adjustmentFields: EntityField[] = [
-  { key: 'Number', label: 'Number' },
-  { key: 'WarehouseCode', label: 'Warehouse' },
-  { key: 'Reason', label: 'Reason' },
-  { key: 'Status', label: 'Status', status: true },
-  { key: 'Notes', label: 'Notes' },
-];
+function useInvFields() {
+  const { t } = useI18n();
+  const f = {
+    material: [
+      { key: 'Code', label: t('inventory.fields.code') },
+      { key: 'Name', label: t('inventory.fields.name') },
+      { key: 'Description', label: t('inventory.fields.description') },
+      { key: 'Category', label: t('inventory.fields.category') },
+      { key: 'UnitOfMeasure', label: t('inventory.fields.uom') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+    ] as EntityField[],
+    warehouse: [
+      { key: 'Code', label: t('inventory.fields.code') },
+      { key: 'Name', label: t('inventory.fields.name') },
+      { key: 'WarehouseType', label: t('inventory.fields.type') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+    ] as EntityField[],
+    location: [
+      { key: 'WarehouseCode', label: t('inventory.fields.warehouse') },
+      { key: 'Code', label: t('inventory.fields.code') },
+      { key: 'Name', label: t('inventory.fields.name') },
+      { key: 'LocationType', label: t('inventory.fields.type') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+    ] as EntityField[],
+    balance: [
+      { key: 'MaterialCode', label: t('inventory.fields.material') },
+      { key: 'WarehouseCode', label: t('inventory.fields.warehouse') },
+      { key: 'LocationCode', label: t('inventory.fields.location') },
+      { key: 'BatchNumber', label: t('inventory.fields.lot') },
+      { key: 'QuantityOnHand', label: t('inventory.fields.onHand'), type: 'number' as const },
+      { key: 'QuantityReserved', label: t('inventory.fields.reserved'), type: 'number' as const },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+    ] as EntityField[],
+    batch: [
+      { key: 'BatchNumber', label: t('inventory.fields.lot') },
+      { key: 'MaterialCode', label: t('inventory.fields.material') },
+      { key: 'Quantity', label: t('inventory.fields.qty'), type: 'number' as const },
+      { key: 'ExpiryDate', label: t('inventory.fields.expiry'), type: 'date' as const },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+    ] as EntityField[],
+    receipt: [
+      { key: 'Number', label: t('inventory.fields.number') },
+      { key: 'WarehouseCode', label: t('inventory.fields.warehouse') },
+      { key: 'Reference', label: t('inventory.fields.reference') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+      { key: 'Notes', label: t('inventory.fields.notes') },
+    ] as EntityField[],
+    issue: [
+      { key: 'Number', label: t('inventory.fields.number') },
+      { key: 'WarehouseCode', label: t('inventory.fields.warehouse') },
+      { key: 'Reference', label: t('inventory.fields.reference') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+      { key: 'Notes', label: t('inventory.fields.notes') },
+    ] as EntityField[],
+    transfer: [
+      { key: 'Number', label: t('inventory.fields.number') },
+      { key: 'FromWarehouseCode', label: t('inventory.fields.fromWh') },
+      { key: 'ToWarehouseCode', label: t('inventory.fields.toWh') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+      { key: 'Notes', label: t('inventory.fields.notes') },
+    ] as EntityField[],
+    count: [
+      { key: 'Number', label: t('inventory.fields.number') },
+      { key: 'WarehouseCode', label: t('inventory.fields.warehouse') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+      { key: 'Notes', label: t('inventory.fields.notes') },
+    ] as EntityField[],
+    adjustment: [
+      { key: 'Number', label: t('inventory.fields.number') },
+      { key: 'WarehouseCode', label: t('inventory.fields.warehouse') },
+      { key: 'Reason', label: t('inventory.fields.reason') },
+      { key: 'Status', label: t('inventory.fields.status'), status: true },
+      { key: 'Notes', label: t('inventory.fields.notes') },
+    ] as EntityField[],
+  };
+  return f;
+}
 
 export function MaterialListPage() {
+  const { t } = useI18n();
+  const fields = useInvFields().material;
   return (
     <EntityListScreen
       screenId="INV-004"
-      title="Materials"
-      description="Master data · material library for warehouse and planning."
+      title={t('inventory.materialsTitle')}
+      description={t('inventory.materialsDesc')}
       route="materials"
-      fields={materialFields}
+      fields={fields}
       detailPath={(id) => `/inventory/master-data/materials/${id}`}
-      createLabel="New material"
+      createLabel={t('inventory.newMaterial')}
     />
   );
 }
 
 export function MaterialDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams({ strict: false }) as { id: string };
   return (
     <EntityDetailScreen
       screenId="INV-005"
-      title="Material Detail"
+      title={t('inventory.materialDetail')}
       route="materials"
       id={id}
       listPath="/inventory/master-data/materials"
-      fields={materialFields}
+      fields={useInvFields().material}
     />
   );
 }
 
 export function WarehouseListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-006"
-      title="Warehouses"
-      description="Master data · warehouse directory."
+      title={t('inventory.warehousesTitle')}
+      description={t('inventory.warehousesDesc')}
       route="warehouses"
-      fields={warehouseFields}
+      fields={useInvFields().warehouse}
       detailPath={(id) => `/inventory/master-data/warehouses/${id}`}
-      createLabel="New warehouse"
+      createLabel={t('inventory.newWarehouse')}
     />
   );
 }
 
 export function WarehouseDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams({ strict: false }) as { id: string };
   return (
     <EntityDetailScreen
       screenId="INV-007"
-      title="Warehouse Detail"
+      title={t('inventory.warehouseDetail')}
       route="warehouses"
       id={id}
       listPath="/inventory/master-data/warehouses"
-      fields={warehouseFields}
+      fields={useInvFields().warehouse}
     />
   );
 }
 
 export function LocationListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-008"
-      title="Locations"
-      description="Master data · bins and zones."
+      title={t('inventory.locationsTitle')}
+      description={t('inventory.locationsDesc')}
       route="locations"
-      fields={locationFields}
-      createLabel="New location"
+      fields={useInvFields().location}
+      createLabel={t('inventory.newLocation')}
     />
   );
 }
 
 export function StockBalancePage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-014"
-      title="Stock Balance Inquiry"
-      description="On-hand, reserved, and available by material / location / lot."
+      title={t('inventory.balanceTitle')}
+      description={t('inventory.balanceDesc')}
       route="inventory"
-      fields={balanceFields}
-      createLabel="Add balance row"
+      fields={useInvFields().balance}
+      createLabel={t('inventory.addBalance')}
     />
   );
 }
 
 export function LotListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-010"
-      title="Lots"
-      description="Batch / lot directory with status signals."
+      title={t('inventory.lotsTitle')}
+      description={t('inventory.lotsDesc')}
       route="batches"
-      fields={batchFields}
-      createLabel="New lot"
+      fields={useInvFields().batch}
+      createLabel={t('inventory.newLot')}
     />
   );
 }
 
 export function GoodsReceiptListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-015"
-      title="Goods Receipts"
-      description="Inbound documents — open Detail to post."
+      title={t('inventory.grTitle')}
+      description={t('inventory.grDesc')}
       route="goods-receipts"
-      fields={receiptFields}
+      fields={useInvFields().receipt}
       detailPath={(id) => `/inventory/operations/goods-receipts/${id}`}
-      createLabel="New receipt"
+      createLabel={t('inventory.newReceipt')}
     />
   );
 }
 
 export function GoodsReceiptDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams({ strict: false }) as { id: string };
   return (
     <EntityDetailScreen
       screenId="INV-016"
-      title="Goods Receipt Detail"
+      title={t('inventory.grDetail')}
       route="goods-receipts"
       id={id}
       listPath="/inventory/operations/goods-receipts"
-      fields={receiptFields}
+      fields={useInvFields().receipt}
     />
   );
 }
 
 export function GoodsIssueListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-017"
-      title="Goods Issues"
-      description="Outbound issue documents."
+      title={t('inventory.giTitle')}
+      description={t('inventory.giDesc')}
       route="goods-issues"
-      fields={issueFields}
-      createLabel="New issue"
+      fields={useInvFields().issue}
+      createLabel={t('inventory.newIssue')}
     />
   );
 }
 
 export function TransferListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-019"
-      title="Transfers"
-      description="Inter-location / inter-warehouse moves."
+      title={t('inventory.trTitle')}
+      description={t('inventory.trDesc')}
       route="transfers"
-      fields={transferFields}
-      createLabel="New transfer"
+      fields={useInvFields().transfer}
+      createLabel={t('inventory.newTransfer')}
     />
   );
 }
 
 export function CycleCountListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-021"
-      title="Cycle Counts"
-      description="Count sessions and follow-up."
+      title={t('inventory.ccTitle')}
+      description={t('inventory.ccDesc')}
       route="inventory-counts"
-      fields={countFields}
-      createLabel="New count"
+      fields={useInvFields().count}
+      createLabel={t('inventory.newCount')}
     />
   );
 }
 
 export function AdjustmentListPage() {
+  const { t } = useI18n();
   return (
     <EntityListScreen
       screenId="INV-024"
-      title="Inventory Adjustments"
-      description="Approved variance documents — posting is permission gated."
+      title={t('inventory.adjTitle')}
+      description={t('inventory.adjDesc')}
       route="inventory-adjustments"
-      fields={adjustmentFields}
-      createLabel="New adjustment"
+      fields={useInvFields().adjustment}
+      createLabel={t('inventory.newAdjustment')}
     />
   );
 }
 
 export function InventoryReportsPage() {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
       <div>
         <p className="text-xs font-medium text-[var(--text-muted)]">INV-025</p>
-        <h2 className="text-xl font-semibold tracking-tight">Inventory Reports</h2>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">Launcher for operational inventory reports.</p>
+        <h2 className="text-xl font-semibold tracking-tight">{t('inventory.reportsTitle')}</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('inventory.reportsDesc')}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          ['Stock by warehouse', 'On-hand and available grouped by warehouse'],
-          ['Open movements', 'Draft receipts, issues, transfers'],
-          ['Count accuracy', 'Cycle count variance summary'],
+          [t('inventory.reportStockByWh'), t('inventory.reportStockByWhDesc')],
+          [t('inventory.reportOpenMoves'), t('inventory.reportOpenMovesDesc')],
+          [t('inventory.reportCountAccuracy'), t('inventory.reportCountAccuracyDesc')],
         ].map(([title, body]) => (
           <Card key={title}>
             <CardHeader>

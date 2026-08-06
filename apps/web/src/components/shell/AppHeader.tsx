@@ -3,11 +3,13 @@ import { ChevronDown, LogOut, Menu, PanelLeft, Search, Sparkles } from 'lucide-r
 import { useEffect, useRef, useState } from 'react';
 import { Button, cn } from '@naswood/ui';
 import { useAuth } from '@/auth/useAuth';
+import { useI18n } from '@/i18n';
 import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 import { useShell } from './useShell';
 
 export function AppHeader() {
+  const { t } = useI18n();
   const { user, logout } = useAuth();
   const { collapsed, toggleCollapsed } = useShell();
   const navigate = useNavigate();
@@ -47,7 +49,7 @@ export function AppHeader() {
         variant="ghost"
         size="sm"
         className="shrink-0"
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? 'Kenar çubuğunu genişlet' : 'Kenar çubuğunu daralt'}
         onClick={toggleCollapsed}
       >
         <span className="lg:hidden">
@@ -67,28 +69,28 @@ export function AppHeader() {
       <div className="ml-auto flex items-center gap-2">
         <div className="hidden items-center gap-2 md:flex">
           <label className="sr-only" htmlFor="header-company">
-            Company
+            Şirket
           </label>
           <select
             id="header-company"
             className="h-9 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm"
             value={user?.companyId ?? ''}
             disabled
-            title="Company switching lands with multi-company UX"
+            title={t('companySwitchSoon')}
           >
-            <option value={user?.companyId ?? ''}>{user?.companyId ?? 'Company'}</option>
+            <option value={user?.companyId ?? ''}>{user?.companyId ?? 'Şirket'}</option>
           </select>
           <label className="sr-only" htmlFor="header-plant">
-            Plant
+            Tesis
           </label>
           <select
             id="header-plant"
             className="h-9 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm"
             value={user?.plantId ?? ''}
             disabled
-            title="Plant switching lands with multi-plant UX"
+            title={t('plantSwitchSoon')}
           >
-            <option value={user?.plantId ?? ''}>{user?.plantId ?? 'Plant'}</option>
+            <option value={user?.plantId ?? ''}>{user?.plantId ?? 'Tesis'}</option>
           </select>
         </div>
 
@@ -98,17 +100,17 @@ export function AppHeader() {
           size="sm"
           className="hidden sm:inline-flex"
           disabled
-          title="Global search coming soon"
+          title={t('globalSearchSoon')}
         >
           <Search className="size-4" />
-          <span className="hidden lg:inline">Search</span>
+          <span className="hidden lg:inline">Ara</span>
           <kbd className="ml-1 hidden rounded border border-[var(--border-default)] px-1 text-[10px] text-[var(--text-muted)] lg:inline">
             ⌘K
           </kbd>
         </Button>
 
         <NotificationBell />
-        <Button type="button" variant="ghost" size="sm" disabled title="AI Assistant coming soon">
+        <Button type="button" variant="ghost" size="sm" disabled title={t('aiSoon')}>
           <Sparkles className="size-4" />
         </Button>
         <ThemeToggle />
@@ -127,7 +129,7 @@ export function AppHeader() {
             <span className="hidden min-w-0 lg:block">
               <span className="block truncate text-sm font-medium">{user?.name ?? user?.username}</span>
               <span className="block truncate text-xs text-[var(--text-muted)]">
-                {user?.roles?.[0] ?? 'User'}
+                {user?.roles?.[0] ?? 'Kullanıcı'}
               </span>
             </span>
             <ChevronDown className="hidden size-4 text-[var(--text-muted)] lg:block" />
@@ -149,9 +151,9 @@ export function AppHeader() {
               role="menuitem"
               className="flex w-full items-center gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--color-surface-hover)] disabled:opacity-50"
               disabled
-              title="Profile settings coming soon"
+              title="Profil ayarları yakında"
             >
-              Preferences
+              Tercihler
             </button>
             <button
               type="button"
@@ -161,7 +163,7 @@ export function AppHeader() {
               disabled={loggingOut}
             >
               <LogOut className="size-4" />
-              {loggingOut ? 'Signing out…' : 'Sign out'}
+              {loggingOut ? 'Çıkış yapılıyor…' : 'Çıkış yap'}
             </button>
           </div>
         </div>

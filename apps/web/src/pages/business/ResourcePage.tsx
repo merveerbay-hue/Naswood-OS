@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource, deleteResource, getDashboard, searchResource } from '@/api/business';
+import { useI18n } from '@/i18n';
 
 export interface ResourceField {
   key: string;
@@ -29,6 +30,7 @@ function readField(row: Record<string, unknown>, key: string): unknown {
 }
 
 export function ResourcePage({ title, description, route, fields, kind = 'master' }: ResourcePageProps) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [form, setForm] = useState<Record<string, string>>(() =>
@@ -109,8 +111,8 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
 
       <Card>
         <CardHeader>
-          <CardTitle>Create</CardTitle>
-          <CardDescription>Quick create for Sprint MVP.</CardDescription>
+          <CardTitle>{t('create')}</CardTitle>
+          <CardDescription>{t('createQuick')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 md:grid-cols-3">
@@ -126,7 +128,7 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
             ))}
           </div>
           <Button type="button" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-            {createMutation.isPending ? 'Saving…' : 'Create'}
+            {createMutation.isPending ? t('saving') : t('create')}
           </Button>
           {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
         </CardContent>
@@ -134,7 +136,7 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
 
       <Card>
         <CardHeader>
-          <CardTitle>Library</CardTitle>
+          <CardTitle>{t('entity.library')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <form
@@ -144,11 +146,11 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
               void listQuery.refetch();
             }}
           >
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className="max-w-sm" />
-            <Button type="submit" variant="secondary">Search</Button>
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('searchPlaceholder')} className="max-w-sm" />
+            <Button type="submit" variant="secondary">{t('search')}</Button>
           </form>
           {listQuery.isLoading ? (
-            <p className="text-sm text-[var(--text-secondary)]">Loading…</p>
+            <p className="text-sm text-[var(--text-secondary)]">{t('loading')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-left text-sm">
@@ -157,7 +159,7 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
                     {columns.map((c) => (
                       <th key={c.key} className="px-2 py-2 font-medium">{c.label}</th>
                     ))}
-                    <th className="px-2 py-2 font-medium">Actions</th>
+                    <th className="px-2 py-2 font-medium">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -173,7 +175,7 @@ export function ResourcePage({ title, description, route, fields, kind = 'master
                           variant="danger"
                           onClick={() => deleteMutation.mutate(String(readField(row, 'id') ?? ''))}
                         >
-                          Delete
+                          {t('delete')}
                         </Button>
                       </td>
                     </tr>
