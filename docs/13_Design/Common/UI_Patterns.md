@@ -57,6 +57,8 @@ Complete a transaction **step by step** with validation gates.
 - Hard gates block Next/Finish; soft gates warn.  
 - Draft persistence between steps when policy allows.  
 - New Lot/Serial/Package/Pallet/Production IDs → Numbering Service only (`Document_Numbering.md`).  
+- Technical drawings / cross-sections attach via Platform File Upload — typed roles on the document (e.g. Production Planning Wizard step 4).  
+- Finish step may offer **print/export** (shop packet) without a separate “Create print entity” screen.  
 - No generic “Create entity” summary that skips process gates.
 
 ### Components (typical)

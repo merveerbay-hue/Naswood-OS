@@ -94,15 +94,18 @@ Plan production  →  Production Planning Wizard
 1  Ürün seçimi
 2  Revizyon seçimi
 3  Ölçü seçimi
-4  Ağaç türü seçimi
-5  Hammadde uygunluğu
-6  Hat seçimi
-7  Kapasite kontrolü
-8  Termin planı
-9  Maliyet simülasyonu
-10 Onay ve Release
+4  Teknik paket (detay çizim · kesit · ekler)  → File Upload / DMS
+5  Ağaç türü seçimi
+6  Hammadde uygunluğu
+7  Hat seçimi
+8  Kapasite kontrolü
+9  Termin planı
+10 Maliyet simülasyonu
+11 Onay · Release · isteğe bağlı Saha paketi yazdır / PDF
     ↓
-Released Production Order  (+ optional WO package / reservations)
+Released Production Order
+  (+ optional WO package / reservations)
+  (+ shop packet: ölçü + çizim + kesit çıktısı)
 ```
 
 Secondary

@@ -129,22 +129,24 @@ Primary Actions
 
 ## PRD-101 Production Planning Wizard  ★ primary
 
-**Job to be done:** Planlamacı üretilebilir bir planı kurar ve Release eder.
+**Job to be done:** Planlamacı üretilebilir bir planı kurar; **ölçü + detay çizim + kesit** teknik paketini bağlar; Release eder ve istenirse **saha paketi (çıktı)** alır.
 
-Full spec: `docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`
+Full spec: `docs/00_Product/Process_Screens/PRD_Production_Planning_Wizard.md`  
+Screen type: **Wizard** · Files: Platform `File_Upload.md` (reference only)
 
 Steps
 
 1. Ürün seçimi  
 2. Revizyon seçimi  
-3. Ölçü seçimi  
-4. Ağaç türü seçimi  
-5. Hammadde uygunluğu  
-6. Hat seçimi  
-7. Kapasite kontrolü  
-8. Termin planı  
-9. Maliyet simülasyonu  
-10. Onay ve Release  
+3. Ölçü seçimi (cut list / tolerans)  
+4. **Teknik paket** — detay çizim · kesit · ekler  
+5. Ağaç türü seçimi  
+6. Hammadde uygunluğu  
+7. Hat seçimi  
+8. Kapasite kontrolü  
+9. Termin planı  
+10. Maliyet simülasyonu  
+11. Onay, **Release** ve **çıktı** (shop packet / ölçü kartı / çizim seti)
 
 Primary Users
 
@@ -153,11 +155,12 @@ Primary Users
 
 Outcome
 
-- Draft plan saved, or Production Order **Released**
+- Draft plan saved, or Production Order **Released**  
+- Optional: Shop packet PDF queued / printed
 
 Components
 
-- Wizard · Availability Panel · Capacity chart · Approval Bar
+- Wizard · Attachment Panel · Drawing/PDF Preview · Availability Panel · Capacity chart · Approval Bar · Print options
 
 ---
 
@@ -181,15 +184,16 @@ Actions
 
 ## PRD-102b Production Order Detail
 
-**Job to be done:** Release sonrası tek planı izle / belgele (oluşturma yolu değil).
+**Job to be done:** Release sonrası tek planı izle / belgele; teknik paketi yönet; **çıktı al** (oluşturma yolu değil).
 
 Sections
 
-- Overview · Materials · Routing · Schedule · Capacity · History · Documents
+- Overview · **Technical package** (ölçü özeti · detay çizim · kesit · ekler) · Materials · Routing · Schedule · Capacity · History
 
 Actions
 
-- Reschedule (policy) · Print · Duplicate → Wizard · Cancel
+- **Print shop packet** / Export PDF / Download drawings · Reschedule (policy) · Duplicate → Wizard · Cancel  
+- Attach / replace drawing or cross-section (permission) — files via Platform DMS
 
 ---
 

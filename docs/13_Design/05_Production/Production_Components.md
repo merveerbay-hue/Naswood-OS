@@ -104,7 +104,9 @@ inventory rules are **referenced**, never restated here.
 
 | Component | Purpose | Used by |
 |-----------|---------|---------|
-| Attachment Panel | Photos / docs | Scrap, Quality bridge, Detail |
+| Attachment Panel | Typed technical files (DetailDrawing, CrossSection, …) | Planning Wizard step 4, Order Detail, Scrap, Quality |
+| Drawing / PDF Preview | Preview drawings & cross-sections | Wizard · Detail · Shop packet |
+| Print options / Shop packet compose | Select outputs (packet, dimension card, drawing set, labels) | Wizard step 11 · Order Detail |
 | Audit Timeline | Compliance history | Detail screens |
 | Genealogy Tracer | Forward/backward view *(data from Genealogy authority)* | Monitoring / FG |
 | Notification toast | Action result | All mutations |
