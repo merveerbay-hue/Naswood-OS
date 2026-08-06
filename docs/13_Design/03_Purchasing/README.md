@@ -63,13 +63,13 @@ The Purchasing module manages
 
 The module does NOT manage
 
-- Material Master
+- Material Definitions (`Material_Definition_Architecture.md`)
 - Inventory Balances
 - Production Planning
 - Financial Accounting
 - Accounts Payable
 
-These processes are handled by their respective modules.
+These processes are handled by their respective modules. Purchasing **consumes** Released Material Definitions.
 
 ---
 

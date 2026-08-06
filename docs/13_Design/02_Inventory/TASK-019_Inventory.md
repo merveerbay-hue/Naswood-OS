@@ -50,7 +50,7 @@ The Inventory entity manages
 
 Inventory does NOT manage
 
-- Material Master
+- Material Definitions
 - Purchase Orders
 - Sales Orders
 - Production Orders

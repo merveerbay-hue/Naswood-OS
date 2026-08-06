@@ -543,6 +543,7 @@ Design Program sequence: `Inventory_Design_Program.md`.
 | Genealogy graph | `Material_Genealogy.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
 | Multi-UoM · pcs/lm/m²/m³/kg/t | `Measurement_Conversion_Engine.md` |
+| Material Definition (rule packs) | `Material_Definition_Architecture.md` |
 | **This standard** | Compliance by Design · Workbench interaction laws · column/status vocabulary · audit/revision/approval composition for Inventory ops |
 
 ---
@@ -561,4 +562,4 @@ Design Program sequence: `Inventory_Design_Program.md`.
 
 ## Related
 
-`Package_Allocation_Workspace.md` · `Document_Management_Evidence_and_Export.md` · `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Audit_Log.md` · `Approval_Workflow.md` · `Inventory_Architecture.md` · `Inventory_Workflow.md` · `Inventory_Design_Program.md` · `INV_Goods_Issue_Workbench.md` · `INV_Receiving_Workbench.md` · `UI_Patterns.md` · `Screen_Types.md`
+`Package_Allocation_Workspace.md` · `Measurement_Conversion_Engine.md` · `Material_Definition_Architecture.md` · `Document_Management_Evidence_and_Export.md` · `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Audit_Log.md` · `Approval_Workflow.md` · `Inventory_Architecture.md` · `Inventory_Workflow.md` · `Inventory_Design_Program.md` · `INV_Goods_Issue_Workbench.md` · `INV_Receiving_Workbench.md` · `UI_Patterns.md` · `Screen_Types.md`

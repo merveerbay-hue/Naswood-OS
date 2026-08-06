@@ -86,13 +86,13 @@ The Inventory module manages
 
 The module does not manage
 
-- Material Master Data
+- Material Definitions (catalog rule packs — `Material_Definition_Architecture.md`)
 - Purchasing Processes
 - Sales Processes
 - Production Planning
 - Financial Accounting
 
-These processes are handled by their respective modules.
+These processes are handled by their respective modules. Inventory **consumes** Released Material Definitions and the Measurement & Conversion Engine.
 
 ---
 
@@ -314,7 +314,7 @@ The Inventory module exchanges information with the following modules.
 
 | Module | Purpose |
 |----------|---------|
-| Master Data | Material definitions |
+| Master Data | Material Definitions (Designer) |
 | Purchasing | Supplier receipts |
 | Sales | Customer shipments |
 | Production | Material consumption and finished goods receipt |

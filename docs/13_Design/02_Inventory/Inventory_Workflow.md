@@ -23,7 +23,7 @@
 # High-level
 
 ```text
-Master Data (Material, Warehouse, Location)
+Master Data (Material Definition, Warehouse, Location)
         │
         ▼
 Inbound (GR) ──► Balance ↑

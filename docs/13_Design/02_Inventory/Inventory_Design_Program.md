@@ -40,7 +40,7 @@ AI drafts the process PRD only for the **active** row.
 | 11 | **Material Traceability** | Malzeme İzlenebilirlik | Workbench / Explorer | Queued — MI + Genealogy |
 | 12 | **Analytics & Reports** | Analitik & Raporlar | Explorer / Reports | Queued — **not** Command Center |
 
-Master Data (Malzeme / Depo / Lokasyon tanımla) is **out of this operations sequence** — separate engineering / configuration track.
+Master Data (Malzeme tanımla = **Material Definition Designer** · Depo / Lokasyon) is **out of this operations sequence** — separate engineering / configuration track (`Material_Definition_Architecture.md`).
 
 ---
 
@@ -83,6 +83,7 @@ Finish action (Post / Release / Complete — never bare Save as the job):
 | **Package Allocation Workspace** (all stock movements) | `Package_Allocation_Workspace.md` — learn once · use on Receiving · Issue · Transfer · Production · Shipping · Count |
 | **Inventory Workbench Design Standard** (COMPLIANCE BY DESIGN) | `Inventory_Workbench_Design_Standard.md` — audit · revision · approvals · immutable txns · package grid/status vocabulary · Scan/Verify/Review/Approve |
 | **Measurement & Conversion Engine** (multi-UoM) | `Measurement_Conversion_Engine.md` — enter once · live pcs/lm/m²/m³/kg/t · no manual conversion |
+| **Material Definition Architecture** | `Material_Definition_Architecture.md` — active material rule pack (not passive Master card); Inventory reads Stock UoM / packaging / traceability from Definition |
 
 ---
 

@@ -45,7 +45,7 @@ Warehouse is responsible for
 
 Warehouse is NOT responsible for
 
-- Material Master
+- Material Definitions
 - Production Planning
 - Purchasing
 - Sales

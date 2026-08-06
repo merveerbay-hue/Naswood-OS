@@ -28,11 +28,16 @@ Master Data
 
 ## Description
 
-The Materials module manages every physical material throughout its entire lifecycle within Naswood OS.
+The Materials module manages **Material Definitions** — active catalog rule packs — and supports the lifecycle of materials within Naswood OS.
 
-A Material is any physical object that enters, is transformed within or exits the manufacturing process.
+**Architecture:** [`Material_Definition_Architecture.md`](../../13_Design/99_Shared/Material_Definition_Architecture.md)  
+A Material Definition is not a passive stock card: it binds Identity, Measurement, Conversion, Packaging, Numbering, Quality, Traceability, and Costing rules for all modules.
 
-Materials remain traceable from Receiving to Shipment through immutable Business Codes and Transformation records.
+A **physical** material instance is a **Material Identity** (`Material_Identity_Architecture.md`), not the catalog Definition.
+
+Materials remain traceable from Receiving to Shipment through immutable Business Codes, Material Identities, and Transformation records.
+
+**Screen type:** Material Definition Designer / Builder — never “Create Material” CRUD (`Screen_Types.md`).
 
 ---
 
@@ -814,6 +819,12 @@ Carbon Footprint Tracking
 ---
 
 # 33. Related Documents
+
+[`Material_Definition_Architecture.md`](../../13_Design/99_Shared/Material_Definition_Architecture.md)
+
+[`Material_Identity_Architecture.md`](../../13_Design/99_Shared/Material_Identity_Architecture.md)
+
+[`Measurement_Conversion_Engine.md`](../../13_Design/99_Shared/Measurement_Conversion_Engine.md)
 
 Database Schema
 

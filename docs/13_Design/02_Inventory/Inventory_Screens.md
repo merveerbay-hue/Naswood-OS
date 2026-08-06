@@ -100,7 +100,7 @@ Inventory
 | INV-021/022 | **Cycle Count Session** | Counts | **Sayım başlat / Start count** — not “Yeni sayım”. Spec: `Process_Screens/INV_Cycle_Count_Session.md` |
 | INV-023 | Physical Inventory | Counts | Plant-wide count event |
 | INV-024 | **Post Adjustment** | Counts | **Düzeltme onayla / Post adjustment** (Approval / Workbench) |
-| INV-004/005 | Material Library / Define material | Master Data | **Malzeme tanımla** — business fields only; `MAT-…` auto (Numbering). Not Code* form |
+| INV-004/005 | Material Definition Library / Designer | Master Data | **Malzeme tanımla** — Material Definition Designer (`Material_Definition_Architecture.md`); Identity·Measurement·Conversion·Packaging·Quality·Traceability·Costing packs; `MAT-…` auto. Not Code* / passive Master card |
 | INV-006/007 | Warehouse Library / Configure warehouse | Master Data | **Depo adı · tip · fabrika…** → `WH-…` auto. Not Warehouse Code input |
 | INV-008/009 | Location Library | Master Data | **Lokasyon ekle** — name-first; code auto |
 | INV-002/003 | Product bridge | Master Data | Jump to Product (`PDT-*`) catalog |

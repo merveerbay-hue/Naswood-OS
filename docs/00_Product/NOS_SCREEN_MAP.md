@@ -199,7 +199,7 @@ Dashboard
 **Real life:** What we sell / stock as finished & semi-finished catalog — families, dimensions, species/grade for timber.  
 **Roles:** Product Manager, Sales Engineer, Master Data.  
 **ERP ref:** SAP Material Master (FERT) / D365 Product information management — **catalog**, not shop floor.  
-**NOS better:** Timber-aware attributes (species, grade, dimension) first-class; clear split from Production BOM.
+**NOS better:** Commercial **Product** links to **Material Definition** (`Material_Definition_Architecture.md`) — not a passive Material Master card; timber attributes + conversion/quality/costing rule packs on Definition; clear split from Production BOM.
 
 ```text
 Product
@@ -395,8 +395,8 @@ Inventory
 | INV-024 | Inventory Adjustment | Counts | Spec’d |
 | INV-002 | Product List *(bridge to PDT)* | Master Data | Spec’d |
 | INV-003 | Product Detail *(bridge)* | Master Data | Spec’d |
-| INV-004 | Material List | Master Data | Spec’d |
-| INV-005 | Material Detail | Master Data | Spec’d |
+| INV-004 | Material Definition Library | Master Data | Spec’d |
+| INV-005 | Material Definition Designer | Master Data | Spec’d |
 | INV-006 | Warehouse List | Master Data | Spec’d |
 | INV-007 | Warehouse Detail / Map | Master Data | Spec’d |
 | INV-008 | Location List | Master Data | Spec’d |

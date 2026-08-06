@@ -95,17 +95,16 @@ The Inventory module follows these principles:
 # Domain Architecture
 
 ```
-                        Master Data
-                              │
-                              ▼
-                        Material Master
+                   Material Definition
+              (Identity · Measurement · Conversion ·
+               Packaging · Quality · Traceability · Costing)
                               │
                               ▼
                         Warehouse Structure
                               │
           ┌───────────────┬───────────────┐
           ▼               ▼               ▼
-     Warehouse         Location         Batch
+     Warehouse         Location         Batch / MI
           │               │               │
           └───────────────┴───────────────┘
                           │
@@ -123,6 +122,10 @@ Goods Receipt   Goods Issue   Stock Transfer   Count
                  Reports • Dashboard • AI
 ```
 
+Material Definition authority: `Material_Definition_Architecture.md`  
+Multi-UoM: `Measurement_Conversion_Engine.md`  
+Inventory does not own Material Definition — it **consumes** Released Definitions.
+
 ---
 
 # Module Boundaries
@@ -139,7 +142,7 @@ Inventory owns:
 
 Inventory does NOT own:
 
-- Material Definitions
+- Material Definitions (catalog rule packs)
 - Purchase Orders
 - Sales Orders
 - Production Orders
@@ -321,12 +324,15 @@ Sales Production Quality
 
 # Module Integrations
 
-## Master Data
+## Master Data / Material Definition
 
 Consumes
 
-- Material
-- Unit of Measure
+- Material Definition (rule packs — not a passive Material Master card)
+- Measurement & Conversion Engine (Stock UoM · pcs/lm/m²/m³/kg/t)
+- Unit of Measure (via Measurement System)
+
+Authority: `Material_Definition_Architecture.md` · `Measurement_Conversion_Engine.md`
 
 ---
 

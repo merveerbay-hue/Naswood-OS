@@ -47,7 +47,7 @@ Inventory
 | **Operations** | **Mal kabul başlat** · **Mal çıkışı** (GI Workbench) · Putaway (next) · Transfer · Ship | “Yeni çıkış / Create GI” |
 | Stock | Warehouse Explorer · Balance · Lot / MI · Reservation · Traceability | Manual Lot / MI create |
 | Counts & Adjustments | Start count · Physical inventory · Post adjustment | Bare Create Adjustment |
-| Master Data | Malzeme tanımla · Depo yapılandır · Lokasyon ekle | Code * Create forms |
+| Master Data | **Malzeme tanımla** (Material Definition Designer) · Depo yapılandır · Lokasyon ekle | Code * Create forms / passive Material Master card |
 | Reports / Analytics | Run / drill (item 12 in Design Program) | Replacing Command Center |
 | Settings | Parameters | — |
 
