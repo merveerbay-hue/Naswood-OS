@@ -2,10 +2,19 @@
 
 **Document:** Material Identity Architecture  
 **Status:** Official — Product Architect  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Location:** `docs/13_Design/99_Shared/Material_Identity_Architecture.md`  
-**Owns:** Material Identity (lifecycle root), distinction from Lot/Batch, identity class chain, receiving as genealogy root  
-**Does not own:** Numbering *format algorithms* (→ `Document_Numbering.md`) · Genealogy *graph operations / inquiry* (→ `Material_Genealogy.md`) · Stock balances (→ `Inventory_Architecture.md`) · Transformation execution (→ `Transformation_Model.md`)
+**Owns:** Material Identity (lifecycle root) · distinction from Lot/Batch · **identity family** (Package · Lot · Bundle · Pallet · Receiving document · Inventory Transaction · Production Identity) · parent–child laws · identity class chain · receiving as genealogy root  
+**Does not own:** Numbering *format algorithms* (→ `Document_Numbering.md`) · Genealogy *graph operations / inquiry* (→ `Material_Genealogy.md`) · Package lifecycle depth (→ `Package_Architecture.md`) · Stock balances / txn engine (→ `Inventory_Transaction_Engine.md` / Architecture) · Transformation execution (→ `Transformation_Model.md`) · Material Definition catalog (→ `Material_Definition_Architecture.md`)
+
+---
+
+## Changelog
+
+| Version | What landed |
+|---------|-------------|
+| 1.0.0 | MI vs Lot · receiving root · class chain · absolute laws |
+| **1.1.0** | Identity family (Package · Bundle · Pallet · Receiving · Txn · Production Identity) · Foundation #3 · parent–child map |
 
 ---
 
@@ -76,6 +85,31 @@ A Lot may contain many Material Identities (e.g. many logs in one supplier lot).
 | `GR-…` | Receiving **document** |
 | Package / Pallet / Serial | Handling / unit identity — may link to MI. Partial GI: default = same Package Identity/barcode (remaining qty/status); optional company-policy **split** mints linked child PKG — see `INV_Goods_Issue_Workbench.md` |
 | Production Order `PO-…` | Demand / plan — not material instance |
+| Production Identity | Execution / output identity when configured — may mint new MI on confirm |
+
+### 2.4 Identity family (Foundation v1.1)
+
+NOS tracks **several identity kinds**. They must not be collapsed into “lot.”
+
+| Identity | What it is | Lifelong? | Parent–child |
+|----------|------------|-----------|--------------|
+| **Material Identity** | Physical material **state** | Yes (per state) | On every transformation |
+| **Package Identity** | Physical handling unit / barcode | Yes (default; split = children) | Optional policy split |
+| **Lot / Batch** | Operational party attribute | Policy | Not genealogy root |
+| **Bundle** | Grouping of packages / pieces | Policy | Links packages |
+| **Pallet** | Logistics unit of packages/bundles | Policy | Links packages / bundles |
+| **Receiving (GR-…)** | Inbound **document** | Document lifecycle | Roots MI creation event |
+| **Inventory Transaction** | Immutable stock movement | Forever (posted) | Links MI / Package / docs |
+| **Production Identity** | Shop-floor / output tracking hook | Per execution policy | May mint child MI |
+
+```text
+Genealogy graph nodes = Material Identities.
+Package / Pallet / Bundle = handling graph (links to MI).
+Receiving / Inventory Transaction / Production Order = document / event spine.
+```
+
+Detail for Package lifecycle → `Package_Architecture.md`.  
+Detail for txn immutability → `Compliance_Architecture.md` · Transaction Engine.
 
 ---
 
@@ -254,9 +288,13 @@ Production may keep the same Lot for logistics while minting a **new MI** on eve
 | Topic | Document |
 |-------|----------|
 | Number format / mint service | `Document_Numbering.md` |
+| Material Definition (catalog) | `Material_Definition_Architecture.md` |
+| Package domain | `Package_Architecture.md` |
 | Genealogy graph | `docs/05_Modules/02_Production/Material_Genealogy.md` |
 | Transformations | `docs/03_system/Transformation_Model.md` |
 | Receiving UX | `INV_Receiving_Workbench.md` |
-| Stock | `Inventory_Architecture.md` |
+| Stock / txn engine | `Inventory_Architecture.md` · `Inventory_Transaction_Engine.md` |
+| Compliance | `Compliance_Architecture.md` |
+| Foundation program | `Inventory_Foundation_Program.md` |
 | Authority matrix | `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md` |
 | Constitution | `AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md` § 2.3 |

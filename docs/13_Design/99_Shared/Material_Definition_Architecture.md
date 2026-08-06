@@ -2,10 +2,10 @@
 
 **Document:** Material Definition Architecture  
 **Status:** Official — Product Architect  
-**Version:** 1.0.1  
+**Version:** 1.1.0  
 **Location:** `docs/13_Design/99_Shared/Material_Definition_Architecture.md`  
-**Owns:** Material Definition as the active, composite material knowledge object for NOS · distinction from passive Material Master card · composition of Identity / Measurement / Conversion / Packaging / Numbering / Quality / Traceability / Costing rule packs · Material Definition vs Material Identity vs Commercial Product · Designer / Builder screen-type law for material knowledge · single definition consumed by all modules  
-**Does not own:** Material Identity minting meaning (→ `Material_Identity_Architecture.md`) · Numbering format algorithms (→ `Document_Numbering.md`) · Conversion calculation service (→ `Measurement_Conversion_Engine.md`) · SI units / precision (→ `Measurement_System.md`) · Unit-pair factors (→ `Unit_Conversion.md`) · Stock balances (→ `Inventory_Architecture.md`) · Genealogy graph ops (→ `Material_Genealogy.md`) · Quality disposition workflows (→ Quality Architecture) · Costing valuation methods (→ Costing) · Commercial Product catalog (→ `Products.md`) · Field-by-field legacy Material Master lists (→ `Material.md` / `Materials.md` — consumers)
+**Owns:** Material Definition as the active, composite material knowledge object for NOS · distinction from passive Material Master card · **full attribute / rule-pack catalog** (Identity · Type · Family · Species · Grade · Moisture · Dimensions · Measurement & Conversion · Density · Packaging · Numbering · Traceability · Quality · Barcode · Default Warehouse · Storage · Unit Precision · Rounding · Costing Unit · Default Production Unit) · Material Definition vs Material Identity vs Commercial Product · Designer / Builder screen-type law · single definition consumed by all modules  
+**Does not own:** Material Identity minting meaning (→ `Material_Identity_Architecture.md`) · Numbering format algorithms (→ `Document_Numbering.md`) · Conversion architecture / engine (→ `Measurement_Conversion_Architecture.md` · `Measurement_Conversion_Engine.md`) · SI units (→ `Measurement_System.md`) · Unit-pair factors (→ `Unit_Conversion.md`) · Warehouse hierarchy detail (→ `Warehouse_Architecture.md`) · Package domain depth (→ `Package_Architecture.md`) · Stock balances (→ Inventory Transaction Engine / Architecture) · Genealogy graph ops (→ `Material_Genealogy.md`) · Quality disposition workflows (→ Quality) · Costing valuation methods (→ Costing) · Commercial Product catalog (→ `Products.md`) · Legacy field lists (→ `Material.md` / `Materials.md` — consumers) · Compliance spine (→ `Compliance_Architecture.md`)
 
 ---
 
@@ -14,7 +14,8 @@
 | Version | What landed |
 |---------|-------------|
 | 1.0.0 | Material Definition Architecture — active rule packs · three layers · Designer UX |
-| **1.0.1** | Consumer docs updated: Inventory Architecture · Purchasing · Screen Map · Workspaces/Screens |
+| 1.0.1 | Consumer docs updated: Inventory Architecture · Purchasing · Screen Map · Workspaces/Screens |
+| **1.1.0** | Full attribute catalog (Foundation #1) · binds Measurement Conversion Architecture · Warehouse / Package / Compliance · Inventory Foundation Program |
 
 ---
 
@@ -134,9 +135,10 @@ Detail algorithms stay in the cited authority; the Definition **binds** which ru
 
 | Binds | Authority |
 |-------|-----------|
-| Stock / Purchase / Production / Sales / Planning / Costing / Shipping UoM roles | `Measurement_Conversion_Engine.md` |
-| Custom conversion formula (versioned) | Conversion Engine + Definition revision |
-| Enter-once · display pcs / lm / m² / m³ / kg / t | Conversion Engine |
+| Stock / Purchase / Production / Sales / Planning / Costing / Shipping UoM roles | `Measurement_Conversion_Architecture.md` |
+| Custom conversion formula (versioned) | Conversion Architecture + Definition revision |
+| Enter-once · display pcs / lm / m² / m³ / kg / t | Conversion Engine (implements Architecture) |
+| Unit Precision · Rounding Rules | Definition + Measurement System / Unit Conversion |
 
 ### 5.4 Packaging pack
 
@@ -175,6 +177,40 @@ Detail algorithms stay in the cited authority; the Definition **binds** which ru
 ```text
 The Definition does not re-implement these engines.
 It SELECTS and VERSIONS the rule packs they execute.
+```
+
+---
+
+## 5b. Full attribute catalog (Foundation v1.1)
+
+Every Released Material Definition **shall be able to carry** (required vs optional by Material Type):
+
+| Attribute / binding | Pack | Notes |
+|---------------------|------|--------|
+| **Material Identity** (class / mint rules) | Identity | Links to MI Architecture — not a physical MI |
+| **Material Type** | General | LOG · PRS · Lumber · Panel · Chemical · Spare… |
+| **Product Family** | General | Commercial / planning family |
+| **Tree Species** | Measurement | e.g. Sarıçam · Oak |
+| **Grade** | Quality | A / B / … |
+| **Moisture** | Quality / Measurement | Spec band + basis for density |
+| **Dimensions** | Measurement | Thickness · Width · Length |
+| **Measurement & Conversion Engine** | Conversion | Role UoMs + formula family binding |
+| **Density** | Measurement | kg/m³ (+ moisture basis) |
+| **Packaging Rules** | Packaging | Pieces/package · label · close checklist expectations |
+| **Numbering Rules** | Numbering | Which series for MAT / MI / PKG / Lot |
+| **Traceability Rules** | Traceability | Genealogy · CoC · evidence required |
+| **Quality Rules** | Quality | Inspection · hold · certificate relevance |
+| **Barcode Rules** | Packaging / Numbering | Label template · scan expectations · no reuse |
+| **Default Warehouse** | Storage | Default WH for putaway / planning |
+| **Storage Rules** | Storage | Zone constraints · hazmat · quarantine affinity → Warehouse Architecture |
+| **Unit Precision** | Conversion | Per-quantity precision overrides |
+| **Rounding Rules** | Conversion | Business rounding for this material |
+| **Costing Unit** | Costing | Often m³ |
+| **Default Production Unit** | Conversion / Production | Production UoM role |
+
+```text
+This catalog is why Material Definition is the FIRST foundation file.
+Production must not start until these bindings are Official.
 ```
 
 ---
@@ -293,4 +329,4 @@ SO line, PO line, and costing sheet.
 
 ## Related
 
-`Material_Identity_Architecture.md` · `Measurement_Conversion_Engine.md` · `Measurement_System.md` · `Unit_Conversion.md` · `Document_Numbering.md` · `Package_Allocation_Workspace.md` · `Material_Genealogy.md` · `Inventory_Architecture.md` · `Screen_Types.md` · `UI_Patterns.md` · `docs/13_Design/01_Master_Data/Material.md` · `docs/05_Modules/01_Master_Data/Materials.md` · `docs/05_Modules/01_Master_Data/Products.md`
+`Inventory_Foundation_Program.md` · `Material_Identity_Architecture.md` · `Measurement_Conversion_Architecture.md` · `Measurement_Conversion_Engine.md` · `Compliance_Architecture.md` · `Warehouse_Architecture.md` · `Package_Architecture.md` · `Measurement_System.md` · `Unit_Conversion.md` · `Document_Numbering.md` · `Package_Allocation_Workspace.md` · `Material_Genealogy.md` · `Inventory_Architecture.md` · `Screen_Types.md` · `UI_Patterns.md` · `Material.md` · `Materials.md` · `Products.md`

@@ -2,10 +2,11 @@
 
 **Document:** Measurement & Conversion Engine (centralized multi-UoM service)  
 **Status:** Official — Product Architect  
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Location:** `docs/13_Design/99_Shared/Measurement_Conversion_Engine.md`  
-**Owns:** Material-centric multi-unit conversion service used by all NOS modules · enter-once / display-all quantity law · stock vs purchase / production / sales / costing UoM roles · dimensional · density · package · custom formula conversion composition · equivalent quantity display set (pcs · lm · m² · m³ · kg · t) · prohibition of module-local manual conversion math  
-**Does not own:** SI unit catalog / precision defaults (→ `Measurement_System.md`) · generic unit-pair factor tables & packaging factor primitives (→ `Unit_Conversion.md`) · Material Definition composition / Designer UX (→ `Material_Definition_Architecture.md`) · Inventory stock ledger posting (→ `Inventory_Architecture.md`) · Costing valuation methods (→ Costing) · Package Allocation Workspace interaction (→ `Package_Allocation_Workspace.md`)
+**Architecture authority:** [`Measurement_Conversion_Architecture.md`](./Measurement_Conversion_Architecture.md) — Primary/Secondary units · Formula Engine · wood families · precision composition  
+**Owns:** Runtime / service contract — enter-once / display-all · request/response · Post snapshot · module call sites  
+**Does not own:** Architectural unit model (→ Measurement Conversion Architecture) · SI catalog (→ `Measurement_System.md`) · unit-pair tables (→ `Unit_Conversion.md`) · Material Definition bindings (→ `Material_Definition_Architecture.md`) · stock ledger (→ Inventory Transaction Engine) · Costing methods · Package Allocation UX
 
 ---
 
