@@ -644,6 +644,7 @@ export const tr = {
       arrivalTime: 'Varış saati',
       gate: 'Kapı',
       fillDemoTruck: 'Demo kamyon doldur',
+      platePlaceholder: 'Plaka yazın…',
       gateNeedPlate: 'Devam için kamyon plakası gerekli.',
       gateNeedSupplier: 'Devam için tedarikçi gerekli.',
       gateNeedDoc: 'En az bir evrak ekleyin.',

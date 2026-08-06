@@ -73,9 +73,9 @@ export function ReceivingWorkbench() {
   const [approved, setApproved] = useState(false);
 
   const [truck, setTruck] = useState({
-    plate: '',
-    trailer: '',
-    driver: '',
+    plate: '34 ABC 123',
+    trailer: '34 DEF 456',
+    driver: 'Ahmet Yılmaz',
     supplier: 'Nordic Timber Oy',
     arrivalDate: new Date().toISOString().slice(0, 10),
     arrivalTime: new Date().toTimeString().slice(0, 5),
