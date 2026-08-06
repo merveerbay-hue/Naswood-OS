@@ -96,32 +96,46 @@ export function ReceivingWorkbench() {
   const stage = STAGES[stageIdx];
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
 
-  const canAdvance = useMemo(() => {
+  const gateMessage = useMemo(() => {
     switch (stage.id) {
       case 'truck':
-        return Boolean(truck.plate.trim() && truck.supplier.trim());
+        if (!truck.plate.trim()) return t('wb.rcv.gateNeedPlate');
+        if (!truck.supplier.trim()) return t('wb.rcv.gateNeedSupplier');
+        return null;
       case 'documents':
-        return docs.length > 0;
+        return docs.length === 0 ? t('wb.rcv.gateNeedDoc') : null;
       case 'ocr':
-        return ocrAccepted;
+        return !ocrAccepted ? t('wb.rcv.gateNeedOcr') : null;
       case 'verify':
-        return verifyResolved;
+        return !verifyResolved ? t('wb.rcv.gateNeedVerify') : null;
       case 'count':
-        return Number(countQty) > 0;
-      case 'inspect':
-        return true;
+        return Number(countQty) <= 0 ? t('wb.rcv.gateNeedCount') : null;
       case 'warehouse':
-        return Boolean(warehouse.trim() && location.trim());
+        return !warehouse.trim() || !location.trim() ? t('wb.rcv.gateNeedWh') : null;
       case 'labels':
-        return Boolean(minted.lot) || labelsPrinted;
+        return null;
       case 'review':
-        return approved;
-      case 'post':
-        return !posted;
+        return !approved ? t('wb.rcv.gateNeedApprove') : null;
       default:
-        return true;
+        return null;
     }
-  }, [stage.id, truck, docs, ocrAccepted, verifyResolved, countQty, warehouse, location, minted.lot, labelsPrinted, approved, posted]);
+  }, [
+    stage.id,
+    truck.plate,
+    truck.supplier,
+    docs.length,
+    ocrAccepted,
+    verifyResolved,
+    countQty,
+    warehouse,
+    location,
+    minted.lot,
+    labelsPrinted,
+    approved,
+    t,
+  ]);
+
+  const canAdvance = !gateMessage && !posted;
 
   const persistMutation = useMutation({
     mutationFn: async () => {
@@ -277,6 +291,23 @@ export function ReceivingWorkbench() {
             <CardContent className="space-y-4">
               {stage.id === 'truck' ? (
                 <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() =>
+                        setTruck((prev) => ({
+                          ...prev,
+                          plate: '34 ABC 123',
+                          trailer: '34 DEF 456',
+                          driver: 'Ahmet Yılmaz',
+                          supplier: 'Nordic Timber Oy',
+                        }))
+                      }
+                    >
+                      {t('wb.rcv.fillDemoTruck')}
+                    </Button>
+                  </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     {(
                       [
@@ -587,6 +618,7 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
+              {gateMessage ? <p className="text-sm text-[var(--color-danger)]">{gateMessage}</p> : null}
               {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
             </CardContent>
           </Card>
