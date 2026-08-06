@@ -3868,3 +3868,69 @@ Consistency is enforced.
 
 The long-term success of NOS depends on respecting these principles every day.
 
+MEASUREMENT & CONVERSION ENGINE
+
+The NOS platform shall include a centralized Measurement & Conversion Engine.
+
+The engine shall be shared by
+
+• Inventory
+• Production
+• Purchasing
+• Sales
+• Planning
+• Costing
+• Quality
+• Shipping
+
+A material may be stored using one unit of measure while being planned,
+purchased, produced or sold using another unit.
+
+Examples
+
+Inventory
+
+Piece
+
+Production
+
+Square Meter
+
+Sales
+
+Linear Meter
+
+Costing
+
+Cubic Meter
+
+The system shall automatically calculate all equivalent quantities without
+requiring manual calculations.
+
+Conversion shall be based on
+
+• Material Dimensions
+• Thickness
+• Width
+• Length
+• Density
+• Material Type
+• Package Rules
+• Custom Conversion Formula
+
+The operator shall enter the quantity only once.
+
+The system shall automatically display
+
+• Pieces
+• Linear Meters
+• Square Meters
+• Cubic Meters
+• Kilograms
+• Tons
+
+according to the material definition.
+
+Every module shall use the same centralized conversion engine.
+
+Manual calculations are prohibited.
