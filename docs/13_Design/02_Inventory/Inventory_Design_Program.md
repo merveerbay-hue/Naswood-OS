@@ -40,7 +40,7 @@ AI drafts the process PRD only for the **active** row.
 | 11 | **Material Traceability** | Malzeme İzlenebilirlik | Workbench / Explorer | Queued — MI + Genealogy |
 | 12 | **Analytics & Reports** | Analitik & Raporlar | Explorer / Reports | Queued — **not** Command Center |
 
-Master Data (Malzeme / Depo / Lokasyon tanımla) is **out of this operations sequence** — separate engineering / configuration track.
+Master Data (Malzeme tanımla = **Material Definition Designer** · Depo / Lokasyon) is **out of this operations sequence** — separate engineering / configuration track (`Material_Definition_Architecture.md`).
 
 ---
 

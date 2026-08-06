@@ -2,10 +2,19 @@
 
 **Document:** Material Definition Architecture  
 **Status:** Official — Product Architect  
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Location:** `docs/13_Design/99_Shared/Material_Definition_Architecture.md`  
 **Owns:** Material Definition as the active, composite material knowledge object for NOS · distinction from passive Material Master card · composition of Identity / Measurement / Conversion / Packaging / Numbering / Quality / Traceability / Costing rule packs · Material Definition vs Material Identity vs Commercial Product · Designer / Builder screen-type law for material knowledge · single definition consumed by all modules  
 **Does not own:** Material Identity minting meaning (→ `Material_Identity_Architecture.md`) · Numbering format algorithms (→ `Document_Numbering.md`) · Conversion calculation service (→ `Measurement_Conversion_Engine.md`) · SI units / precision (→ `Measurement_System.md`) · Unit-pair factors (→ `Unit_Conversion.md`) · Stock balances (→ `Inventory_Architecture.md`) · Genealogy graph ops (→ `Material_Genealogy.md`) · Quality disposition workflows (→ Quality Architecture) · Costing valuation methods (→ Costing) · Commercial Product catalog (→ `Products.md`) · Field-by-field legacy Material Master lists (→ `Material.md` / `Materials.md` — consumers)
+
+---
+
+## Changelog
+
+| Version | What landed |
+|---------|-------------|
+| 1.0.0 | Material Definition Architecture — active rule packs · three layers · Designer UX |
+| **1.0.1** | Consumer docs updated: Inventory Architecture · Purchasing · Screen Map · Workspaces/Screens |
 
 ---
 

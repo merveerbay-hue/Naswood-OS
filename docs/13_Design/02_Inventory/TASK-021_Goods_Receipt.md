@@ -49,7 +49,7 @@ Goods Receipt supports inventory receipts from
 Goods Receipt does NOT
 
 - Approve Purchase Orders
-- Create Material Master
+- Create Material Definition (engineering track — Definition Designer)
 - Calculate Inventory Cost
 - Process Supplier Invoices
 
