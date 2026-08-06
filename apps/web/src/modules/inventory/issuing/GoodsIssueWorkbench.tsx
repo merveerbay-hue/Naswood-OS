@@ -147,11 +147,52 @@ const AI_RULES = [
   'Depo optimizasyonu',
 ];
 
-/** Catalog of pickable packages (Explorer / Add). */
+/** Catalog of pickable packages (Manual Package Selection / Smart Scan). */
 const UV = 0.0437; // m³ / piece for 26×140×4000 approx
 const UW = 18.5; // kg / piece demo
 
+type SmartScanResult = {
+  pkg: AllocRow;
+  materialOk: boolean;
+  dimensionsOk: boolean;
+  qualityOk: boolean;
+  lotOk: boolean;
+  customerOk: boolean;
+  hardFail: boolean;
+  softWarning: string | null;
+};
+
+function evaluateSmartScan(pkg: AllocRow): SmartScanResult {
+  const materialOk = pkg.species.toLowerCase().includes('thermowood') || pkg.species.toLowerCase().includes('pine');
+  const dimensionsOk = pkg.dimensions === '26×140×4000';
+  const qualityOk = pkg.quality === 'A';
+  const lotOk = pkg.lot.startsWith('LOT-TW-2026-000042');
+  const customerOk = !pkg.code.startsWith('PKG-D');
+  const hardFail = !materialOk || !dimensionsOk;
+  const softWarning = !customerOk
+    ? 'Bu paket farklı müşteriye rezervlidir. Devam etmek istiyor musunuz?'
+    : !qualityOk || !lotOk
+      ? 'Kalite veya lot karışımı riski — AI doğrulaması uyarı veriyor.'
+      : null;
+  return { pkg, materialOk, dimensionsOk, qualityOk, lotOk, customerOk, hardFail, softWarning };
+}
+
 const PACKAGE_CATALOG: AllocRow[] = [
+  {
+    code: 'PKG-001245',
+    warehouse: 'Ana Mamul Deposu',
+    location: 'WH01 / A03 / R05',
+    lot: 'LOT-TW-2026-000042',
+    mi: 'FG-TWDECK-20260801-00045',
+    species: 'Sarıçam Thermowood',
+    dimensions: '26×140×4000',
+    quality: 'A',
+    moisture: '%6',
+    available: 120,
+    selected: 40,
+    unitVolume: UV,
+    unitWeight: UW,
+  },
   {
     code: 'PKG-A-2026-000120',
     warehouse: 'Ana Mamul Deposu',
@@ -229,8 +270,10 @@ const PACKAGE_CATALOG: AllocRow[] = [
   },
 ];
 
-/** Minimum package set for SO-250001 (50). */
-const AI_ALLOCATION: AllocRow[] = PACKAGE_CATALOG.slice(0, 3).map((p) => ({ ...p }));
+/** Minimum package set for SO-250001 (50) — AI recommend A/B/C. */
+const AI_ALLOCATION: AllocRow[] = PACKAGE_CATALOG.filter((p) =>
+  ['PKG-A-2026-000120', 'PKG-B-2026-000088', 'PKG-C-2026-000091'].includes(p.code),
+).map((p) => ({ ...p }));
 
 function remainingOf(row: AllocRow) {
   return Math.max(0, row.available - row.selected);
@@ -270,8 +313,12 @@ export function GoodsIssueWorkbench() {
 
   const [docType, setDocType] = useState<DocType | null>('sales');
   const [manualReason, setManualReason] = useState('');
-  const [aiDecision, setAiDecision] = useState<'none' | 'accept' | 'ignore'>('none');
-  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [aiDecision, setAiDecision] = useState<'none' | 'accept' | 'manual'>('none');
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualMethod, setManualMethod] = useState<'scan' | 'search'>('scan');
+  const [pkgSearch, setPkgSearch] = useState('');
+  const [smartScan, setSmartScan] = useState<SmartScanResult | null>(null);
+  const [softConfirm, setSoftConfirm] = useState(false);
   const [allocation, setAllocation] = useState<AllocRow[]>([]);
   const [overrideHistory, setOverrideHistory] = useState<string[]>([]);
   const [mixWaived, setMixWaived] = useState(false);
@@ -336,10 +383,6 @@ export function GoodsIssueWorkbench() {
     () =>
       allocation.reduce((s, r) => s + (dispositions[r.code] ?? emptyDisposition(r.selected)).good, 0),
     [allocation, dispositions],
-  );
-  const addablePackages = useMemo(
-    () => PACKAGE_CATALOG.filter((p) => !allocation.some((a) => a.code === p.code)),
-    [allocation],
   );
   const viewRows = useMemo(() => {
     const q = filterText.trim().toLowerCase();
@@ -489,7 +532,9 @@ export function GoodsIssueWorkbench() {
 
   function acceptAi() {
     setAiDecision('accept');
-    setOverrideOpen(false);
+    setManualOpen(false);
+    setSmartScan(null);
+    setSoftConfirm(false);
     const rows = AI_ALLOCATION.map((p) => ({ ...p }));
     setAllocation(rows);
     syncDispositions(rows);
@@ -497,16 +542,58 @@ export function GoodsIssueWorkbench() {
     setError(null);
   }
 
-  function ignoreAi() {
-    setAiDecision('ignore');
-    setOverrideOpen(true);
-    setAllocation([]);
-    setDispositions({});
+  function openManualSelect() {
+    setAiDecision('manual');
+    setManualOpen(true);
+    setManualMethod('scan');
+    setSmartScan(null);
+    setSoftConfirm(false);
+    setPkgSearch('');
+    setScanValue('');
+    if (allocation.length === 0) {
+      setDispositions({});
+    }
     setMixWaived(false);
     setError(null);
   }
 
-  function addPackage(code: string) {
+  function resolvePackageLookup(raw: string): AllocRow | null {
+    const q = raw.trim().toLowerCase();
+    if (!q) return null;
+    return (
+      PACKAGE_CATALOG.find(
+        (p) => p.code.toLowerCase() === q || p.code.toLowerCase().includes(q) || p.mi.toLowerCase() === q,
+      ) ?? null
+    );
+  }
+
+  function runSmartScan(raw: string, method: 'scan' | 'search') {
+    const found = resolvePackageLookup(raw);
+    if (!found) {
+      setSmartScan(null);
+      setError(t('wb.iss.pkgNotFound'));
+      return;
+    }
+    setError(null);
+    setSoftConfirm(false);
+    setSmartScan(evaluateSmartScan(found));
+    setOverrideHistory((h) => [
+      ...h,
+      `${new Date().toISOString().slice(11, 19)} ${method === 'scan' ? 'Scan' : 'Search'} → ${found.code}`,
+    ]);
+  }
+
+  function useSmartScanPackage() {
+    if (!smartScan || smartScan.hardFail) return;
+    if (smartScan.softWarning && !softConfirm) return;
+    addPackage(smartScan.pkg.code, 'smart-scan');
+    setSmartScan(null);
+    setSoftConfirm(false);
+    setScanValue('');
+    setPkgSearch('');
+  }
+
+  function addPackage(code: string, via: string = 'add') {
     const src = PACKAGE_CATALOG.find((p) => p.code === code);
     if (!src || allocation.some((a) => a.code === code)) return;
     setAllocation((rows) => {
@@ -515,7 +602,7 @@ export function GoodsIssueWorkbench() {
       return next;
     });
     setFocusedCode(code);
-    setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} Add → ${code}`]);
+    setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} ${via} → ${code}`]);
     setMixWaived(false);
     setError(null);
   }
@@ -582,7 +669,9 @@ export function GoodsIssueWorkbench() {
     const rows = AI_ALLOCATION.map((p) => ({ ...p }));
     setAllocation(rows);
     syncDispositions(rows);
-    setOverrideOpen(false);
+    setManualOpen(false);
+    setSmartScan(null);
+    setSoftConfirm(false);
     setMixWaived(false);
   }
 
@@ -1090,38 +1179,172 @@ export function GoodsIssueWorkbench() {
                     <Button type="button" variant={aiDecision === 'accept' ? 'default' : 'secondary'} onClick={acceptAi}>
                       ✓ {t('wb.iss.acceptAi')}
                     </Button>
-                    <Button type="button" variant={aiDecision === 'ignore' ? 'default' : 'secondary'} onClick={ignoreAi}>
-                      {t('wb.iss.ignoreAi')}
+                    <Button
+                      type="button"
+                      variant={aiDecision === 'manual' ? 'default' : 'secondary'}
+                      onClick={openManualSelect}
+                    >
+                      {t('wb.iss.manualSelect')}
                     </Button>
                   </div>
                   {aiDecision === 'accept' ? (
                     <p className="text-sm text-[var(--color-primary)]">{t('wb.iss.acceptOk')}</p>
                   ) : null}
-                  {overrideOpen || aiDecision === 'ignore' ? (
-                    <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
-                      <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.iss.explorer')}</p>
-                      <p className="font-mono text-[11px] text-[var(--text-muted)]">{t('wb.iss.explorerPath')}</p>
-                      <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.overrideHint')}</p>
-                      <div className="grid gap-2">
-                        {addablePackages.map((p) => (
-                          <button
-                            key={p.code}
-                            type="button"
-                            draggable
-                            onDragStart={(e) => e.dataTransfer.setData('text/pkg', p.code)}
-                            onClick={() => addPackage(p.code)}
-                            className="cursor-grab rounded-md border border-[var(--border-default)] px-3 py-2 text-left text-sm hover:border-[var(--color-primary)] active:cursor-grabbing"
-                          >
-                            <p className="font-mono text-xs font-medium">{p.code}</p>
-                            <p className="text-xs text-[var(--text-muted)]">
-                              {p.location} · {p.available} {t('wb.iss.colAvail').toLowerCase()} · {p.lot} · {p.quality} ·{' '}
-                              {p.moisture} · {t('wb.iss.dragMe')}
-                            </p>
-                          </button>
-                        ))}
+                  {manualOpen || aiDecision === 'manual' ? (
+                    <div className="space-y-3 rounded-md border border-[var(--border-default)] px-3 py-3">
+                      <p className="text-sm font-semibold">{t('wb.iss.manualSelectTitle')}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t('wb.iss.manualSelectHint')}</p>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="manual-method"
+                            checked={manualMethod === 'scan'}
+                            onChange={() => {
+                              setManualMethod('scan');
+                              setSmartScan(null);
+                              setSoftConfirm(false);
+                            }}
+                          />
+                          {t('wb.iss.methodScan')}
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="manual-method"
+                            checked={manualMethod === 'search'}
+                            onChange={() => {
+                              setManualMethod('search');
+                              setSmartScan(null);
+                              setSoftConfirm(false);
+                            }}
+                          />
+                          {t('wb.iss.methodSearch')}
+                        </label>
                       </div>
+
+                      {manualMethod === 'scan' ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Input
+                            value={scanValue}
+                            onChange={(e) => setScanValue(e.target.value)}
+                            placeholder={t('wb.iss.scanPh')}
+                            className="min-w-[200px] flex-1 font-mono"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') runSmartScan(scanValue, 'scan');
+                            }}
+                          />
+                          <Button type="button" onClick={() => runSmartScan(scanValue, 'scan')}>
+                            {t('wb.iss.scanValidate')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => {
+                              setScanValue('PKG-001245');
+                              runSmartScan('PKG-001245', 'scan');
+                            }}
+                          >
+                            {t('wb.iss.demoSmartScan')}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          <Input
+                            value={pkgSearch}
+                            onChange={(e) => setPkgSearch(e.target.value)}
+                            placeholder={t('wb.iss.searchPh')}
+                            className="min-w-[200px] flex-1 font-mono"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') runSmartScan(pkgSearch, 'search');
+                            }}
+                          />
+                          <Button type="button" onClick={() => runSmartScan(pkgSearch, 'search')}>
+                            {t('wb.iss.searchBtn')}
+                          </Button>
+                        </div>
+                      )}
+
+                      {smartScan ? (
+                        <div
+                          className={`space-y-2 rounded-md border px-3 py-3 ${
+                            smartScan.hardFail
+                              ? 'border-[var(--color-danger)]/50 bg-[var(--color-danger)]/5'
+                              : smartScan.softWarning
+                                ? 'border-amber-500/40 bg-amber-500/5'
+                                : 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5'
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">
+                            {smartScan.hardFail
+                              ? t('wb.iss.smartScanWrong')
+                              : smartScan.softWarning
+                                ? t('wb.iss.smartScanWarn')
+                                : t('wb.iss.smartScanOk')}
+                          </p>
+                          <p className="font-mono text-sm font-medium">📦 {smartScan.pkg.code}</p>
+                          <ul className="space-y-1 text-sm text-[var(--text-secondary)]">
+                            <li>🌲 {smartScan.pkg.species}</li>
+                            <li>📏 {smartScan.pkg.dimensions}</li>
+                            <li>
+                              📦 {smartScan.pkg.available} {t('wb.iss.pcs')}
+                            </li>
+                            <li>
+                              📐 {(smartScan.pkg.available * smartScan.pkg.unitVolume).toFixed(3)} m³
+                            </li>
+                            <li>
+                              📍 {smartScan.pkg.warehouse} / {smartScan.pkg.location}
+                            </li>
+                            <li>
+                              {smartScan.qualityOk ? '🟢' : '⚠'} {t('wb.iss.checkQuality')}
+                            </li>
+                            <li>
+                              {smartScan.customerOk ? '🟢' : '⚠'} {t('wb.iss.checkCustomer')}
+                            </li>
+                            <li>
+                              {smartScan.lotOk ? '🟢' : '⚠'} {t('wb.iss.checkLot')}
+                            </li>
+                            <li>
+                              {smartScan.dimensionsOk ? '🟢' : '⚠'} {t('wb.iss.checkDims')}
+                            </li>
+                            <li>
+                              {smartScan.materialOk ? '🟢' : '⚠'} {t('wb.iss.checkMaterial')}
+                            </li>
+                          </ul>
+                          {smartScan.softWarning ? (
+                            <label className="flex items-start gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={softConfirm}
+                                onChange={(e) => setSoftConfirm(e.target.checked)}
+                                className="mt-1"
+                              />
+                              <span>{smartScan.softWarning}</span>
+                            </label>
+                          ) : null}
+                          <Button
+                            type="button"
+                            disabled={
+                              smartScan.hardFail ||
+                              Boolean(smartScan.softWarning && !softConfirm) ||
+                              allocation.some((a) => a.code === smartScan.pkg.code)
+                            }
+                            onClick={useSmartScanPackage}
+                          >
+                            {t('wb.iss.usePackage')}
+                          </Button>
+                        </div>
+                      ) : null}
+
                       {allocation.length > 0 ? <PackageAllocationWorkspace editable={false} /> : null}
-                      <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.aiValidationOverride')}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.aiValidationManual')}</p>
+                      <button
+                        type="button"
+                        className="text-xs text-[var(--text-muted)] underline"
+                        onClick={() => setError(t('wb.iss.browseOptionalHint'))}
+                      >
+                        {t('wb.iss.browseWarehouse')}
+                      </button>
                     </div>
                   ) : null}
                 </div>
@@ -1134,33 +1357,58 @@ export function GoodsIssueWorkbench() {
                     <Button type="button" variant="secondary" onClick={resetToAi}>
                       {t('wb.iss.resetAi')}
                     </Button>
-                    <Button type="button" variant="secondary" onClick={() => setOverrideOpen(true)}>
-                      {t('wb.iss.addPkg')}
+                    <Button type="button" variant="secondary" onClick={openManualSelect}>
+                      {t('wb.iss.manualSelect')}
                     </Button>
                     <Button type="button" variant="secondary" onClick={() => applyDemoDisposition('PKG-00254')}>
                       {t('wb.iss.demoDisposition')}
                     </Button>
                   </div>
-                  {overrideOpen ? (
-                    <div className="flex flex-wrap gap-2 rounded-md border border-[var(--border-default)] px-3 py-2">
-                      {addablePackages.length === 0 ? (
-                        <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.noMorePkg')}</p>
-                      ) : (
-                        addablePackages.map((p) => (
+                  {manualOpen && stage.id === 'picking' ? (
+                    <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-2">
+                      <p className="text-xs text-[var(--text-secondary)]">{t('wb.iss.manualSelectHint')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Input
+                          value={scanValue}
+                          onChange={(e) => setScanValue(e.target.value)}
+                          placeholder={t('wb.iss.scanPh')}
+                          className="min-w-[180px] flex-1 font-mono"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') runSmartScan(scanValue, 'scan');
+                          }}
+                        />
+                        <Button type="button" onClick={() => runSmartScan(scanValue, 'scan')}>
+                          {t('wb.iss.scanValidate')}
+                        </Button>
+                      </div>
+                      {smartScan ? (
+                        <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-2 text-sm">
+                          <p className="font-mono font-medium">{smartScan.pkg.code}</p>
+                          <p className="text-xs text-[var(--text-muted)]">
+                            {smartScan.pkg.species} · {smartScan.pkg.dimensions} · {smartScan.pkg.location}
+                          </p>
+                          {smartScan.softWarning ? (
+                            <label className="flex items-start gap-2 text-xs">
+                              <input
+                                type="checkbox"
+                                checked={softConfirm}
+                                onChange={(e) => setSoftConfirm(e.target.checked)}
+                                className="mt-0.5"
+                              />
+                              {smartScan.softWarning}
+                            </label>
+                          ) : null}
                           <Button
-                            key={p.code}
                             type="button"
-                            variant="secondary"
-                            draggable
-                            onDragStart={(e) =>
-                              ((e as unknown as DragEvent).dataTransfer.setData('text/pkg', p.code))
+                            disabled={
+                              smartScan.hardFail || Boolean(smartScan.softWarning && !softConfirm)
                             }
-                            onClick={() => addPackage(p.code)}
+                            onClick={useSmartScanPackage}
                           >
-                            + {p.code}
+                            {t('wb.iss.usePackage')}
                           </Button>
-                        ))
-                      )}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 
@@ -1456,8 +1704,8 @@ export function GoodsIssueWorkbench() {
                         t('wb.iss.aiDecision'),
                         aiDecision === 'accept'
                           ? t('wb.iss.acceptAi')
-                          : aiDecision === 'ignore'
-                            ? t('wb.iss.ignoreAi')
+                          : aiDecision === 'manual'
+                            ? t('wb.iss.manualSelect')
                             : '—',
                       ],
                       [
@@ -1468,8 +1716,8 @@ export function GoodsIssueWorkbench() {
                       [t('wb.iss.evidence'), `${evidence.length} ${t('wb.iss.evidenceCount')}`],
                       [t('wb.iss.destination'), destination],
                       [
-                        t('wb.iss.overrideHistory'),
-                        overrideHistory.length ? overrideHistory.join(' · ') : t('wb.iss.noOverrides'),
+                        t('wb.iss.manualHistory'),
+                        overrideHistory.length ? overrideHistory.join(' · ') : t('wb.iss.noManualSelect'),
                       ],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
@@ -1522,8 +1770,8 @@ export function GoodsIssueWorkbench() {
                 <dd className="font-medium">
                   {aiDecision === 'accept'
                     ? t('wb.iss.acceptAi')
-                    : aiDecision === 'ignore'
-                      ? t('wb.iss.ignoreAi')
+                    : aiDecision === 'manual'
+                      ? t('wb.iss.manualSelect')
                       : '—'}
                 </dd>
               </div>
