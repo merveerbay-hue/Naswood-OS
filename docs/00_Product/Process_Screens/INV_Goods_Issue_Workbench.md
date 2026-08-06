@@ -22,6 +22,7 @@
 | **2.0** | Override Mode + Warehouse Explorer · Package Selection detail · **Partial Package Consumption** · Package Identity permanence · expanded Loading · Document Library / Export UX surfaces · Override History · gates table |
 | **2.0.1** | **Accept / Override Recommendation** CTAs · AI Validation continues in Override · Partial pick auto-updates remaining · **optional company-policy package split** with full traceability |
 | **2.0.2** | Canonical worked scenarios: SO-250001 multi-package AI pick · **Kabul Et / Yoksay** CTAs · partial PKG-00254 120→40→80 |
+| **2.0.3** | **Multiple Package Picking** · Package Allocation Grid · mix AI Validation (lot/quality/moisture/dims/customer) · edit/add/remove packages |
 
 v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
 
@@ -321,6 +322,104 @@ Override changes **selection**, not the right to break business rules.
 
 ---
 
+## Multiple Package Picking
+
+A **single Goods Issue** may consume material from **multiple packages**.
+
+The system shall automatically recommend the **minimum number of packages** while respecting:
+
+| Driver |
+|--------|
+| FIFO / FEFO |
+| Customer Requirements |
+| Reservation Rules |
+| Quality Status |
+| Lot Consistency |
+| Moisture Consistency |
+| Dimension Consistency |
+| Species Consistency |
+| Warehouse Optimization |
+
+The operator may:
+
+| Action |
+|--------|
+| **Accept** the recommendation (**Kabul Et**) |
+| **Modify** package quantities (Selected Quantity on the grid) |
+| **Remove** packages from the allocation |
+| **Add** additional packages (Explorer / scan) |
+| **Ignore** AI recommendations (**Yoksay**) and build the allocation manually |
+
+Totals and remaining quantities recalculate in real time.  
+Each allocated package still follows Partial Package Usage (barcode unchanged).
+
+---
+
+## Package Allocation Grid
+
+Primary picking surface after AI Accept / Override. **Each row = one package.**
+
+| Column | Content |
+|--------|---------|
+| Package Number | Display-only (scan/pick identity) |
+| Warehouse | Name-first · code display |
+| Location | Zone / rack / shelf / bin display |
+| Lot | Display-only |
+| Material Identity | Display-only |
+| Species | |
+| Dimensions | |
+| Quality Grade | |
+| Moisture | |
+| Available Quantity | On-hand in package |
+| **Selected Quantity** | Editable — issue qty from this package (may be partial) |
+| Remaining Quantity | Available − Selected (auto) |
+
+```text
+Grid shall calculate totals in real time:
+  Σ Selected  vs  Required on demand line
+  Σ Remaining across allocated packages
+```
+
+UI actions on the grid: edit Selected · Remove row · Add package · Reset to AI recommendation.
+
+---
+
+## Partial Package Usage
+
+Each package in the allocation **may be partially consumed**.
+
+```text
+Physical package barcode / QR / Package Identity → unchanged.
+Only inventory balances update — via Inventory Transaction(s).
+Remaining Quantity · Volume · Weight · Pieces · Status auto-update per package.
+```
+
+See also § Partial Package Picking (PKG-00254 example) and optional company-policy split.
+
+---
+
+## AI Validation (allocation / mix)
+
+**Even when** the operator Accepts, modifies quantities, Adds/Removes packages, or uses Override — AI **shall warn** if:
+
+| Warning |
+|---------|
+| Multiple Lots are selected |
+| Different Quality Grades are mixed |
+| Different Moisture Levels are mixed |
+| Different Dimensions are mixed |
+| Customer-specific picking rules are violated |
+
+```text
+The operator may continue only if explicitly authorized
+(Supervisor / Quality / policy role) — always audited.
+Unauthorized → gate blocks Post / Next.
+```
+
+Wrong Material / Species / Package / Reservation / Moisture Class checks from § AI Validation still apply per row.
+
+---
+
 ## Worked scenarios (canonical)
 
 ### Senaryo 1 — AI önerisi (varsayılan)
@@ -590,7 +689,9 @@ History is always preserved. Multiple Goods Issues may consume the same package 
 
 ## AI Validation
 
-**Even in Override Mode**, AI **shall continue validating**:
+**Even in Override Mode and after grid edits**, AI **shall continue validating**.
+
+### Per-package / demand checks
 
 | Check |
 |-------|
@@ -604,18 +705,28 @@ History is always preserved. Multiple Goods Issues may consume the same package 
 | Wrong Moisture Class |
 | Wrong Package |
 
+### Allocation mix warnings (multi-package)
+
+| Warning | Continue? |
+|---------|-------------|
+| Multiple Lots selected | Only if authorized |
+| Different Quality Grades mixed | Only if authorized |
+| Different Moisture Levels mixed | Only if authorized |
+| Different Dimensions mixed | Only if authorized |
+| Customer-specific picking rules violated | Only if authorized |
+
 ```text
-The operator may override location / package selection,
-but may not violate business validation rules
-unless explicitly authorized.
+The operator may override location / package selection and edit the allocation grid,
+but may not violate business validation rules unless explicitly authorized.
 ```
 
 | Path | AI Validation |
 |------|----------------|
-| Kabul Et | On — confirms scan matches recommendation + demand |
-| Yoksay (Override) | **Still on** — validates manually chosen package against demand / quality / reservation / customer spec |
+| Kabul Et | On — confirms allocation matches recommendation + demand |
+| Grid modify / add / remove | On — re-validates mix + per-row rules |
+| Yoksay (Override) | **Still on** — validates manually chosen packages |
 
-Authorization to waive a validation = Supervisor / Quality / policy role · always audited · visible in Override History.
+Authorization to waive = Supervisor / Quality / policy role · always audited · visible in Override History.
 
 ---
 
@@ -769,12 +880,12 @@ Tablet / desk: document select · Accept/Override · review · Document Library 
 ## Cursor implementation notes
 
 1. Screen type = **Workbench** — not Issue Create form.  
-2. FE CTAs: **Kabul Et** · **Yoksay** → Explorer (see Senaryo 1–3).  
-3. Demo demand: SO-250001 · Thermowood Deck 26×140×4000 · 50 paket → Paket A/B/C.  
-4. AI Validation on both paths; partial PKG-00254 120→40→80 automatic remaining.  
-5. Post → inventory txn + package update (+ child PKG if policy) + reservation clear + evidence + genealogy.  
-6. Command Center “Open issues” opens this Workbench.  
-7. Manual GI = permission + reason — audited.  
+2. FE: **Package Allocation Grid** (multi-package) · Kabul Et / Yoksay · edit Selected / Remove / Add.  
+3. Demo: SO-250001 · Thermowood 26×140×4000 · 50 → Paket A/B/C minimum set; real-time totals.  
+4. Mix AI Validation warnings; waive only with authorization.  
+5. Partial per row: barcode unchanged; balances via Inventory Transactions.  
+6. Post → one GI · N inventory txns (per package line) · remaining updates · evidence · genealogy.  
+7. Command Center “Open issues” opens this Workbench.  
 8. Export / permanence → Shared Document Management — reference only.
 
 ---
