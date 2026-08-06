@@ -74,7 +74,7 @@ A Lot may contain many Material Identities (e.g. many logs in one supplier lot).
 |------------|------|
 | `MAT-…` | Catalog / master material definition (type, species, dims template) — **not** a physical instance |
 | `GR-…` | Receiving **document** |
-| Package / Pallet / Serial | Handling / unit identity — may link to MI |
+| Package / Pallet / Serial | Handling / unit identity — may link to MI. Partial GI: default = same Package Identity/barcode (remaining qty/status); optional company-policy **split** mints linked child PKG — see `INV_Goods_Issue_Workbench.md` |
 | Production Order `PO-…` | Demand / plan — not material instance |
 
 ---

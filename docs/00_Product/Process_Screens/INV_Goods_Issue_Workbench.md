@@ -3,13 +3,28 @@
 **Module:** Inventory  
 **Workspace:** Operations  
 **Screen type:** **Workbench** (warehouse execution) — `Screen_Types.md` · `UI_Patterns.md`  
-**Version:** 1.0 — Master Prompt aligned  
+**Version:** 2.0 — Master Prompt v2.0 aligned  
 **Status:** Product Architect — authoritative issue UX  
 **Supersedes as primary UX:** linear [`INV_Issue_Wizard.md`](./INV_Issue_Wizard.md) (retained as spine)  
 **Stock truth:** `Inventory_Architecture.md` · `Inventory_Workflow.md`  
 **Identity:** `Document_Numbering.md` · `Material_Identity_Architecture.md` · `Material_Genealogy.md`  
 **Evidence / Document Library / Export:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md)  
+**Package / barcode immutability (format refs):** `Barcode_QR_Model.md` · `Barcode_Strategy.md` · `Naming_Standards.md` · Packaging module  
 **Design program:** `Inventory_Design_Program.md` § 7 (PA-directed ahead of Putaway)
+
+---
+
+## Changelog
+
+| Version | What landed |
+|---------|-------------|
+| 1.0 | Demand-backed Workbench spine · AI pick · scan/verify · quality · thin loading · Post · Evidence First |
+| **2.0** | Override Mode + Warehouse Explorer · Package Selection detail · **Partial Package Consumption** · Package Identity permanence · expanded Loading · Document Library / Export UX surfaces · Override History · gates table |
+| **2.0.1** | **Accept / Override Recommendation** CTAs · AI Validation continues in Override · Partial pick auto-updates remaining · **optional company-policy package split** with full traceability |
+| **2.0.2** | Canonical worked scenarios: SO-250001 multi-package AI pick · **Kabul Et / Yoksay** CTAs · partial PKG-00254 120→40→80 |
+| **2.0.3** | **Multiple Package Picking** · Package Allocation Grid · mix AI Validation (lot/quality/moisture/dims/customer) · edit/add/remove packages |
+
+v2 **extends** Inventory Architecture / Workflow / Screens — it does not replace stock ledger or numbering algorithms.
 
 ---
 
@@ -18,18 +33,43 @@
 ```text
 This is NOT a CRUD screen.
 This is NOT a Create / Edit form.
-This is a warehouse execution Workbench.
+This is NOT a database editor.
+This is an AI-powered Warehouse Operations Workbench.
 Inventory quantities are NEVER edited directly.
-Every Goods Issue creates an Inventory Transaction.
+Every Goods Issue creates Inventory Transaction(s).
 ```
 
 ```text
-Never allow issuing materials without a business reason.
-AI prepares · Operator scans · verifies · confirms · photographs when needed.
+Never allow issuing materials without a business document
+(except permission-controlled Manual Issue).
+AI prepares · Operator scans · reviews · verifies · confirms.
+The system calculates · validates · warns · generates · tracks.
 ```
 
-**Forbidden:** Bare Save form · typed Material / Lot / Package / Pallet / WH / Location / GI / txn codes · issue with no reference (except permission-controlled Manual)  
-**Required:** Business document → load demand → AI pick recommend → scan validate → evidence → quality gate → **Post**
+```text
+PACKAGE IDENTITY LAW (wood manufacturing — Master Prompt v2.0)
+─────────────────────────────────────────────────────────────
+Packages are physical objects.
+Default partial pick: same Package Identity / Barcode / QR remain;
+system updates Remaining Quantity · Volume · Weight · Pieces · Status.
+Optional: if company policy requires automatic package split,
+Numbering mints child package(s) while preserving complete traceability
+(parent → child · Inventory Transactions · Genealogy).
+Never silently rename or reuse a barcode.
+Traceability = Inventory Transactions + Material Genealogy —
+never by overwriting Package IDs.
+```
+
+```text
+AI VALIDATION LAW
+─────────────────────────────────────────────────────────────
+Even in Override Mode, AI continues validating business rules.
+Operator may override location / package selection.
+Operator may NOT violate validation rules without explicit authorization.
+```
+
+**Forbidden:** Bare Save form · typed Material / Lot / Package / Pallet / WH / Location / GI / txn / MI codes · orphan issue · reusing package barcodes · bypassing AI validation without authorization  
+**Required:** Business document → load demand → AI pick (default) → **Accept** or **Override** → scan / verify (AI validation always on) → evidence → quality → destination → review (incl. overrides) → **Post**
 
 ---
 
@@ -38,21 +78,21 @@ AI prepares · Operator scans · verifies · confirms · photographs when needed
 | # | Question | Answer |
 |---|----------|--------|
 | 1 | **Who is the user?** | Warehouse Operator (picker) · Warehouse Supervisor · Inventory Controller (exceptions) · optionally Production / Maintenance / Shipping coordinators as request owners |
-| 2 | **Real-life job?** | Takes an approved demand (PO production / WO / SO / …), walks or drives to bin, picks correct material/lot/qty, proves if needed, confirms issue so stock leaves Available (and reservation clears) |
-| 3 | **Documents?** | Source: Production Order · Maintenance WO · Sales Order · Sample / R&D / Scrap / Transfer / Internal Consumption request · (rare) Manual GI. Output: GI document · pick list · loading note (if ship) |
-| 4 | **Photos?** | Damage / missing / broken package · optional load / staging photos · exception evidence — linked to GI (Evidence First) |
-| 5 | **AI support?** | Best WH/location/lot/package (FIFO/FEFO/reservation/quality) · pick-route hint · wrong material/lot/qty/mixed detect · shortage predict · repeated-error learning |
-| 6 | **Auto-generated?** | GI number · inventory txn · movement / warehouse / material history · audit · scan & validation history · genealogy consumption link · suggested pick candidates |
-| 7 | **Never manual?** | Material Code · Lot · Package · Pallet · Warehouse/Location codes · GI number · Inventory Transaction number · Material Identity strings · free-hand stock qty edit |
-| 8 | **User decisions?** | Which business document to work · approve/override AI pick suggestion (within policy) · confirm scan matches · capture evidence when exception · loading/production destination assignment · **Approve Post** · raise NCR / block if wrong |
+| 2 | **Real-life job?** | Takes approved demand, goes to bin, picks correct package/lot/qty (often **partial package**), may override AI via Warehouse Explorer, proves exceptions, confirms issue so stock ↓ and reservation clears — **same physical barcode stays on the package** |
+| 3 | **Documents?** | Source: Production Order · Maintenance WO · Sales Order · Sample / R&D / Scrap / Transfer / Internal · Manual GI. Output: GI · picking list · loading note (if ship) · digital file / Document Library |
+| 4 | **Photos?** | Damage / missing / broken package · loading · optional video / voice — Evidence Panel → permanent archive |
+| 5 | **AI support?** | FIFO/FEFO · reservation · quality · customer reqs · WH rules · location optimize · package integrity · availability · pick route · wrong material/dims/species/moisture/quality/package/lot detect |
+| 6 | **Auto-generated?** | GI · inventory txn(s) · histories · audit · scan/validation/override history · genealogy · remaining package qty/volume/weight/status · suggested pick |
+| 7 | **Never manual?** | Material Code · Lot · Package · Pallet · WH/Location codes · GI · txn · MI strings · free-hand stock balance edit · **new package number on partial issue** |
+| 8 | **User decisions?** | Which demand · **Kabul Et** or **Yoksay** (Explorer) · issue qty within package remaining · destination · evidence when needed · **Approve Post** · raise NCR |
 
 ---
 
 ## Job to be done
 
-> Depocu, **iş nedeni olan** talebe karşı doğru malzeme / lot / miktarı tarayarak çıkarır; kalite ve rezervasyon kapılarını geçer; gerekirse kanıt ekler; **Post** ile stok düşer ve izlenebilirlik güncellenir.
+> Depocu, **iş belgesine** bağlı talebe karşı doğru paketi / lotu tarar; AI önerisini **Accept** eder veya **Override** ile Warehouse Explorer’dan seçer; **kısmi paket** çıkışında kalan miktarı sistem günceller (politika varsa otomatik split + izlenebilirlik); Override’da bile AI validation çalışır; **Post** ile stok ve genealogy güncellenir.
 
-**Not the job:** “Create a GoodsIssue row” or type inventory down.
+**Not the job:** Create a GoodsIssue row · type inventory down · bypass validation · invent package codes.
 
 ## CTA
 
@@ -63,7 +103,7 @@ AI prepares · Operator scans · verifies · confirms · photographs when needed
 
 Never: “Yeni çıkış” / “Create Goods Issue.”
 
-Entry: Command Center queues · Operations · Production / Maintenance / Sales deep-link with reference · rugged Terminal into same session.
+Entry: Command Center queues · Operations · Production / Maintenance / Sales deep-link · rugged Terminal into same session · INV-017 library reopen.
 
 ---
 
@@ -72,23 +112,28 @@ Entry: Command Center queues · Operations · Production / Maintenance / Sales d
 | Topic | Authority |
 |-------|-----------|
 | Identifiers | `Document_Numbering.md` |
-| Material Identity / Lot | `Material_Identity_Architecture.md` |
-| Genealogy (consume / link) | `Material_Genealogy.md` |
-| Stock / reservations | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
+| Material Identity / Lot (Package ≠ MI) | `Material_Identity_Architecture.md` |
+| Genealogy | `Material_Genealogy.md` |
+| Stock / reservations / txn immutability | `Inventory_Architecture.md` · `Inventory_Workflow.md` |
+| Evidence · Document Library · Export | `Document_Management_Evidence_and_Export.md` |
+| Package code immutability / QR | `Barcode_QR_Model.md` · `Barcode_Strategy.md` |
 | Screen type | `Screen_Types.md` · `UI_Patterns.md` |
+| Warehouse Explorer (browse alternate bins) | Design Program #4 — **consume when landed**; do not redefine Explorer here |
 | Demand sources | Production / Maintenance / Sales / Quality process docs (reference only) |
 
 ```text
 Identifiers are generated automatically according to the centralized
 Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
-Manual entry is prohibited.
+Manual entry is prohibited. Users work with names and scans; codes are display-only.
+Selecting an existing Package / Lot / MI for consumption is allowed.
+Minting a new Package Identity is NOT part of partial Goods Issue.
 ```
 
 ---
 
 ## Allowed business documents (issue source)
 
-Goods Issue **can only** be created from:
+Goods Issue **can only** originate from:
 
 | Source | Typical consumer |
 |--------|------------------|
@@ -99,25 +144,46 @@ Goods Issue **can only** be created from:
 | Internal Consumption | Cost center / overhead |
 | R&D Request | Lab / trial |
 | Scrap Request | Controlled scrap issue |
-| Transfer Request | Issue leg toward transfer (policy) |
-| **Manual Goods Issue** | **Permission-controlled exception only** |
+| Warehouse Transfer | Issue leg toward transfer (policy) |
+| **Manual Issue** | **Permission-controlled exception only** |
 
-No orphan issues. Manual requires elevated permission + reason code.
+```text
+Goods cannot leave inventory without a business document.
+```
+
+Manual requires elevated permission + reason code + audit.
 
 ---
 
-## Workbench anatomy
+## Workbench design (not a form)
+
+Operational command center — compose:
+
+| Surface | Role |
+|---------|------|
+| Cards | Interactive stage content only (not decorative KPI cards) |
+| Timeline / stage rail | 10-step progress |
+| Warehouse Map | AI route + current bin |
+| Material Grid | Demand lines · reserved · available · remaining |
+| AI Recommendation Panel | Default pick proposal |
+| Evidence Panel | Photos · video · voice · docs |
+| Warehouse Explorer | Override browse: WH → Zone → Rack → Shelf → Bin → Package |
+| Package Preview | Full package card (see § Package Selection) |
+| Document Viewer / Library | Session digital file |
+| Sticky Action Bar | Draft · Back · Next · Ignore AI · NCR · **Post** |
+
+Enterprise refs: SAP EWM · Dynamics SCM · Infor WMS · IFS Cloud · Manhattan — adapted to NOS laws (demand-backed · Package Identity · Evidence First · no Create form).
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ INV-ISS-001  Goods Issue Workbench     GI-… (system) · Draft/InProgress  │
-│ Ref: PO-… / WO-… / SO-… · Priority · Required date                       │
+│ Ref: PO-… / WO-… / SO-… · Priority · Required date · Customer/Project    │
 ├────────────┬─────────────────────────────────────┬───────────────────────┤
 │ TIMELINE   │ MAIN                                │ CONTEXT               │
-│ 1 Document │ Task Panel · Material List          │ AI Recommendations    │
-│ 2 Materials│ Warehouse Map · Location Panel      │ Validation / Warnings │
-│ 3 AI Pick  │ Evidence Panel · Loading / Line     │ Reservation / Quality │
-│ 4 Picking  │                                     │                       │
+│ 1 Document │ Task · Material Grid                │ AI Recommendations    │
+│ 2 Materials│ Package Preview · Warehouse Map     │ Validation / Warnings │
+│ 3 AI Pick  │ Explorer (override) · Evidence      │ Reservation / Quality │
+│ 4 Picking  │ Document Library · Loading          │ Override History      │
 │ 5 Verify   │                                     │                       │
 │ 6 Evidence │                                     │                       │
 │ 7 Quality  │                                     │                       │
@@ -125,11 +191,9 @@ No orphan issues. Manual requires elevated permission + reason code.
 │ 9 Review   │                                     │                       │
 │ 10 Post    │                                     │                       │
 ├────────────┴─────────────────────────────────────┴───────────────────────┤
-│ STICKY: Save draft · Back · Next · Raise NCR · Post                      │
+│ STICKY: Draft · Back · Next · Kabul Et · Yoksay · NCR · Post                 │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
-
-Surfaces: Task Panel · Reference Document Panel · Material List · Warehouse Map · Location Panel · AI Recommendation Panel · Evidence Panel · Timeline · Validation Panel · Sticky Action Bar.
 
 ---
 
@@ -137,88 +201,328 @@ Surfaces: Task Panel · Reference Document Panel · Material List · Warehouse M
 
 ```text
 1 Select business document
-2 Load required materials
-3 AI material / location / lot recommendation
-4 Picking (scan WH → zone → bin)
-5 Verify material
+2 Load material requirements
+3 AI picking recommendation → Kabul Et  OR  Yoksay (Override → Explorer)
+4 Picking / package selection (scan · partial qty)
+5 Verify material & package  (AI Validation — also in Override)
 6 Evidence collection
 7 Quality validation
 8 Loading / production destination
-9 Final review
-10 Posting → Inventory Transaction + history + genealogy
+9 Final review (+ Override History)
+10 Posting → Inventory Transaction(s) + history + genealogy + Evidence Archive
 ```
 
 ### 1 — Select business document
 
-Show eligible open demands: Production Order · Maintenance WO · Sales Order · Sample / Internal / R&D / Scrap / Transfer request · Manual (if permitted).
+Display eligible open demands:
 
-Display: Request owner · Priority · Required date · Status.
+Production Order · Sales Order · Maintenance Order · Transfer Request · Internal Request · Sample · R&D · Scrap · Manual (if permitted).
+
+Show per demand:
+
+| Field |
+|-------|
+| Owner |
+| Priority |
+| Required Date |
+| Status |
+| Customer (when sales) |
+| Project (when applicable) |
 
 **Gate:** One valid reference selected (or Manual + permission + reason).
 
 ---
 
-### 2 — Load required materials
+### 2 — Load material requirements
 
-Auto-retrieve: Required materials · Required qty · Reserved qty · Available qty · Alternatives (policy).
+Automatically retrieve (no manual material creation):
 
-**Do not** allow creating catalog materials here. Name-first display; codes secondary.
+| Field |
+|-------|
+| Required Materials |
+| Required Quantity |
+| Reserved Quantity |
+| Available Quantity |
+| Alternative Materials |
+| Required Package Type |
+| Required Quality |
+| Required Dimensions |
+| Required Moisture |
+
+Name-first display; codes secondary / display-only.
 
 **Gate:** ≥1 open line with remaining qty.
 
 ---
 
-### 3 — AI material recommendation
+### 3 — AI picking recommendation
 
-Recommend Warehouse · Location · Lot · Package · Pallet using:
+The system **shall automatically recommend** inventory according to:
 
-FIFO · FEFO · Reservation · Quality status · Warehouse rules · Material status.
+| Driver |
+|--------|
+| FIFO |
+| FEFO |
+| Reservation |
+| Quality Status |
+| Warehouse Rules |
+| Location Optimization |
+| Package Integrity |
+| Customer Requirements |
 
-Operator **approves** or overrides within policy (still scan-validated later).
+The recommendation is the **default option**.
 
-**Gate:** Each line has an approved pick proposal (or explicit supervisor override).
+Display:
+
+| Recommendation |
+|----------------|
+| Recommended Warehouse |
+| Recommended Location |
+| Recommended Package |
+| Recommended Quantity |
+| Recommended Route |
+
+Operator chooses exactly one path:
+
+| Control (TR) | Control (EN) | Result |
+|--------------|--------------|--------|
+| **✓ Kabul Et** | **Accept** / Use AI recommendation | Proceed with AI default |
+| **✓ Yoksay** | **Ignore** | Enter Override Mode (Warehouse Explorer) |
+
+Also acceptable TR labels: **AI Önerisini Kullan** (= Kabul Et) · **Yoksay**.
+
+**Gate:** Each line has **Kabul Et** recorded **or** an audited **Yoksay** override selection.
 
 ---
 
-### 4 — Picking
+### Override Mode
 
-Navigate: Warehouse → Zone → Rack → Shelf → Bin.
+When **Yoksay** is selected:
 
-Support: Barcode · QR · RFID · Scanner · Voice picking (future).
+1. Open **Warehouse Explorer** (browse — do not redefine Explorer UX; Design Program #4).  
+2. Operator browses inventory:
 
-Every scan validated against proposal / reservation.
+```text
+Depo / Warehouse
+    ↓
+Zone
+    ↓
+Rack
+    ↓
+Shelf
+    ↓
+Package
+```
 
-**Gate:** Scans recorded for required identity level (lot/serial/package as configured).
+3. Operator may manually choose another package (scan or Explorer pick — name-first; **no typed codes**).  
+4. **Every override shall be logged** in audit history (actor · timestamp · AI proposal · chosen WH/location/package · reason if policy requires).
+
+**AI Validation continues in Override Mode** (see § AI Validation).  
+Override changes **selection**, not the right to break business rules.
+
+---
+
+## Multiple Package Picking
+
+A **single Goods Issue** may consume material from **multiple packages**.
+
+The system shall automatically recommend the **minimum number of packages** while respecting:
+
+| Driver |
+|--------|
+| FIFO / FEFO |
+| Customer Requirements |
+| Reservation Rules |
+| Quality Status |
+| Lot Consistency |
+| Moisture Consistency |
+| Dimension Consistency |
+| Species Consistency |
+| Warehouse Optimization |
+
+The operator may:
+
+| Action |
+|--------|
+| **Accept** the recommendation (**Kabul Et**) |
+| **Modify** package quantities (Selected Quantity on the grid) |
+| **Remove** packages from the allocation |
+| **Add** additional packages (Explorer / scan) |
+| **Ignore** AI recommendations (**Yoksay**) and build the allocation manually |
+
+Totals and remaining quantities recalculate in real time.  
+Each allocated package still follows Partial Package Usage (barcode unchanged).
+
+---
+
+## Package Allocation Grid
+
+Primary picking surface after AI Accept / Override. **Each row = one package.**
+
+| Column | Content |
+|--------|---------|
+| Package Number | Display-only (scan/pick identity) |
+| Warehouse | Name-first · code display |
+| Location | Zone / rack / shelf / bin display |
+| Lot | Display-only |
+| Material Identity | Display-only |
+| Species | |
+| Dimensions | |
+| Quality Grade | |
+| Moisture | |
+| Available Quantity | On-hand in package |
+| **Selected Quantity** | Editable — issue qty from this package (may be partial) |
+| Remaining Quantity | Available − Selected (auto) |
+
+```text
+Grid shall calculate totals in real time:
+  Σ Selected  vs  Required on demand line
+  Σ Remaining across allocated packages
+```
+
+UI actions on the grid: edit Selected · Remove row · Add package · Reset to AI recommendation.
+
+---
+
+## Partial Package Usage
+
+Each package in the allocation **may be partially consumed**.
+
+```text
+Physical package barcode / QR / Package Identity → unchanged.
+Only inventory balances update — via Inventory Transaction(s).
+Remaining Quantity · Volume · Weight · Pieces · Status auto-update per package.
+```
+
+See also § Partial Package Picking (PKG-00254 example) and optional company-policy split.
+
+---
+
+## AI Validation (allocation / mix)
+
+**Even when** the operator Accepts, modifies quantities, Adds/Removes packages, or uses Override — AI **shall warn** if:
+
+| Warning |
+|---------|
+| Multiple Lots are selected |
+| Different Quality Grades are mixed |
+| Different Moisture Levels are mixed |
+| Different Dimensions are mixed |
+| Customer-specific picking rules are violated |
+
+```text
+The operator may continue only if explicitly authorized
+(Supervisor / Quality / policy role) — always audited.
+Unauthorized → gate blocks Post / Next.
+```
+
+Wrong Material / Species / Package / Reservation / Moisture Class checks from § AI Validation still apply per row.
+
+---
+
+## Worked scenarios (canonical)
+
+### Senaryo 1 — AI önerisi (varsayılan)
+
+```text
+Satış Siparişi     SO-250001
+İstenen            Thermowood Deck 26×140×4000
+Miktar             50 Paket
+```
+
+AI stokları tarar ve kurallara göre önerir:
+
+| Paket | Miktar |
+|-------|--------|
+| Paket A | 20 Paket |
+| Paket B | 15 Paket |
+| Paket C | 15 Paket |
+| **Toplam** | **50 Paket** |
+
+Öneri kuralları: FIFO · FEFO · Rezervasyon · Kalite · Lokasyon · Aynı Lot · Aynı Nem · Aynı Kalite · Aynı Üretim Tarihi.
+
+Operatör: **✓ Kabul Et**
+
+→ Tarama / doğrulama yoluna devam (AI Validation açık).
+
+---
+
+### Senaryo 2 — Override (çok kritik)
+
+Operatör sahada biliyor ki:
+
+- **Paket B** üste yakın / forklift orada, **veya**
+- **Paket D** müşteriye daha uygun.
+
+UI net iki seçenek sunar:
+
+```text
+[ AI Önerisini Kullan ]     (= Kabul Et)
+[ Yoksay ]                  (= Override)
+```
+
+**Yoksay** → Warehouse Explorer açılır:
+
+```text
+Depo → Zone → Rack → Shelf → Package
+```
+
+Operatör paketi seçer. Seçim audit’e yazılır. **AI Validation devam eder** (yanlış malzeme / nem / kalite / müşteri speki vb. yetkisiz geçilemez).
+
+---
+
+### Senaryo 3 — Kısmi paket (ahşap sektörü kritik)
+
+```text
+Paket     PKG-00254
+İçerik    120 adet · 5.24 m³
+Satış     40 adet istiyor
+
+Operatör  PKG-00254 → 40 kullan → 80 depoda kalır
+```
+
+Sistem **otomatik** günceller: Remaining Quantity · Volume · Weight · Pieces · Package Status.  
+Aynı barkod / QR fiziksel pakette kalır (varsayılan politika). Yeni paket numarası üretilmez.
+
+---
+
+### 4 — Picking / package selection
+
+Navigate along recommended route (or Explorer path). Support: Barcode · QR · RFID · Scanner · Voice (future).
+
+Every scan runs through **AI Validation** against demand + proposal/override + reservation.
+
+Operator confirms **issue quantity** (may be less than package available — see Partial Package Picking).
+
+**Gate:** Scans recorded for required identity level; issue qty > 0 and ≤ available (and ≤ reserved when reservation-bound); AI Validation clear or authorized waiver.
 
 ---
 
 ### 5 — Verify material
 
-Check: Correct material · Lot · Package · Qty · Quality status · Expiry · Reservation.
+Operator review surface for AI Validation results (Accept and Override paths).
 
-Detect and **block until resolved:** Wrong material/lot/qty · Blocked · Expired · Mixed lots (policy).
-
-**Gate:** All lines green or supervisor waiver (audited).
+**Gate:** All lines green or explicitly authorized waiver (audited).
 
 ---
 
 ### 6 — Evidence collection
 
-Photos · optional video/voice · PDF/Excel notes · damage / missing / broken package photos.
+Every Goods Issue shall preserve (when captured), permanently linked to the GI transaction:
 
-Evidence **belongs to the Goods Issue transaction** (Evidence First — not orphan attachments).
+Photos · Videos · Voice Notes · Issue Documents · PDF · Excel · Operator Notes · Damage Photos · Loading Photos.
 
-**Gate:** Required when exception/damage policy says so; else optional.
+**Gate:** Required when exception/damage/loading policy says so; else optional.
+
+Surfaces: Evidence Panel · Photo Gallery · Document Viewer — capabilities per Shared Document Management law (do not redefine).
 
 ---
 
 ### 7 — Quality validation
 
-Auto-check: Blocked · Inspection hold · Quarantine · Expired · Rejected.
+Hard quality state checks (Blocked · Quarantine · Inspection Hold · Expired · Rejected) plus AI Validation rules.
 
-**Do not allow Post** if quality blocks the material (unless Quality releases — separate flow).
-
-**Gate:** Quality clear for all issue lines.
+**Gate:** Quality clear for all issue lines (or authorized release recorded).
 
 ---
 
@@ -226,10 +530,10 @@ Auto-check: Blocked · Inspection hold · Quarantine · Expired · Rejected.
 
 | If | Assign |
 |----|--------|
-| Shipment-related | Vehicle · Loading dock · Pallet · Package · Loading sequence |
-| Production issue | Production line · Work Center · Operation |
+| **Sales / shipment** | Vehicle · Loading Dock · Carrier · Shipment |
+| **Production** | Production Line · Work Center · Operation |
 
-Name-first pickers; no code typing.
+Name-first pickers; no code typing. Optional loading photos → Evidence Panel.
 
 **Gate:** Destination required by issue type policy.
 
@@ -237,9 +541,21 @@ Name-first pickers; no code typing.
 
 ### 9 — Final review
 
-Show: Business document · Materials · WH/locations · Lots/packages · Evidence · Inventory deltas · Warnings / differences.
+Display:
 
-Operator **confirms**.
+| Block |
+|-------|
+| Business Document |
+| Requested Materials |
+| Selected Packages (with issued / remaining) |
+| Warehouse · Locations |
+| Inventory Changes |
+| Evidence |
+| Warnings |
+| AI Recommendations |
+| **Override History** |
+
+Operator confirms.
 
 **Gate:** Explicit approve for Post.
 
@@ -252,53 +568,294 @@ Operator **confirms**.
 | Artifact |
 |----------|
 | Goods Issue document (Posted) — number via Numbering |
-| Inventory Transaction (immutable) — balance ↓ |
+| Inventory Transaction(s) (immutable) — balance ↓ |
+| Package quantity / volume / weight / status update (same Package ID) |
 | Material movement · Warehouse history · Material history |
-| Audit trail · Scan / validation / approval history |
-| Evidence archive |
+| Audit trail · Scan / validation / approval / **override** history |
+| Evidence Archive + Document Library seal |
 | Reservation clear (when applicable) |
 | Genealogy update (MI consumed / linked to demand / FG path as rules allow) |
 
-Nothing edited as a raw quantity field. Reverse only via compensating transaction.
+Nothing edited as a raw on-hand field outside the transaction. Reverse only via compensating transaction.
 
 ---
 
-## AI features (summary)
+## Package Selection
 
-Recommend best lot/location · FIFO/FEFO · Detect pick errors (wrong material/lot/qty/mixed) · Predict shortage · Suggest pick route · Detect repeated operator mistakes (coach / supervisor alert).
+Display complete package information in **Package Preview**:
 
-AI **prepares**; operator **approves**.
+| Field |
+|-------|
+| Package Number (display-only) |
+| Material Identity |
+| Species |
+| Dimensions |
+| Quality Grade |
+| Moisture |
+| Length · Width · Thickness |
+| Available Pieces |
+| Available Volume |
+| Weight |
+| Production Date |
+| Current Warehouse |
+| Current Location |
+| Reservation Status |
+| Customer Reservation |
+| Photos |
+
+Selection via scan of existing barcode/QR or Explorer pick — never typed Package Number.
 
 ---
 
-## Evidence First
+## Partial Package Picking
 
-Preserve (immutable archive on Post): Photos · Documents · Issue notes · Operator comments · AI analysis · Scan history · Validation history · Approval history.
+Warehouse operators **shall be able to consume only part of a package**.
 
-Nothing overwritten.
+### Example
 
-**Authority (do not redefine):** Document Library · Evidence Archive capabilities · history chain · search · export → [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md).
+```text
+Package
+120 Pieces
+    ↓
+Issue
+40 Pieces
+    ↓
+Remaining
+80 Pieces
+```
+
+### Default behavior (same physical package)
+
+The system **shall automatically update** on the **same** Package Identity:
+
+| Field |
+|-------|
+| Remaining Quantity |
+| Remaining Volume |
+| Remaining Weight |
+| Remaining Pieces |
+| Package Status |
+
+```text
+Original barcode / QR stays on the physical package.
+No new barcode is printed for the remainder (default policy).
+```
+
+| Field | Example |
+|-------|---------|
+| Original Quantity | 120 |
+| Issued (this GI) | 40 |
+| Remaining Pieces | 80 |
+| Package Status | → Partially Used |
+
+### Optional: company-policy package split
+
+```text
+If company policy requires,
+the system may automatically split the package
+while preserving complete traceability.
+```
+
+| Rule | Detail |
+|------|--------|
+| When | Configured company / plant policy only — not operator whim |
+| How | Numbering Service mints **child** Package Identity for the remainder and/or issued handling unit (policy decides which side keeps the original barcode) |
+| Traceability | Parent ↔ child package link · Inventory Transactions · Material Genealogy · audit — **complete chain** |
+| Forbidden | Silent rename · barcode reuse · orphan remainder without link |
+
+Default wood-yard policy: **no split** — one physical package keeps one barcode until fully consumed.  
+Split policy is an explicit configuration, not the Workbench default.
+
+### Inventory Transactions
+
+Partial issue **shall** create Inventory Transaction(s):
+
+```text
+PKG-… (source)
+    ↓
+Goods Issue (40 Pieces)
+    ↓
+Production Order / Sales Order / …
+    ↓
+Inventory Transaction
+    ↓
+Audit Log
+(+ child PKG link if policy split)
+```
+
+History is always preserved. Multiple Goods Issues may consume the same package over time until remaining reaches zero / Consumed / Closed (unless split moved remainder to a child package).
 
 ---
 
-## Identity
+## AI Validation
 
-Operator never enters: Material Code · Lot · Package · Pallet · Warehouse/Location codes · GI number · Inventory Transaction number · Material Identity strings.
+**Even in Override Mode and after grid edits**, AI **shall continue validating**.
 
-Selection of **existing** Lot/MI/Package via scan or name-first picker is allowed. Minting new GI/txn IDs = Numbering Service only.
+### Per-package / demand checks
+
+| Check |
+|-------|
+| Wrong Material |
+| Wrong Dimension |
+| Wrong Species |
+| Wrong Quality |
+| Wrong Customer Specification |
+| Wrong Reservation |
+| Wrong Lot |
+| Wrong Moisture Class |
+| Wrong Package |
+
+### Allocation mix warnings (multi-package)
+
+| Warning | Continue? |
+|---------|-------------|
+| Multiple Lots selected | Only if authorized |
+| Different Quality Grades mixed | Only if authorized |
+| Different Moisture Levels mixed | Only if authorized |
+| Different Dimensions mixed | Only if authorized |
+| Customer-specific picking rules violated | Only if authorized |
+
+```text
+The operator may override location / package selection and edit the allocation grid,
+but may not violate business validation rules unless explicitly authorized.
+```
+
+| Path | AI Validation |
+|------|----------------|
+| Kabul Et | On — confirms allocation matches recommendation + demand |
+| Grid modify / add / remove | On — re-validates mix + per-row rules |
+| Yoksay (Override) | **Still on** — validates manually chosen packages |
+
+Authorization to waive = Supervisor / Quality / policy role · always audited · visible in Override History.
+
+---
+
+## Package Identity
+
+| Property | Rule |
+|----------|------|
+| Package Identity | Immutable for that physical unit; child packages only via **policy split** (new ID, linked) |
+| Package Barcode / QR | Never reused; default partial pick keeps original on physical package |
+| Lifetime | While physical package exists |
+| May change without new ID | Remaining Quantity · Volume · Weight · Pieces · **Status** |
+
+### Package Status
+
+| Status | Meaning |
+|--------|---------|
+| Available | Pickable |
+| Reserved | Bound to demand |
+| In Picking | Active GI session |
+| Partially Used | Remaining > 0 after one or more issues |
+| Consumed | Remaining = 0 (fully issued) |
+| Closed | Business-closed (policy) |
+
+Package ≠ Material Identity. Package **links to** MI (and may contain / represent MI units). See `Material_Identity_Architecture.md`.
 
 ---
 
 ## Traceability
 
-Every Goods Issue must support end-to-end reconstruction:
+The system shall always reconstruct:
+
+| Question | Answered by |
+|----------|-------------|
+| Which Receiving created this package / MI? | Receiving root + txn history |
+| Which Supplier delivered it? | Receiving / PO link |
+| Which Production Order consumed it? | GI → demand reference |
+| Which Finished Product contains it? | Genealogy |
+| Which Customer received it? | SO / shipment chain |
 
 ```text
-Receiving root MI → Lot/package → Reservation (if any) → Goods Issue →
+Receiving root MI → Lot / Package → Reservation (if any) → Goods Issue txn(s) →
 Production Order / WO / SO → (later) FG / Customer shipment
 ```
 
-Genealogy + Inventory history jointly answer where it came from and what consumed it.
+```text
+Traceability relies on Inventory Transactions and Material Genealogy.
+NOT by changing Package IDs.
+```
+
+---
+
+## Document Library & Evidence Archive
+
+Every Goods Issue includes (surfaces on Workbench + INV-017 detail):
+
+Document Library · Photo Gallery · Evidence Viewer · AI Analysis · OCR Results · Audit History · Timeline.
+
+Support (by Shared law — do not redefine): Preview · Download · ZIP · Print · Search · Version History.
+
+**Authority:** [`Document_Management_Evidence_and_Export.md`](../../13_Design/99_Shared/Document_Management_Evidence_and_Export.md).
+
+---
+
+## Export
+
+Support Excel · CSV · PDF.
+
+Generate from library / reports (formats & columns → Shared law):
+
+| Export |
+|--------|
+| Goods Issue Report |
+| Picking List |
+| Inventory Movement Report |
+| Material Consumption Report |
+| Transaction History |
+| Difference Report |
+
+---
+
+## Override History
+
+Append-only panel (Context + Final Review), sealed into audit on Post:
+
+| Field |
+|-------|
+| When |
+| Who |
+| AI recommendation (WH · location · package · qty) |
+| Operator selection |
+| Reason (if policy requires) |
+| Authorization (if waiver) |
+
+---
+
+## Gates summary
+
+| Stage | Gate |
+|-------|------|
+| 1 Document | Valid demand (or Manual + permission + reason) |
+| 2 Materials | ≥1 open line with remaining qty |
+| 3 AI | **Kabul Et** **or** logged **Yoksay** (Explorer override) |
+| 4 Picking | Scan OK · issue qty ≤ available · AI Validation clear (or authorized) |
+| 5 Verify | AI Validation results green or audited waiver |
+| 6 Evidence | Policy-required evidence present |
+| 7 Quality | No block / hold / quarantine / expired without release |
+| 8 Destination | Required destination assigned |
+| 9 Review | Explicit approve · Override History visible |
+| 10 Post | Creates txn(s) · updates package remaining · archive |
+
+---
+
+## AI features (summary)
+
+Recommend (FIFO/FEFO/reservation/quality/WH rules/location/same lot/moisture/quality/production date/customer) · **Kabul Et** or **Yoksay** · AI Validation always on · shortage predict · pick route · repeated-override coaching.
+
+AI **recommends and validates**; operator **Kabul Et** or **Yoksay** (selection only) — not business rules.
+
+---
+
+## Identity & Numbering
+
+Operator **never** enters:
+
+Goods Issue Number · Inventory Transaction Number · Warehouse Code · Location Code · Package Number · Material Code · Lot Number · Material Identity strings.
+
+All identifiers: Numbering Architecture.  
+Existing Package / Lot / MI: **scan or pick only**.  
+Partial pick default: **same Package ID**; policy split: Numbering mints **linked child** package(s) only.
 
 ---
 
@@ -306,31 +863,35 @@ Genealogy + Inventory history jointly answer where it came from and what consume
 
 | Role | Focus |
 |------|--------|
-| Warehouse Operator | Scan · verify · evidence · Post |
-| Supervisor | Override AI · waive within policy · unblock |
-| Inventory Controller | Reservation / shortage · Manual GI permission |
+| Warehouse Operator | Scan · **Kabul Et** or **Yoksay** · partial qty · evidence · Post |
+| Supervisor | Authorize validation waivers · unblock |
+| Inventory Controller | Reservation / shortage · Manual GI · package-split policy config (with admin) |
 | Quality | Holds / release (blocks issue until clear) |
 
 ---
 
 ## Mobile / Terminal
 
-Rugged Terminal may run steps 4–5 (pick/verify) inside the same GI session; full Workbench on tablet for document select · review · Post.
+Rugged Terminal: steps 4–5 (pick/verify/partial qty) inside the same GI session.  
+Tablet / desk: document select · Accept/Override · review · Document Library · Post.
 
 ---
 
 ## Cursor implementation notes
 
 1. Screen type = **Workbench** — not Issue Create form.  
-2. FE: replace Issue Wizard shell with this Workbench; keep spine gates in `INV_Issue_Wizard.md`.  
-3. Demand APIs load lines; never create materials.  
-4. Post → inventory txn + reservation clear + evidence archive + genealogy event.  
-5. Command Center queue “Open issues” opens this Workbench.  
-6. Manual GI = permission flag + reason — audited.
+2. FE: **Package Allocation Grid** (multi-package) · Kabul Et / Yoksay · edit Selected / Remove / Add.  
+3. Demo: SO-250001 · Thermowood 26×140×4000 · 50 → Paket A/B/C minimum set; real-time totals.  
+4. Mix AI Validation warnings; waive only with authorization.  
+5. Partial per row: barcode unchanged; balances via Inventory Transactions.  
+6. Post → one GI · N inventory txns (per package line) · remaining updates · evidence · genealogy.  
+7. Command Center “Open issues” opens this Workbench.  
+8. Export / permanence → Shared Document Management — reference only.
 
 ---
 
 ## Related
 
 `INV_Issue_Wizard.md` · `Inventory_Workflow.md` · FLOW-INV-002 · `Inventory_Screens.md`  
-`Inventory_Design_Program.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md` · `Inventory_Dashboard.md`
+`Inventory_Design_Program.md` · `Material_Identity_Architecture.md` · `Document_Numbering.md`  
+`Document_Management_Evidence_and_Export.md` · `Inventory_Dashboard.md` · `Barcode_QR_Model.md`
