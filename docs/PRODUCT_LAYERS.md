@@ -16,7 +16,7 @@ AI/NOS_CONSTITUTION/
   01–03                       Foundation / Engineering / Platform
 
 docs/
-├── 00_Product/               ✅ Living NOS product map (modules · roles · workspace outline)
+├── 00_Product/               ✅ Living NOS product map + Screen Map (Phase 2)
 ├── 13_Design/                ✅ Module design packs (Architecture, Workflow, API, …)
 ├── 14_Implementation/        ✅ FROZEN — historical TASK archives only
 ├── 15_UI_Architecture/       Module → Workspace IA

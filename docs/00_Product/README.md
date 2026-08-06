@@ -1,58 +1,49 @@
 # NOS Product Map (living)
 
-**Status:** Active — Product Architect Drive  
+**Status:** Active — Phase 2 Product Architecture  
 **Authority:** [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](../../AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md)
 
-This folder holds NOS **as a product**, not as a TASK backlog.
+---
+
+## Phase 2 anchor
+
+**Canonical Screen Map:** [`NOS_SCREEN_MAP.md`](./NOS_SCREEN_MAP.md)
 
 ```text
-NOS → Modules → Workspace → Navigation → Screen → Component → Workflow → Permissions → Code
+NOS → Module → Workspace → Screen → Component → Workflow → Permissions → Code
+```
+
+---
+
+## Top-level modules (locked in Screen Map)
+
+```text
+NOS
+├── Dashboard
+├── Product
+├── Sales
+├── CRM
+├── Purchasing
+├── Inventory
+├── Production
+├── Quality
+├── Maintenance
+├── Finance
+├── HR
+├── Administration
+└── Settings
 ```
 
 ---
 
 ## Program order
 
-1. NOS whole-product map (this folder)
-2. Module deep-dives (role lenses)
-3. Workspace extraction
-4. Screen design
-5. Shared component library
-6. Cursor implementation of named slices
-
----
-
-## Module index (outline — refine in sessions)
-
-| Module | Purpose (one line) | Primary roles | Workspaces (target) | Product docs |
-|--------|-------------------|---------------|---------------------|--------------|
-| Production | Plan and execute shop-floor manufacturing | Prod. Manager, Planner, Operator, Quality, Maintenance | Dashboard, Planning, Execution, Monitoring, Master Data, Reports, Analytics | `13_Design/05_Production/`, `15_UI_Architecture/Production/` |
-| Inventory | Warehouse health, stock, movements | Warehouse, Materials, Planner | Dashboard, Warehouse, Materials, Transactions, Planning, Reports | `15_UI_Architecture/Inventory/` |
-| Purchasing | Source and receive supply | Buyer, Approver | *(session)* | Purchasing IA |
-| Sales | Order-to-cash commercial | Sales, CSR | *(session)* | Sales IA |
-| Quality | Inspect, NCR, CAPA, release | Quality, Operator | *(session)* | Quality IA |
-| Maintenance | Assets, WO, PM, downtime, OEE | Maintenance, Supervisor | Assets, Maintenance, Planning, Downtime, OEE, Reports | Maintenance IA |
-| Finance | *(session)* | *(session)* | *(session)* | — |
-| Analytics | Cross-module insight | Manager, Executive | *(session)* | — |
-| Platform / Admin | Identity, files, settings | Admin | *(session)* | Constitution Platform |
-
----
-
-## Role lens checklist (per module session)
-
-Copy into the module decision note:
-
-- [ ] Üretim / modül müdürü ne görür?
-- [ ] Planlamacı ne görür?
-- [ ] Operatör / saha kullanıcısı ne görür?
-- [ ] Bakım kesişimi?
-- [ ] Kalite kesişimi?
-- [ ] Yönetici / CEO KPI yüzeyi?
-- [ ] SAP / IFS / D365 / Infor referans notu
-- [ ] NOS farklılaştırma kararı
-- [ ] Workspace listesi kilitlendi
-- [ ] Document layer güncellendi
-- [ ] Cursor implement slice adlandırıldı (veya henüz değil)
+1. **NOS Screen Map** ← current  
+2. Module deep-dives (role lenses)  
+3. Workspace refinement  
+4. Screen PRDs (`docs/15_UI/`)  
+5. Shared component library (`docs/18_Component_Library/`)  
+6. Cursor implementation of named slices  
 
 ---
 
@@ -69,4 +60,7 @@ Copy into the module decision note:
 
 ## Next session
 
-Directed by Product Architect. Default first deep-dive when requested: **Production** — “Üretim Müdürü Production’a girince ne görmeli?”
+Directed by Product Architect. Recommended:
+
+- **Production** — “Üretim Müdürü Production’a girince ne görmeli?”  
+- or **Dashboard** — “CEO / Plant Manager ne görmeli?”
