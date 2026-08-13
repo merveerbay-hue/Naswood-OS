@@ -58,13 +58,13 @@ Warehouse Command Center / Operations
 
 ```text
 Command Center / Operations
-→ Issue goods / Mal çıkışı (Goods Issue Workbench — not Create form)
+→ Issue goods / Mal çıkışı (Goods Issue Workbench v2.0 — not Create form)
 → Select business document (Production / Maintenance / Sales / … / Manual+permission)
 → Load required materials (no material create)
-→ AI recommend pick (WH / location / lot / package)
-→ Scan pick · Verify · Evidence · Quality gate
-→ Destination (line / dock) · Review · Post
-→ Balance ↓ · reservation clear · genealogy · evidence archive
+→ AI recommend → Kabul Et OR Yoksay (Explorer)
+→ Scan package · partial qty · AI Validation (also in Override) · Evidence · Quality
+→ Destination (line / dock) · Review (+ Override History) · Post
+→ Balance ↓ · package remaining updated (+ policy split if configured) · reservation clear · genealogy · evidence archive
 ```
 
 ---

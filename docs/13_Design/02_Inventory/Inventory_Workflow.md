@@ -69,14 +69,20 @@ Truck arrives
 
 ```text
 Business document (Production / Maintenance / Sales / Sample / … / Manual+permission)
-→ Goods Issue Workbench (not Create form)
+→ Goods Issue Workbench v2.0 (not Create form)
 → Load required materials (no material create)
-→ AI recommend WH / location / lot / package (FIFO/FEFO/reservation/quality)
-→ Pick (scan) · Verify · Evidence · Quality gate
-→ Destination (production line / loading dock)
-→ Review · Post
-→ InventoryTransaction · balance ↓ · reservation clear · genealogy link · evidence archive
+→ AI recommend (FIFO/FEFO/reservation/quality/WH rules/location/package integrity/customer)
+   → Kabul Et  OR  Yoksay → Warehouse Explorer (logged)
+→ Pick (scan) · partial qty · AI Validation always on (incl. Override) · Evidence · Quality
+→ Destination (production line / loading dock · vehicle/carrier when sales)
+→ Review (+ Override History) · Post
+→ InventoryTransaction(s) · balance ↓ · package remaining/status update
+   (+ child PKG if company-policy split)
+→ reservation clear · genealogy link · evidence archive
 ```
+
+**Package law:** Default partial pick updates remaining on the same Package Identity/barcode. Company policy may auto-split with complete parent–child traceability (`INV_Goods_Issue_Workbench.md` v2.0.1).  
+**AI Validation law:** Override changes selection only — business rules still enforced unless explicitly authorized.
 
 ---
 
