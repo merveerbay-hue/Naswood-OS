@@ -124,7 +124,18 @@ export function MaterialDefinitionDesigner() {
   const queryClient = useQueryClient();
   const [packIdx, setPackIdx] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
-  const [def, setDef] = useState<DefState>(DEFAULT_DEF);
+  const [def, setDef] = useState<DefState>(() => {
+    if (typeof window === 'undefined') return DEFAULT_DEF;
+    const sp = new URLSearchParams(window.location.search);
+    if (!sp.get('from') && !sp.get('name')) return DEFAULT_DEF;
+    return {
+      ...DEFAULT_DEF,
+      name: sp.get('name')?.trim() || DEFAULT_DEF.name,
+      thicknessMm: sp.get('thicknessMm')?.trim() || DEFAULT_DEF.thicknessMm,
+      widthMm: sp.get('widthMm')?.trim() || DEFAULT_DEF.widthMm,
+      lengthMm: sp.get('lengthMm')?.trim() || DEFAULT_DEF.lengthMm,
+    };
+  });
   const [approved, setApproved] = useState(false);
   const [released, setReleased] = useState(false);
   const [mintedCode, setMintedCode] = useState<string | null>(null);

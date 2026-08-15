@@ -36,6 +36,11 @@ export type IncomingLine = {
   dimSamples: DimSample[];
   /** Stage 2 — pre-accept after checks */
   preAccept: PreAcceptDecision;
+  /** Stage 2 — material master match (required for ok/conditional) */
+  matchConfirmed: boolean;
+  matchedMaterialId: string;
+  matchedMaterialCode: string;
+  matchScore: number | null;
   /** Stage 3 count */
   countStatus: CountStatus;
   aiQty: string;
@@ -77,6 +82,10 @@ export function emptyIncomingLineFields(line: LineIdentity): Pick<
   | 'targetMoisturePct'
   | 'moistureSamples'
   | 'dimSamples'
+  | 'matchConfirmed'
+  | 'matchedMaterialId'
+  | 'matchedMaterialCode'
+  | 'matchScore'
   | 'aiQty'
   | 'operatorQty'
   | 'packages'
@@ -92,6 +101,10 @@ export function emptyIncomingLineFields(line: LineIdentity): Pick<
     targetMoisturePct: '12',
     moistureSamples: demoMoisture(line.id),
     dimSamples: demoDims(line),
+    matchConfirmed: false,
+    matchedMaterialId: '',
+    matchedMaterialCode: '',
+    matchScore: null,
     aiQty: '',
     operatorQty: '',
     packages: '',
@@ -251,8 +264,27 @@ export function lineChecksComplete(line: IncomingLine): boolean {
   return lineMoistureChecked(line) && lineDimsChecked(line) && line.preAccept !== 'none';
 }
 
+export function lineMaterialMatched(line: IncomingLine): boolean {
+  return line.matchConfirmed && !!line.matchedMaterialId.trim() && !!line.matchedMaterialCode.trim();
+}
+
+/** Reject needs checks only; ok/conditional also need material master match. */
+export function lineReadyForNextStage(line: IncomingLine): boolean {
+  if (!lineChecksComplete(line)) return false;
+  if (line.preAccept === 'reject') return true;
+  return lineMaterialMatched(line);
+}
+
 export function allLinesChecksComplete(lines: IncomingLine[]): boolean {
   return lines.length > 0 && lines.every(lineChecksComplete);
+}
+
+export function allLinesReadyForCount(lines: IncomingLine[]): boolean {
+  return lines.length > 0 && lines.every(lineReadyForNextStage) && countableLines(lines).length > 0;
+}
+
+export function lineMatchLabel(line: IncomingLine): string {
+  return `${line.name} ${formatLineDims(line)}`.replace(/\s+—\s*$/, '').trim();
 }
 
 export function formatLineDims(line: IncomingLine): string {

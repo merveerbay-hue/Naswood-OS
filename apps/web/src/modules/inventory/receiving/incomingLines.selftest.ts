@@ -4,11 +4,12 @@
  */
 import {
   allCountableCounted,
-  allLinesChecksComplete,
+  allLinesReadyForCount,
   countableLines,
   finalLineQty,
   lineChecksComplete,
   lineDimsChecked,
+  lineMaterialMatched,
   lineMoistureChecked,
   lumberVolumeM3,
   matchIncomingByLabel,
@@ -24,15 +25,10 @@ function assert(cond: boolean, msg: string) {
 
 const seeded = seedIncomingFromDocuments();
 assert(seeded.length === 5, 'seed 5 lines');
-assert(seeded.every((l) => l.preAccept === 'none'), 'preAccept none on seed');
-assert(seeded.every((l) => l.moistureSamples.length >= 2), 'moisture samples per line');
-assert(seeded.filter((l) => l.kind !== 'log').every((l) => l.dimSamples.length >= 1), 'dim samples for non-log');
-assert(seeded.find((l) => l.kind === 'log')!.dimSamples.length === 0, 'log has no fixed dims');
-assert(countableLines(seeded).length === 0, 'none countable until pre-accept');
-assert(!allLinesChecksComplete(seeded), 'checks incomplete at seed');
+assert(seeded.every((l) => !l.matchConfirmed), 'no match on seed');
+assert(!allLinesReadyForCount(seeded), 'not ready at seed');
 
 const lumber = seeded[0]!;
-assert(!lineMoistureChecked(lumber), 'moisture empty');
 const withMoist: IncomingLine = {
   ...lumber,
   moistureSamples: [{ id: 'm', label: 'N1', valuePct: '11.5' }],
@@ -56,11 +52,17 @@ const decided: IncomingLine[] = seeded.map((l, i) => ({
           },
         ],
   preAccept: i === 4 ? 'reject' : i === 3 ? 'conditional' : 'ok',
+  matchConfirmed: i === 4 ? false : true,
+  matchedMaterialId: i === 4 ? '' : `mat-${l.id}`,
+  matchedMaterialCode: i === 4 ? '' : `CODE-${l.id}`,
+  matchScore: i === 4 ? null : 90,
 }));
-assert(allLinesChecksComplete(decided), 'all line checks complete');
+assert(lineChecksComplete(decided[0]!), 'checks ok');
+assert(lineMaterialMatched(decided[0]!), 'material matched');
+assert(!lineMaterialMatched(decided[4]!), 'reject no material ok');
+assert(allLinesReadyForCount(decided), 'ready when reject skips match');
 assert(syncBatchPreAccept(decided) === 'ok', 'batch ok when any ok');
 assert(countableLines(decided).length === 4, 'reject excluded from count');
-assert(lineChecksComplete(decided[0]!), 'line 0 complete');
 
 const withQty: IncomingLine = { ...decided[0]!, operatorQty: '498', countStatus: 'counted' };
 assert(finalLineQty(withQty) === 498, 'operator qty');
