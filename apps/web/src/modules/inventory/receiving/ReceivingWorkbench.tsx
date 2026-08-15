@@ -25,9 +25,10 @@ import {
   type MaterialCheckState,
 } from './MaterialCheckStep';
 import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountStep';
-import { IncomingPreAcceptPanel } from './IncomingPreAcceptPanel';
+import { IncomingLineCheckPanel } from './IncomingLineCheckPanel';
 import {
   allCountableCounted,
+  allLinesChecksComplete,
   countableLines,
   finalLineQty,
   formatLineDims,
@@ -198,8 +199,8 @@ export function ReceivingWorkbench() {
         return null;
       case 'materialCheck':
         if (incomingLines.length === 0) return t('wb.rcv.ops.check.noIncomingYet');
+        if (!allLinesChecksComplete(incomingLines)) return t('wb.rcv.ops.check.gateNeedPerLineChecks');
         if (materialCheck.qualityVerdict === 'none') return t('wb.rcv.ops.check.gateNeedQuality');
-        if (preAccept === 'none') return t('wb.rcv.ops.gateNeedPreAcceptLines');
         if (preAccept === 'reject') return t('wb.rcv.ops.gatePreAcceptReject');
         if (countable.length === 0) return t('wb.rcv.ops.gateAllRejected');
         if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
@@ -322,6 +323,12 @@ export function ReceivingWorkbench() {
           `preAccept=${preAccept}`,
           `incomingLines=${incomingLines.length}`,
           `countable=${countable.length}`,
+          `lineChecks=${incomingLines
+            .map(
+              (l) =>
+                `${l.name}|moist=${l.moistureSamples.map((s) => s.valuePct).filter(Boolean).join('/')}|dims=${l.dimSamples.filter((d) => d.thickness).length}|pa=${l.preAccept}`,
+            )
+            .join(',')}`,
           `counted=${countable
             .filter((l) => l.countStatus === 'counted')
             .map((l) => `${l.name}|${formatLineDims(l)}|${finalLineQty(l)}${l.unit}`)
@@ -331,9 +338,6 @@ export function ReceivingWorkbench() {
             .map((l) => l.name)
             .join(',')}`,
           `quality=${materialCheck.qualityVerdict}`,
-          `moistureTarget=${materialCheck.targetMoisturePct}`,
-          `moistureSamples=${materialCheck.moistureSamples.map((s) => s.valuePct).join('/')}`,
-          `dimsTarget=${materialCheck.targetThickness}x${materialCheck.targetWidth}x${materialCheck.targetLength}`,
           `qualityFlags=${Object.keys(materialCheck.qualityFlags).filter((k) => materialCheck.qualityFlags[k]).join(',') || 'none'}`,
           `photos=${photoCount}`,
           `docs=${docs.join(',')}`,
@@ -496,7 +500,7 @@ export function ReceivingWorkbench() {
 
               {stage.id === 'materialCheck' ? (
                 <div className="space-y-5">
-                  <IncomingPreAcceptPanel
+                  <IncomingLineCheckPanel
                     lines={incomingLines}
                     onChange={updateIncomingLines}
                     disabled={posted}
@@ -508,6 +512,7 @@ export function ReceivingWorkbench() {
                     }}
                     disabled={posted}
                     hidePreAccept
+                    hideMoistureAndDims
                     materialMatchSlot={
                     <div className="space-y-3">
                       <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
@@ -654,7 +659,12 @@ export function ReceivingWorkbench() {
                       ],
                       [
                         t('wb.rcv.ops.check.moisture'),
-                        `${materialCheck.targetMoisturePct}% · ${materialCheck.moistureSamples.map((s) => s.valuePct).filter(Boolean).join(' / ') || '—'}`,
+                        incomingLines
+                          .map(
+                            (l) =>
+                              `${l.name}:${l.moistureSamples.map((s) => s.valuePct).filter(Boolean).join('/') || '—'}`,
+                          )
+                          .join(' · ') || '—',
                       ],
                       [
                         t('wb.rcv.ops.check.quality'),
@@ -664,7 +674,10 @@ export function ReceivingWorkbench() {
                       ],
                       [
                         t('wb.rcv.ops.check.dims'),
-                        `${materialCheck.targetThickness}×${materialCheck.targetWidth}×${materialCheck.targetLength}`,
+                        incomingLines
+                          .filter((l) => l.thicknessMm != null)
+                          .map((l) => `${l.name}:${formatLineDims(l)}`)
+                          .join(' · ') || '—',
                       ],
                       [t('wb.rcv.matchedMaterial'), matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')],
                       [

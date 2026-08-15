@@ -85,12 +85,21 @@ type Props = {
   disabled?: boolean;
   /** Hide batch pre-accept when per-line decisions are shown in parent. */
   hidePreAccept?: boolean;
+  /** Hide global nem/ölçü when each incoming line has its own checks. */
+  hideMoistureAndDims?: boolean;
   /** Slot below checks for material-card matching UI (kept in parent). */
   materialMatchSlot?: ReactNode;
 };
 
 /** Stage 2 — Malzeme kontrolü: nem, kalite, ölçü, foto, ön kabul. */
-export function MaterialCheckStep({ value, onChange, disabled, hidePreAccept, materialMatchSlot }: Props) {
+export function MaterialCheckStep({
+  value,
+  onChange,
+  disabled,
+  hidePreAccept,
+  hideMoistureAndDims,
+  materialMatchSlot,
+}: Props) {
   const { t } = useI18n();
 
   function patch(partial: Partial<MaterialCheckState>) {
@@ -132,9 +141,12 @@ export function MaterialCheckStep({ value, onChange, disabled, hidePreAccept, ma
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.check.intro')}</p>
+      <p className="text-sm text-[var(--text-secondary)]">
+        {hideMoistureAndDims ? t('wb.rcv.ops.check.introShipment') : t('wb.rcv.ops.check.intro')}
+      </p>
 
       {/* Nem */}
+      {!hideMoistureAndDims ? (
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.check.moisture')}</h3>
@@ -208,6 +220,7 @@ export function MaterialCheckStep({ value, onChange, disabled, hidePreAccept, ma
           ) : null}
         </div>
       </section>
+      ) : null}
 
       {/* Kalite */}
       <section className="space-y-3">
@@ -265,6 +278,7 @@ export function MaterialCheckStep({ value, onChange, disabled, hidePreAccept, ma
       </section>
 
       {/* Ölçü */}
+      {!hideMoistureAndDims ? (
       <section className="space-y-3">
         <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.check.dims')}</h3>
         <div className="grid gap-2 sm:grid-cols-3">
@@ -336,6 +350,7 @@ export function MaterialCheckStep({ value, onChange, disabled, hidePreAccept, ma
           {t('wb.rcv.ops.check.addSample')}
         </Button>
       </section>
+      ) : null}
 
       {/* Foto */}
       <section className="space-y-3">

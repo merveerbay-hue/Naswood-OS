@@ -1,4 +1,4 @@
-/** Shared incoming product lines — Stage 1 document → Stage 2 pre-accept → Stage 3 count. */
+/** Shared incoming product lines — Stage 1 document → Stage 2 check → Stage 3 count. */
 
 export type MaterialKind = 'lumber' | 'log' | 'lamella' | 'thermowood' | 'panel' | 'packaged' | 'other';
 
@@ -10,6 +10,16 @@ export type PackageRow = { id: string; qty: string };
 
 export type LogRow = { id: string; diameterCm: string; lengthM: string };
 
+export type MoistureSample = { id: string; label: string; valuePct: string };
+
+export type DimSample = {
+  id: string;
+  label: string;
+  thickness: string;
+  width: string;
+  length: string;
+};
+
 export type IncomingLine = {
   id: string;
   name: string;
@@ -19,7 +29,12 @@ export type IncomingLine = {
   kind: MaterialKind;
   unit: 'adet' | 'm3' | 'm2';
   documentQty: number;
-  /** From Stage 2 */
+  /** Stage 2 — per-line moisture */
+  targetMoisturePct: string;
+  moistureSamples: MoistureSample[];
+  /** Stage 2 — per-line dimension samples (targets = document dims) */
+  dimSamples: DimSample[];
+  /** Stage 2 — pre-accept after checks */
   preAccept: PreAcceptDecision;
   /** Stage 3 count */
   countStatus: CountStatus;
@@ -34,8 +49,34 @@ export type IncomingLine = {
   note: string;
 };
 
-export function emptyIncomingLineFields(): Pick<
+type LineIdentity = Pick<IncomingLine, 'id' | 'thicknessMm' | 'widthMm' | 'lengthMm' | 'kind'>;
+
+function demoMoisture(lineId: string): MoistureSample[] {
+  return [
+    { id: `${lineId}-m1`, label: 'Numune 1', valuePct: '' },
+    { id: `${lineId}-m2`, label: 'Numune 2', valuePct: '' },
+  ];
+}
+
+function demoDims(line: LineIdentity): DimSample[] {
+  if (line.kind === 'log' || line.thicknessMm == null) return [];
+  return [
+    {
+      id: `${line.id}-d1`,
+      label: 'Numune 1',
+      thickness: String(line.thicknessMm),
+      width: String(line.widthMm ?? ''),
+      length: String(line.lengthMm ?? ''),
+    },
+    { id: `${line.id}-d2`, label: 'Numune 2', thickness: '', width: '', length: '' },
+  ];
+}
+
+export function emptyIncomingLineFields(line: LineIdentity): Pick<
   IncomingLine,
+  | 'targetMoisturePct'
+  | 'moistureSamples'
+  | 'dimSamples'
   | 'aiQty'
   | 'operatorQty'
   | 'packages'
@@ -48,6 +89,9 @@ export function emptyIncomingLineFields(): Pick<
   | 'countStatus'
 > {
   return {
+    targetMoisturePct: '12',
+    moistureSamples: demoMoisture(line.id),
+    dimSamples: demoDims(line),
     aiQty: '',
     operatorQty: '',
     packages: '',
@@ -61,14 +105,112 @@ export function emptyIncomingLineFields(): Pick<
   };
 }
 
+type DemoSpec = {
+  id: string;
+  name: string;
+  thicknessMm: number | null;
+  widthMm: number | null;
+  lengthMm: number | null;
+  kind: MaterialKind;
+  unit: 'adet' | 'm3' | 'm2';
+  documentQty: number;
+  preAccept: PreAcceptDecision;
+  packages?: string;
+  perPackage?: string;
+  logCount?: string;
+};
+
+function buildDemoLine(s: DemoSpec): IncomingLine {
+  const empty = emptyIncomingLineFields(s);
+  return {
+    id: s.id,
+    name: s.name,
+    thicknessMm: s.thicknessMm,
+    widthMm: s.widthMm,
+    lengthMm: s.lengthMm,
+    kind: s.kind,
+    unit: s.unit,
+    documentQty: s.documentQty,
+    preAccept: s.preAccept,
+    ...empty,
+    packages: s.packages ?? '',
+    perPackage: s.perPackage ?? '',
+    logCount: s.logCount ?? '',
+  };
+}
+
+/** Demo lines as if extracted from Stage 1 documents (irsaliye/excel/pdf). */
+export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
+  buildDemoLine({
+    id: 'in-1',
+    name: 'Çam Kereste',
+    thicknessMm: 26,
+    widthMm: 140,
+    lengthMm: 3000,
+    kind: 'lumber',
+    unit: 'adet',
+    documentQty: 500,
+    preAccept: 'ok',
+  }),
+  buildDemoLine({
+    id: 'in-2',
+    name: 'Çam Kereste',
+    thicknessMm: 26,
+    widthMm: 92,
+    lengthMm: 3000,
+    kind: 'lumber',
+    unit: 'adet',
+    documentQty: 300,
+    preAccept: 'ok',
+    packages: '6',
+    perPackage: '50',
+  }),
+  buildDemoLine({
+    id: 'in-3',
+    name: 'Çam Tomruk',
+    thicknessMm: null,
+    widthMm: null,
+    lengthMm: null,
+    kind: 'log',
+    unit: 'adet',
+    documentQty: 42,
+    preAccept: 'ok',
+    logCount: '42',
+  }),
+  buildDemoLine({
+    id: 'in-4',
+    name: 'Thermowood Deck',
+    thicknessMm: 26,
+    widthMm: 140,
+    lengthMm: 3000,
+    kind: 'thermowood',
+    unit: 'adet',
+    documentQty: 100,
+    preAccept: 'conditional',
+    packages: '4',
+    perPackage: '25',
+  }),
+  buildDemoLine({
+    id: 'in-5',
+    name: 'Masif Panel',
+    thicknessMm: 20,
+    widthMm: 1200,
+    lengthMm: 2400,
+    kind: 'panel',
+    unit: 'adet',
+    documentQty: 20,
+    preAccept: 'reject',
+  }),
+];
+
 /** Seed from Stage 1 document extract (demo). Pre-accept starts undecided. */
 export function seedIncomingFromDocuments(): IncomingLine[] {
   return DEMO_INCOMING_FROM_DOCUMENTS.map((line) => ({
     ...line,
-    ...emptyIncomingLineFields(),
-    packages: line.kind === 'packaged' || line.kind === 'thermowood' || line.id === 'in-2' ? line.packages : '',
-    perPackage: line.kind === 'packaged' || line.kind === 'thermowood' || line.id === 'in-2' ? line.perPackage : '',
-    logCount: line.kind === 'log' ? String(line.documentQty) : '',
+    ...emptyIncomingLineFields(line),
+    packages: line.packages,
+    perPackage: line.perPackage,
+    logCount: line.logCount,
     preAccept: 'none',
   }));
 }
@@ -82,114 +224,36 @@ export function syncBatchPreAccept(lines: IncomingLine[]): PreAcceptDecision {
   return 'none';
 }
 
-/** Demo lines as if extracted from Stage 1 documents (irsaliye/excel/pdf). */
-export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
-  {
-    id: 'in-1',
-    name: 'Çam Kereste',
-    thicknessMm: 26,
-    widthMm: 140,
-    lengthMm: 3000,
-    kind: 'lumber',
-    unit: 'adet',
-    documentQty: 500,
-    preAccept: 'ok',
-    countStatus: 'pending',
-    aiQty: '',
-    operatorQty: '',
-    packages: '',
-    perPackage: '',
-    packageRows: [],
-    logCount: '',
-    logTotalM3: '',
-    logRows: [],
-    note: '',
-  },
-  {
-    id: 'in-2',
-    name: 'Çam Kereste',
-    thicknessMm: 26,
-    widthMm: 92,
-    lengthMm: 3000,
-    kind: 'lumber',
-    unit: 'adet',
-    documentQty: 300,
-    preAccept: 'ok',
-    countStatus: 'pending',
-    aiQty: '',
-    operatorQty: '',
-    packages: '6',
-    perPackage: '50',
-    packageRows: [],
-    logCount: '',
-    logTotalM3: '',
-    logRows: [],
-    note: '',
-  },
-  {
-    id: 'in-3',
-    name: 'Çam Tomruk',
-    thicknessMm: null,
-    widthMm: null,
-    lengthMm: null,
-    kind: 'log',
-    unit: 'adet',
-    documentQty: 42,
-    preAccept: 'ok',
-    countStatus: 'pending',
-    aiQty: '',
-    operatorQty: '',
-    packages: '',
-    perPackage: '',
-    packageRows: [],
-    logCount: '42',
-    logTotalM3: '',
-    logRows: [],
-    note: '',
-  },
-  {
-    id: 'in-4',
-    name: 'Thermowood Deck',
-    thicknessMm: 26,
-    widthMm: 140,
-    lengthMm: 3000,
-    kind: 'thermowood',
-    unit: 'adet',
-    documentQty: 100,
-    preAccept: 'conditional',
-    countStatus: 'pending',
-    aiQty: '',
-    operatorQty: '',
-    packages: '4',
-    perPackage: '25',
-    packageRows: [],
-    logCount: '',
-    logTotalM3: '',
-    logRows: [],
-    note: '',
-  },
-  {
-    id: 'in-5',
-    name: 'Masif Panel',
-    thicknessMm: 20,
-    widthMm: 1200,
-    lengthMm: 2400,
-    kind: 'panel',
-    unit: 'adet',
-    documentQty: 20,
-    preAccept: 'reject',
-    countStatus: 'pending',
-    aiQty: '',
-    operatorQty: '',
-    packages: '',
-    perPackage: '',
-    packageRows: [],
-    logCount: '',
-    logTotalM3: '',
-    logRows: [],
-    note: '',
-  },
-];
+export function lineHasDims(line: IncomingLine): boolean {
+  return line.thicknessMm != null && line.widthMm != null && line.lengthMm != null;
+}
+
+/** At least one moisture reading entered. */
+export function lineMoistureChecked(line: IncomingLine): boolean {
+  return line.moistureSamples.some((s) => {
+    const n = Number(String(s.valuePct).replace(',', '.'));
+    return Number.isFinite(n) && n > 0;
+  });
+}
+
+/** For dimmed products: at least one full sample; logs/no-dims skip. */
+export function lineDimsChecked(line: IncomingLine): boolean {
+  if (!lineHasDims(line)) return true;
+  return line.dimSamples.some((s) => {
+    const t = Number(String(s.thickness).replace(',', '.'));
+    const w = Number(String(s.width).replace(',', '.'));
+    const len = Number(String(s.length).replace(',', '.'));
+    return Number.isFinite(t) && Number.isFinite(w) && Number.isFinite(len) && t > 0 && w > 0 && len > 0;
+  });
+}
+
+export function lineChecksComplete(line: IncomingLine): boolean {
+  return lineMoistureChecked(line) && lineDimsChecked(line) && line.preAccept !== 'none';
+}
+
+export function allLinesChecksComplete(lines: IncomingLine[]): boolean {
+  return lines.length > 0 && lines.every(lineChecksComplete);
+}
 
 export function formatLineDims(line: IncomingLine): string {
   if (line.thicknessMm != null && line.widthMm != null && line.lengthMm != null) {
