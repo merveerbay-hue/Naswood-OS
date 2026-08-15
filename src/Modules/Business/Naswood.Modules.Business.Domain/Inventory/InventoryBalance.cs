@@ -47,6 +47,23 @@ public sealed class InventoryBalance : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void ApplyReceipt(decimal quantity)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Receipt quantity must be positive.");
+        QuantityOnHand += quantity;
+        Status = "Active";
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void ApplyIssue(decimal quantity)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Issue quantity must be positive.");
+        if (QuantityOnHand - QuantityReserved < quantity)
+            throw new InvalidOperationException("Insufficient available stock.");
+        QuantityOnHand -= quantity;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

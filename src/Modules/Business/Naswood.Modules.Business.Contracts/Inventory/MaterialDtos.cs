@@ -9,6 +9,7 @@ public sealed class MaterialDto
     public required string Category { get; init; }
     public required string UnitOfMeasure { get; init; }
     public required string Status { get; init; }
+    public string? DefinitionJson { get; init; }
     public required string CompanyId { get; init; }
     public string? PlantId { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
@@ -22,6 +23,7 @@ public sealed class UpsertMaterialRequestDto
     public string Category { get; init; } = string.Empty;
     public string UnitOfMeasure { get; init; } = string.Empty;
     public string Status { get; init; } = string.Empty;
+    public string DefinitionJson { get; init; } = string.Empty;
 }
 
 public sealed class PagedMaterialDto

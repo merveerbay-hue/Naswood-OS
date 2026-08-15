@@ -29,3 +29,10 @@ export async function getResource<T>(route: string, id: string): Promise<T> {
 export async function getDashboard<T>(route: string): Promise<T> {
   return apiRequest<T>(`/api/v1/${route}`, { method: 'GET', auth: true });
 }
+
+export async function executeStockDocument<T>(
+  route: 'goods-receipts/execute' | 'goods-issues/execute',
+  body: unknown,
+): Promise<T> {
+  return apiRequest<T>(`/api/v1/${route}`, { method: 'POST', auth: true, body });
+}

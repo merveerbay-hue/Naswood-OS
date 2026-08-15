@@ -7,7 +7,7 @@ public sealed class Material : BusinessEntity
 {
     private Material() { }
 
-    private Material(Guid id, string code, string name, string description, string category, string unitOfMeasure, string status, string companyId, string? plantId)
+    private Material(Guid id, string code, string name, string description, string category, string unitOfMeasure, string status, string definitionJson, string companyId, string? plantId)
         : base(id)
     {
         Code = code;
@@ -16,6 +16,7 @@ public sealed class Material : BusinessEntity
         Category = category;
         UnitOfMeasure = unitOfMeasure;
         Status = status;
+        DefinitionJson = definitionJson;
         CompanyId = companyId;
         PlantId = plantId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
@@ -27,13 +28,14 @@ public sealed class Material : BusinessEntity
     public string Category { get; private set; } = string.Empty;
     public string UnitOfMeasure { get; private set; } = string.Empty;
     public string Status { get; private set; } = string.Empty;
+    public string DefinitionJson { get; private set; } = string.Empty;
 
-    public static Material Create(string code, string name, string description, string category, string unitOfMeasure, string status, string companyId = "COMP-001", string? plantId = "PLANT-001")
+    public static Material Create(string code, string name, string description, string category, string unitOfMeasure, string status, string definitionJson = "", string companyId = "COMP-001", string? plantId = "PLANT-001")
     {
-        return new Material(UuidV7.NewGuid(), code, name, description, category, unitOfMeasure, status, companyId, plantId);
+        return new Material(UuidV7.NewGuid(), code, name, description, category, unitOfMeasure, status, definitionJson ?? string.Empty, companyId, plantId);
     }
 
-    public void Update(string code, string name, string description, string category, string unitOfMeasure, string status)
+    public void Update(string code, string name, string description, string category, string unitOfMeasure, string status, string? definitionJson = null)
     {
         Code = code;
         Name = name;
@@ -41,6 +43,7 @@ public sealed class Material : BusinessEntity
         Category = category;
         UnitOfMeasure = unitOfMeasure;
         Status = status;
+        if (definitionJson is not null) DefinitionJson = definitionJson;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

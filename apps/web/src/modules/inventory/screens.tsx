@@ -198,6 +198,70 @@ export function LotListPage() {
   );
 }
 
+export function PackageListPage() {
+  return (
+    <EntityListScreen
+      screenId="INV-PKG"
+      title="Paketler"
+      description="Stok paketleri — barkod / paket no ile arama"
+      route="packages"
+      fields={[
+        { key: 'PackageNumber', label: 'Paket' },
+        { key: 'Barcode', label: 'Barkod' },
+        { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'MaterialIdentityNumber', label: 'MI' },
+        { key: 'WarehouseCode', label: 'Depo' },
+        { key: 'LocationCode', label: 'Lokasyon' },
+        { key: 'Quantity', label: 'Miktar', type: 'number' },
+        { key: 'Status', label: 'Durum', status: true },
+      ]}
+    />
+  );
+}
+
+export function MaterialIdentityListPage() {
+  return (
+    <EntityListScreen
+      screenId="INV-MI"
+      title="Material Identity"
+      description="Fiziksel kimlik düğümleri (receiving root MI)"
+      route="material-identities"
+      fields={[
+        { key: 'IdentityNumber', label: 'MI' },
+        { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'LotNumber', label: 'Lot' },
+        { key: 'WarehouseCode', label: 'Depo' },
+        { key: 'LocationCode', label: 'Lokasyon' },
+        { key: 'Quantity', label: 'Miktar', type: 'number' },
+        { key: 'RootGoodsReceiptNumber', label: 'GR' },
+        { key: 'Status', label: 'Durum', status: true },
+      ]}
+    />
+  );
+}
+
+export function InventoryMovementListPage() {
+  return (
+    <EntityListScreen
+      screenId="INV-MV"
+      title="Stok Hareketleri"
+      description="Transaction Engine kayıtları (In/Out)"
+      route="inventory-movements"
+      fields={[
+        { key: 'MovementNumber', label: 'Hareket' },
+        { key: 'MovementType', label: 'Tip' },
+        { key: 'Direction', label: 'Yön' },
+        { key: 'DocumentNumber', label: 'Belge' },
+        { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'PackageNumber', label: 'Paket' },
+        { key: 'Quantity', label: 'Miktar', type: 'number' },
+        { key: 'WarehouseCode', label: 'Depo' },
+        { key: 'Status', label: 'Durum', status: true },
+      ]}
+    />
+  );
+}
+
 export function GoodsReceiptListPage() {
   const { t } = useI18n();
   return (

@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
-import { createResource } from '@/api/business';
+import { executeStockDocument } from '@/api/business';
 import { useI18n } from '@/i18n';
 
 type StageId =
@@ -177,40 +177,69 @@ export function ReceivingWorkbench() {
   const persistMutation = useMutation({
     mutationFn: async () => {
       const whCode = warehouse.toLowerCase().includes('hammadde') || warehouse.toLowerCase().includes('ana') ? 'WH-RM' : 'WH-FG';
-      return createResource<Record<string, unknown>>('goods-receipts', {
+      const materialCode = (ocrFields.material.value || 'MAT-UNKNOWN').trim();
+      const locCode = location.trim() || 'RECV';
+      const qty = Number(countQty) || 0;
+      const mi = minted.mi || `MI-${Date.now()}`;
+      const lot = minted.lot || `LOT-${Date.now()}`;
+      const pkg = minted.pkg || `PKG-${Date.now()}`;
+      return executeStockDocument<{
+        documentId: string;
+        documentNumber: string;
+        status: string;
+        lines: Array<{
+          materialCode: string;
+          materialIdentityNumber: string;
+          packageNumber: string;
+          lotNumber: string;
+          movementNumber: string;
+          quantity: number;
+        }>;
+      }>('goods-receipts/execute', {
         warehouseCode: whCode,
         reference: truck.plate || 'MANUAL',
-        status: 'Posted',
         notes: [
           `supplier=${truck.supplier}`,
           `gate=${truck.gate}`,
-          `qty=${countQty}`,
-          `loc=${location}`,
-          `material=${ocrFields.material.value}`,
+          `qty=${qty}`,
+          `loc=${locCode}`,
+          `material=${materialCode}`,
           `inspect=${inspectOk ? 'OK' : 'HOLD'}`,
           `flags=${DAMAGE_FLAGS.filter((f) => flags[f]).join(',') || 'none'}`,
           `docs=${docs.length}`,
           `photos=${Object.values(photos).filter(Boolean).length}`,
         ].join('; '),
         number: '',
+        lines: [
+          {
+            materialCode,
+            locationCode: locCode,
+            lotNumber: lot,
+            packageNumber: pkg,
+            materialIdentityNumber: mi,
+            quantity: qty > 0 ? qty : 1,
+            unitOfMeasure: 'Piece',
+            barcode: pkg,
+          },
+        ],
       });
     },
     onSuccess: async (created) => {
       setError(null);
-      const gr =
-        (typeof created.number === 'string' && created.number) ||
-        (typeof created.code === 'string' && created.code) ||
-        mintPreview('GR');
+      const line = created.lines?.[0];
+      const gr = created.documentNumber || mintPreview('GR');
       setMinted((m) => ({
         ...m,
         gr,
-        mi: m.mi ?? ('LOG-PINE-' + mintPreview('ID').replace('ID-', '')),
-        lot: m.lot ?? mintPreview('LOT'),
-        pkg: m.pkg ?? mintPreview('PKG'),
+        mi: line?.materialIdentityNumber || m.mi || ('LOG-PINE-' + mintPreview('ID').replace('ID-', '')),
+        lot: line?.lotNumber || m.lot || mintPreview('LOT'),
+        pkg: line?.packageNumber || m.pkg || mintPreview('PKG'),
         pallet: m.pallet ?? mintPreview('PAL'),
       }));
       setPosted(true);
       await queryClient.invalidateQueries({ queryKey: ['business', 'goods-receipts'] });
+      await queryClient.invalidateQueries({ queryKey: ['business', 'inventory'] });
+      await queryClient.invalidateQueries({ queryKey: ['business', 'packages'] });
     },
     onError: (e: Error) => setError(e.message),
   });

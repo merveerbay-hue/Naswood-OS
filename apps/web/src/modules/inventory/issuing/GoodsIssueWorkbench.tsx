@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useMemo, useState, type DragEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
-import { createResource } from '@/api/business';
+import { executeStockDocument } from '@/api/business';
 import { useI18n } from '@/i18n';
 
 type StageId =
@@ -59,6 +59,7 @@ const MATERIAL_LINES = [
 
 type AllocRow = {
   code: string;
+  materialCode: string;
   warehouse: string;
   location: string;
   lot: string;
@@ -180,6 +181,7 @@ function evaluateSmartScan(pkg: AllocRow): SmartScanResult {
 const PACKAGE_CATALOG: AllocRow[] = [
   {
     code: 'PKG-001245',
+    materialCode: 'MAT-TW-DECK-26140',
     warehouse: 'Ana Mamul Deposu',
     location: 'WH01 / A03 / R05',
     lot: 'LOT-TW-2026-000042',
@@ -195,6 +197,7 @@ const PACKAGE_CATALOG: AllocRow[] = [
   },
   {
     code: 'PKG-A-2026-000120',
+    materialCode: 'MAT-TW-DECK-26140',
     warehouse: 'Ana Mamul Deposu',
     location: 'A-01-02',
     lot: 'LOT-TW-2026-000042',
@@ -210,6 +213,7 @@ const PACKAGE_CATALOG: AllocRow[] = [
   },
   {
     code: 'PKG-B-2026-000088',
+    materialCode: 'MAT-TW-DECK-26140',
     warehouse: 'Ana Mamul Deposu',
     location: 'A-01-04',
     lot: 'LOT-TW-2026-000042',
@@ -225,6 +229,7 @@ const PACKAGE_CATALOG: AllocRow[] = [
   },
   {
     code: 'PKG-C-2026-000091',
+    materialCode: 'MAT-TW-DECK-26140',
     warehouse: 'Ana Mamul Deposu',
     location: 'A-02-01',
     lot: 'LOT-TW-2026-000042',
@@ -240,6 +245,7 @@ const PACKAGE_CATALOG: AllocRow[] = [
   },
   {
     code: 'PKG-00254',
+    materialCode: 'MAT-TW-DECK-26140',
     warehouse: 'Ana Mamul Deposu',
     location: 'A-03-02',
     lot: 'LOT-TW-2026-000042',
@@ -255,6 +261,7 @@ const PACKAGE_CATALOG: AllocRow[] = [
   },
   {
     code: 'PKG-D-2026-000210',
+    materialCode: 'MAT-TW-DECK-26140',
     warehouse: 'Ana Mamul Deposu',
     location: 'B-03-01',
     lot: 'LOT-TW-2026-000099',
@@ -462,10 +469,36 @@ export function GoodsIssueWorkbench() {
 
   const persistMutation = useMutation({
     mutationFn: async () => {
-      return createResource<Record<string, unknown>>('goods-issues', {
+      const lines = allocation
+        .map((r) => {
+          const d = dispositions[r.code] ?? emptyDisposition(r.selected);
+          const qty = d.good > 0 ? d.good : r.selected;
+          if (qty <= 0) return null;
+          return {
+            packageNumber: r.code,
+            barcode: r.code,
+            materialCode: r.materialCode || 'MAT-TW-DECK-26140',
+            locationCode: r.location || 'PICK',
+            lotNumber: r.lot || '',
+            materialIdentityNumber: r.mi || '',
+            quantity: qty,
+            unitOfMeasure: 'Piece',
+          };
+        })
+        .filter(Boolean);
+
+      if (!lines.length) {
+        throw new Error('Çıkış satırı yok — paket seçimi ve good miktarı gerekli.');
+      }
+
+      return executeStockDocument<{
+        documentId: string;
+        documentNumber: string;
+        status: string;
+        lines: Array<{ packageNumber: string; movementNumber: string; quantity: number }>;
+      }>('goods-issues/execute', {
         warehouseCode: 'WH-RM',
         reference: selectedDoc?.ref || 'MANUAL',
-        status: 'Posted',
         notes: [
           `docType=${docType}`,
           `ai=${aiDecision}`,
@@ -489,17 +522,16 @@ export function GoodsIssueWorkbench() {
           .filter(Boolean)
           .join('; '),
         number: '',
+        lines,
       });
     },
     onSuccess: async (created) => {
       setError(null);
-      const gi =
-        (typeof created.number === 'string' && created.number) ||
-        (typeof created.code === 'string' && created.code) ||
-        mintPreview('GI');
-      setMintedGi(gi);
+      setMintedGi(created.documentNumber || mintPreview('GI'));
       setPosted(true);
       await queryClient.invalidateQueries({ queryKey: ['business', 'goods-issues'] });
+      await queryClient.invalidateQueries({ queryKey: ['business', 'inventory'] });
+      await queryClient.invalidateQueries({ queryKey: ['business', 'packages'] });
     },
     onError: (e: Error) => setError(e.message),
   });

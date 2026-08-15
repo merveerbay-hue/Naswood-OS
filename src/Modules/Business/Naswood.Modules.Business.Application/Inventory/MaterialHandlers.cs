@@ -15,8 +15,8 @@ public interface IMaterialRepository
 
 public sealed record SearchMaterialQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedMaterialDto>>;
 public sealed record GetMaterialByIdQuery(Guid Id) : IQuery<Result<MaterialDto>>;
-public sealed record CreateMaterialCommand(string Code, string Name, string Description, string Category, string UnitOfMeasure, string Status) : ICommand<Result<MaterialDto>>;
-public sealed record UpdateMaterialCommand(Guid Id, string Code, string Name, string Description, string Category, string UnitOfMeasure, string Status) : ICommand<Result<MaterialDto>>;
+public sealed record CreateMaterialCommand(string Code, string Name, string Description, string Category, string UnitOfMeasure, string Status, string DefinitionJson = "") : ICommand<Result<MaterialDto>>;
+public sealed record UpdateMaterialCommand(Guid Id, string Code, string Name, string Description, string Category, string UnitOfMeasure, string Status, string? DefinitionJson = null) : ICommand<Result<MaterialDto>>;
 public sealed record DeleteMaterialCommand(Guid Id) : ICommand<Result>;
 
 public static class MaterialMapper
@@ -30,6 +30,7 @@ public static class MaterialMapper
             Category = e.Category,
             UnitOfMeasure = e.UnitOfMeasure,
             Status = e.Status,
+            DefinitionJson = e.DefinitionJson,
         CompanyId = e.CompanyId,
         PlantId = e.PlantId,
         CreatedAt = e.CreatedAt
@@ -73,7 +74,7 @@ public sealed class CreateMaterialCommandHandler : ICommandHandler<CreateMateria
     public CreateMaterialCommandHandler(IMaterialRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<MaterialDto>> HandleAsync(CreateMaterialCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Material.Create(SystemIdentifier.Ensure(command.Code, "MAT"), command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status);
+        var e = Material.Create(SystemIdentifier.Ensure(command.Code, "MAT"), command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status, command.DefinitionJson ?? string.Empty);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(MaterialMapper.ToDto(e));
@@ -89,7 +90,7 @@ public sealed class UpdateMaterialCommandHandler : ICommandHandler<UpdateMateria
     {
         var e = await _repo.GetByIdAsync(command.Id, cancellationToken).ConfigureAwait(false);
         if (e is null || e.IsDeleted) return Result.Failure<MaterialDto>(Error.NotFound("BUS-001", "Material was not found."));
-        e.Update(command.Code, command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status);
+        e.Update(command.Code, command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status, command.DefinitionJson);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(MaterialMapper.ToDto(e));
     }
