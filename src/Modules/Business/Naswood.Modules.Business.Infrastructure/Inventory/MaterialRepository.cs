@@ -11,7 +11,18 @@ public sealed class MaterialRepository : IMaterialRepository
     public MaterialRepository(BusinessDbContext db) => _db = db;
 
     public Task<Material?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        _db.Set<Material>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        _db.Set<Material>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+    public Task<Material?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var value = (code ?? string.Empty).Trim();
+        if (value.Length == 0)
+            return Task.FromResult<Material?>(null);
+        var lower = value.ToLowerInvariant();
+        return _db.Set<Material>().FirstOrDefaultAsync(
+            x => !x.IsDeleted && x.Code.ToLower() == lower,
+            cancellationToken);
+    }
 
     public async Task AddAsync(Material entity, CancellationToken cancellationToken = default) =>
         await _db.Set<Material>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -22,7 +33,9 @@ public sealed class MaterialRepository : IMaterialRepository
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
-            query = query.Where(x => EF.Functions.ILike(x.Name, "%" + value + "%"));
+            query = query.Where(x =>
+                EF.Functions.ILike(x.Name, "%" + value + "%")
+                || EF.Functions.ILike(x.Code, "%" + value + "%"));
         }
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await query.OrderByDescending(x => x.CreatedAt)

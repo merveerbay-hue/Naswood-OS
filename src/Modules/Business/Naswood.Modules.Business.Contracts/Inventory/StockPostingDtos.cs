@@ -18,6 +18,13 @@ public sealed class ExecuteGoodsReceiptRequestDto
     public string WarehouseCode { get; init; } = string.Empty;
     public string Reference { get; init; } = string.Empty;
     public string Notes { get; init; } = string.Empty;
+    /// <summary>Operator must confirm counted quantity before ledger post.</summary>
+    public bool QuantityVerified { get; init; }
+    /// <summary>
+    /// Document extract provenance. <c>demo</c> is UI-only and must never post to stock.
+    /// Allowed for post: <c>ocr</c>, <c>manual</c>, or empty when lines are operator-confirmed masters.
+    /// </summary>
+    public string ExtractSource { get; init; } = string.Empty;
     public IReadOnlyList<StockPostLineRequestDto> Lines { get; init; } = Array.Empty<StockPostLineRequestDto>();
 }
 

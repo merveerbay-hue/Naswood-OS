@@ -31,6 +31,8 @@ public sealed record ExecuteGoodsReceiptCommand(
     string WarehouseCode,
     string Reference,
     string Notes,
+    bool QuantityVerified,
+    string ExtractSource,
     IReadOnlyList<StockPostLineRequestDto> Lines) : ICommand<Result<ExecuteStockDocumentResultDto>>;
 
 public sealed record ExecuteGoodsIssueCommand(
@@ -49,6 +51,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
     private readonly IGoodsReceiptRepository _receipts;
     private readonly IInventoryBalanceRepository _balances;
     private readonly IBatchRepository _batches;
+    private readonly IMaterialRepository _materials;
     private readonly IMaterialIdentityRepository _identities;
     private readonly IInventoryPackageRepository _packages;
     private readonly IInventoryMovementRepository _movements;
@@ -58,6 +61,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         IGoodsReceiptRepository receipts,
         IInventoryBalanceRepository balances,
         IBatchRepository batches,
+        IMaterialRepository materials,
         IMaterialIdentityRepository identities,
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
@@ -66,6 +70,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         _receipts = receipts;
         _balances = balances;
         _batches = batches;
+        _materials = materials;
         _identities = identities;
         _packages = packages;
         _movements = movements;
@@ -78,6 +83,14 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-001", "At least one receipt line is required."));
         if (string.IsNullOrWhiteSpace(command.WarehouseCode))
             return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-002", "WarehouseCode is required."));
+        if (!command.QuantityVerified)
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                "INV-POST-010",
+                "Quantity must be verified before posting a goods receipt to stock."));
+        if (string.Equals(command.ExtractSource?.Trim(), "demo", StringComparison.OrdinalIgnoreCase))
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                "INV-POST-012",
+                "Demo OCR extract cannot be posted as a real goods receipt."));
 
         var receipt = GoodsReceipt.Create(
             SystemIdentifier.Ensure(command.Number, "GR"),
@@ -99,6 +112,24 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-004", $"Line {lineNo}: Quantity must be positive."));
 
             var materialCode = line.MaterialCode.Trim();
+            if (string.Equals(materialCode, "MAT-UNKNOWN", StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-011",
+                    $"Line {lineNo}: MAT-UNKNOWN is not a valid material master code."));
+
+            var material = await _materials.GetByCodeAsync(materialCode, cancellationToken).ConfigureAwait(false);
+            if (material is null)
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-011",
+                    $"Line {lineNo}: Material '{materialCode}' is not a valid material master code."));
+            if (!string.IsNullOrWhiteSpace(material.Status)
+                && !string.Equals(material.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-013",
+                    $"Line {lineNo}: Material '{materialCode}' is not Active (status: {material.Status})."));
+
+            // Prefer canonical master code casing.
+            materialCode = material.Code;
             var locationCode = string.IsNullOrWhiteSpace(line.LocationCode) ? "RECV" : line.LocationCode.Trim();
             var lotNumber = string.IsNullOrWhiteSpace(line.LotNumber)
                 ? SystemIdentifier.Ensure(null, "LOT")
