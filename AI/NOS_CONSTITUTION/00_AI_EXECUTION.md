@@ -5,7 +5,7 @@
 #
 # Document      : AI Execution Constitution
 # Part          : 00 — Execution Authority
-# Version       : 1.1.0
+# Version       : 1.2.0
 # Status        : Official
 # Owner         : Naswood Technology
 #
@@ -13,6 +13,9 @@
 # working on NOS. It does not redefine product vision. It defines how AI
 # must read, rank, and apply existing authority documents before writing
 # any code, screen, API, or navigation change.
+#
+# Product thinking (how we design) lives in 04_PRODUCT_ARCHITECT.md.
+# This file governs implementation after that design exists.
 #
 # If this document conflicts with a TASK, the TASK yields.
 # If this document conflicts with Foundation / Engineering / Platform,
@@ -28,15 +31,22 @@ documents already exist in this repository.
 
 What has been missing is not more Implementation TASKs.
 
-What has been missing is the **product layer** — and an execution constitution
-that forces AI to drive from that layer instead of from TASK files.
+What has been missing is the **product layer** — how AI is forced to *think*
+about NOS as a product (roles, workspaces, ERP comparison) before docs or code —
+and an execution constitution that implements from that layer instead of TASKs.
 
-Without this protocol, even excellent Architecture and Design documents
-remain in the shadow of TASK files.
-
+**Product thinking protocol:** `04_PRODUCT_ARCHITECT.md`  
+**Product map home:** `docs/00_Product/`  
 **`docs/14_Implementation` is FROZEN.** Do not add new TASK files.
-Delivery is driven by Module → Workspace → Navigation → Screens → Components
-→ User Flow → Frontend. See `docs/PRODUCT_LAYERS.md`.
+
+Delivery shape:
+
+```text
+NOS → Module → Workspace → Navigation → Screen → Component
+  → Workflow → Permissions → Code
+```
+
+See `docs/PRODUCT_LAYERS.md`.
 
 ---
 
@@ -85,9 +95,14 @@ REQUIRED delivery chain:
     → Navigation
     → Screens (15_UI)
     → Components (18)
-    → User Flow (17)
+    → Workflow / User Flow (17)
+    → Permissions (19)
     → Frontend (20 + apps/web)
 ```
+
+Before designing a new module surface, run the Product Architect ladder in
+`04_PRODUCT_ARCHITECT.md` (real life → roles → SAP/IFS/D365/Infor → NOS better
+→ document → implement).
 
 ## Rule C — Reconstruct the complete module first
 
@@ -136,11 +151,13 @@ and `17_User_Flows/Production_Flow.md`.
 Higher always wins. Lower may only refine, never contradict.
 
 ```text
-L0  AI Execution Constitution          ← this file (procedure)
+L0  AI Execution Constitution          ← this file (implementation procedure)
+L0b Product Architect Drive            04_PRODUCT_ARCHITECT.md (design thinking)
 L1  NOS Constitution
       01_FOUNDATION.md
       02_ENGINEERING.md
       03_PLATFORM.md
+L1b NOS Product Map                    docs/00_Product/
 L2  Architecture                       (system + module architecture)
 L3  Engineering Rules / Standards
 L4  Platform Rules
@@ -175,10 +192,10 @@ FROZEN (not a delivery driver):
 # 4. Mandatory Read Order (before product UI / FE work)
 
 ```text
-1. AI Execution Constitution          (this document)
-2. Constitution — Foundation
-3. Constitution — Engineering Rules
-4. Constitution — Platform Rules
+1. Product Architect Drive            (04 — how to think)
+2. AI Execution Constitution          (this document — how to implement)
+3. NOS Product Map                    (docs/00_Product)
+4. Constitution — Foundation / Engineering / Platform
 5. Relevant ADRs / system architecture
 6. Module Architecture
 7. Module Workflow
@@ -186,7 +203,7 @@ FROZEN (not a delivery driver):
 9. Module Dashboard
 10. Module Mobile
 11. UI Architecture (workspaces)
-12. Navigation (docs/19_Navigation)
+12. Navigation + Permissions (docs/19_Navigation)
 13. Screen Architecture (PRD / QLT / MNT / …)
 14. User Flows (docs/17_User_Flows)
 15. Component Library + Design System
@@ -285,12 +302,14 @@ Never title work as “Add Asset CRUD” or “TASK-078”.
 
 | Part | Role |
 |------|------|
-| `00_AI_EXECUTION.md` | How AI must execute (this file) |
+| `04_PRODUCT_ARCHITECT.md` | How humans + AI **design** the product |
+| `00_AI_EXECUTION.md` | How AI **implements** (this file) |
 | `01_FOUNDATION.md` | Identity, principles, documentation hierarchy |
 | `02_ENGINEERING.md` | Engineering philosophy, SDLC, Clean/Hexagonal/DDD |
 | `03_PLATFORM.md` | Platform capabilities (workflow, identity, files, …) |
 
 Product layer map: `docs/PRODUCT_LAYERS.md`  
+Product map home: `docs/00_Product/`  
 `Cursor_Rules.md` must point here and must not weaken these rules.
 
 ---
@@ -300,10 +319,11 @@ Product layer map: `docs/PRODUCT_LAYERS.md`
 NOS will not become an enterprise manufacturing OS by completing TASKs as
 isolated CRUD screens.
 
-NOS becomes that platform when delivery answers **“NOS nasıl çalışır?”**
-through Module, Workspace, Navigation, Screens, Components, and User Flows —
-then Frontend.
+NOS becomes that platform when we **design** with the Product Architect Drive
+and **deliver** Module → Workspace → Navigation → Screen → Component →
+Workflow → Permissions → Code.
 
+**We design. Cursor applies.**  
 **Never generate a screen directly from a TASK.**  
 **Do not create new TASKs.**  
 **Always reconstruct the complete module first.**  

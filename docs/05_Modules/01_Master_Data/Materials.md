@@ -1,8 +1,8 @@
-# Inventory Material Master
+# Materials Module
 
 **Project:** Naswood OS
 
-**Document:** Inventory Material Master
+**Document:** Materials Module
 
 **Version:** 1.0
 
@@ -14,7 +14,7 @@
 
 ## Module Name
 
-Inventory Material Master
+Materials
 
 ## Module Code
 
@@ -22,19 +22,22 @@ MOD-MAT
 
 ## Module Category
 
-Inventory
+Master Data
 
 ---
 
 ## Description
 
-Inventory Material Master owns every physical Material identity throughout its
-lifecycle within Naswood OS.
+The Materials module manages **Material Definitions** — active catalog rule packs — and supports the lifecycle of materials within Naswood OS.
 
-A Material is any physical object that enters, is transformed within or exits the manufacturing process.
+**Architecture:** [`Material_Definition_Architecture.md`](../../13_Design/99_Shared/Material_Definition_Architecture.md)  
+A Material Definition is not a passive stock card: it binds Identity, Measurement, Conversion, Packaging, Numbering, Quality, Traceability, and Costing rules for all modules.
 
-Materials remain traceable from Receiving to Shipment through immutable
-Business Codes and Manufacturing-owned genealogy records.
+A **physical** material instance is a **Material Identity** (`Material_Identity_Architecture.md`), not the catalog Definition.
+
+Materials remain traceable from Receiving to Shipment through immutable Business Codes, Material Identities, and Transformation records.
+
+**Screen type:** Material Definition Designer / Builder — never “Create Material” CRUD (`Screen_Types.md`).
 
 ---
 
@@ -42,8 +45,9 @@ Business Codes and Manufacturing-owned genealogy records.
 
 - Establish a single source of truth for all materials
 - Maintain complete traceability
-- Support Manufacturing transformation references
-- Integrate Material identity with Inventory transactions and Production
+- Support manufacturing transformations
+- Enable genealogy tracking
+- Integrate inventory and production
 - Support AI-driven optimization
 
 ---
@@ -61,6 +65,10 @@ Material Identification
 Material Attributes
 
 Lifecycle Management
+
+Transformation Tracking
+
+Parent–Child Relationships
 
 Material Status Management
 
@@ -80,8 +88,6 @@ Material Attachments
 
 Inventory Transactions
 
-Transformation Genealogy
-
 Production Scheduling
 
 Sales Orders
@@ -94,13 +100,13 @@ Accounting
 
 ## Dependencies
 
-Product Management
+Master Data
 
-Inventory Ledger
+Inventory
 
 Production
 
-Manufacturing Genealogy
+Transformation
 
 Workflow
 
@@ -448,23 +454,11 @@ Package
 
 Material Business Codes are immutable.
 
-Inventory is the sole owner of Material Master and physical Material identity.
-
 Every Material shall have one Material Type.
 
 Every Material shall have one current state.
 
 Every Material shall support full traceability.
-
-Product creation, Product release, BOM release, planning and order creation
-shall never create Material automatically.
-
-Physical Material is created only by an authorized posted Inventory
-transaction such as goods receipt, production output or approved opening
-balance.
-
-Manufacturing owns transformation genealogy and references Inventory Material
-identifiers.
 
 Deleted Materials are not physically removed.
 
@@ -826,6 +820,12 @@ Carbon Footprint Tracking
 
 # 33. Related Documents
 
+[`Material_Definition_Architecture.md`](../../13_Design/99_Shared/Material_Definition_Architecture.md)
+
+[`Material_Identity_Architecture.md`](../../13_Design/99_Shared/Material_Identity_Architecture.md)
+
+[`Measurement_Conversion_Engine.md`](../../13_Design/99_Shared/Measurement_Conversion_Engine.md)
+
 Database Schema
 
 Material Attributes
@@ -891,11 +891,5 @@ Recover material state using Event History, Audit Logs and Transformation record
 Materials are the digital representation of every physical object within Naswood OS.
 
 Each material has a unique identity, immutable Business Code and complete lifecycle history.
-
-Inventory owns Material identity and stock state. Manufacturing owns
-transformation genealogy. Product Management owns Product definitions.
-
-A Product is not a Material, and defining a Product never creates physical
-Material or stock.
 
 The Materials module forms the foundation of traceability, production control, inventory management, quality assurance and AI-driven manufacturing optimization.

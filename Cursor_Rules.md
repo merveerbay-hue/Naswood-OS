@@ -4,7 +4,7 @@
 
 **Document:** Cursor Rules
 
-**Version:** 1.2
+**Version:** 1.3
 
 ---
 
@@ -16,34 +16,93 @@ The objective is to ensure consistency, maintainability and enterprise-grade sof
 
 ---
 
-# AI Execution Constitution (read first — mandatory)
+# Product Architect Drive (design first — mandatory)
 
-**Canonical:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
-**Product stack:** [`docs/PRODUCT_LAYERS.md`](docs/PRODUCT_LAYERS.md)
+**Canonical:** [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md)  
+**SSOT matrix:** [`docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`](docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md)  
+**Product map:** [`docs/00_Product/`](docs/00_Product/)  
+**Implementation:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
+**Layer map:** [`docs/PRODUCT_LAYERS.md`](docs/PRODUCT_LAYERS.md)
 
-`docs/14_Implementation` is **FROZEN** — no new TASK files.  
-Delivery driver is the product layer, not Architecture → TASK → TASK.
+Before stating any cross-cutting rule in a doc or PR: check the Authority Matrix.  
+**Yes, already defined → reference only. No → edit the authority document.**
+
+### No shared Create screen — Master Data ≠ Create Form
+
+**Authority:** [`docs/13_Design/Common/Screen_Types.md`](docs/13_Design/Common/Screen_Types.md) · [`UI_Patterns.md`](docs/13_Design/Common/UI_Patterns.md)
+
+```text
+NOS'ta "New" diye tek tip ekran yoktur.
+NOS'ta Master Data ekranları "Create Form" değildir.
+```
+
+Never implement “Yeni” as the same entity Create form across modules.  
+Choose **Wizard / Builder / Designer / Configuration / Terminal / Console / Explorer / Planner / Dashboard / Workbench / Approval Center / Library**, then process steps from module flows.
+
+Engineering masters (BOM, Machine, Routing, …) use **Builder / Designer / Configuration** → **Release** — not Code · Name · Save.
+
+```text
+✘ Entity → Form
+✔ Business Object → Business Workspace → Business Designer
+```
+
+### System generated identifiers + name-first UX
+
+**Authority:** [`Document_Numbering.md`](docs/13_Design/99_Shared/Document_Numbering.md) § System Generated Identifiers · Constitution § 2.3
+
+```text
+Identifiers are generated automatically according to the centralized
+Numbering Architecture (docs/13_Design/99_Shared/Document_Numbering.md).
+```
+
+```text
+✘  Code *  ________
+✔  System Code — Automatically generated after save / on Release
+✔  Pickers by name (Ürün 🔍 Thermowood Deck …) — not by typed product code
+```
+
+Never generate editable Code / Number / Lot / Warehouse Code fields on data-entry screens.
+
+
+**We design. Cursor applies.**
+
+```text
+NOS → Module → Workspace → Navigation → Screen → Component → Workflow → Permissions → Code
+```
+
+### Thinking ladder (before docs or code)
+
+1. Real life — factory behavior  
+2. User / roles — who sees what?  
+3. Market — SAP / IFS / Dynamics / Infor  
+4. NOS better — our product choice  
+5. Document — product layers  
+6. Implement — named workspace / screens only  
 
 ### Absolute rules
 
-1. **Never generate a screen from a TASK** (or TASK habit).
-2. **Always reconstruct the complete module first.**
-3. Deliver **Module → Workspace → Navigation → Screens → Components → User Flow → Frontend.**
-4. Prefer prompts like **“Maintenance Workspace’i oluştur”**, not **“TASK-078’i yap”**.
+1. **Never** start from “TASK-XXX yaz / yap”.
+2. **Never** generate a screen from a TASK (or TASK habit).
+3. **Always** reconstruct the complete module first (roles + workspaces).
+4. Prefer **“Üretim Müdürü Production’da ne görmeli?”** / **“Maintenance Workspace’i oluştur”**, not **“TASK-078’i yap”**.
 
-### Mandatory read order before product UI / FE work
+`docs/14_Implementation` is **FROZEN** — no new TASK files.
+
+### Mandatory read order
 
 ```text
-1. AI Execution Constitution
-2. Foundation / Engineering / Platform
-3. Module Architecture · Workflow · API · Dashboard · Mobile
-4. UI Architecture          docs/15_UI_Architecture/
-5. Navigation               docs/19_Navigation/
-6. Screen Architecture      docs/15_UI/
-7. User Flows               docs/17_User_Flows/
-8. Component Library        docs/18_Component_Library/
-9. Design System            docs/16_Design_System/
-10. Frontend Architecture   docs/20_Frontend_Architecture/
+1. Product Architect Drive     AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md
+2. AI Execution Constitution   AI/NOS_CONSTITUTION/00_AI_EXECUTION.md
+3. NOS Product Map             docs/00_Product/
+4. Foundation / Engineering / Platform
+5. Module Architecture · Workflow · API · Dashboard · Mobile
+6. UI Architecture             docs/15_UI_Architecture/
+7. Navigation / Permissions    docs/19_Navigation/
+8. Screen Architecture         docs/15_UI/
+9. User Flows                  docs/17_User_Flows/
+10. Component Library          docs/18_Component_Library/
+11. Design System              docs/16_Design_System/
+12. Frontend Architecture      docs/20_Frontend_Architecture/
 ```
 
 ### Forbidden default
@@ -52,9 +111,10 @@ Delivery driver is the product layer, not Architecture → TASK → TASK.
 TASK-078 → Asset CRUD
 next TASK → another ResourcePage
 new file under 14_Implementation/
+“TASK yazalım” as a product brief
 ```
 
-If product docs are missing, **author the product layer** (screen/flow/nav) — do not invent a TASK.
+If product docs are missing, **run the thinking ladder and author the product layer** — do not invent a TASK.
 
 ---
 
@@ -96,13 +156,13 @@ Every new feature shall include:
 # Product UI Hierarchy (mandatory)
 
 ```text
-AI Execution Constitution → Constitution → Architecture → Domain
+Product Architect Drive → AI Execution Constitution → Constitution → Architecture
+    → NOS Product Map (00_Product)
     → Module Design (Architecture / Workflow / API / Dashboard / Mobile)
     → UI Architecture (15_UI_Architecture)
-    → Navigation (19_Navigation)
+    → Navigation + Permissions (19_Navigation)
     → Screen Architecture (15_UI)
-    → User Flows (17_User_Flows)
-    → Component Library (18) → Design System (16)
+    → Components (18) → Workflow / User Flows (17) → Design System (16)
     → Frontend Architecture (20)
     → Source Code
 
@@ -111,9 +171,10 @@ AI Execution Constitution → Constitution → Architecture → Domain
 
 ### Critical rules
 
-- Open work with **workspace / screen / flow**, never with a new TASK file.
+- Open design with **roles and jobs**, not TASK IDs.
+- Open implementation with **workspace / screen / flow**, never with a new TASK file.
 - Before coding business UI, open the **screen PRD** and compose from Component Library.
-- Current flat CRUD nav/pages are **technical MVP debt**; converge to `19_Navigation` + `15_UI`.
+- Current flat CRUD nav/pages are **technical MVP debt**; converge to product workspaces.
 
 ---
 

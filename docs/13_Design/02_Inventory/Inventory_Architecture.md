@@ -8,10 +8,6 @@
 
 **Status:** Approved
 
-**Domain Status:** Candidate (Not Canonical)
-
-See `Inventory_Canonicalization_Candidate.md` for freeze gates.
-
 ---
 
 # Purpose
@@ -23,6 +19,22 @@ The Inventory module is responsible for managing all physical material movements
 Inventory acts as the operational backbone connecting Purchasing, Production, Sales, Quality, Maintenance and Finance.
 
 This document establishes the domain boundaries, core entities, workflows and integration points of the Inventory module.
+
+---
+
+# Authority references (do not redefine)
+
+This document owns **inventory ownership and stock truth**. Cross-cutting laws live elsewhere.
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, **Material Identity**, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| **Material Identity** (lifecycle · MI vs Lot · receiving root) | `docs/13_Design/99_Shared/Material_Identity_Architecture.md` |
+| Genealogy graph (nodes = Material Identities) | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Traceability inquiry (joint with Quality) | Quality Architecture + this document (views); Genealogy owns the graph |
+
+Do not restate numbering algorithms or “lot is auto-generated” in Inventory Screens / Flows / Workflow — reference Document_Numbering.md + Material_Identity_Architecture.md.
 
 ---
 
@@ -83,14 +95,16 @@ The Inventory module follows these principles:
 # Domain Architecture
 
 ```
-                  Inventory Material Master
+                   Material Definition
+              (Identity · Measurement · Conversion ·
+               Packaging · Quality · Traceability · Costing)
                               │
                               ▼
                         Warehouse Structure
                               │
           ┌───────────────┬───────────────┐
           ▼               ▼               ▼
-     Warehouse         Location         Batch
+     Warehouse         Location         Batch / MI
           │               │               │
           └───────────────┴───────────────┘
                           │
@@ -108,14 +122,16 @@ Goods Receipt   Goods Issue   Stock Transfer   Count
                  Reports • Dashboard • AI
 ```
 
+Material Definition authority: `Material_Definition_Architecture.md`  
+Multi-UoM: `Measurement_Conversion_Engine.md`  
+Inventory does not own Material Definition — it **consumes** Released Definitions.
+
 ---
 
 # Module Boundaries
 
 Inventory owns:
 
-- Material Master
-- Physical Material Identity
 - Warehouses
 - Locations
 - Stock
@@ -126,8 +142,7 @@ Inventory owns:
 
 Inventory does NOT own:
 
-- Product Definitions
-- Material Genealogy
+- Material Definitions (catalog rule packs)
 - Purchase Orders
 - Sales Orders
 - Production Orders
@@ -309,12 +324,15 @@ Sales Production Quality
 
 # Module Integrations
 
-## Master Data
+## Master Data / Material Definition
 
 Consumes
 
-- Material
-- Unit of Measure
+- Material Definition (rule packs — not a passive Material Master card)
+- Measurement & Conversion Engine (Stock UoM · pcs/lm/m²/m³/kg/t)
+- Unit of Measure (via Measurement System)
+
+Authority: `Material_Definition_Architecture.md` · `Measurement_Conversion_Engine.md`
 
 ---
 

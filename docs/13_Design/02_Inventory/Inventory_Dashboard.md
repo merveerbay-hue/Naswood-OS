@@ -1,557 +1,199 @@
-# Inventory Dashboard
+# Inventory Dashboard — Warehouse Command Center
 
-**Module:** Inventory
-
-**Category:** Dashboard
-
-**Version:** 1.0
-
-**Status:** Approved
-
----
-
-# Purpose
-
-The Inventory Dashboard provides a real-time operational view of warehouse activities, inventory levels, stock movements and inventory health across the organization.
-
-It enables warehouse operators, supervisors, production planners, purchasing teams and executives to monitor inventory performance, identify issues and make informed decisions.
-
-The dashboard is designed for live operational monitoring rather than historical reporting.
+**Module:** Inventory  
+**Screen ID:** INV-001  
+**Workspace:** Dashboard  
+**Screen type:** Dashboard (**operational command center** — not Analytics)  
+**Version:** 2.0  
+**Status:** Product Architect — authoritative  
+**Job-first:** `docs/00_Product/JOB_FIRST_SCREEN_DESIGN.md`
 
 ---
 
-# Objectives
+## Absolute rule
 
-- Real-Time Inventory Visibility
-- Warehouse Performance Monitoring
-- Stock Accuracy
-- Inventory Health Monitoring
-- Operational Decision Support
-- Executive KPI Monitoring
-
----
-
-# Dashboard Principles
-
-The dashboard shall be:
-
-- Real-Time
-- Role-Based
-- Interactive
-- Mobile Compatible
-- Drill-Down Enabled
-- AI Assisted
-
-Users should be able to move from KPI → Chart → Detail View within three clicks.
-
----
-
-# Dashboard Layout
-
-```
--------------------------------------------------------------
- Inventory Overview
--------------------------------------------------------------
-
- KPI Cards
-
- Current Stock
- Reserved
- Available
- Incoming
- Outgoing
- Inventory Value
-
--------------------------------------------------------------
-
- Warehouse Status
-
- Inventory by Warehouse
- Warehouse Utilization
- Capacity Usage
-
--------------------------------------------------------------
-
- Inventory Operations
-
- Goods Receipt
- Goods Issue
- Transfers
- Reservations
-
--------------------------------------------------------------
-
- Inventory Health
-
- Slow Moving
- Negative Stock
- Cycle Count Accuracy
- Blocked Inventory
-
--------------------------------------------------------------
-
- AI Recommendations
-
- Low Stock
- Overstock
- Suggested Transfers
- Purchase Suggestions
-
--------------------------------------------------------------
+```text
+Inventory Dashboard is NOT a KPI page.
+Inventory Dashboard is NOT a historical analytics wall.
+Inventory Dashboard is the operational command center of the warehouse.
 ```
 
----
+**Forbidden:** Hero KPI strip as the primary job · “Inventory Value” as first viewport · chart-first layout · Create entity forms  
+**Required:** Job CTAs · live queues · exceptions · dock / inbound pressure · one-click into Workbench / Wizard / Terminal
 
-# Dashboard Sections
-
-## Inventory Overview
-
-Displays overall inventory statistics.
-
-Widgets
-
-- Current Inventory
-- Available Inventory
-- Reserved Inventory
-- Incoming Inventory
-- Outgoing Inventory
-- Inventory Value
+Analytics, valuation trends, and slow-moving studies live in **Reports** / **Analytics** workspaces — not here.
 
 ---
 
-## Warehouse Overview
+## Job to be done
 
-Displays warehouse status.
+> Depo şefi / operatör, **bugün depoyu yönetir**: hangi kamyon / kabul / çıkış / transfer / sayım bekliyor; nerede bloke / negatif / kapasite riski var; bir tıkla ilgili iş ekranına girer.
 
-Widgets
-
-- Warehouse Capacity
-- Occupancy Rate
-- Empty Locations
-- Used Locations
-- Warehouse Comparison
+**Not the job:** “See inventory KPIs” or “Browse valuation charts.”
 
 ---
 
-## Inventory Movements
+## CTA / entry
 
-Displays today's activity.
+| Locale | Opens |
+|--------|--------|
+| TR | **Envanter · Komuta Merkezi** (module home) |
+| EN | **Inventory · Command Center** |
 
-Widgets
+From here, primary actions:
 
-- Goods Receipts
-- Goods Issues
-- Internal Transfers
-- Inventory Adjustments
-- Reservations
-- Cycle Counts
+| CTA | Target |
+|-----|--------|
+| **Mal kabul başlat** | Receiving Workbench |
+| **Mal çıkışı** | Issue Wizard |
+| **Stok transfer** | Transfer Wizard |
+| **Sayım başlat** | Cycle Count Session |
 
----
-
-## Inventory Health
-
-Displays inventory quality indicators.
-
-Widgets
-
-- Negative Stock
-- Slow Moving Inventory
-- Fast Moving Inventory
-- Aging Inventory
-- Blocked Stock
-- Near Expiry Batch
+Never: “+ New Goods Receipt” from the command center.
 
 ---
 
-## Warehouse Performance
+## Authority references
 
-Displays operational efficiency.
-
-Widgets
-
-- Putaway Time
-- Picking Time
-- Transfer Time
-- Count Accuracy
-- Order Fulfillment Rate
-- Warehouse Productivity
+| Topic | Authority |
+|-------|-----------|
+| Screen type / no Create | `Screen_Types.md` · `UI_Patterns.md` |
+| Receiving | `INV_Receiving_Workbench.md` · `Material_Identity_Architecture.md` |
+| Stock truth | `Inventory_Architecture.md` |
+| Workspaces / nav | `Inventory_Workspaces.md` · `Inventory_Navigation.md` |
+| Screen index | `Inventory_Screens.md` |
 
 ---
 
-## AI Insights
+## Command center anatomy
 
-Displays AI-generated recommendations.
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ INV-001  Warehouse Command Center     Plant · Shift · Now       │
+│ [Mal kabul başlat] [Mal çıkışı] [Transfer] [Sayım başlat]       │  ← ACTION BAR
+├──────────────────────────────┬──────────────────────────────────┤
+│ LIVE QUEUES                  │ EXCEPTIONS / BLOCKS              │
+│ Open receiving (Draft/InProg)│ Negative stock                   │
+│ Trucks at gate / dock        │ QI / Hold / Blocked              │
+│ Open issues · transfers      │ Capacity critical locations      │
+│ Open counts · putaway tasks  │ Overdue receipts / ASN           │
+├──────────────────────────────┴──────────────────────────────────┤
+│ TODAY’S PRESSURE (thin status — not hero KPIs)                  │
+│ Available · Reserved · Inbound expected · Outbound due          │
+│  → each cell drills to Stock / Operations job — not a report    │
+├─────────────────────────────────────────────────────────────────┤
+│ DOCK / INBOUND BOARD (optional plant)                           │
+│ Gate · Truck · Supplier · Stage · Open Workbench                │
+├─────────────────────────────────────────────────────────────────┤
+│ AI / OPS HINTS (actionable only)                                │
+│ “3 receipts waiting Post” · “Zone A full — suggest WH-FG”       │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-Widgets
+### Layout laws
 
-- Reorder Suggestions
-- Overstock Detection
-- Inventory Risk
-- Stock Optimization
-- Demand Forecast
-- Suggested Transfers
+| Zone | Purpose | Anti-pattern |
+|------|---------|--------------|
+| **Action bar** | Start warehouse jobs | Hidden behind menus |
+| **Live queues** | Work waiting **now** | Monthly charts |
+| **Exceptions** | What will stop the floor | Vanity metrics |
+| **Thin status** | Context for decisions | Giant KPI cards as the page |
+| **Dock board** | Physical inbound reality | Empty decorative widgets |
+| **Hints** | Next best action | Passive “insights” without link |
 
-Reference
-
-AI_Copilot.md
-
----
-
-# KPI Cards
-
-The dashboard shall provide the following KPI cards.
-
-| KPI | Description |
-|------|-------------|
-| Current Stock | Total stock quantity |
-| Available Stock | Available for use |
-| Reserved Stock | Reserved quantity |
-| Inventory Value | Total inventory value |
-| Warehouse Utilization | Used storage capacity |
-| Goods Receipts Today | Today's receipts |
-| Goods Issues Today | Today's issues |
-| Inventory Accuracy | Stock accuracy percentage |
-
-Reference
-
-KPIs.md
-
----
-
-# Standard Charts
-
-Supports
-
-- Line Chart
-- Bar Chart
-- Donut Chart
-- Area Chart
-- Heat Map
-
-Reference
-
-Standard_Charts.md
+Every row / card **opens a job screen** (Workbench, Wizard, Terminal, Explorer inquiry) within one click.
 
 ---
 
-# Recommended Widgets
+## Sections (operational)
 
-## Inventory by Warehouse
+### 1 — Action bar (primary)
 
-Bar Chart
+Job verbs only — same CTAs as Operations workspace.
 
-Shows inventory distribution across warehouses.
+### 2 — Live queues
 
----
+| Queue | Meaning | Opens |
+|-------|---------|--------|
+| Open receiving | Draft / InProgress Receiving sessions | Receipt library or resume Workbench |
+| At gate / dock | Trucks registered, not Posted | Receiving Workbench |
+| Open goods issues | Waiting pick / post | Issue Wizard / library |
+| Open transfers | In motion | Transfer Wizard / library |
+| Open counts | Sessions in progress | Count Session |
+| Putaway / pick tasks | Directed work (INV-027) | Task Terminal |
 
-## Warehouse Utilization
+Counts are **queue depth**, not executive KPIs.
 
-Donut Chart
+### 3 — Exceptions / blocks
 
-Shows occupied versus available storage.
+| Signal | Action |
+|--------|--------|
+| Negative stock | Balance inquiry → adjust / count |
+| Hold / QI / Blocked | Lot / MI inquiry · Quality |
+| Capacity critical | Warehouse / location Explorer |
+| Overdue ASN / PO receipt | Start Receiving Workbench |
+| Missing Material Identity on posted line | Controllers only — data fix |
 
----
+### 4 — Thin status strip (secondary)
 
-## Daily Inventory Movement
+On-hand · Reserved · Available · Expected inbound · Due outbound.
 
-Line Chart
+These support the queues — they must not dominate the first viewport. No “Inventory Value” in the command center primary surface (Finance / Reports).
 
-Displays goods receipts and issues over time.
+### 5 — Dock / inbound board
 
----
+Truck plate · supplier · gate · Workbench stage · time since arrival · **Open Workbench**.
 
-## Inventory Trend
+Ties to Receiving Workbench truck registration.
 
-Area Chart
+### 6 — Actionable hints (optional AI)
 
-Displays inventory levels over selected periods.
-
----
-
-## Inventory Value Trend
-
-Line Chart
-
-Tracks inventory valuation changes.
-
----
-
-## Top Materials
-
-Bar Chart
-
-Shows highest-value or highest-quantity materials.
+Only recommendations that deep-link to a job. No orphan insight cards.
 
 ---
 
-## Slow Moving Inventory
+## What lives elsewhere
 
-Table
-
-Displays materials with low turnover.
-
----
-
-## Negative Stock Alerts
-
-Alert Widget
-
-Displays materials with negative stock.
+| Content | Workspace / screen |
+|---------|-------------------|
+| Inventory value trends | Reports / Finance |
+| Slow / fast movers analytics | Analytics |
+| Historical movement charts | Reports |
+| Master data counts as “footprint KPIs” | Master Data libraries — not command center hero |
 
 ---
 
-## Reservation Summary
+## Roles
 
-Table
+| Role | Command center focus |
+|------|----------------------|
+| Warehouse Operator | Action bar · my queues · dock |
+| Warehouse Supervisor | All queues · exceptions · capacity |
+| Inventory Controller | Exceptions · accuracy · holds |
+| Planner / Purchasing | Inbound overdue · availability strip (read) |
 
-Displays active reservations.
-
----
-
-## Batch Expiry
-
-Timeline
-
-Displays batches approaching expiration.
+Role-based widgets — same law: **jobs first**.
 
 ---
 
-# Filters
+## Mobile
 
-Supports
-
-- Company
-- Plant
-- Warehouse
-- Location
-- Material Group
-- Material
-- Batch
-- Date Range
-- Stock Status
-
-All widgets must update dynamically based on applied filters.
+Rugged tablet: action bar + queues + exceptions. Charts optional / deferred. Scan deep-links into Receiving / Issue Terminal.
 
 ---
 
-# Drill-Down
+## Cursor implementation notes
 
-Users can navigate from dashboard widgets to detailed records.
-
-Example
-
-Warehouse Utilization
-
-↓
-
-Warehouse Detail
-
-↓
-
-Location Detail
-
-↓
-
-Inventory Record
-
-↓
-
-Transaction History
+1. Do **not** implement INV-001 as a KPI card grid with value/accuracy charts.  
+2. Primary viewport = Action bar + Live queues + Exceptions.  
+3. Queue counts from operational APIs (`openGoodsReceipts`, …) — label as **work waiting**, not KPI.  
+4. CTAs navigate to job paths (`/inventory/operations/receive`, …).  
+5. Reports link is secondary footer — not the page purpose.  
+6. Screen type remains **Dashboard** in catalog, with Inventory specialization = **Command Center**.
 
 ---
 
-# Alerts
+## Related
 
-Displays operational alerts.
-
-Examples
-
-- Low Stock
-- Negative Inventory
-- Warehouse Capacity > 90%
-- Blocked Inventory
-- Count Variance
-- Batch Near Expiry
-
-Alerts use the shared notification framework.
-
-Reference
-
-Notification_System.md
-
----
-
-# Dashboard Refresh
-
-Supports
-
-- Automatic Refresh
-- Manual Refresh
-- Live Mode
-
-Default refresh interval
-
-60 seconds
-
----
-
-# Personalization
-
-Users may customize
-
-- Favorite Widgets
-- Dashboard Layout
-- Default Warehouse
-- Default Filters
-- Chart Preferences
-
-Reference
-
-Dashboard_Widgets.md
-
----
-
-# Mobile Dashboard
-
-Supports
-
-- KPI Cards
-- Alerts
-- Warehouse Summary
-- Barcode Shortcuts
-- Goods Receipt Shortcut
-- Goods Issue Shortcut
-- Cycle Count Shortcut
-
-Reference
-
-09_Mobile/Dashboard.md
-
----
-
-# Permissions
-
-Dashboard visibility is controlled by role.
-
-Examples
-
-Warehouse Operator
-
-- Own warehouse only
-
-Warehouse Manager
-
-- Assigned warehouses
-
-Plant Manager
-
-- Plant-wide visibility
-
-Executive
-
-- Company-wide visibility
-
-Reference
-
-Permission_Model.md
-
----
-
-# AI Features
-
-The dashboard integrates AI capabilities.
-
-Supports
-
-- Stock Optimization
-- Inventory Forecasting
-- Suggested Replenishment
-- Overstock Detection
-- Demand Prediction
-- Warehouse Optimization
-
-Reference
-
-AI_Widgets.md
-
----
-
-# Performance
-
-Dashboard should
-
-- Load within 2 seconds
-- Support real-time updates
-- Cache KPI calculations
-- Lazy-load detail widgets
-
-Reference
-
-Performance.md
-
-Caching.md
-
----
-
-# Audit
-
-Dashboard interactions are not audited.
-
-Administrative changes to dashboard configuration are audited.
-
-Reference
-
-Audit_Log.md
-
----
-
-# Acceptance Criteria
-
-The Inventory Dashboard shall:
-
-- Display real-time inventory KPIs.
-- Support role-based visibility.
-- Provide drill-down navigation.
-- Refresh automatically.
-- Support personalization.
-- Integrate AI recommendations.
-- Support desktop and mobile devices.
-- Use standard platform widgets.
-
----
-
-# Related Documents
-
-Inventory_Architecture.md
-
-TASK-017_Warehouse.md
-
-TASK-018_Location.md
-
-TASK-019_Inventory.md
-
-TASK-021_Goods_Receipt.md
-
-TASK-022_Goods_Issue.md
-
-TASK-023_Stock_Transfer.md
-
-TASK-024_Inventory_Count.md
-
-Dashboard_Widgets.md
-
-KPIs.md
-
-Standard_Charts.md
-
-AI_Widgets.md
-
-Notification_System.md
-
-Performance.md
-
-Caching.md
-
-Permission_Model.md
-
-Audit_Log.md
+`Inventory_Screens.md` · `Inventory_Workspaces.md` · `Inventory_Navigation.md` · `Inventory_User_Flows.md`  
+`INV_Receiving_Workbench.md` · `UI_Patterns.md` § Dashboard · `Screen_Types.md`

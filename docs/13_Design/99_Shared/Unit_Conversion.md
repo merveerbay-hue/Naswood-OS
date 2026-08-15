@@ -8,6 +8,8 @@
 
 **Status:** Approved
 
+**Material multi-UoM business engine (Inventory · Production · Sales · …):** [`Measurement_Conversion_Engine.md`](./Measurement_Conversion_Engine.md) — owns enter-once / role UoMs / dimensional wood composition. This document remains the unit-pair factors · packaging factors · engine primitive authority.
+
 ---
 
 # Purpose
@@ -300,6 +302,9 @@ Production Unit
 Sales Unit
 
 Packaging Unit
+
+**Product / material multi-UoM roles, enter-once UX, dimensional composition, and cross-module API contract:**  
+→ [`Measurement_Conversion_Engine.md`](./Measurement_Conversion_Engine.md)
 
 Reference
 

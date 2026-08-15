@@ -1,3 +1,5 @@
+> **UX authority note:** `+ New` / Create wireframes in this TASK are historical. Live CTAs: [`Sales_Screens.md`](./Sales_Screens.md) · [`Screen_Types.md`](../Common/Screen_Types.md) § Create matrix · Process_Screens.
+
 # TASK-039 — Quotation
 
 **Module:** Sales
@@ -53,7 +55,7 @@ Quotation Grid
 
 ────────────────────────────────────────────────────────────
 
-+ New Quotation
+**Prepare quotation** / Teklif hazırla
 
 Duplicate
 

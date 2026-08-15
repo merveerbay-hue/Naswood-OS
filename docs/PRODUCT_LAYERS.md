@@ -1,6 +1,8 @@
 # NOS Product Documentation Layers
 
 **Status:** Active roadmap  
+**Product thinking:** [`AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md`](../AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md)  
+**AI implementation:** [`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](../AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)  
 **Replaces as delivery driver:** `14_Implementation` TASK chain
 
 ---
@@ -8,59 +10,83 @@
 ## Stack
 
 ```text
-AI/NOS_CONSTITUTION/          Authority + AI execution protocol
+AI/NOS_CONSTITUTION/
+  04_PRODUCT_ARCHITECT.md     How we think & design (Product Architect Drive)
+  00_AI_EXECUTION.md          How AI implements after design
+  01–03                       Foundation / Engineering / Platform
+
 docs/
-├── 13_Design/                ✅ Backend / module design (Architecture, Workflow, API, Dashboard, Mobile)
+├── 00_Product/               ✅ Product map · Screen Map · Authority Matrix (SSOT)
+├── 13_Design/
+│   ├── Common/               ✅ Screen_Types · UI_Patterns (no shared Create)
+│   └── …/                    ✅ Module design packs (Architecture, Workflow, API, …)
 ├── 14_Implementation/        ✅ FROZEN — historical TASK archives only
-├── 15_UI_Architecture/       ✅ Module → Workspace IA
-├── 15_UI/                    ✅ Screen Architecture (PRD / QLT / MNT / INV / SAL / PUR / CRM)
-├── 16_Design_System/         ← Visual & interaction standards (index + topics → canonical DS)
-├── 17_User_Flows/            ← Cross-screen jobs
-├── 18_Component_Library/     ← Enterprise building blocks (Entity Grid, Kanban, …)
-├── 19_Navigation/            ← Menu, permissions, workspace chrome, breadcrumbs
-└── 20_Frontend_Architecture/ ← App shell, routing, state, module FE boundaries
+├── 15_UI_Architecture/       Module → Workspace IA
+├── 15_UI/                    Screen Architecture
+├── 16_Design_System/         Visual & interaction standards
+├── 17_User_Flows/            Cross-screen jobs / workflows
+├── 18_Component_Library/     Enterprise building blocks
+├── 19_Navigation/            Menu, permissions, workspace chrome
+└── 20_Frontend_Architecture/ App shell, routing, state, FE boundaries
 ```
 
 ---
 
-## Delivery chain (mandatory)
+## Product shape (mandatory)
 
 ```text
-Architecture
-    ↓
-Module
-    ↓
+NOS
+  ↓
+Modules
+  ↓
 Workspace
-    ↓
+  ↓
 Navigation
-    ↓
-Screens
-    ↓
-Components
-    ↓
-User Flow
-    ↓
-Frontend
+  ↓
+Screen
+  ↓
+Component
+  ↓
+Workflow
+  ↓
+Permissions
+  ↓
+Code
 ```
 
 **Not:**
 
 ```text
-Architecture → TASK → TASK → TASK
+Architecture → TASK → TASK → TASK → CRUD
 ```
 
 ---
 
-## How to ask Cursor (examples)
+## Design → Document → Code
+
+```text
+1. Real life          How does the factory work?
+2. User / roles       Who sees what?
+3. Market reference   SAP / IFS / Dynamics / Infor
+4. NOS better         Our product choice
+5. Document           Product layers above
+6. Cursor implement   Named workspace / screens only
+```
+
+---
+
+## How to ask Cursor
 
 | Avoid | Prefer |
 |-------|--------|
 | “TASK-078’i yap” | “Maintenance Workspace’i oluştur” |
-| “TASK-056 CRUD” | “Production Orders List + Detail (PRD-010/011)” |
+| “TASK-056 CRUD” | “Production Orders List + Detail — Planning workspace” |
 | “NCR ekranı ekle” | “Quality Non-Conformance screen family + CAPA flow” |
+| “TASK yazalım” | “Üretim Müdürü Production’da ne görmeli?” |
 
 ---
 
 ## AI entry
 
-[`AI/NOS_CONSTITUTION/00_AI_EXECUTION.md`](../AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
+1. Product thinking → [`04_PRODUCT_ARCHITECT.md`](../AI/NOS_CONSTITUTION/04_PRODUCT_ARCHITECT.md)  
+2. Implementation → [`00_AI_EXECUTION.md`](../AI/NOS_CONSTITUTION/00_AI_EXECUTION.md)
