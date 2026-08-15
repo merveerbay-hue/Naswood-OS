@@ -1,8 +1,8 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useMemo, useState, type DragEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
-import { executeStockDocument } from '@/api/business';
+import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 
 type StageId =
@@ -148,7 +148,7 @@ const AI_RULES = [
   'Depo optimizasyonu',
 ];
 
-/** Catalog of pickable packages (Manual Package Selection / Smart Scan). */
+/** Live packages come from /api/v1/packages (stock engine). */
 const UV = 0.0437; // m³ / piece for 26×140×4000 approx
 const UW = 18.5; // kg / piece demo
 
@@ -164,12 +164,12 @@ type SmartScanResult = {
 };
 
 function evaluateSmartScan(pkg: AllocRow): SmartScanResult {
-  const materialOk = pkg.species.toLowerCase().includes('thermowood') || pkg.species.toLowerCase().includes('pine');
-  const dimensionsOk = pkg.dimensions === '26×140×4000';
-  const qualityOk = pkg.quality === 'A';
-  const lotOk = pkg.lot.startsWith('LOT-TW-2026-000042');
+  const materialOk = Boolean(pkg.materialCode);
+  const dimensionsOk = true;
+  const qualityOk = pkg.quality === 'A' || pkg.quality === '—';
+  const lotOk = Boolean(pkg.lot);
   const customerOk = !pkg.code.startsWith('PKG-D');
-  const hardFail = !materialOk || !dimensionsOk;
+  const hardFail = !materialOk || pkg.available <= 0;
   const softWarning = !customerOk
     ? 'Bu paket farklı müşteriye rezervlidir. Devam etmek istiyor musunuz?'
     : !qualityOk || !lotOk
@@ -178,109 +178,41 @@ function evaluateSmartScan(pkg: AllocRow): SmartScanResult {
   return { pkg, materialOk, dimensionsOk, qualityOk, lotOk, customerOk, hardFail, softWarning };
 }
 
-const PACKAGE_CATALOG: AllocRow[] = [
-  {
-    code: 'PKG-001245',
-    materialCode: 'MAT-TW-DECK-26140',
-    warehouse: 'Ana Mamul Deposu',
-    location: 'WH01 / A03 / R05',
-    lot: 'LOT-TW-2026-000042',
-    mi: 'FG-TWDECK-20260801-00045',
-    species: 'Sarıçam Thermowood',
-    dimensions: '26×140×4000',
-    quality: 'A',
-    moisture: '%6',
-    available: 120,
-    selected: 40,
-    unitVolume: UV,
-    unitWeight: UW,
-  },
-  {
-    code: 'PKG-A-2026-000120',
-    materialCode: 'MAT-TW-DECK-26140',
-    warehouse: 'Ana Mamul Deposu',
-    location: 'A-01-02',
-    lot: 'LOT-TW-2026-000042',
-    mi: 'FG-TWDECK-20260801-00012',
-    species: 'Pine Thermowood',
-    dimensions: '26×140×4000',
-    quality: 'A',
-    moisture: '%6',
-    available: 20,
-    selected: 20,
-    unitVolume: UV,
-    unitWeight: UW,
-  },
-  {
-    code: 'PKG-B-2026-000088',
-    materialCode: 'MAT-TW-DECK-26140',
-    warehouse: 'Ana Mamul Deposu',
-    location: 'A-01-04',
-    lot: 'LOT-TW-2026-000042',
-    mi: 'FG-TWDECK-20260801-00018',
-    species: 'Pine Thermowood',
-    dimensions: '26×140×4000',
-    quality: 'A',
-    moisture: '%6',
-    available: 15,
-    selected: 15,
-    unitVolume: UV,
-    unitWeight: UW,
-  },
-  {
-    code: 'PKG-C-2026-000091',
-    materialCode: 'MAT-TW-DECK-26140',
-    warehouse: 'Ana Mamul Deposu',
-    location: 'A-02-01',
-    lot: 'LOT-TW-2026-000042',
-    mi: 'FG-TWDECK-20260801-00022',
-    species: 'Pine Thermowood',
-    dimensions: '26×140×4000',
-    quality: 'A',
-    moisture: '%6',
-    available: 15,
-    selected: 15,
-    unitVolume: UV,
-    unitWeight: UW,
-  },
-  {
-    code: 'PKG-00254',
-    materialCode: 'MAT-TW-DECK-26140',
-    warehouse: 'Ana Mamul Deposu',
-    location: 'A-03-02',
-    lot: 'LOT-TW-2026-000042',
-    mi: 'FG-TWDECK-20260801-00030',
-    species: 'Pine Thermowood',
-    dimensions: '26×140×4000',
-    quality: 'A',
-    moisture: '%6',
-    available: 120,
-    selected: 40,
-    unitVolume: UV,
-    unitWeight: UW,
-  },
-  {
-    code: 'PKG-D-2026-000210',
-    materialCode: 'MAT-TW-DECK-26140',
-    warehouse: 'Ana Mamul Deposu',
-    location: 'B-03-01',
-    lot: 'LOT-TW-2026-000099',
-    mi: 'FG-TWDECK-20260715-00008',
-    species: 'Pine Thermowood',
-    dimensions: '26×140×3000',
-    quality: 'B',
-    moisture: '%8',
-    available: 20,
-    selected: 20,
-    unitVolume: 0.0328,
-    unitWeight: 14.2,
-  },
-];
+type ApiPackage = Record<string, unknown>;
 
-/** Minimum package set for SO-250001 (50) — AI recommend A/B/C. */
-const AI_ALLOCATION: AllocRow[] = PACKAGE_CATALOG.filter((p) =>
-  ['PKG-A-2026-000120', 'PKG-B-2026-000088', 'PKG-C-2026-000091'].includes(p.code),
-).map((p) => ({ ...p }));
+function mapApiPackage(row: ApiPackage, selected = 0): AllocRow {
+  const qty = Number(row.quantity ?? row.Quantity ?? 0);
+  const code = String(row.packageNumber ?? row.PackageNumber ?? '');
+  return {
+    code,
+    materialCode: String(row.materialCode ?? row.MaterialCode ?? ''),
+    warehouse: String(row.warehouseCode ?? row.WarehouseCode ?? ''),
+    location: String(row.locationCode ?? row.LocationCode ?? ''),
+    lot: String(row.lotNumber ?? row.LotNumber ?? ''),
+    mi: String(row.materialIdentityNumber ?? row.MaterialIdentityNumber ?? ''),
+    species: String(row.materialCode ?? row.MaterialCode ?? '—'),
+    dimensions: '—',
+    quality: 'A',
+    moisture: '—',
+    available: qty,
+    selected: selected > 0 ? Math.min(selected, qty) : Math.min(qty, REQUIRED_QTY),
+    unitVolume: UV,
+    unitWeight: UW,
+  };
+}
+
+function buildAiAllocation(catalog: AllocRow[]): AllocRow[] {
+  const rows: AllocRow[] = [];
+  let need = REQUIRED_QTY;
+  for (const p of catalog) {
+    if (need <= 0) break;
+    if (p.available <= 0) continue;
+    const take = Math.min(p.available, need);
+    rows.push({ ...p, selected: take });
+    need -= take;
+  }
+  return rows;
+}
 
 function remainingOf(row: AllocRow) {
   return Math.max(0, row.available - row.selected);
@@ -311,6 +243,20 @@ export function GoodsIssueWorkbench() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const packagesQuery = useQuery({
+    queryKey: ['business', 'packages', 'gi-workbench'],
+    queryFn: () => searchResource<ApiPackage>('packages'),
+  });
+
+  const packageCatalog = useMemo(() => {
+    const items = packagesQuery.data?.items ?? [];
+    return items
+      .filter((row) => String(row.status ?? row.Status ?? '').toLowerCase() === 'available')
+      .map((row) => mapApiPackage(row));
+  }, [packagesQuery.data]);
+
+  const aiAllocation = useMemo(() => buildAiAllocation(packageCatalog), [packageCatalog]);
   const [stageIdx, setStageIdx] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
   const [posted, setPosted] = useState(false);
@@ -563,11 +509,15 @@ export function GoodsIssueWorkbench() {
   }
 
   function acceptAi() {
+    if (aiAllocation.length === 0) {
+      setError('Stokta uygun paket yok. Önce mal kabul (execute) ile paket oluşturun.');
+      return;
+    }
     setAiDecision('accept');
     setManualOpen(false);
     setSmartScan(null);
     setSoftConfirm(false);
-    const rows = AI_ALLOCATION.map((p) => ({ ...p }));
+    const rows = aiAllocation.map((p) => ({ ...p }));
     setAllocation(rows);
     syncDispositions(rows);
     setMixWaived(false);
@@ -593,7 +543,7 @@ export function GoodsIssueWorkbench() {
     const q = raw.trim().toLowerCase();
     if (!q) return null;
     return (
-      PACKAGE_CATALOG.find(
+      packageCatalog.find(
         (p) => p.code.toLowerCase() === q || p.code.toLowerCase().includes(q) || p.mi.toLowerCase() === q,
       ) ?? null
     );
@@ -626,7 +576,7 @@ export function GoodsIssueWorkbench() {
   }
 
   function addPackage(code: string, via: string = 'add') {
-    const src = PACKAGE_CATALOG.find((p) => p.code === code);
+    const src = packageCatalog.find((p) => p.code === code);
     if (!src || allocation.some((a) => a.code === code)) return;
     setAllocation((rows) => {
       const next = [...rows, { ...src }];
@@ -669,14 +619,14 @@ export function GoodsIssueWorkbench() {
   }
 
   function applyDemoDisposition(code: string) {
-    const pkg = PACKAGE_CATALOG.find((p) => p.code === code);
-    if (!pkg) return;
-    // A:13 Good + PKG-00254:40 (Good 37 · Damaged 2 · Scrap 1) → Good total 50
-    const a = { ...AI_ALLOCATION[0], selected: 13 };
-    const pick = { ...pkg, selected: 40 };
+    const pkg = packageCatalog.find((p) => p.code === code);
+    if (!pkg || aiAllocation.length === 0) return;
+    // Prefer live AI allocation + scanned package to hit required good total.
+    const a = { ...aiAllocation[0], selected: Math.min(13, aiAllocation[0].available) };
+    const pick = { ...pkg, selected: Math.min(40, pkg.available) };
     setAllocation([a, pick]);
     setDispositions({
-      [a.code]: emptyDisposition(13),
+      [a.code]: emptyDisposition(a.selected),
       [code]: {
         good: 37,
         damaged: 2,
@@ -698,7 +648,7 @@ export function GoodsIssueWorkbench() {
 
   function resetToAi() {
     setAiDecision('accept');
-    const rows = AI_ALLOCATION.map((p) => ({ ...p }));
+    const rows = aiAllocation.map((p) => ({ ...p }));
     setAllocation(rows);
     syncDispositions(rows);
     setManualOpen(false);
@@ -716,7 +666,7 @@ export function GoodsIssueWorkbench() {
     const match = allocation.find(
       (r) => r.code.toUpperCase() === v || r.code.toUpperCase().includes(v) || v.includes(r.code.toUpperCase().slice(0, 10)),
     );
-    const inCatalog = PACKAGE_CATALOG.find(
+    const inCatalog = packageCatalog.find(
       (r) => r.code.toUpperCase() === v || r.code.toUpperCase().includes(v),
     );
     if (match) {
@@ -1190,7 +1140,7 @@ export function GoodsIssueWorkbench() {
                         </tr>
                       </thead>
                       <tbody>
-                        {AI_ALLOCATION.map((p) => (
+                        {aiAllocation.map((p) => (
                           <tr key={p.code} className="border-t border-[var(--border-default)]">
                             <td className="px-3 py-2 font-mono font-medium">{p.code}</td>
                             <td className="px-3 py-2 font-mono">{p.location}</td>

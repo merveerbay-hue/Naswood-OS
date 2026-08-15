@@ -70,44 +70,33 @@ public sealed class GetInventoryBalanceByIdQueryHandler : IQueryHandler<GetInven
 
 public sealed class CreateInventoryBalanceCommandHandler : ICommandHandler<CreateInventoryBalanceCommand, Result<InventoryBalanceDto>>
 {
-    private readonly IInventoryBalanceRepository _repo;
-    private readonly IBusinessUnitOfWork _uow;
-    public CreateInventoryBalanceCommandHandler(IInventoryBalanceRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
-    public async Task<Result<InventoryBalanceDto>> HandleAsync(CreateInventoryBalanceCommand command, CancellationToken cancellationToken = default)
+    public Task<Result<InventoryBalanceDto>> HandleAsync(CreateInventoryBalanceCommand command, CancellationToken cancellationToken = default)
     {
-        var e = InventoryBalance.Create(command.MaterialCode, command.WarehouseCode, command.LocationCode, command.BatchNumber, command.QuantityOnHand, command.QuantityReserved, command.Status);
-        await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
-        await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return Result.Success(InventoryBalanceMapper.ToDto(e));
+        _ = command;
+        return Task.FromResult(Result.Failure<InventoryBalanceDto>(Error.Validation(
+            "INV-BAL-001",
+            "Inventory balances are ledger-owned. Post stock via goods-receipts/execute or goods-issues/execute.")));
     }
 }
 
 public sealed class UpdateInventoryBalanceCommandHandler : ICommandHandler<UpdateInventoryBalanceCommand, Result<InventoryBalanceDto>>
 {
-    private readonly IInventoryBalanceRepository _repo;
-    private readonly IBusinessUnitOfWork _uow;
-    public UpdateInventoryBalanceCommandHandler(IInventoryBalanceRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
-    public async Task<Result<InventoryBalanceDto>> HandleAsync(UpdateInventoryBalanceCommand command, CancellationToken cancellationToken = default)
+    public Task<Result<InventoryBalanceDto>> HandleAsync(UpdateInventoryBalanceCommand command, CancellationToken cancellationToken = default)
     {
-        var e = await _repo.GetByIdAsync(command.Id, cancellationToken).ConfigureAwait(false);
-        if (e is null || e.IsDeleted) return Result.Failure<InventoryBalanceDto>(Error.NotFound("BUS-001", "InventoryBalance was not found."));
-        e.Update(command.MaterialCode, command.WarehouseCode, command.LocationCode, command.BatchNumber, command.QuantityOnHand, command.QuantityReserved, command.Status);
-        await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return Result.Success(InventoryBalanceMapper.ToDto(e));
+        _ = command;
+        return Task.FromResult(Result.Failure<InventoryBalanceDto>(Error.Validation(
+            "INV-BAL-002",
+            "Inventory balances cannot be edited directly. Use inventory transactions (execute) or adjustments workflow.")));
     }
 }
 
 public sealed class DeleteInventoryBalanceCommandHandler : ICommandHandler<DeleteInventoryBalanceCommand, Result>
 {
-    private readonly IInventoryBalanceRepository _repo;
-    private readonly IBusinessUnitOfWork _uow;
-    public DeleteInventoryBalanceCommandHandler(IInventoryBalanceRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
-    public async Task<Result> HandleAsync(DeleteInventoryBalanceCommand command, CancellationToken cancellationToken = default)
+    public Task<Result> HandleAsync(DeleteInventoryBalanceCommand command, CancellationToken cancellationToken = default)
     {
-        var e = await _repo.GetByIdAsync(command.Id, cancellationToken).ConfigureAwait(false);
-        if (e is null || e.IsDeleted) return Result.Failure(Error.NotFound("BUS-001", "InventoryBalance was not found."));
-        e.SoftDelete();
-        await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return Result.Success();
+        _ = command;
+        return Task.FromResult(Result.Failure(Error.Validation(
+            "INV-BAL-003",
+            "Inventory balances cannot be deleted directly. Reverse stock via inventory transactions.")));
     }
 }

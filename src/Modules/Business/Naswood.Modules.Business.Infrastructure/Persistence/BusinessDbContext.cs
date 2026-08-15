@@ -75,6 +75,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.UnitOfMeasure).HasMaxLength(200);
             entity.Property(x => x.Status).HasMaxLength(200);
             entity.Property(x => x.DefinitionJson).HasColumnType("text");
+            entity.HasIndex(x => x.Code);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.Warehouse>(entity =>
@@ -89,6 +90,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PlantId).HasMaxLength(200);
             entity.Property(x => x.WarehouseType).HasMaxLength(200);
             entity.Property(x => x.Status).HasMaxLength(200);
+            entity.HasIndex(x => x.Code);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.Location>(entity =>
