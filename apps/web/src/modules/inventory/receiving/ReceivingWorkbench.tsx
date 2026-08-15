@@ -19,13 +19,17 @@ import {
   type PhotoSlot,
   type TruckInfo,
 } from './TruckEvidenceStep';
+import {
+  MaterialCheckStep,
+  createDefaultMaterialCheck,
+  type MaterialCheckState,
+} from './MaterialCheckStep';
 
 /**
  * Real ops receiving rail (6 stages):
  * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
  *
- * This change implements Stage 1 fully. Stages 2–6 keep the existing safe stock path
- * (material master match + verified qty) until each stage is built next.
+ * Stage 1 + Stage 2 implemented. Stages 3–6 keep the safe stock path until built next.
  */
 type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
@@ -87,7 +91,7 @@ export function ReceivingWorkbench() {
   const [photos, setPhotos] = useState<Partial<Record<PhotoSlot, boolean>>>({});
 
   const [materialLabel, setMaterialLabel] = useState(PLACEHOLDER_MATERIAL_LABEL);
-  const [preAccept, setPreAccept] = useState<'none' | 'ok' | 'conditional' | 'reject'>('none');
+  const [materialCheck, setMaterialCheck] = useState<MaterialCheckState>(() => createDefaultMaterialCheck());
   const [countQty, setCountQty] = useState('48');
   const [quantityVerified, setQuantityVerified] = useState(false);
   const [compareResolved, setCompareResolved] = useState(false);
@@ -100,6 +104,7 @@ export function ReceivingWorkbench() {
   const [warehouse, setWarehouse] = useState('WH-RM');
   const [location, setLocation] = useState('A-03-02');
 
+  const preAccept = materialCheck.preAccept;
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
     queryFn: () =>
@@ -179,6 +184,7 @@ export function ReceivingWorkbench() {
         if (docs.length === 0 && photoCount === 0) return t('wb.rcv.ops.gateNeedEvidence');
         return null;
       case 'materialCheck':
+        if (materialCheck.qualityVerdict === 'none') return t('wb.rcv.ops.check.gateNeedQuality');
         if (preAccept === 'none') return t('wb.rcv.ops.gateNeedPreAccept');
         if (preAccept === 'reject') return t('wb.rcv.ops.gatePreAcceptReject');
         if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
@@ -202,6 +208,7 @@ export function ReceivingWorkbench() {
     truck.supplier,
     docs.length,
     photoCount,
+    materialCheck.qualityVerdict,
     preAccept,
     matchConfirmed,
     matchedMaterialCode,
@@ -293,6 +300,11 @@ export function ReceivingWorkbench() {
           `arrival=${truck.arrivalDate}T${truck.arrivalTime}`,
           `gate=${truck.gate}`,
           `preAccept=${preAccept}`,
+          `quality=${materialCheck.qualityVerdict}`,
+          `moistureTarget=${materialCheck.targetMoisturePct}`,
+          `moistureSamples=${materialCheck.moistureSamples.map((s) => s.valuePct).join('/')}`,
+          `dimsTarget=${materialCheck.targetThickness}x${materialCheck.targetWidth}x${materialCheck.targetLength}`,
+          `qualityFlags=${Object.keys(materialCheck.qualityFlags).filter((k) => materialCheck.qualityFlags[k]).join(',') || 'none'}`,
           `photos=${photoCount}`,
           `docs=${docs.join(',')}`,
           `qty=${qty}`,
@@ -445,119 +457,96 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'materialCheck' ? (
-                <div className="space-y-4">
-                  <p className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-                    {t('wb.rcv.ops.stage2Interim')}
-                  </p>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">{t('wb.rcv.ops.preAcceptTitle')}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(
-                        [
-                          ['ok', t('wb.rcv.ops.preAccept.ok')],
-                          ['conditional', t('wb.rcv.ops.preAccept.conditional')],
-                          ['reject', t('wb.rcv.ops.preAccept.reject')],
-                        ] as const
-                      ).map(([id, label]) => (
-                        <Button
-                          key={id}
-                          type="button"
-                          size="sm"
-                          variant={preAccept === id ? 'default' : 'secondary'}
+                <MaterialCheckStep
+                  value={materialCheck}
+                  onChange={setMaterialCheck}
+                  disabled={posted}
+                  materialMatchSlot={
+                    <div className="space-y-3">
+                      <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
+                        <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.incomingLabel')}</p>
+                        <Input
+                          className="mt-1"
+                          value={materialLabel}
                           disabled={posted}
-                          onClick={() => setPreAccept(id)}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.incomingLabel')}</p>
-                    <Input
-                      className="mt-1"
-                      value={materialLabel}
-                      disabled={posted}
-                      onChange={(e) => {
-                        setMaterialLabel(e.target.value);
-                        clearMaterialMatch();
-                      }}
-                    />
-                  </div>
-
-                  {suggestedMatch ? (
-                    <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-                      <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.suggestedMaterial')}</p>
-                      <p className="font-mono text-sm font-semibold">{suggestedMatch.material.code}</p>
-                      <p className="text-sm">{suggestedMatch.material.name}</p>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        {formatDims(
-                          parseDefinitionDims(suggestedMatch.material.definitionJson) ??
-                            parseDimensions(suggestedMatch.material.name),
-                        )}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        {t('wb.rcv.materialMatchScore')}: %{suggestedMatch.score} ·{' '}
-                        {t(`wb.rcv.matchStatus.${suggestedMatch.status}`)}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          disabled={posted || suggestedMatch.status === 'NO_MATCH'}
-                          onClick={() => confirmMatch(suggestedMatch)}
-                        >
-                          {t('wb.rcv.confirmMatch')}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          disabled={posted}
-                          onClick={() => {
-                            setShowMaterialPicker(true);
+                          onChange={(e) => {
+                            setMaterialLabel(e.target.value);
                             clearMaterialMatch();
                           }}
-                        >
-                          {t('wb.rcv.pickOtherMaterial')}
-                        </Button>
+                        />
                       </div>
-                      {matchConfirmed ? (
-                        <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
-                          {t('wb.rcv.matchConfirmedBanner')} · {matchedMaterialCode}
-                        </p>
+                      {suggestedMatch ? (
+                        <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
+                          <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.suggestedMaterial')}</p>
+                          <p className="font-mono text-sm font-semibold">{suggestedMatch.material.code}</p>
+                          <p className="text-sm">{suggestedMatch.material.name}</p>
+                          <p className="text-xs text-[var(--text-muted)]">
+                            {formatDims(
+                              parseDefinitionDims(suggestedMatch.material.definitionJson) ??
+                                parseDimensions(suggestedMatch.material.name),
+                            )}
+                          </p>
+                          <p className="mt-1 text-xs">
+                            {t('wb.rcv.materialMatchScore')}: %{suggestedMatch.score} ·{' '}
+                            {t(`wb.rcv.matchStatus.${suggestedMatch.status}`)}
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              disabled={posted || suggestedMatch.status === 'NO_MATCH'}
+                              onClick={() => confirmMatch(suggestedMatch)}
+                            >
+                              {t('wb.rcv.confirmMatch')}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              disabled={posted}
+                              onClick={() => {
+                                setShowMaterialPicker(true);
+                                clearMaterialMatch();
+                              }}
+                            >
+                              {t('wb.rcv.pickOtherMaterial')}
+                            </Button>
+                          </div>
+                          {matchConfirmed ? (
+                            <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
+                              {t('wb.rcv.matchConfirmedBanner')} · {matchedMaterialCode}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.noMaterialsInMaster')}</p>
+                      )}
+                      {showMaterialPicker ? (
+                        <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
+                          <Input
+                            value={materialSearch}
+                            disabled={posted}
+                            placeholder={t('wb.rcv.materialSearchPlaceholder')}
+                            onChange={(e) => setMaterialSearch(e.target.value)}
+                          />
+                          <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
+                            {pickerList.map((m) => (
+                              <li key={m.id}>
+                                <button
+                                  type="button"
+                                  disabled={posted}
+                                  className="flex w-full flex-col rounded-md px-2 py-1.5 text-left hover:bg-[var(--color-surface-hover)]"
+                                  onClick={() => selectMasterMaterial(m)}
+                                >
+                                  <span className="font-mono text-xs font-semibold">{m.code}</span>
+                                  <span>{m.name}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       ) : null}
                     </div>
-                  ) : (
-                    <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.noMaterialsInMaster')}</p>
-                  )}
-
-                  {showMaterialPicker ? (
-                    <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
-                      <Input
-                        value={materialSearch}
-                        disabled={posted}
-                        placeholder={t('wb.rcv.materialSearchPlaceholder')}
-                        onChange={(e) => setMaterialSearch(e.target.value)}
-                      />
-                      <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
-                        {pickerList.map((m) => (
-                          <li key={m.id}>
-                            <button
-                              type="button"
-                              disabled={posted}
-                              className="flex w-full flex-col rounded-md px-2 py-1.5 text-left hover:bg-[var(--color-surface-hover)]"
-                              onClick={() => selectMasterMaterial(m)}
-                            >
-                              <span className="font-mono text-xs font-semibold">{m.code}</span>
-                              <span>{m.name}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
+                  }
+                />
               ) : null}
 
               {stage.id === 'physicalCount' ? (
@@ -615,6 +604,20 @@ export function ReceivingWorkbench() {
                       [t('wb.rcv.supplier'), truck.supplier],
                       [t('wb.rcv.ops.evidenceSummary'), `${docs.length} belge · ${photoCount} foto`],
                       [t('wb.rcv.ops.preAcceptTitle'), preAccept === 'none' ? '—' : t(`wb.rcv.ops.preAccept.${preAccept}`)],
+                      [
+                        t('wb.rcv.ops.check.moisture'),
+                        `${materialCheck.targetMoisturePct}% · ${materialCheck.moistureSamples.map((s) => s.valuePct).filter(Boolean).join(' / ') || '—'}`,
+                      ],
+                      [
+                        t('wb.rcv.ops.check.quality'),
+                        materialCheck.qualityVerdict === 'none'
+                          ? '—'
+                          : t(`wb.rcv.ops.check.qualityVerdict.${materialCheck.qualityVerdict}`),
+                      ],
+                      [
+                        t('wb.rcv.ops.check.dims'),
+                        `${materialCheck.targetThickness}×${materialCheck.targetWidth}×${materialCheck.targetLength}`,
+                      ],
                       [t('wb.rcv.matchedMaterial'), matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')],
                       [t('wb.rcv.countedQty'), `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`],
                       [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
