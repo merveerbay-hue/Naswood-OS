@@ -83,12 +83,23 @@ type Props = {
   value: MaterialCheckState;
   onChange: (next: MaterialCheckState) => void;
   disabled?: boolean;
+  /** Hide batch pre-accept when per-line decisions are shown in parent. */
+  hidePreAccept?: boolean;
+  /** Hide global nem/ölçü when each incoming line has its own checks. */
+  hideMoistureAndDims?: boolean;
   /** Slot below checks for material-card matching UI (kept in parent). */
   materialMatchSlot?: ReactNode;
 };
 
 /** Stage 2 — Malzeme kontrolü: nem, kalite, ölçü, foto, ön kabul. */
-export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot }: Props) {
+export function MaterialCheckStep({
+  value,
+  onChange,
+  disabled,
+  hidePreAccept,
+  hideMoistureAndDims,
+  materialMatchSlot,
+}: Props) {
   const { t } = useI18n();
 
   function patch(partial: Partial<MaterialCheckState>) {
@@ -130,9 +141,12 @@ export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.check.intro')}</p>
+      <p className="text-sm text-[var(--text-secondary)]">
+        {hideMoistureAndDims ? t('wb.rcv.ops.check.introShipment') : t('wb.rcv.ops.check.intro')}
+      </p>
 
       {/* Nem */}
+      {!hideMoistureAndDims ? (
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.check.moisture')}</h3>
@@ -206,6 +220,7 @@ export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot
           ) : null}
         </div>
       </section>
+      ) : null}
 
       {/* Kalite */}
       <section className="space-y-3">
@@ -263,6 +278,7 @@ export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot
       </section>
 
       {/* Ölçü */}
+      {!hideMoistureAndDims ? (
       <section className="space-y-3">
         <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.check.dims')}</h3>
         <div className="grid gap-2 sm:grid-cols-3">
@@ -334,6 +350,7 @@ export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot
           {t('wb.rcv.ops.check.addSample')}
         </Button>
       </section>
+      ) : null}
 
       {/* Foto */}
       <section className="space-y-3">
@@ -366,30 +383,32 @@ export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot
         </div>
       </section>
 
-      {/* Ön kabul */}
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.preAcceptTitle')}</h3>
-        <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.check.preAcceptHint')}</p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ['ok', t('wb.rcv.ops.preAccept.ok')],
-              ['conditional', t('wb.rcv.ops.preAccept.conditional')],
-              ['reject', t('wb.rcv.ops.preAccept.reject')],
-            ] as const
-          ).map(([id, label]) => (
-            <Button
-              key={id}
-              type="button"
-              variant={value.preAccept === id ? 'default' : 'secondary'}
-              disabled={disabled}
-              onClick={() => patch({ preAccept: id })}
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-      </section>
+      {/* Ön kabul — batch (hidden when parent shows per-line) */}
+      {!hidePreAccept ? (
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.preAcceptTitle')}</h3>
+          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.check.preAcceptHint')}</p>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ['ok', t('wb.rcv.ops.preAccept.ok')],
+                ['conditional', t('wb.rcv.ops.preAccept.conditional')],
+                ['reject', t('wb.rcv.ops.preAccept.reject')],
+              ] as const
+            ).map(([id, label]) => (
+              <Button
+                key={id}
+                type="button"
+                variant={value.preAccept === id ? 'default' : 'secondary'}
+                disabled={disabled}
+                onClick={() => patch({ preAccept: id })}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {materialMatchSlot ? (
         <section className="space-y-3 border-t border-[var(--border-default)] pt-4">

@@ -4,14 +4,7 @@ import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
-import {
-  formatDims,
-  parseDefinitionDims,
-  parseDimensions,
-  rankMaterialMatches,
-  type MaterialCandidate,
-  type MaterialMatchResult,
-} from './materialMatch';
+import { type MaterialCandidate } from './materialMatch';
 import { DocumentControlPanel } from './DocumentControlPanel';
 import {
   TruckEvidenceStep,
@@ -24,12 +17,19 @@ import {
   createDefaultMaterialCheck,
   type MaterialCheckState,
 } from './MaterialCheckStep';
+import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountStep';
+import { IncomingLineCheckPanel } from './IncomingLineCheckPanel';
 import {
-  PhysicalCountStep,
-  createDefaultPhysicalCount,
-  finalPhysicalQty,
-  type PhysicalCountState,
-} from './PhysicalCountStep';
+  allCountableCounted,
+  allLinesReadyForCount,
+  countableLines,
+  finalLineQty,
+  formatLineDims,
+  lineMaterialMatched,
+  seedIncomingFromDocuments,
+  syncBatchPreAccept,
+  type IncomingLine,
+} from './incomingLines';
 
 /**
  * Real ops receiving rail (6 stages):
@@ -54,7 +54,7 @@ const STAGES: StageDef[] = [
   { id: 'stock', titleKey: 'wb.rcv.ops.step.stock', hintKey: 'wb.rcv.ops.step.stockHint' },
 ];
 
-/** Placeholder label used until Stage 3 document reading extracts lines. */
+/** Placeholder until Stage 1 seeds incoming lines. */
 const PLACEHOLDER_MATERIAL_LABEL = 'Thermowood Deck 26×140×3000';
 
 function mintPreview(prefix: string) {
@@ -96,22 +96,28 @@ export function ReceivingWorkbench() {
   const [docs, setDocs] = useState<EvidenceDocKind[]>([]);
   const [photos, setPhotos] = useState<Partial<Record<PhotoSlot, boolean>>>({});
 
-  const [materialLabel, setMaterialLabel] = useState(PLACEHOLDER_MATERIAL_LABEL);
   const [materialCheck, setMaterialCheck] = useState<MaterialCheckState>(() => createDefaultMaterialCheck());
-  const [physicalCount, setPhysicalCount] = useState<PhysicalCountState>(() => createDefaultPhysicalCount());
+  const [incomingLines, setIncomingLines] = useState<IncomingLine[]>([]);
   const [compareResolved, setCompareResolved] = useState(false);
-  const [matchedMaterialCode, setMatchedMaterialCode] = useState('');
-  const [matchedMaterialId, setMatchedMaterialId] = useState('');
-  const [matchConfirmed, setMatchConfirmed] = useState(false);
-  const [confirmedMatchScore, setConfirmedMatchScore] = useState<number | null>(null);
-  const [showMaterialPicker, setShowMaterialPicker] = useState(false);
-  const [materialSearch, setMaterialSearch] = useState('');
   const [warehouse, setWarehouse] = useState('WH-RM');
   const [location, setLocation] = useState('A-03-02');
 
-  const preAccept = materialCheck.preAccept;
-  const countQty = String(finalPhysicalQty(physicalCount) || physicalCount.operatorQty || '');
-  const quantityVerified = physicalCount.verified;
+  const preAccept = syncBatchPreAccept(incomingLines);
+  const countable = useMemo(() => countableLines(incomingLines), [incomingLines]);
+  const countQty = String(finalPhysicalQtyFromLines(incomingLines) || '');
+  const quantityVerified = allCountableCounted(incomingLines);
+  const primaryStockLine = useMemo(() => {
+    const counted = countable.filter((l) => l.countStatus === 'counted' && lineMaterialMatched(l));
+    return counted.find((l) => l.kind === 'lumber') ?? counted[0] ?? null;
+  }, [countable]);
+  const matchedMaterialCode = primaryStockLine?.matchedMaterialCode ?? '';
+  const matchedMaterialId = primaryStockLine?.matchedMaterialId ?? '';
+  const matchConfirmed = !!primaryStockLine && lineMaterialMatched(primaryStockLine);
+  const confirmedMatchScore = primaryStockLine?.matchScore ?? null;
+  const materialLabel = primaryStockLine
+    ? `${primaryStockLine.name} ${formatLineDims(primaryStockLine)}`
+    : PLACEHOLDER_MATERIAL_LABEL;
+
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
     queryFn: () =>
@@ -143,20 +149,6 @@ export function ReceivingWorkbench() {
         })),
     [materialsQuery.data],
   );
-
-  const rankedMatches = useMemo(
-    () => rankMaterialMatches(materialLabel, materialCandidates, undefined, 8),
-    [materialLabel, materialCandidates],
-  );
-  const suggestedMatch: MaterialMatchResult | null = rankedMatches[0] ?? null;
-
-  const pickerList = useMemo(() => {
-    const q = materialSearch.trim().toLowerCase();
-    if (!q) return materialCandidates;
-    return materialCandidates.filter(
-      (m) => m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
-    );
-  }, [materialCandidates, materialSearch]);
 
   const stage = STAGES[stageIdx];
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
@@ -191,14 +183,15 @@ export function ReceivingWorkbench() {
         if (docs.length === 0 && photoCount === 0) return t('wb.rcv.ops.gateNeedEvidence');
         return null;
       case 'materialCheck':
+        if (incomingLines.length === 0) return t('wb.rcv.ops.check.noIncomingYet');
+        if (!allLinesReadyForCount(incomingLines)) return t('wb.rcv.ops.check.gateNeedPerLineMaterial');
         if (materialCheck.qualityVerdict === 'none') return t('wb.rcv.ops.check.gateNeedQuality');
-        if (preAccept === 'none') return t('wb.rcv.ops.gateNeedPreAccept');
         if (preAccept === 'reject') return t('wb.rcv.ops.gatePreAcceptReject');
-        if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
+        if (countable.length === 0) return t('wb.rcv.ops.gateAllRejected');
         return null;
       case 'physicalCount':
-        if (finalPhysicalQty(physicalCount) <= 0) return t('wb.rcv.gateNeedCount');
-        if (!physicalCount.verified) return t('wb.rcv.gateNeedQtyVerify');
+        if (countable.length === 0) return t('wb.rcv.ops.count.noCountable');
+        if (!allCountableCounted(incomingLines)) return t('wb.rcv.ops.count.needAllCounted');
         return null;
       case 'compare':
         return !compareResolved ? t('wb.rcv.gateNeedControl') : null;
@@ -215,11 +208,10 @@ export function ReceivingWorkbench() {
     truck.supplier,
     docs.length,
     photoCount,
+    incomingLines,
     materialCheck.qualityVerdict,
     preAccept,
-    matchConfirmed,
-    matchedMaterialCode,
-    physicalCount,
+    countable.length,
     compareResolved,
     approved,
     postBlockedReason,
@@ -228,32 +220,8 @@ export function ReceivingWorkbench() {
 
   const canAdvance = !gateMessage && !posted;
 
-  function clearMaterialMatch() {
-    setMatchedMaterialCode('');
-    setMatchedMaterialId('');
-    setMatchConfirmed(false);
-    setConfirmedMatchScore(null);
-    setApproved(false);
-    setPhysicalCount((c) => ({ ...c, verified: false }));
-  }
-
-  function confirmMatch(result: MaterialMatchResult) {
-    if (result.status === 'NO_MATCH') return;
-    setMatchedMaterialCode(result.material.code);
-    setMatchedMaterialId(result.material.id);
-    setConfirmedMatchScore(result.score);
-    setMatchConfirmed(true);
-    setShowMaterialPicker(false);
-    setApproved(false);
-  }
-
-  function selectMasterMaterial(m: MaterialCandidate) {
-    const scored = rankMaterialMatches(materialLabel, [m], undefined, 1)[0];
-    setMatchedMaterialCode(m.code);
-    setMatchedMaterialId(m.id);
-    setConfirmedMatchScore(scored?.score ?? 0);
-    setMatchConfirmed(true);
-    setShowMaterialPicker(false);
+  function updateIncomingLines(next: IncomingLine[]) {
+    setIncomingLines(next);
     setApproved(false);
   }
 
@@ -307,19 +275,27 @@ export function ReceivingWorkbench() {
           `arrival=${truck.arrivalDate}T${truck.arrivalTime}`,
           `gate=${truck.gate}`,
           `preAccept=${preAccept}`,
+          `incomingLines=${incomingLines.length}`,
+          `countable=${countable.length}`,
+          `lineChecks=${incomingLines
+            .map(
+              (l) =>
+                `${l.name}|moist=${l.moistureSamples.map((s) => s.valuePct).filter(Boolean).join('/')}|dims=${l.dimSamples.filter((d) => d.thickness).length}|pa=${l.preAccept}`,
+            )
+            .join(',')}`,
+          `counted=${countable
+            .filter((l) => l.countStatus === 'counted')
+            .map((l) => `${l.name}|${formatLineDims(l)}|${finalLineQty(l)}${l.unit}`)
+            .join(',')}`,
+          `rejected=${incomingLines
+            .filter((l) => l.preAccept === 'reject')
+            .map((l) => l.name)
+            .join(',')}`,
           `quality=${materialCheck.qualityVerdict}`,
-          `moistureTarget=${materialCheck.targetMoisturePct}`,
-          `moistureSamples=${materialCheck.moistureSamples.map((s) => s.valuePct).join('/')}`,
-          `dimsTarget=${materialCheck.targetThickness}x${materialCheck.targetWidth}x${materialCheck.targetLength}`,
           `qualityFlags=${Object.keys(materialCheck.qualityFlags).filter((k) => materialCheck.qualityFlags[k]).join(',') || 'none'}`,
           `photos=${photoCount}`,
           `docs=${docs.join(',')}`,
-          `countMethod=${physicalCount.method}`,
-          `documentQty=${physicalCount.documentQty}`,
-          `aiQty=${physicalCount.aiQty}`,
-          `operatorQty=${physicalCount.operatorQty}`,
           `qty=${qty}`,
-          `packages=${physicalCount.packages}x${physicalCount.perPackage}`,
           `loc=${locCode}`,
           `materialId=${materialId}`,
           `material=${materialCode}`,
@@ -368,6 +344,9 @@ export function ReceivingWorkbench() {
       }
       persistMutation.mutate();
       return;
+    }
+    if (stage.id === 'truckEvidence' && incomingLines.length === 0) {
+      setIncomingLines(seedIncomingFromDocuments());
     }
     const next = Math.min(stageIdx + 1, STAGES.length - 1);
     setStageIdx(next);
@@ -469,105 +448,30 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'materialCheck' ? (
-                <MaterialCheckStep
-                  value={materialCheck}
-                  onChange={setMaterialCheck}
-                  disabled={posted}
-                  materialMatchSlot={
-                    <div className="space-y-3">
-                      <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-                        <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.incomingLabel')}</p>
-                        <Input
-                          className="mt-1"
-                          value={materialLabel}
-                          disabled={posted}
-                          onChange={(e) => {
-                            setMaterialLabel(e.target.value);
-                            clearMaterialMatch();
-                          }}
-                        />
-                      </div>
-                      {suggestedMatch ? (
-                        <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-                          <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.suggestedMaterial')}</p>
-                          <p className="font-mono text-sm font-semibold">{suggestedMatch.material.code}</p>
-                          <p className="text-sm">{suggestedMatch.material.name}</p>
-                          <p className="text-xs text-[var(--text-muted)]">
-                            {formatDims(
-                              parseDefinitionDims(suggestedMatch.material.definitionJson) ??
-                                parseDimensions(suggestedMatch.material.name),
-                            )}
-                          </p>
-                          <p className="mt-1 text-xs">
-                            {t('wb.rcv.materialMatchScore')}: %{suggestedMatch.score} ·{' '}
-                            {t(`wb.rcv.matchStatus.${suggestedMatch.status}`)}
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              disabled={posted || suggestedMatch.status === 'NO_MATCH'}
-                              onClick={() => confirmMatch(suggestedMatch)}
-                            >
-                              {t('wb.rcv.confirmMatch')}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              disabled={posted}
-                              onClick={() => {
-                                setShowMaterialPicker(true);
-                                clearMaterialMatch();
-                              }}
-                            >
-                              {t('wb.rcv.pickOtherMaterial')}
-                            </Button>
-                          </div>
-                          {matchConfirmed ? (
-                            <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
-                              {t('wb.rcv.matchConfirmedBanner')} · {matchedMaterialCode}
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.noMaterialsInMaster')}</p>
-                      )}
-                      {showMaterialPicker ? (
-                        <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
-                          <Input
-                            value={materialSearch}
-                            disabled={posted}
-                            placeholder={t('wb.rcv.materialSearchPlaceholder')}
-                            onChange={(e) => setMaterialSearch(e.target.value)}
-                          />
-                          <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
-                            {pickerList.map((m) => (
-                              <li key={m.id}>
-                                <button
-                                  type="button"
-                                  disabled={posted}
-                                  className="flex w-full flex-col rounded-md px-2 py-1.5 text-left hover:bg-[var(--color-surface-hover)]"
-                                  onClick={() => selectMasterMaterial(m)}
-                                >
-                                  <span className="font-mono text-xs font-semibold">{m.code}</span>
-                                  <span>{m.name}</span>
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </div>
-                  }
-                />
+                <div className="space-y-5">
+                  <IncomingLineCheckPanel
+                    lines={incomingLines}
+                    onChange={updateIncomingLines}
+                    materialCandidates={materialCandidates}
+                    disabled={posted}
+                    onRefreshMaterials={() => {
+                      void materialsQuery.refetch();
+                    }}
+                  />
+                  <MaterialCheckStep
+                    value={materialCheck}
+                    onChange={setMaterialCheck}
+                    disabled={posted}
+                    hidePreAccept
+                    hideMoistureAndDims
+                  />
+                </div>
               ) : null}
 
               {stage.id === 'physicalCount' ? (
                 <PhysicalCountStep
-                  value={physicalCount}
-                  onChange={(next) => {
-                    setPhysicalCount(next);
-                    if (!next.verified) setApproved(false);
-                  }}
+                  lines={incomingLines}
+                  onChange={updateIncomingLines}
                   disabled={posted}
                 />
               ) : null}
@@ -576,9 +480,7 @@ export function ReceivingWorkbench() {
                 <DocumentControlPanel
                   disabled={posted}
                   onResolvedChange={setCompareResolved}
-                  onRequestMaterialMatch={(line) => {
-                    setMaterialLabel(line.product);
-                    clearMaterialMatch();
+                  onRequestMaterialMatch={() => {
                     const idx = STAGES.findIndex((s) => s.id === 'materialCheck');
                     if (idx >= 0) {
                       setStageIdx(idx);
@@ -597,8 +499,17 @@ export function ReceivingWorkbench() {
                       [t('wb.rcv.ops.evidenceSummary'), `${docs.length} belge · ${photoCount} foto`],
                       [t('wb.rcv.ops.preAcceptTitle'), preAccept === 'none' ? '—' : t(`wb.rcv.ops.preAccept.${preAccept}`)],
                       [
+                        t('wb.rcv.ops.count.summaryIncoming'),
+                        `${incomingLines.length} · ${t('wb.rcv.ops.count.summaryCounted')}: ${countable.filter((l) => l.countStatus === 'counted').length} · red: ${incomingLines.filter((l) => l.preAccept === 'reject').length}`,
+                      ],
+                      [
                         t('wb.rcv.ops.check.moisture'),
-                        `${materialCheck.targetMoisturePct}% · ${materialCheck.moistureSamples.map((s) => s.valuePct).filter(Boolean).join(' / ') || '—'}`,
+                        incomingLines
+                          .map(
+                            (l) =>
+                              `${l.name}:${l.moistureSamples.map((s) => s.valuePct).filter(Boolean).join('/') || '—'}`,
+                          )
+                          .join(' · ') || '—',
                       ],
                       [
                         t('wb.rcv.ops.check.quality'),
@@ -608,12 +519,25 @@ export function ReceivingWorkbench() {
                       ],
                       [
                         t('wb.rcv.ops.check.dims'),
-                        `${materialCheck.targetThickness}×${materialCheck.targetWidth}×${materialCheck.targetLength}`,
+                        incomingLines
+                          .filter((l) => l.thicknessMm != null)
+                          .map((l) => `${l.name}:${formatLineDims(l)}`)
+                          .join(' · ') || '—',
                       ],
-                      [t('wb.rcv.matchedMaterial'), matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')],
+                      [
+                        t('wb.rcv.matchedMaterial'),
+                        countable
+                          .map((l) =>
+                            lineMaterialMatched(l) ? `${l.name}:${l.matchedMaterialCode}` : `${l.name}:—`,
+                          )
+                          .join(' · ') || t('wb.rcv.noMaterialMatched'),
+                      ],
                       [
                         t('wb.rcv.countedQty'),
-                        `${countQty} · doc ${physicalCount.documentQty} · AI ${physicalCount.aiQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`,
+                        `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'} · ${countable
+                          .filter((l) => l.countStatus === 'counted')
+                          .map((l) => `${l.name}:${finalLineQty(l)}`)
+                          .join(', ')}`,
                       ],
                       [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
                     ].map(([label, value]) => (
