@@ -83,12 +83,14 @@ type Props = {
   value: MaterialCheckState;
   onChange: (next: MaterialCheckState) => void;
   disabled?: boolean;
+  /** Hide batch pre-accept when per-line decisions are shown in parent. */
+  hidePreAccept?: boolean;
   /** Slot below checks for material-card matching UI (kept in parent). */
   materialMatchSlot?: ReactNode;
 };
 
 /** Stage 2 — Malzeme kontrolü: nem, kalite, ölçü, foto, ön kabul. */
-export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot }: Props) {
+export function MaterialCheckStep({ value, onChange, disabled, hidePreAccept, materialMatchSlot }: Props) {
   const { t } = useI18n();
 
   function patch(partial: Partial<MaterialCheckState>) {
@@ -366,30 +368,32 @@ export function MaterialCheckStep({ value, onChange, disabled, materialMatchSlot
         </div>
       </section>
 
-      {/* Ön kabul */}
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.preAcceptTitle')}</h3>
-        <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.check.preAcceptHint')}</p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ['ok', t('wb.rcv.ops.preAccept.ok')],
-              ['conditional', t('wb.rcv.ops.preAccept.conditional')],
-              ['reject', t('wb.rcv.ops.preAccept.reject')],
-            ] as const
-          ).map(([id, label]) => (
-            <Button
-              key={id}
-              type="button"
-              variant={value.preAccept === id ? 'default' : 'secondary'}
-              disabled={disabled}
-              onClick={() => patch({ preAccept: id })}
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-      </section>
+      {/* Ön kabul — batch (hidden when parent shows per-line) */}
+      {!hidePreAccept ? (
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold tracking-tight">{t('wb.rcv.ops.preAcceptTitle')}</h3>
+          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.check.preAcceptHint')}</p>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ['ok', t('wb.rcv.ops.preAccept.ok')],
+                ['conditional', t('wb.rcv.ops.preAccept.conditional')],
+                ['reject', t('wb.rcv.ops.preAccept.reject')],
+              ] as const
+            ).map(([id, label]) => (
+              <Button
+                key={id}
+                type="button"
+                variant={value.preAccept === id ? 'default' : 'secondary'}
+                disabled={disabled}
+                onClick={() => patch({ preAccept: id })}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {materialMatchSlot ? (
         <section className="space-y-3 border-t border-[var(--border-default)] pt-4">

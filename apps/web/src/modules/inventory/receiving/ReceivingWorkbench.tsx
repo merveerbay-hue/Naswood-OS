@@ -24,12 +24,17 @@ import {
   createDefaultMaterialCheck,
   type MaterialCheckState,
 } from './MaterialCheckStep';
+import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountStep';
+import { IncomingPreAcceptPanel } from './IncomingPreAcceptPanel';
 import {
-  PhysicalCountStep,
-  createDefaultPhysicalCount,
-  finalPhysicalQty,
-  type PhysicalCountState,
-} from './PhysicalCountStep';
+  allCountableCounted,
+  countableLines,
+  finalLineQty,
+  formatLineDims,
+  seedIncomingFromDocuments,
+  syncBatchPreAccept,
+  type IncomingLine,
+} from './incomingLines';
 
 /**
  * Real ops receiving rail (6 stages):
@@ -98,7 +103,7 @@ export function ReceivingWorkbench() {
 
   const [materialLabel, setMaterialLabel] = useState(PLACEHOLDER_MATERIAL_LABEL);
   const [materialCheck, setMaterialCheck] = useState<MaterialCheckState>(() => createDefaultMaterialCheck());
-  const [physicalCount, setPhysicalCount] = useState<PhysicalCountState>(() => createDefaultPhysicalCount());
+  const [incomingLines, setIncomingLines] = useState<IncomingLine[]>([]);
   const [compareResolved, setCompareResolved] = useState(false);
   const [matchedMaterialCode, setMatchedMaterialCode] = useState('');
   const [matchedMaterialId, setMatchedMaterialId] = useState('');
@@ -109,9 +114,10 @@ export function ReceivingWorkbench() {
   const [warehouse, setWarehouse] = useState('WH-RM');
   const [location, setLocation] = useState('A-03-02');
 
-  const preAccept = materialCheck.preAccept;
-  const countQty = String(finalPhysicalQty(physicalCount) || physicalCount.operatorQty || '');
-  const quantityVerified = physicalCount.verified;
+  const preAccept = syncBatchPreAccept(incomingLines);
+  const countable = useMemo(() => countableLines(incomingLines), [incomingLines]);
+  const countQty = String(finalPhysicalQtyFromLines(incomingLines) || '');
+  const quantityVerified = allCountableCounted(incomingLines);
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
     queryFn: () =>
@@ -191,14 +197,16 @@ export function ReceivingWorkbench() {
         if (docs.length === 0 && photoCount === 0) return t('wb.rcv.ops.gateNeedEvidence');
         return null;
       case 'materialCheck':
+        if (incomingLines.length === 0) return t('wb.rcv.ops.check.noIncomingYet');
         if (materialCheck.qualityVerdict === 'none') return t('wb.rcv.ops.check.gateNeedQuality');
-        if (preAccept === 'none') return t('wb.rcv.ops.gateNeedPreAccept');
+        if (preAccept === 'none') return t('wb.rcv.ops.gateNeedPreAcceptLines');
         if (preAccept === 'reject') return t('wb.rcv.ops.gatePreAcceptReject');
+        if (countable.length === 0) return t('wb.rcv.ops.gateAllRejected');
         if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
         return null;
       case 'physicalCount':
-        if (finalPhysicalQty(physicalCount) <= 0) return t('wb.rcv.gateNeedCount');
-        if (!physicalCount.verified) return t('wb.rcv.gateNeedQtyVerify');
+        if (countable.length === 0) return t('wb.rcv.ops.count.noCountable');
+        if (!allCountableCounted(incomingLines)) return t('wb.rcv.ops.count.needAllCounted');
         return null;
       case 'compare':
         return !compareResolved ? t('wb.rcv.gateNeedControl') : null;
@@ -215,11 +223,12 @@ export function ReceivingWorkbench() {
     truck.supplier,
     docs.length,
     photoCount,
+    incomingLines,
     materialCheck.qualityVerdict,
     preAccept,
+    countable.length,
     matchConfirmed,
     matchedMaterialCode,
-    physicalCount,
     compareResolved,
     approved,
     postBlockedReason,
@@ -234,7 +243,11 @@ export function ReceivingWorkbench() {
     setMatchConfirmed(false);
     setConfirmedMatchScore(null);
     setApproved(false);
-    setPhysicalCount((c) => ({ ...c, verified: false }));
+  }
+
+  function updateIncomingLines(next: IncomingLine[]) {
+    setIncomingLines(next);
+    setApproved(false);
   }
 
   function confirmMatch(result: MaterialMatchResult) {
@@ -307,6 +320,16 @@ export function ReceivingWorkbench() {
           `arrival=${truck.arrivalDate}T${truck.arrivalTime}`,
           `gate=${truck.gate}`,
           `preAccept=${preAccept}`,
+          `incomingLines=${incomingLines.length}`,
+          `countable=${countable.length}`,
+          `counted=${countable
+            .filter((l) => l.countStatus === 'counted')
+            .map((l) => `${l.name}|${formatLineDims(l)}|${finalLineQty(l)}${l.unit}`)
+            .join(',')}`,
+          `rejected=${incomingLines
+            .filter((l) => l.preAccept === 'reject')
+            .map((l) => l.name)
+            .join(',')}`,
           `quality=${materialCheck.qualityVerdict}`,
           `moistureTarget=${materialCheck.targetMoisturePct}`,
           `moistureSamples=${materialCheck.moistureSamples.map((s) => s.valuePct).join('/')}`,
@@ -314,12 +337,7 @@ export function ReceivingWorkbench() {
           `qualityFlags=${Object.keys(materialCheck.qualityFlags).filter((k) => materialCheck.qualityFlags[k]).join(',') || 'none'}`,
           `photos=${photoCount}`,
           `docs=${docs.join(',')}`,
-          `countMethod=${physicalCount.method}`,
-          `documentQty=${physicalCount.documentQty}`,
-          `aiQty=${physicalCount.aiQty}`,
-          `operatorQty=${physicalCount.operatorQty}`,
           `qty=${qty}`,
-          `packages=${physicalCount.packages}x${physicalCount.perPackage}`,
           `loc=${locCode}`,
           `materialId=${materialId}`,
           `material=${materialCode}`,
@@ -368,6 +386,14 @@ export function ReceivingWorkbench() {
       }
       persistMutation.mutate();
       return;
+    }
+    if (stage.id === 'truckEvidence' && incomingLines.length === 0) {
+      const seeded = seedIncomingFromDocuments();
+      setIncomingLines(seeded);
+      const first = seeded[0];
+      if (first) {
+        setMaterialLabel(`${first.name} ${formatLineDims(first)}`.replace(' —', '').trim());
+      }
     }
     const next = Math.min(stageIdx + 1, STAGES.length - 1);
     setStageIdx(next);
@@ -469,11 +495,20 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'materialCheck' ? (
-                <MaterialCheckStep
-                  value={materialCheck}
-                  onChange={setMaterialCheck}
-                  disabled={posted}
-                  materialMatchSlot={
+                <div className="space-y-5">
+                  <IncomingPreAcceptPanel
+                    lines={incomingLines}
+                    onChange={updateIncomingLines}
+                    disabled={posted}
+                  />
+                  <MaterialCheckStep
+                    value={materialCheck}
+                    onChange={(next) => {
+                      setMaterialCheck(next);
+                    }}
+                    disabled={posted}
+                    hidePreAccept
+                    materialMatchSlot={
                     <div className="space-y-3">
                       <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
                         <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.incomingLabel')}</p>
@@ -486,6 +521,25 @@ export function ReceivingWorkbench() {
                             clearMaterialMatch();
                           }}
                         />
+                        {countable.length > 0 ? (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {countable.map((line) => (
+                              <Button
+                                key={line.id}
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                disabled={posted}
+                                onClick={() => {
+                                  setMaterialLabel(`${line.name} ${formatLineDims(line)}`);
+                                  clearMaterialMatch();
+                                }}
+                              >
+                                {line.name} {formatLineDims(line)}
+                              </Button>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                       {suggestedMatch ? (
                         <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
@@ -558,16 +612,14 @@ export function ReceivingWorkbench() {
                       ) : null}
                     </div>
                   }
-                />
+                  />
+                </div>
               ) : null}
 
               {stage.id === 'physicalCount' ? (
                 <PhysicalCountStep
-                  value={physicalCount}
-                  onChange={(next) => {
-                    setPhysicalCount(next);
-                    if (!next.verified) setApproved(false);
-                  }}
+                  lines={incomingLines}
+                  onChange={updateIncomingLines}
                   disabled={posted}
                 />
               ) : null}
@@ -597,6 +649,10 @@ export function ReceivingWorkbench() {
                       [t('wb.rcv.ops.evidenceSummary'), `${docs.length} belge · ${photoCount} foto`],
                       [t('wb.rcv.ops.preAcceptTitle'), preAccept === 'none' ? '—' : t(`wb.rcv.ops.preAccept.${preAccept}`)],
                       [
+                        t('wb.rcv.ops.count.summaryIncoming'),
+                        `${incomingLines.length} · ${t('wb.rcv.ops.count.summaryCounted')}: ${countable.filter((l) => l.countStatus === 'counted').length} · red: ${incomingLines.filter((l) => l.preAccept === 'reject').length}`,
+                      ],
+                      [
                         t('wb.rcv.ops.check.moisture'),
                         `${materialCheck.targetMoisturePct}% · ${materialCheck.moistureSamples.map((s) => s.valuePct).filter(Boolean).join(' / ') || '—'}`,
                       ],
@@ -613,7 +669,10 @@ export function ReceivingWorkbench() {
                       [t('wb.rcv.matchedMaterial'), matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')],
                       [
                         t('wb.rcv.countedQty'),
-                        `${countQty} · doc ${physicalCount.documentQty} · AI ${physicalCount.aiQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`,
+                        `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'} · ${countable
+                          .filter((l) => l.countStatus === 'counted')
+                          .map((l) => `${l.name}:${finalLineQty(l)}`)
+                          .join(', ')}`,
                       ],
                       [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
                     ].map(([label, value]) => (
