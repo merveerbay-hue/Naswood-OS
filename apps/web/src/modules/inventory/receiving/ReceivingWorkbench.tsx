@@ -24,12 +24,18 @@ import {
   createDefaultMaterialCheck,
   type MaterialCheckState,
 } from './MaterialCheckStep';
+import {
+  PhysicalCountStep,
+  createDefaultPhysicalCount,
+  finalPhysicalQty,
+  type PhysicalCountState,
+} from './PhysicalCountStep';
 
 /**
  * Real ops receiving rail (6 stages):
  * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
  *
- * Stage 1 + Stage 2 implemented. Stages 3–6 keep the safe stock path until built next.
+ * Stages 1–3 implemented. Stages 4–6 keep the safe stock path until built next.
  */
 type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
@@ -92,8 +98,7 @@ export function ReceivingWorkbench() {
 
   const [materialLabel, setMaterialLabel] = useState(PLACEHOLDER_MATERIAL_LABEL);
   const [materialCheck, setMaterialCheck] = useState<MaterialCheckState>(() => createDefaultMaterialCheck());
-  const [countQty, setCountQty] = useState('48');
-  const [quantityVerified, setQuantityVerified] = useState(false);
+  const [physicalCount, setPhysicalCount] = useState<PhysicalCountState>(() => createDefaultPhysicalCount());
   const [compareResolved, setCompareResolved] = useState(false);
   const [matchedMaterialCode, setMatchedMaterialCode] = useState('');
   const [matchedMaterialId, setMatchedMaterialId] = useState('');
@@ -105,6 +110,8 @@ export function ReceivingWorkbench() {
   const [location, setLocation] = useState('A-03-02');
 
   const preAccept = materialCheck.preAccept;
+  const countQty = String(finalPhysicalQty(physicalCount) || physicalCount.operatorQty || '');
+  const quantityVerified = physicalCount.verified;
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
     queryFn: () =>
@@ -190,8 +197,8 @@ export function ReceivingWorkbench() {
         if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
         return null;
       case 'physicalCount':
-        if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
-        if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
+        if (finalPhysicalQty(physicalCount) <= 0) return t('wb.rcv.gateNeedCount');
+        if (!physicalCount.verified) return t('wb.rcv.gateNeedQtyVerify');
         return null;
       case 'compare':
         return !compareResolved ? t('wb.rcv.gateNeedControl') : null;
@@ -212,8 +219,7 @@ export function ReceivingWorkbench() {
     preAccept,
     matchConfirmed,
     matchedMaterialCode,
-    countQty,
-    quantityVerified,
+    physicalCount,
     compareResolved,
     approved,
     postBlockedReason,
@@ -228,6 +234,7 @@ export function ReceivingWorkbench() {
     setMatchConfirmed(false);
     setConfirmedMatchScore(null);
     setApproved(false);
+    setPhysicalCount((c) => ({ ...c, verified: false }));
   }
 
   function confirmMatch(result: MaterialMatchResult) {
@@ -307,7 +314,12 @@ export function ReceivingWorkbench() {
           `qualityFlags=${Object.keys(materialCheck.qualityFlags).filter((k) => materialCheck.qualityFlags[k]).join(',') || 'none'}`,
           `photos=${photoCount}`,
           `docs=${docs.join(',')}`,
+          `countMethod=${physicalCount.method}`,
+          `documentQty=${physicalCount.documentQty}`,
+          `aiQty=${physicalCount.aiQty}`,
+          `operatorQty=${physicalCount.operatorQty}`,
           `qty=${qty}`,
+          `packages=${physicalCount.packages}x${physicalCount.perPackage}`,
           `loc=${locCode}`,
           `materialId=${materialId}`,
           `material=${materialCode}`,
@@ -550,34 +562,14 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'physicalCount' ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.stage3Interim')}</p>
-                  <label className="block max-w-xs space-y-1 text-sm">
-                    <span className="text-[var(--text-secondary)]">{t('wb.rcv.countedQty')}</span>
-                    <Input
-                      type="number"
-                      value={countQty}
-                      disabled={posted}
-                      onChange={(e) => {
-                        setCountQty(e.target.value);
-                        setQuantityVerified(false);
-                        setApproved(false);
-                      }}
-                    />
-                  </label>
-                  <label className="flex items-center gap-2 text-sm font-medium">
-                    <input
-                      type="checkbox"
-                      checked={quantityVerified}
-                      disabled={posted || Number(countQty) <= 0}
-                      onChange={(e) => {
-                        setQuantityVerified(e.target.checked);
-                        if (!e.target.checked) setApproved(false);
-                      }}
-                    />
-                    {t('wb.rcv.qtyVerified')}
-                  </label>
-                </div>
+                <PhysicalCountStep
+                  value={physicalCount}
+                  onChange={(next) => {
+                    setPhysicalCount(next);
+                    if (!next.verified) setApproved(false);
+                  }}
+                  disabled={posted}
+                />
               ) : null}
 
               {stage.id === 'compare' ? (
@@ -619,7 +611,10 @@ export function ReceivingWorkbench() {
                         `${materialCheck.targetThickness}×${materialCheck.targetWidth}×${materialCheck.targetLength}`,
                       ],
                       [t('wb.rcv.matchedMaterial'), matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')],
-                      [t('wb.rcv.countedQty'), `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`],
+                      [
+                        t('wb.rcv.countedQty'),
+                        `${countQty} · doc ${physicalCount.documentQty} · AI ${physicalCount.aiQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`,
+                      ],
                       [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
