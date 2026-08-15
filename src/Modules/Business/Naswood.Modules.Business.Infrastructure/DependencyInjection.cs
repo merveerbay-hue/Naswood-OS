@@ -23,6 +23,9 @@ public static class DependencyInjection
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IStockTransferRepository, Naswood.Modules.Business.Infrastructure.Inventory.StockTransferRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryCountRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryCountRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryAdjustmentRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryAdjustmentRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IMaterialIdentityRepository, Naswood.Modules.Business.Infrastructure.Inventory.MaterialIdentityRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryPackageRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryPackageRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryMovementRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryMovementRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Purchasing.ISupplierRepository, Naswood.Modules.Business.Infrastructure.Purchasing.SupplierRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IPurchaseRequestRepository, Naswood.Modules.Business.Infrastructure.Purchasing.PurchaseRequestRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IRfqRepository, Naswood.Modules.Business.Infrastructure.Purchasing.RfqRepository>();

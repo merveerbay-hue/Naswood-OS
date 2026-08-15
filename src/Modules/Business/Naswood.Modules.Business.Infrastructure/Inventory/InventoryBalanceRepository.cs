@@ -13,6 +13,15 @@ public sealed class InventoryBalanceRepository : IInventoryBalanceRepository
     public Task<InventoryBalance?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<InventoryBalance>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<InventoryBalance?> FindByKeyAsync(string materialCode, string warehouseCode, string locationCode, string batchNumber, CancellationToken cancellationToken = default) =>
+        _db.Set<InventoryBalance>().FirstOrDefaultAsync(
+            x => !x.IsDeleted
+                && x.MaterialCode == materialCode
+                && x.WarehouseCode == warehouseCode
+                && x.LocationCode == locationCode
+                && x.BatchNumber == batchNumber,
+            cancellationToken);
+
     public async Task AddAsync(InventoryBalance entity, CancellationToken cancellationToken = default) =>
         await _db.Set<InventoryBalance>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 

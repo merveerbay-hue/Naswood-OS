@@ -63,6 +63,14 @@ using (var scope = app.Services.CreateScope())
             }
         }
     }
+
+    // Incremental patches for existing databases (EnsureCreated / CreateTables do not ALTER columns).
+    await businessDb.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE IF EXISTS business.business_inventory_material ADD COLUMN IF NOT EXISTS "DefinitionJson" text NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_goodsreceipt ALTER COLUMN "Notes" TYPE text;
+        ALTER TABLE IF EXISTS business.business_inventory_goodsissue ALTER COLUMN "Notes" TYPE text;
+        """).ConfigureAwait(false);
 }
 
 app.UseRateLimiter();

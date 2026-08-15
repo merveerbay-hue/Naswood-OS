@@ -4,6 +4,21 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { getDashboard } from '@/api/business';
 import { useI18n } from '@/i18n';
 
+interface InventoryDockItemDto {
+  gate?: string;
+  Gate?: string;
+  truck?: string;
+  Truck?: string;
+  supplier?: string;
+  Supplier?: string;
+  stage?: string;
+  Stage?: string;
+  documentNumber?: string;
+  DocumentNumber?: string;
+  status?: string;
+  Status?: string;
+}
+
 interface InventoryDashboardDto {
   materialCount?: number;
   MaterialCount?: number;
@@ -27,10 +42,24 @@ interface InventoryDashboardDto {
   OpenTransfers?: number;
   openCounts?: number;
   OpenCounts?: number;
+  negativeBalanceRows?: number;
+  NegativeBalanceRows?: number;
+  holdPackageCount?: number;
+  HoldPackageCount?: number;
+  availablePackageCount?: number;
+  AvailablePackageCount?: number;
+  postedMovementCount?: number;
+  PostedMovementCount?: number;
+  dockItems?: InventoryDockItemDto[];
+  DockItems?: InventoryDockItemDto[];
 }
 
 function metric(data: InventoryDashboardDto | undefined, camel: keyof InventoryDashboardDto, pascal: keyof InventoryDashboardDto) {
-  return data?.[camel] ?? data?.[pascal] ?? 0;
+  return Number(data?.[camel] ?? data?.[pascal] ?? 0);
+}
+
+function dockField(row: InventoryDockItemDto, camel: keyof InventoryDockItemDto, pascal: keyof InventoryDockItemDto) {
+  return String(row[camel] ?? row[pascal] ?? '—');
 }
 
 /** INV-001 — Warehouse Command Center (not a KPI page). */
@@ -42,6 +71,7 @@ export function InventoryDashboardPage() {
   });
 
   const data = query.data;
+  const dockItems = data?.dockItems ?? data?.DockItems ?? [];
 
   const actions = [
     { label: t('inventory.cmdReceive'), path: '/inventory/operations/receive', primary: true },
@@ -94,16 +124,19 @@ export function InventoryDashboardPage() {
       label: t('inventory.exNegative'),
       detail: t('inventory.exNegativeHint'),
       path: '/inventory/stock/balances',
+      count: metric(data, 'negativeBalanceRows', 'NegativeBalanceRows'),
     },
     {
       label: t('inventory.exHold'),
       detail: t('inventory.exHoldHint'),
-      path: '/inventory/stock/lots',
+      path: '/inventory/stock/packages',
+      count: metric(data, 'holdPackageCount', 'HoldPackageCount'),
     },
     {
-      label: t('inventory.exCapacity'),
-      detail: t('inventory.exCapacityHint'),
-      path: '/inventory/master-data/warehouses',
+      label: 'Uygun paket',
+      detail: 'Available status packages in stock engine',
+      path: '/inventory/stock/packages',
+      count: metric(data, 'availablePackageCount', 'AvailablePackageCount'),
     },
   ];
 
@@ -111,7 +144,7 @@ export function InventoryDashboardPage() {
     { camel: 'quantityAvailable' as const, pascal: 'QuantityAvailable' as const, label: t('inventory.available'), path: '/inventory/stock/balances' },
     { camel: 'quantityReserved' as const, pascal: 'QuantityReserved' as const, label: t('inventory.reserved'), path: '/inventory/stock/balances' },
     { camel: 'quantityOnHand' as const, pascal: 'QuantityOnHand' as const, label: t('inventory.onHand'), path: '/inventory/stock/balances' },
-    { camel: 'openGoodsReceipts' as const, pascal: 'OpenGoodsReceipts' as const, label: t('inventory.inboundOpen'), path: '/inventory/operations/goods-receipts' },
+    { camel: 'postedMovementCount' as const, pascal: 'PostedMovementCount' as const, label: 'Stok hareketi', path: '/inventory/stock/movements' },
   ];
 
   return (
@@ -131,7 +164,6 @@ export function InventoryDashboardPage() {
         <p className="text-sm text-[var(--color-danger)]">{(query.error as Error).message}</p>
       ) : null}
 
-      {/* Action bar — primary */}
       <div className="flex flex-wrap gap-2">
         {actions.map((a) => (
           <Link key={a.path} to={a.path}>
@@ -143,7 +175,6 @@ export function InventoryDashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        {/* Live queues */}
         <Card>
           <CardHeader>
             <CardTitle>{t('inventory.liveQueues')}</CardTitle>
@@ -175,7 +206,6 @@ export function InventoryDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Exceptions */}
         <Card>
           <CardHeader>
             <CardTitle>{t('inventory.exceptions')}</CardTitle>
@@ -186,17 +216,19 @@ export function InventoryDashboardPage() {
               <Link
                 key={ex.label}
                 to={ex.path}
-                className="block rounded-[var(--radius-md)] border border-[var(--border-default)] px-3 py-2.5 hover:bg-[var(--color-surface-hover)]"
+                className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border-default)] px-3 py-2.5 hover:bg-[var(--color-surface-hover)]"
               >
-                <p className="text-sm font-medium text-[var(--color-danger)]">{ex.label}</p>
-                <p className="text-xs text-[var(--text-muted)]">{ex.detail}</p>
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-danger)]">{ex.label}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{ex.detail}</p>
+                </div>
+                <span className="text-lg font-semibold tabular-nums">{query.isLoading ? '…' : ex.count}</span>
               </Link>
             ))}
           </CardContent>
         </Card>
       </div>
 
-      {/* Thin status — secondary, not hero KPIs */}
       <div>
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
           {t('inventory.statusStrip')}
@@ -217,50 +249,53 @@ export function InventoryDashboardPage() {
         </div>
       </div>
 
-      {/* Dock board (demo operational surface) */}
       <Card>
         <CardHeader>
           <CardTitle>{t('inventory.dockBoard')}</CardTitle>
           <p className="text-xs text-[var(--text-muted)]">{t('inventory.dockBoardHint')}</p>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead className="text-xs text-[var(--text-muted)]">
-                <tr>
-                  <th className="pb-2 font-medium">{t('inventory.dockGate')}</th>
-                  <th className="pb-2 font-medium">{t('inventory.dockTruck')}</th>
-                  <th className="pb-2 font-medium">{t('inventory.dockSupplier')}</th>
-                  <th className="pb-2 font-medium">{t('inventory.dockStage')}</th>
-                  <th className="pb-2 font-medium" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-default)]">
-                <tr>
-                  <td className="py-2">2</td>
-                  <td className="py-2 font-mono text-xs">34 ABC 123</td>
-                  <td className="py-2">Nordic Timber Oy</td>
-                  <td className="py-2">{t('inventory.dockStageDocs')}</td>
-                  <td className="py-2 text-right">
-                    <Link to="/inventory/operations/receive" className="text-xs font-medium text-[var(--color-primary)] hover:underline">
-                      {t('inventory.openWorkbench')}
-                    </Link>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-2">1</td>
-                  <td className="py-2 font-mono text-xs">06 XYZ 778</td>
-                  <td className="py-2">ABC Forest</td>
-                  <td className="py-2">{t('inventory.dockStageGate')}</td>
-                  <td className="py-2 text-right">
-                    <Link to="/inventory/operations/receive" className="text-xs font-medium text-[var(--color-primary)] hover:underline">
-                      {t('inventory.openWorkbench')}
-                    </Link>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {query.isLoading ? (
+            <p className="text-sm text-[var(--text-muted)]">{t('loading')}</p>
+          ) : dockItems.length === 0 ? (
+            <p className="text-sm text-[var(--text-secondary)]">
+              Açık/son kabul kaydı yok.{' '}
+              <Link to="/inventory/operations/receive" className="text-[var(--color-primary)] hover:underline">
+                {t('inventory.openWorkbench')}
+              </Link>
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left text-sm">
+                <thead className="text-xs text-[var(--text-muted)]">
+                  <tr>
+                    <th className="pb-2 font-medium">{t('inventory.dockGate')}</th>
+                    <th className="pb-2 font-medium">{t('inventory.dockTruck')}</th>
+                    <th className="pb-2 font-medium">{t('inventory.dockSupplier')}</th>
+                    <th className="pb-2 font-medium">{t('inventory.dockStage')}</th>
+                    <th className="pb-2 font-medium">GR</th>
+                    <th className="pb-2 font-medium" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-default)]">
+                  {dockItems.map((row) => (
+                    <tr key={dockField(row, 'documentNumber', 'DocumentNumber')}>
+                      <td className="py-2">{dockField(row, 'gate', 'Gate')}</td>
+                      <td className="py-2 font-mono text-xs">{dockField(row, 'truck', 'Truck')}</td>
+                      <td className="py-2">{dockField(row, 'supplier', 'Supplier')}</td>
+                      <td className="py-2">{dockField(row, 'stage', 'Stage')}</td>
+                      <td className="py-2 font-mono text-xs">{dockField(row, 'documentNumber', 'DocumentNumber')}</td>
+                      <td className="py-2 text-right">
+                        <Link to="/inventory/operations/receive" className="text-xs font-medium text-[var(--color-primary)] hover:underline">
+                          {t('inventory.openWorkbench')}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

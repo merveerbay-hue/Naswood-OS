@@ -25,7 +25,10 @@ import {
   LocationListPage,
   LotListPage,
   MaterialDetailPage,
+  MaterialIdentityListPage,
   MaterialListPage,
+  PackageListPage,
+  InventoryMovementListPage,
   StockBalancePage,
   TransferListPage,
   WarehouseDetailPage,
@@ -222,6 +225,21 @@ const invLotsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'stock/lots',
   component: LotListPage,
+});
+const invPackagesRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/packages',
+  component: PackageListPage,
+});
+const invIdentitiesRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/identities',
+  component: MaterialIdentityListPage,
+});
+const invMovementsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/movements',
+  component: InventoryMovementListPage,
 });
 const invReceiptsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
@@ -449,6 +467,9 @@ const implemented = new Set([
   '/inventory/master-data/locations',
   '/inventory/stock/balances',
   '/inventory/stock/lots',
+  '/inventory/stock/packages',
+  '/inventory/stock/identities',
+  '/inventory/stock/movements',
   '/inventory/operations/goods-receipts',
   '/inventory/operations/receive',
   '/inventory/operations/goods-issues',
@@ -587,6 +608,9 @@ export const routeTree = rootRoute.addChildren([
       invDefineWarehouseRoute,
       invBalancesRoute,
       invLotsRoute,
+      invPackagesRoute,
+      invIdentitiesRoute,
+      invMovementsRoute,
       invReceiptsRoute,
       invReceiveWizardRoute,
       invReceiptDetailRoute,

@@ -35,7 +35,7 @@ public sealed class MaterialController : ControllerBase
     [RequirePermission("Material.Create")]
     public async Task<IActionResult> Create([FromBody] UpsertMaterialRequestDto request, CancellationToken cancellationToken)
     {
-        var result = await _dispatcher.SendAsync(new CreateMaterialCommand(request.Code, request.Name, request.Description, request.Category, request.UnitOfMeasure, request.Status), cancellationToken).ConfigureAwait(false);
+        var result = await _dispatcher.SendAsync(new CreateMaterialCommand(request.Code, request.Name, request.Description, request.Category, request.UnitOfMeasure, request.Status, request.DefinitionJson ?? string.Empty), cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Material created.");
     }
 
@@ -43,7 +43,7 @@ public sealed class MaterialController : ControllerBase
     [RequirePermission("Material.Update")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpsertMaterialRequestDto request, CancellationToken cancellationToken)
     {
-        var result = await _dispatcher.SendAsync(new UpdateMaterialCommand(id, request.Code, request.Name, request.Description, request.Category, request.UnitOfMeasure, request.Status), cancellationToken).ConfigureAwait(false);
+        var result = await _dispatcher.SendAsync(new UpdateMaterialCommand(id, request.Code, request.Name, request.Description, request.Category, request.UnitOfMeasure, request.Status, request.DefinitionJson), cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Material updated.");
     }
 

@@ -41,6 +41,12 @@ public sealed class GoodsIssue : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void MarkPosted()
+    {
+        Status = "Posted";
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

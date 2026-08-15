@@ -1,5 +1,7 @@
 import { Link, useParams } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
+import { searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
 import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
@@ -189,11 +191,78 @@ export function LotListPage() {
   return (
     <EntityListScreen
       screenId="INV-010"
-      title={t('inventory.lotsTitle')}
-      description={t('inventory.lotsDesc')}
+      title="Lot / Parti (operasyonel)"
+      description="Lot = parti özniteliği. Yaşam boyu kimlik için Material Identity listesini kullanın."
       route="batches"
       fields={useInvFields().batch}
       createLabel={t('inventory.newLot')}
+    />
+  );
+}
+
+export function PackageListPage() {
+  return (
+    <EntityListScreen
+      screenId="INV-PKG"
+      title="Paketler"
+      description="Stok paketleri — barkod / paket no ile arama"
+      route="packages"
+      fields={[
+        { key: 'PackageNumber', label: 'Paket' },
+        { key: 'Barcode', label: 'Barkod' },
+        { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'MaterialIdentityNumber', label: 'MI' },
+        { key: 'WarehouseCode', label: 'Depo' },
+        { key: 'LocationCode', label: 'Lokasyon' },
+        { key: 'Quantity', label: 'Miktar', type: 'number' },
+        { key: 'Status', label: 'Durum', status: true },
+      ]}
+      readOnly
+    />
+  );
+}
+
+export function MaterialIdentityListPage() {
+  return (
+    <EntityListScreen
+      screenId="INV-MI"
+      title="Material Identity"
+      description="Fiziksel kimlik düğümleri (receiving root MI)"
+      route="material-identities"
+      fields={[
+        { key: 'IdentityNumber', label: 'MI' },
+        { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'LotNumber', label: 'Lot' },
+        { key: 'WarehouseCode', label: 'Depo' },
+        { key: 'LocationCode', label: 'Lokasyon' },
+        { key: 'Quantity', label: 'Miktar', type: 'number' },
+        { key: 'RootGoodsReceiptNumber', label: 'GR' },
+        { key: 'Status', label: 'Durum', status: true },
+      ]}
+      readOnly
+    />
+  );
+}
+
+export function InventoryMovementListPage() {
+  return (
+    <EntityListScreen
+      screenId="INV-MV"
+      title="Stok Hareketleri"
+      description="Transaction Engine kayıtları (In/Out)"
+      route="inventory-movements"
+      fields={[
+        { key: 'MovementNumber', label: 'Hareket' },
+        { key: 'MovementType', label: 'Tip' },
+        { key: 'Direction', label: 'Yön' },
+        { key: 'DocumentNumber', label: 'Belge' },
+        { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'PackageNumber', label: 'Paket' },
+        { key: 'Quantity', label: 'Miktar', type: 'number' },
+        { key: 'WarehouseCode', label: 'Depo' },
+        { key: 'Status', label: 'Durum', status: true },
+      ]}
+      readOnly
     />
   );
 }
@@ -290,6 +359,36 @@ export function AdjustmentListPage() {
 
 export function InventoryReportsPage() {
   const { t } = useI18n();
+  const balances = useQuery({
+    queryKey: ['business', 'inventory', 'report'],
+    queryFn: () => searchResource<Record<string, unknown>>('inventory'),
+  });
+  const movements = useQuery({
+    queryKey: ['business', 'inventory-movements', 'report'],
+    queryFn: () => searchResource<Record<string, unknown>>('inventory-movements'),
+  });
+  const packages = useQuery({
+    queryKey: ['business', 'packages', 'report'],
+    queryFn: () => searchResource<Record<string, unknown>>('packages'),
+  });
+
+  const byWh = new Map<string, number>();
+  for (const row of balances.data?.items ?? []) {
+    const wh = String(row.warehouseCode ?? row.WarehouseCode ?? '—');
+    const qty = Number(row.quantityOnHand ?? row.QuantityOnHand ?? 0);
+    byWh.set(wh, (byWh.get(wh) ?? 0) + qty);
+  }
+
+  const inQty = (movements.data?.items ?? [])
+    .filter((m) => String(m.direction ?? m.Direction ?? '') === 'In')
+    .reduce((s, m) => s + Number(m.quantity ?? m.Quantity ?? 0), 0);
+  const outQty = (movements.data?.items ?? [])
+    .filter((m) => String(m.direction ?? m.Direction ?? '') === 'Out')
+    .reduce((s, m) => s + Number(m.quantity ?? m.Quantity ?? 0), 0);
+  const availablePkgs = (packages.data?.items ?? []).filter(
+    (p) => String(p.status ?? p.Status ?? '').toLowerCase() === 'available',
+  ).length;
+
   return (
     <div className="space-y-4">
       <div>
@@ -298,18 +397,69 @@ export function InventoryReportsPage() {
         <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('inventory.reportsDesc')}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        {[
-          [t('inventory.reportStockByWh'), t('inventory.reportStockByWhDesc')],
-          [t('inventory.reportOpenMoves'), t('inventory.reportOpenMovesDesc')],
-          [t('inventory.reportCountAccuracy'), t('inventory.reportCountAccuracyDesc')],
-        ].map(([title, body]) => (
-          <Card key={title}>
-            <CardHeader>
-              <CardTitle className="text-base">{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-[var(--text-secondary)]">{body}</CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('inventory.reportStockByWh')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-[var(--text-secondary)]">
+            {balances.isLoading ? (
+              <p>{t('loading')}</p>
+            ) : byWh.size === 0 ? (
+              <p>Bakiye yok — önce mal kabul execute edin.</p>
+            ) : (
+              [...byWh.entries()].map(([wh, qty]) => (
+                <div key={wh} className="flex justify-between gap-2 border-b border-[var(--border-default)] py-1">
+                  <span>{wh}</span>
+                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">{qty}</span>
+                </div>
+              ))
+            )}
+            <Link to="/inventory/stock/balances" className="text-xs text-[var(--color-primary)] hover:underline">
+              Bakiyeleri aç
+            </Link>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('inventory.reportOpenMoves')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-[var(--text-secondary)]">
+            {movements.isLoading ? (
+              <p>{t('loading')}</p>
+            ) : (
+              <>
+                <p>
+                  Toplam hareket: <strong className="text-[var(--text-primary)]">{movements.data?.totalCount ?? 0}</strong>
+                </p>
+                <p>
+                  In: <strong className="text-[var(--text-primary)]">{inQty}</strong> · Out:{' '}
+                  <strong className="text-[var(--text-primary)]">{outQty}</strong>
+                </p>
+              </>
+            )}
+            <Link to="/inventory/stock/movements" className="text-xs text-[var(--color-primary)] hover:underline">
+              Hareketleri aç
+            </Link>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('inventory.reportCountAccuracy')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-[var(--text-secondary)]">
+            {packages.isLoading ? (
+              <p>{t('loading')}</p>
+            ) : (
+              <p>
+                Available paket: <strong className="text-[var(--text-primary)]">{availablePkgs}</strong> /{' '}
+                {packages.data?.totalCount ?? 0}
+              </p>
+            )}
+            <Link to="/inventory/stock/packages" className="text-xs text-[var(--color-primary)] hover:underline">
+              Paketleri aç
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

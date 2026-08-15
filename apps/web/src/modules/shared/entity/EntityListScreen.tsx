@@ -44,6 +44,8 @@ interface EntityListScreenProps {
    * Authority: docs/13_Design/Common/Screen_Types.md § Create matrix.
    */
   jobPath?: string;
+  /** Hide create/delete — ledger-owned or search-only resources. */
+  readOnly?: boolean;
 }
 
 function toCamelKey(key: string): string {
@@ -66,6 +68,7 @@ export function EntityListScreen({
   detailPath,
   createLabel,
   jobPath,
+  readOnly = false,
 }: EntityListScreenProps) {
   const { t } = useI18n();
   const actionLabel = createLabel ?? t('new');
@@ -133,7 +136,7 @@ export function EntityListScreen({
           <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>
         </div>
-        {isJobCta && jobPath ? (
+        {readOnly ? null : isJobCta && jobPath ? (
           <Link to={jobPath}>
             <Button type="button">{actionLabel}</Button>
           </Link>
@@ -144,7 +147,7 @@ export function EntityListScreen({
         )}
       </div>
 
-      {!isJobCta && showCreate ? (
+      {!readOnly && !isJobCta && showCreate ? (
         <Card>
           <CardHeader>
             <CardTitle>{actionLabel}</CardTitle>
@@ -232,9 +235,11 @@ export function EntityListScreen({
                                 {t('open')}
                               </Link>
                             ) : null}
-                            <Button type="button" size="sm" variant="danger" onClick={() => deleteMutation.mutate(id)}>
-                              {t('delete')}
-                            </Button>
+                            {readOnly ? null : (
+                              <Button type="button" size="sm" variant="danger" onClick={() => deleteMutation.mutate(id)}>
+                                {t('delete')}
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

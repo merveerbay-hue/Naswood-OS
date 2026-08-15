@@ -186,6 +186,7 @@ export function MaterialDefinitionDesigner() {
         unitOfMeasure: def.stockUom || 'Piece',
         status: 'Active',
         code: '',
+        definitionJson: JSON.stringify(def),
       });
     },
     onSuccess: async (created) => {
