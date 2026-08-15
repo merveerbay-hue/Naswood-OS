@@ -20,7 +20,14 @@ public sealed class StockEngineController : ControllerBase
     public async Task<IActionResult> ExecuteReceipt([FromBody] ExecuteGoodsReceiptRequestDto request, CancellationToken cancellationToken)
     {
         var result = await _dispatcher.SendAsync(
-            new ExecuteGoodsReceiptCommand(request.Number, request.WarehouseCode, request.Reference, request.Notes, request.Lines),
+            new ExecuteGoodsReceiptCommand(
+                request.Number,
+                request.WarehouseCode,
+                request.Reference,
+                request.Notes,
+                request.QuantityVerified,
+                request.ExtractSource ?? string.Empty,
+                request.Lines),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Goods receipt posted to stock.");
     }

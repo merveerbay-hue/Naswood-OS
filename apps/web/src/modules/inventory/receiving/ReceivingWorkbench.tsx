@@ -1,9 +1,12 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
-import { executeStockDocument } from '@/api/business';
+import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
+
+/** UI demo extract only — must never call goods-receipts/execute as real stock. */
+const OCR_EXTRACT_SOURCE = 'demo' as const;
 
 type StageId =
   | 'truck'
@@ -112,16 +115,40 @@ export function ReceivingWorkbench() {
   const [ocrAccepted, setOcrAccepted] = useState(false);
   const [verifyResolved, setVerifyResolved] = useState(false);
   const [countQty, setCountQty] = useState('48');
+  const [quantityVerified, setQuantityVerified] = useState(false);
+  const [matchedMaterialCode, setMatchedMaterialCode] = useState('');
 
   const ocrFlaggedCount = OCR_FIELD_KEYS.filter((k) => ocrFields[k].flagged).length;
+  const isDemoOcr = OCR_EXTRACT_SOURCE === 'demo';
   const [countMode, setCountMode] = useState<'scan' | 'sheet' | 'photo'>('scan');
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [inspectOk, setInspectOk] = useState(true);
   const [warehouse, setWarehouse] = useState('Ana Hammadde Deposu');
   const [location, setLocation] = useState('Rampa A / Bölge 1');
 
+  const materialsQuery = useQuery({
+    queryKey: ['business', 'materials', 'receiving-match'],
+    queryFn: () =>
+      searchResource<{ code: string; name: string; status: string }>('materials'),
+  });
+  const materialOptions = useMemo(
+    () =>
+      (materialsQuery.data?.items ?? []).filter(
+        (m) => !m.status || m.status.toLowerCase() === 'active',
+      ),
+    [materialsQuery.data],
+  );
+
   const stage = STAGES[stageIdx];
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
+
+  const postBlockedReason = useMemo(() => {
+    if (isDemoOcr) return t('wb.rcv.gateDemoOcrBlock');
+    if (!matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterial');
+    if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
+    if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
+    return null;
+  }, [isDemoOcr, matchedMaterialCode, quantityVerified, countQty, t]);
 
   const gateMessage = useMemo(() => {
     switch (stage.id) {
@@ -136,10 +163,15 @@ export function ReceivingWorkbench() {
         if (ocrFlaggedCount > 0) return t('wb.rcv.gateNeedOcrFix');
         return !ocrAccepted ? t('wb.rcv.gateNeedOcr') : null;
       case 'compare':
-      case 'materialVerify':
         return !verifyResolved ? t('wb.rcv.gateNeedVerify') : null;
+      case 'materialVerify':
+        if (!verifyResolved) return t('wb.rcv.gateNeedVerify');
+        if (!matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterial');
+        return null;
       case 'count':
-        return Number(countQty) <= 0 ? t('wb.rcv.gateNeedCount') : null;
+        if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
+        if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
+        return null;
       case 'photoAnalysis':
         return !photoAiAccepted ? t('wb.rcv.gateNeedPhotoAi') : null;
       case 'warehouse':
@@ -150,6 +182,8 @@ export function ReceivingWorkbench() {
         return null;
       case 'review':
         return !approved ? t('wb.rcv.gateNeedApprove') : null;
+      case 'post':
+        return postBlockedReason;
       default:
         return null;
     }
@@ -162,13 +196,16 @@ export function ReceivingWorkbench() {
     ocrEditing,
     ocrFlaggedCount,
     verifyResolved,
+    matchedMaterialCode,
     countQty,
+    quantityVerified,
     photoAiAccepted,
     warehouse,
     location,
     identityAccepted,
     minted.mi,
     approved,
+    postBlockedReason,
     t,
   ]);
 
@@ -176,10 +213,22 @@ export function ReceivingWorkbench() {
 
   const persistMutation = useMutation({
     mutationFn: async () => {
+      if (isDemoOcr) {
+        throw new Error(t('wb.rcv.gateDemoOcrBlock'));
+      }
+      if (!quantityVerified) {
+        throw new Error(t('wb.rcv.gateNeedQtyVerify'));
+      }
+      const materialCode = matchedMaterialCode.trim();
+      if (!materialCode) {
+        throw new Error(t('wb.rcv.gateNeedMaterial'));
+      }
       const whCode = warehouse.toLowerCase().includes('hammadde') || warehouse.toLowerCase().includes('ana') ? 'WH-RM' : 'WH-FG';
-      const materialCode = (ocrFields.material.value || 'MAT-UNKNOWN').trim();
       const locCode = location.trim() || 'RECV';
       const qty = Number(countQty) || 0;
+      if (qty <= 0) {
+        throw new Error(t('wb.rcv.gateNeedCount'));
+      }
       const mi = minted.mi || `MI-${Date.now()}`;
       const lot = minted.lot || `LOT-${Date.now()}`;
       const pkg = minted.pkg || `PKG-${Date.now()}`;
@@ -198,12 +247,15 @@ export function ReceivingWorkbench() {
       }>('goods-receipts/execute', {
         warehouseCode: whCode,
         reference: truck.plate || 'MANUAL',
+        quantityVerified: true,
+        extractSource: OCR_EXTRACT_SOURCE,
         notes: [
           `supplier=${truck.supplier}`,
           `gate=${truck.gate}`,
           `qty=${qty}`,
           `loc=${locCode}`,
           `material=${materialCode}`,
+          `ocrLabel=${ocrFields.material.value}`,
           `inspect=${inspectOk ? 'OK' : 'HOLD'}`,
           `flags=${DAMAGE_FLAGS.filter((f) => flags[f]).join(',') || 'none'}`,
           `docs=${docs.length}`,
@@ -217,7 +269,7 @@ export function ReceivingWorkbench() {
             lotNumber: lot,
             packageNumber: pkg,
             materialIdentityNumber: mi,
-            quantity: qty > 0 ? qty : 1,
+            quantity: qty,
             unitOfMeasure: 'Piece',
             barcode: pkg,
           },
@@ -262,6 +314,10 @@ export function ReceivingWorkbench() {
       }));
     }
     if (stage.id === 'post') {
+      if (postBlockedReason) {
+        setError(postBlockedReason);
+        return;
+      }
       persistMutation.mutate();
       return;
     }
@@ -463,6 +519,11 @@ export function ReceivingWorkbench() {
 
               {stage.id === 'aiDoc' ? (
                 <div className="space-y-3">
+                  {isDemoOcr ? (
+                    <p className="rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2 text-sm text-[var(--color-danger)]">
+                      {t('wb.rcv.demoOcrBanner')}
+                    </p>
+                  ) : null}
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ocrIntro')}</p>
                     <div className="flex flex-wrap gap-2">
@@ -497,6 +558,7 @@ export function ReceivingWorkbench() {
                                 return next;
                               });
                               setCountQty(OCR_DEMO_CORRECTED.quantity);
+                              setQuantityVerified(false);
                             }}
                           >
                             {t('wb.rcv.ocrApplySuggested')}
@@ -512,6 +574,7 @@ export function ReceivingWorkbench() {
                                 return next;
                               });
                               setCountQty(ocrFields.quantity.value.replace(/\D/g, '') || countQty);
+                              setQuantityVerified(false);
                               setOcrEditing(false);
                             }}
                           >
@@ -625,6 +688,37 @@ export function ReceivingWorkbench() {
                       </tbody>
                     </table>
                   </div>
+                  {stage.id === 'materialVerify' ? (
+                    <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
+                      <p className="text-sm font-medium">{t('wb.rcv.materialMatchTitle')}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.materialMatchHint')}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        OCR: <span className="font-medium">{ocrFields.material.value}</span>
+                      </p>
+                      <label className="block text-xs text-[var(--text-muted)]">
+                        {t('wb.rcv.matchedMaterial')}
+                        <select
+                          className="mt-1 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 py-2 text-sm text-[var(--text-primary)]"
+                          value={matchedMaterialCode}
+                          disabled={posted}
+                          onChange={(e) => setMatchedMaterialCode(e.target.value)}
+                        >
+                          <option value="">{t('wb.rcv.pickMaterial')}</option>
+                          {materialOptions.map((m) => (
+                            <option key={m.code} value={m.code}>
+                              {m.code} — {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {materialsQuery.isError ? (
+                        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.materialLoadError')}</p>
+                      ) : null}
+                      {materialsQuery.isSuccess && materialOptions.length === 0 ? (
+                        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.noMaterialsInMaster')}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -653,7 +747,24 @@ export function ReceivingWorkbench() {
                   </div>
                   <label className="block max-w-xs space-y-1 text-sm">
                     <span className="text-[var(--text-secondary)]">{t('wb.rcv.countedQty')}</span>
-                    <Input type="number" value={countQty} onChange={(e) => setCountQty(e.target.value)} />
+                    <Input
+                      type="number"
+                      value={countQty}
+                      disabled={posted}
+                      onChange={(e) => {
+                        setCountQty(e.target.value);
+                        setQuantityVerified(false);
+                      }}
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={quantityVerified}
+                      disabled={posted || Number(countQty) <= 0}
+                      onChange={(e) => setQuantityVerified(e.target.checked)}
+                    />
+                    {t('wb.rcv.qtyVerified')}
                   </label>
                   <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.countPrefer')}</p>
                 </div>
@@ -816,7 +927,7 @@ export function ReceivingWorkbench() {
                     {[
                       [t('wb.rcv.truck'), `${truck.plate || '—'} · ${truck.supplier} · Gate ${truck.gate}`],
                       [t('wb.rcv.documents'), `${docs.length} ${t('wb.rcv.files')}`],
-                      [t('wb.rcv.materials'), `${ocrFields.material.value} · ${countQty} ${ocrFields.unit.value}`],
+                      [t('wb.rcv.materials'), `${matchedMaterialCode || t('wb.rcv.noMaterialMatched')} · OCR ${ocrFields.material.value} · ${countQty} ${ocrFields.unit.value}${quantityVerified ? ` · ${t('wb.rcv.qtyVerifiedShort')}` : ''}`],
                       [t('wb.rcv.diff'), verifyResolved ? t('wb.rcv.resolved') : t('wb.rcv.openDiffs')],
                       [t('wb.rcv.inspect'), inspectOk ? t('wb.rcv.visualOk') : DAMAGE_FLAGS.filter((f) => flags[f]).map((f) => t(`wb.rcv.flag.${f}`)).join(', ')],
                       [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
@@ -838,6 +949,11 @@ export function ReceivingWorkbench() {
               {stage.id === 'post' ? (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.postIntro')}</p>
+                  {postBlockedReason ? (
+                    <p className="rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2 text-sm text-[var(--color-danger)]">
+                      {postBlockedReason}
+                    </p>
+                  ) : null}
                   <ul className="list-inside list-disc text-sm text-[var(--text-primary)]">
                     <li>{t('wb.rcv.postItem.txn')}</li>
                     <li>{t('wb.rcv.postItem.receiving')}</li>
@@ -919,8 +1035,14 @@ export function ReceivingWorkbench() {
             <>
               <Button
                 type="button"
-                disabled={posted || persistMutation.isPending || !approved}
-                onClick={() => persistMutation.mutate()}
+                disabled={posted || persistMutation.isPending || !approved || !!postBlockedReason}
+                onClick={() => {
+                  if (postBlockedReason) {
+                    setError(postBlockedReason);
+                    return;
+                  }
+                  persistMutation.mutate();
+                }}
               >
                 {persistMutation.isPending ? t('saving') : t('wizard.post')}
               </Button>

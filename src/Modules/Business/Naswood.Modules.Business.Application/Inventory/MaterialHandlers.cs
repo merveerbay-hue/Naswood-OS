@@ -9,6 +9,7 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public interface IMaterialRepository
 {
     Task<Material?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Material?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task AddAsync(Material entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Material> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
 }
