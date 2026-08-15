@@ -3,6 +3,8 @@ namespace Naswood.Modules.Business.Contracts.Inventory;
 public sealed class StockPostLineRequestDto
 {
     public string MaterialCode { get; init; } = string.Empty;
+    /// <summary>Optional material master Id — must match MaterialCode when provided.</summary>
+    public string? MaterialId { get; init; }
     public string LocationCode { get; init; } = string.Empty;
     public string LotNumber { get; init; } = string.Empty;
     public string PackageNumber { get; init; } = string.Empty;
