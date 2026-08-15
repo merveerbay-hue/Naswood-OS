@@ -115,13 +115,19 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             if (string.Equals(materialCode, "MAT-UNKNOWN", StringComparison.OrdinalIgnoreCase))
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
                     "INV-POST-011",
-                    $"Line {lineNo}: MAT-UNKNOWN is not a valid material master code."));
+                    "Geçerli bir malzeme kartı seçilmeden mal kabul stok girişi yapılamaz."));
 
             var material = await _materials.GetByCodeAsync(materialCode, cancellationToken).ConfigureAwait(false);
             if (material is null)
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
                     "INV-POST-011",
-                    $"Line {lineNo}: Material '{materialCode}' is not a valid material master code."));
+                    "Geçerli bir malzeme kartı seçilmeden mal kabul stok girişi yapılamaz."));
+            if (!string.IsNullOrWhiteSpace(line.MaterialId)
+                && Guid.TryParse(line.MaterialId, out var materialId)
+                && material.Id != materialId)
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-014",
+                    "Geçerli bir malzeme kartı seçilmeden mal kabul stok girişi yapılamaz. (materialId/code uyuşmazlığı)"));
             if (!string.IsNullOrWhiteSpace(material.Status)
                 && !string.Equals(material.Status, "Active", StringComparison.OrdinalIgnoreCase))
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(

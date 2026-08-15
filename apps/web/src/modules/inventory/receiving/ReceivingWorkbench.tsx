@@ -4,6 +4,14 @@ import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
+import {
+  formatDims,
+  parseDefinitionDims,
+  parseDimensions,
+  rankMaterialMatches,
+  type MaterialCandidate,
+  type MaterialMatchResult,
+} from './materialMatch';
 
 /**
  * Phase-1 receiving pipeline (no real OCR engine yet):
@@ -83,32 +91,89 @@ export function ReceivingWorkbench() {
   const [countQty, setCountQty] = useState('48');
   const [quantityVerified, setQuantityVerified] = useState(false);
   const [matchedMaterialCode, setMatchedMaterialCode] = useState('');
+  const [matchedMaterialId, setMatchedMaterialId] = useState('');
+  const [matchConfirmed, setMatchConfirmed] = useState(false);
+  const [confirmedMatchScore, setConfirmedMatchScore] = useState<number | null>(null);
+  const [showMaterialPicker, setShowMaterialPicker] = useState(false);
+  const [materialSearch, setMaterialSearch] = useState('');
   const [warehouse, setWarehouse] = useState('Ana Hammadde Deposu');
   const [location, setLocation] = useState('Rampa A / Bölge 1');
 
   const ocrFlaggedCount = OCR_FIELD_KEYS.filter((k) => ocrFields[k].flagged).length;
+  const ocrConfidence = ocrFields.material.confidence;
 
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
-    queryFn: () => searchResource<{ code: string; name: string; status: string }>('materials'),
+    queryFn: () =>
+      searchResource<{
+        id: string;
+        code: string;
+        name: string;
+        description?: string;
+        category?: string;
+        unitOfMeasure?: string;
+        status: string;
+        definitionJson?: string;
+      }>('materials'),
   });
-  const materialOptions = useMemo(
-    () => (materialsQuery.data?.items ?? []).filter((m) => !m.status || m.status.toLowerCase() === 'active'),
+
+  const materialCandidates: MaterialCandidate[] = useMemo(
+    () =>
+      (materialsQuery.data?.items ?? [])
+        .filter((m) => !m.status || m.status.toLowerCase() === 'active')
+        .map((m) => ({
+          id: String(m.id),
+          code: m.code,
+          name: m.name,
+          description: m.description,
+          category: m.category,
+          unitOfMeasure: m.unitOfMeasure,
+          status: m.status,
+          definitionJson: m.definitionJson,
+        })),
     [materialsQuery.data],
   );
+
+  const rankedMatches = useMemo(
+    () =>
+      rankMaterialMatches(ocrFields.material.value, materialCandidates, ocrFields.dimensions.value, 8),
+    [ocrFields.material.value, ocrFields.dimensions.value, materialCandidates],
+  );
+
+  const suggestedMatch: MaterialMatchResult | null = rankedMatches[0] ?? null;
+
+  const pickerList = useMemo(() => {
+    const q = materialSearch.trim().toLowerCase();
+    if (!q) return materialCandidates;
+    return materialCandidates.filter(
+      (m) => m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
+    );
+  }, [materialCandidates, materialSearch]);
 
   const stage = STAGES[stageIdx];
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
 
-  /** Stock posts operator-confirmed data only — never raw demo OCR as ledger truth. */
+  /** Stock posts operator-confirmed master material only — never raw OCR text. */
   const postBlockedReason = useMemo(() => {
-    if (!matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterial');
+    if (!matchConfirmed || !matchedMaterialCode.trim() || !matchedMaterialId.trim()) {
+      return t('wb.rcv.gateNeedMaterialConfirm');
+    }
     if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
     if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
     if (!approved) return t('wb.rcv.gateNeedApprove');
     if (!warehouse.trim() || !location.trim()) return t('wb.rcv.gateNeedWh');
     return null;
-  }, [matchedMaterialCode, quantityVerified, countQty, approved, warehouse, location, t]);
+  }, [
+    matchConfirmed,
+    matchedMaterialCode,
+    matchedMaterialId,
+    quantityVerified,
+    countQty,
+    approved,
+    warehouse,
+    location,
+    t,
+  ]);
 
   const gateMessage = useMemo(() => {
     switch (stage.id) {
@@ -123,7 +188,8 @@ export function ReceivingWorkbench() {
       case 'control':
         return !controlAccepted ? t('wb.rcv.gateNeedControl') : null;
       case 'materialMatch':
-        return !matchedMaterialCode.trim() ? t('wb.rcv.gateNeedMaterial') : null;
+        if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
+        return null;
       case 'qtyVerify':
         if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
         if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
@@ -144,6 +210,7 @@ export function ReceivingWorkbench() {
     ocrFlaggedCount,
     ocrAccepted,
     controlAccepted,
+    matchConfirmed,
     matchedMaterialCode,
     countQty,
     quantityVerified,
@@ -156,12 +223,46 @@ export function ReceivingWorkbench() {
 
   const canAdvance = !gateMessage && !posted;
 
+  function clearMaterialMatch() {
+    setMatchedMaterialCode('');
+    setMatchedMaterialId('');
+    setMatchConfirmed(false);
+    setConfirmedMatchScore(null);
+    setApproved(false);
+  }
+
+  function confirmMatch(result: MaterialMatchResult) {
+    if (result.status === 'NO_MATCH') return;
+    setMatchedMaterialCode(result.material.code);
+    setMatchedMaterialId(result.material.id);
+    setConfirmedMatchScore(result.score);
+    setMatchConfirmed(true);
+    setShowMaterialPicker(false);
+    setApproved(false);
+  }
+
+  function selectMasterMaterial(m: MaterialCandidate) {
+    const scored = rankMaterialMatches(ocrFields.material.value, [m], ocrFields.dimensions.value, 1)[0];
+    setMatchedMaterialCode(m.code);
+    setMatchedMaterialId(m.id);
+    setConfirmedMatchScore(scored?.score ?? 0);
+    setMatchConfirmed(true);
+    setShowMaterialPicker(false);
+    setApproved(false);
+  }
+
   const persistMutation = useMutation({
     mutationFn: async () => {
-      if (!quantityVerified) throw new Error(t('wb.rcv.gateNeedQtyVerify'));
-      if (!approved) throw new Error(t('wb.rcv.gateNeedApprove'));
+      if (!matchConfirmed || !quantityVerified || !approved) {
+        throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
+      }
       const materialCode = matchedMaterialCode.trim();
-      if (!materialCode) throw new Error(t('wb.rcv.gateNeedMaterial'));
+      const materialId = matchedMaterialId.trim();
+      if (!materialCode || !materialId) throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
+      // Hard block: never post OCR free-text as materialCode
+      if (materialCode === ocrFields.material.value.trim() && !materialCandidates.some((c) => c.code === materialCode)) {
+        throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
+      }
       const qty = Number(countQty) || 0;
       if (qty <= 0) throw new Error(t('wb.rcv.gateNeedCount'));
 
@@ -172,7 +273,6 @@ export function ReceivingWorkbench() {
       const lot = mintPreview('LOT');
       const pkg = mintPreview('PKG');
 
-      // Operator-confirmed path: never send extractSource=demo to the ledger API.
       return executeStockDocument<{
         documentId: string;
         documentNumber: string;
@@ -196,7 +296,10 @@ export function ReceivingWorkbench() {
           `gate=${truck.gate}`,
           `qty=${qty}`,
           `loc=${locCode}`,
+          `materialId=${materialId}`,
           `material=${materialCode}`,
+          `matchScore=${confirmedMatchScore ?? ''}`,
+          `ocrConfidence=${ocrConfidence}`,
           `ocrLabel=${ocrFields.material.value}`,
           `docs=${docs.join(',')}`,
         ].join('; '),
@@ -204,6 +307,7 @@ export function ReceivingWorkbench() {
         lines: [
           {
             materialCode,
+            materialId,
             locationCode: locCode,
             lotNumber: lot,
             packageNumber: pkg,
@@ -424,6 +528,7 @@ export function ReceivingWorkbench() {
                               });
                               setCountQty(OCR_DEMO_CORRECTED.quantity);
                               setQuantityVerified(false);
+                              clearMaterialMatch();
                             }}
                           >
                             {t('wb.rcv.ocrApplySuggested')}
@@ -440,6 +545,7 @@ export function ReceivingWorkbench() {
                               });
                               setCountQty(ocrFields.quantity.value.replace(/\D/g, '') || countQty);
                               setQuantityVerified(false);
+                              clearMaterialMatch();
                               setOcrEditing(false);
                             }}
                           >
@@ -529,30 +635,113 @@ export function ReceivingWorkbench() {
               {stage.id === 'materialMatch' ? (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.materialMatchHint')}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    OCR: <span className="font-medium text-[var(--text-primary)]">{ocrFields.material.value}</span>
-                  </p>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    {t('wb.rcv.matchedMaterial')}
-                    <select
-                      className="mt-1 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 py-2 text-sm text-[var(--text-primary)]"
-                      value={matchedMaterialCode}
-                      disabled={posted}
-                      onChange={(e) => setMatchedMaterialCode(e.target.value)}
+
+                  <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
+                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ocrReadLabel')}</p>
+                    <p className="font-medium">{ocrFields.material.value}</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">
+                      {t('wb.rcv.ocrConfidence')}: %{ocrConfidence}
+                      {' · '}
+                      {t('wb.rcv.parsedDims')}: {formatDims(parseDimensions(ocrFields.material.value) ?? parseDimensions(ocrFields.dimensions.value))}
+                    </p>
+                  </div>
+
+                  {suggestedMatch ? (
+                    <div
+                      className={`rounded-md border px-3 py-3 ${
+                        suggestedMatch.status === 'STRONG_MATCH'
+                          ? 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5'
+                          : suggestedMatch.status === 'REVIEW_REQUIRED'
+                            ? 'border-[var(--border-default)]'
+                            : 'border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5'
+                      }`}
                     >
-                      <option value="">{t('wb.rcv.pickMaterial')}</option>
-                      {materialOptions.map((m) => (
-                        <option key={m.code} value={m.code}>
-                          {m.code} — {m.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.suggestedMaterial')}</p>
+                      <p className="font-mono text-sm font-semibold">{suggestedMatch.material.code}</p>
+                      <p className="text-sm">{suggestedMatch.material.name}</p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {formatDims(
+                          parseDefinitionDims(suggestedMatch.material.definitionJson) ??
+                            parseDimensions(suggestedMatch.material.name),
+                        )}
+                      </p>
+                      <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
+                        <p>
+                          {t('wb.rcv.ocrConfidence')}: <span className="font-medium">%{ocrConfidence}</span>
+                        </p>
+                        <p>
+                          {t('wb.rcv.materialMatchScore')}:{' '}
+                          <span className="font-medium">%{suggestedMatch.score}</span>
+                        </p>
+                        <p className="sm:col-span-2 font-medium">
+                          {t(`wb.rcv.matchStatus.${suggestedMatch.status}`)}
+                        </p>
+                      </div>
+                      {matchConfirmed && matchedMaterialCode === suggestedMatch.material.code ? (
+                        <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
+                          {t('wb.rcv.matchConfirmedBanner')} · {matchedMaterialCode}
+                        </p>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          disabled={posted || suggestedMatch.status === 'NO_MATCH'}
+                          onClick={() => confirmMatch(suggestedMatch)}
+                        >
+                          {t('wb.rcv.confirmMatch')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={posted}
+                          onClick={() => {
+                            setShowMaterialPicker(true);
+                            clearMaterialMatch();
+                          }}
+                        >
+                          {t('wb.rcv.pickOtherMaterial')}
+                        </Button>
+                      </div>
+                      {suggestedMatch.status === 'NO_MATCH' ? (
+                        <p className="mt-2 text-xs text-[var(--color-danger)]">{t('wb.rcv.noMatchHint')}</p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.noMaterialsInMaster')}</p>
+                  )}
+
+                  {showMaterialPicker ? (
+                    <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
+                      <p className="text-sm font-medium">{t('wb.rcv.materialPickerTitle')}</p>
+                      <Input
+                        value={materialSearch}
+                        disabled={posted}
+                        placeholder={t('wb.rcv.materialSearchPlaceholder')}
+                        onChange={(e) => setMaterialSearch(e.target.value)}
+                      />
+                      <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
+                        {pickerList.map((m) => (
+                          <li key={m.id}>
+                            <button
+                              type="button"
+                              disabled={posted}
+                              className="flex w-full flex-col rounded-md px-2 py-1.5 text-left hover:bg-[var(--color-surface-hover)]"
+                              onClick={() => selectMasterMaterial(m)}
+                            >
+                              <span className="font-mono text-xs font-semibold">{m.code}</span>
+                              <span>{m.name}</span>
+                            </button>
+                          </li>
+                        ))}
+                        {pickerList.length === 0 ? (
+                          <li className="text-xs text-[var(--text-muted)]">{t('wb.rcv.noMaterialsInMaster')}</li>
+                        ) : null}
+                      </ul>
+                    </div>
+                  ) : null}
+
                   {materialsQuery.isError ? (
                     <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.materialLoadError')}</p>
-                  ) : null}
-                  {materialsQuery.isSuccess && materialOptions.length === 0 ? (
-                    <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.noMaterialsInMaster')}</p>
                   ) : null}
                 </div>
               ) : null}
@@ -597,7 +786,7 @@ export function ReceivingWorkbench() {
                     {[
                       [t('wb.rcv.doc.deliveryNote'), docs.includes('deliveryNote') ? t('wb.rcv.attached') : '—'],
                       [t('wb.rcv.truck'), `${truck.plate} · ${truck.supplier}`],
-                      [t('wb.rcv.matchedMaterial'), matchedMaterialCode || t('wb.rcv.noMaterialMatched')],
+                      [t('wb.rcv.matchedMaterial'), matchConfirmed ? `${matchedMaterialCode} · id ${matchedMaterialId.slice(0, 8)}…` : t('wb.rcv.noMaterialMatched')],
                       [t('wb.rcv.countedQty'), `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`],
                       [t('wb.rcv.ocrField.material'), ocrFields.material.value],
                     ].map(([label, value]) => (
@@ -678,7 +867,14 @@ export function ReceivingWorkbench() {
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.rcv.matchedMaterial')}</dt>
-                <dd className="font-medium">{matchedMaterialCode || t('wb.rcv.noMaterialMatched')}</dd>
+                <dd className="font-medium">
+                  {matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')}
+                  {confirmedMatchScore != null && matchConfirmed ? ` · %${confirmedMatchScore}` : ''}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[var(--text-muted)]">{t('wb.rcv.ocrConfidence')}</dt>
+                <dd className="font-medium">%{ocrConfidence}</dd>
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.rcv.countedQty')}</dt>
