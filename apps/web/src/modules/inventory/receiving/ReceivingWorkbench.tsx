@@ -13,16 +13,21 @@ import {
   type MaterialMatchResult,
 } from './materialMatch';
 import { DocumentControlPanel } from './DocumentControlPanel';
-import { DOC_CONTROL_META } from './documentControlDemo';
+import {
+  TruckEvidenceStep,
+  type EvidenceDocKind,
+  type PhotoSlot,
+  type TruckInfo,
+} from './TruckEvidenceStep';
 
 /**
- * Phase-1 receiving pipeline (no real OCR engine yet):
- * İrsaliye → OCR (demo extract) → Kontrol → Malzeme eşleştirme → Miktar doğrulama → Onay → Stok
+ * Real ops receiving rail (6 stages):
+ * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
  *
- * Demo OCR is for operator control only. Stock posts only matched master code + verified qty
- * with extractSource=manual (never extractSource=demo).
+ * This change implements Stage 1 fully. Stages 2–6 keep the existing safe stock path
+ * (material master match + verified qty) until each stage is built next.
  */
-type StageId = 'deliveryNote' | 'ocr' | 'control' | 'materialMatch' | 'qtyVerify' | 'approve' | 'stock';
+type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
 interface StageDef {
   id: StageId;
@@ -31,44 +36,33 @@ interface StageDef {
 }
 
 const STAGES: StageDef[] = [
-  { id: 'deliveryNote', titleKey: 'wb.rcv.step.deliveryNote', hintKey: 'wb.rcv.step.deliveryNoteHint' },
-  { id: 'ocr', titleKey: 'wb.rcv.step.ocr', hintKey: 'wb.rcv.step.ocrHint' },
-  { id: 'control', titleKey: 'wb.rcv.step.control', hintKey: 'wb.rcv.step.controlHint' },
-  { id: 'materialMatch', titleKey: 'wb.rcv.step.materialMatch', hintKey: 'wb.rcv.step.materialMatchHint' },
-  { id: 'qtyVerify', titleKey: 'wb.rcv.step.qtyVerify', hintKey: 'wb.rcv.step.qtyVerifyHint' },
-  { id: 'approve', titleKey: 'wb.rcv.step.approve', hintKey: 'wb.rcv.step.approveHint' },
-  { id: 'stock', titleKey: 'wb.rcv.step.stock', hintKey: 'wb.rcv.step.stockHint' },
+  { id: 'truckEvidence', titleKey: 'wb.rcv.ops.step.truckEvidence', hintKey: 'wb.rcv.ops.step.truckEvidenceHint' },
+  { id: 'materialCheck', titleKey: 'wb.rcv.ops.step.materialCheck', hintKey: 'wb.rcv.ops.step.materialCheckHint' },
+  { id: 'physicalCount', titleKey: 'wb.rcv.ops.step.physicalCount', hintKey: 'wb.rcv.ops.step.physicalCountHint' },
+  { id: 'compare', titleKey: 'wb.rcv.ops.step.compare', hintKey: 'wb.rcv.ops.step.compareHint' },
+  { id: 'result', titleKey: 'wb.rcv.ops.step.result', hintKey: 'wb.rcv.ops.step.resultHint' },
+  { id: 'stock', titleKey: 'wb.rcv.ops.step.stock', hintKey: 'wb.rcv.ops.step.stockHint' },
 ];
 
-type OcrFieldKey = 'material' | 'dimensions' | 'quantity' | 'unit' | 'bundles' | 'supplier';
-
-const OCR_FIELD_KEYS: OcrFieldKey[] = ['material', 'dimensions', 'quantity', 'unit', 'bundles', 'supplier'];
-
-/** Placeholder extract — not a real OCR engine. */
-const OCR_DEMO_INITIAL: Record<OcrFieldKey, { value: string; confidence: number; flagged: boolean }> = {
-  material: { value: 'Thermowood Deck 26×140×3000', confidence: 94, flagged: false },
-  dimensions: { value: '26 × 14O × 3000 mm', confidence: 61, flagged: true },
-  quantity: { value: '4B', confidence: 58, flagged: true },
-  unit: { value: 'adet', confidence: 96, flagged: false },
-  bundles: { value: '4', confidence: 91, flagged: false },
-  supplier: { value: 'Nordlc Timber Oy', confidence: 72, flagged: true },
-};
-
-const OCR_DEMO_CORRECTED: Record<OcrFieldKey, string> = {
-  material: 'Thermowood Deck 26×140×3000',
-  dimensions: '26 × 140 × 3000 mm',
-  quantity: '48',
-  unit: 'adet',
-  bundles: '4',
-  supplier: 'Nordic Timber Oy',
-};
+/** Placeholder label used until Stage 3 document reading extracts lines. */
+const PLACEHOLDER_MATERIAL_LABEL = 'Thermowood Deck 26×140×3000';
 
 function mintPreview(prefix: string) {
-  const seq = new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + String(Math.floor(100000 + Math.random() * 900000));
+  const seq =
+    new Date().toISOString().slice(2, 10).replace(/-/g, '') +
+    '-' +
+    String(Math.floor(100000 + Math.random() * 900000));
   return `${prefix}-${seq}`;
 }
 
-/** INV-RCV-001 — phase-1 safe stock path (demo OCR → operator confirm → ledger). */
+function nowDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function nowTime() {
+  return new Date().toTimeString().slice(0, 5);
+}
+
 export function ReceivingWorkbench() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -80,29 +74,31 @@ export function ReceivingWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [approved, setApproved] = useState(false);
 
-  const [truck, setTruck] = useState({
+  const [truck, setTruck] = useState<TruckInfo>({
     plate: '34 ABC 123',
-    supplier: DOC_CONTROL_META.supplier as string,
+    trailer: '34 DEF 456',
+    driver: 'Ahmet Yılmaz',
+    supplier: 'Nordic Timber',
+    arrivalDate: nowDate(),
+    arrivalTime: nowTime(),
     gate: '2',
   });
-  const [docs, setDocs] = useState<string[]>([]);
-  const [ocrFields, setOcrFields] = useState(OCR_DEMO_INITIAL);
-  const [ocrEditing, setOcrEditing] = useState(false);
-  const [ocrAccepted, setOcrAccepted] = useState(false);
-  const [controlAccepted, setControlAccepted] = useState(false);
+  const [docs, setDocs] = useState<EvidenceDocKind[]>([]);
+  const [photos, setPhotos] = useState<Partial<Record<PhotoSlot, boolean>>>({});
+
+  const [materialLabel, setMaterialLabel] = useState(PLACEHOLDER_MATERIAL_LABEL);
+  const [preAccept, setPreAccept] = useState<'none' | 'ok' | 'conditional' | 'reject'>('none');
   const [countQty, setCountQty] = useState('48');
   const [quantityVerified, setQuantityVerified] = useState(false);
+  const [compareResolved, setCompareResolved] = useState(false);
   const [matchedMaterialCode, setMatchedMaterialCode] = useState('');
   const [matchedMaterialId, setMatchedMaterialId] = useState('');
   const [matchConfirmed, setMatchConfirmed] = useState(false);
   const [confirmedMatchScore, setConfirmedMatchScore] = useState<number | null>(null);
   const [showMaterialPicker, setShowMaterialPicker] = useState(false);
   const [materialSearch, setMaterialSearch] = useState('');
-  const [warehouse, setWarehouse] = useState('Ana Hammadde Deposu');
-  const [location, setLocation] = useState('Rampa A / Bölge 1');
-
-  const ocrFlaggedCount = OCR_FIELD_KEYS.filter((k) => ocrFields[k].flagged).length;
-  const ocrConfidence = ocrFields.material.confidence;
+  const [warehouse, setWarehouse] = useState('WH-RM');
+  const [location, setLocation] = useState('A-03-02');
 
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
@@ -137,11 +133,9 @@ export function ReceivingWorkbench() {
   );
 
   const rankedMatches = useMemo(
-    () =>
-      rankMaterialMatches(ocrFields.material.value, materialCandidates, ocrFields.dimensions.value, 8),
-    [ocrFields.material.value, ocrFields.dimensions.value, materialCandidates],
+    () => rankMaterialMatches(materialLabel, materialCandidates, undefined, 8),
+    [materialLabel, materialCandidates],
   );
-
   const suggestedMatch: MaterialMatchResult | null = rankedMatches[0] ?? null;
 
   const pickerList = useMemo(() => {
@@ -154,8 +148,8 @@ export function ReceivingWorkbench() {
 
   const stage = STAGES[stageIdx];
   const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
+  const photoCount = Object.values(photos).filter(Boolean).length;
 
-  /** Stock posts operator-confirmed master material only — never raw OCR text. */
   const postBlockedReason = useMemo(() => {
     if (!matchConfirmed || !matchedMaterialCode.trim() || !matchedMaterialId.trim()) {
       return t('wb.rcv.gateNeedMaterialConfirm');
@@ -179,25 +173,23 @@ export function ReceivingWorkbench() {
 
   const gateMessage = useMemo(() => {
     switch (stage.id) {
-      case 'deliveryNote':
+      case 'truckEvidence':
         if (!truck.plate.trim()) return t('wb.rcv.gateNeedPlate');
-        if (!docs.includes('deliveryNote')) return t('wb.rcv.gateNeedDeliveryNote');
+        if (!truck.supplier.trim()) return t('wb.rcv.gateNeedSupplier');
+        if (docs.length === 0 && photoCount === 0) return t('wb.rcv.ops.gateNeedEvidence');
         return null;
-      case 'ocr':
-        if (ocrEditing) return t('wb.rcv.gateNeedOcrSave');
-        if (ocrFlaggedCount > 0) return t('wb.rcv.gateNeedOcrFix');
-        return !ocrAccepted ? t('wb.rcv.gateNeedOcr') : null;
-      case 'control':
-        return !controlAccepted ? t('wb.rcv.gateNeedControl') : null;
-      case 'materialMatch':
+      case 'materialCheck':
+        if (preAccept === 'none') return t('wb.rcv.ops.gateNeedPreAccept');
+        if (preAccept === 'reject') return t('wb.rcv.ops.gatePreAcceptReject');
         if (!matchConfirmed || !matchedMaterialCode.trim()) return t('wb.rcv.gateNeedMaterialConfirm');
         return null;
-      case 'qtyVerify':
+      case 'physicalCount':
         if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
         if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
         return null;
-      case 'approve':
-        if (!warehouse.trim() || !location.trim()) return t('wb.rcv.gateNeedWh');
+      case 'compare':
+        return !compareResolved ? t('wb.rcv.gateNeedControl') : null;
+      case 'result':
         return !approved ? t('wb.rcv.gateNeedApprove') : null;
       case 'stock':
         return postBlockedReason;
@@ -207,17 +199,15 @@ export function ReceivingWorkbench() {
   }, [
     stage.id,
     truck.plate,
-    docs,
-    ocrEditing,
-    ocrFlaggedCount,
-    ocrAccepted,
-    controlAccepted,
+    truck.supplier,
+    docs.length,
+    photoCount,
+    preAccept,
     matchConfirmed,
     matchedMaterialCode,
     countQty,
     quantityVerified,
-    warehouse,
-    location,
+    compareResolved,
     approved,
     postBlockedReason,
     t,
@@ -244,13 +234,21 @@ export function ReceivingWorkbench() {
   }
 
   function selectMasterMaterial(m: MaterialCandidate) {
-    const scored = rankMaterialMatches(ocrFields.material.value, [m], ocrFields.dimensions.value, 1)[0];
+    const scored = rankMaterialMatches(materialLabel, [m], undefined, 1)[0];
     setMatchedMaterialCode(m.code);
     setMatchedMaterialId(m.id);
     setConfirmedMatchScore(scored?.score ?? 0);
     setMatchConfirmed(true);
     setShowMaterialPicker(false);
     setApproved(false);
+  }
+
+  function toggleDoc(kind: EvidenceDocKind) {
+    setDocs((d) => (d.includes(kind) ? d.filter((x) => x !== kind) : [...d, kind]));
+  }
+
+  function togglePhoto(slot: PhotoSlot) {
+    setPhotos((p) => ({ ...p, [slot]: !p[slot] }));
   }
 
   const persistMutation = useMutation({
@@ -261,15 +259,10 @@ export function ReceivingWorkbench() {
       const materialCode = matchedMaterialCode.trim();
       const materialId = matchedMaterialId.trim();
       if (!materialCode || !materialId) throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
-      // Hard block: never post OCR free-text as materialCode
-      if (materialCode === ocrFields.material.value.trim() && !materialCandidates.some((c) => c.code === materialCode)) {
-        throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
-      }
       const qty = Number(countQty) || 0;
       if (qty <= 0) throw new Error(t('wb.rcv.gateNeedCount'));
 
-      const whCode =
-        warehouse.toLowerCase().includes('hammadde') || warehouse.toLowerCase().includes('ana') ? 'WH-RM' : 'WH-FG';
+      const whCode = warehouse.trim() || 'WH-RM';
       const locCode = location.trim() || 'RECV';
       const mi = mintPreview('MI');
       const lot = mintPreview('LOT');
@@ -293,17 +286,21 @@ export function ReceivingWorkbench() {
         quantityVerified: true,
         extractSource: 'manual',
         notes: [
-          `pipeline=deliveryNote>ocrDemo>control>materialMatch>qtyVerify>approve>stock`,
+          `pipeline=truckEvidence>materialCheck>physicalCount>compare>result>stock`,
           `supplier=${truck.supplier}`,
+          `trailer=${truck.trailer}`,
+          `driver=${truck.driver}`,
+          `arrival=${truck.arrivalDate}T${truck.arrivalTime}`,
           `gate=${truck.gate}`,
+          `preAccept=${preAccept}`,
+          `photos=${photoCount}`,
+          `docs=${docs.join(',')}`,
           `qty=${qty}`,
           `loc=${locCode}`,
           `materialId=${materialId}`,
           `material=${materialCode}`,
           `matchScore=${confirmedMatchScore ?? ''}`,
-          `ocrConfidence=${ocrConfidence}`,
-          `ocrLabel=${ocrFields.material.value}`,
-          `docs=${docs.join(',')}`,
+          `label=${materialLabel}`,
         ].join('; '),
         number: '',
         lines: [
@@ -345,13 +342,6 @@ export function ReceivingWorkbench() {
         setError(postBlockedReason);
         return;
       }
-      // Mint identity numbers at post time (system-owned).
-      setMinted((m) => ({
-        ...m,
-        mi: m.mi ?? mintPreview('MI'),
-        lot: m.lot ?? mintPreview('LOT'),
-        pkg: m.pkg ?? mintPreview('PKG'),
-      }));
       persistMutation.mutate();
       return;
     }
@@ -360,21 +350,18 @@ export function ReceivingWorkbench() {
     setMaxReached((m) => Math.max(m, next));
   }
 
-  function addDoc(kind: string) {
-    setDocs((d) => (d.includes(kind) ? d : [...d, kind]));
-  }
-
   return (
     <div className="flex min-h-[calc(100vh-7rem)] flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-default)] pb-3">
         <div>
-          <p className="text-xs font-medium text-[var(--text-muted)]">INV-RCV-001 · {t('wb.rcv.screenType')}</p>
+          <p className="text-xs font-medium text-[var(--text-muted)]">INV-RCV-001 · {t('wb.rcv.ops.screenType')}</p>
           <h2 className="text-xl font-semibold tracking-tight">{t('wb.rcv.title')}</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">{t('wb.rcv.phase1Desc')}</p>
-          <p className="mt-1 text-xs font-medium text-[var(--color-primary)]">{t('wb.rcv.phase1Pipeline')}</p>
+          <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.desc')}</p>
+          <p className="mt-1 text-xs font-medium text-[var(--color-primary)]">{t('wb.rcv.ops.pipeline')}</p>
           <p className="mt-2 text-xs text-[var(--text-muted)]">
             {truck.plate ? `${t('wb.rcv.truckPlate')}: ${truck.plate}` : t('wb.rcv.noTruckYet')}
             {truck.supplier ? ` · ${truck.supplier}` : ''}
+            {` · ${docs.length} ${t('wb.rcv.files')} · ${photoCount} ${t('wb.rcv.photos')}`}
             {' · '}
             {t('wb.rcv.stageOf').replace('{n}', String(stageIdx + 1)).replace('{total}', String(STAGES.length))}
           </p>
@@ -401,7 +388,7 @@ export function ReceivingWorkbench() {
         />
       </div>
 
-      <div className="grid flex-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
+      <div className="grid flex-1 gap-3 lg:grid-cols-[200px_minmax(0,1fr)_240px]">
         <nav className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-2">
           <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
             {t('wb.rcv.timeline')}
@@ -445,223 +432,63 @@ export function ReceivingWorkbench() {
               <CardDescription>{t(stage.hintKey)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {stage.id === 'deliveryNote' ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.deliveryNoteIntro')}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {t('wb.rcv.docCtrl.deliveryNote')}:{' '}
-                    <span className="font-mono font-medium text-[var(--text-primary)]">{DOC_CONTROL_META.documentNumber}</span>
-                  </p>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <label className="block space-y-1 text-sm">
-                      <span className="text-[var(--text-secondary)]">{t('wb.rcv.truckPlate')}</span>
-                      <Input
-                        value={truck.plate}
-                        disabled={posted}
-                        onChange={(e) => setTruck((tr) => ({ ...tr, plate: e.target.value }))}
-                      />
-                    </label>
-                    <label className="block space-y-1 text-sm">
-                      <span className="text-[var(--text-secondary)]">{t('wb.rcv.supplier')}</span>
-                      <Input
-                        value={truck.supplier}
-                        disabled={posted}
-                        onChange={(e) => setTruck((tr) => ({ ...tr, supplier: e.target.value }))}
-                      />
-                    </label>
-                    <label className="block space-y-1 text-sm">
-                      <span className="text-[var(--text-secondary)]">{t('wb.rcv.gate')}</span>
-                      <Input
-                        value={truck.gate}
-                        disabled={posted}
-                        onChange={(e) => setTruck((tr) => ({ ...tr, gate: e.target.value }))}
-                      />
-                    </label>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {(['deliveryNote', 'packingList', 'purchaseOrder'] as const).map((kind) => (
-                      <Button
-                        key={kind}
-                        type="button"
-                        variant={docs.includes(kind) ? 'default' : 'secondary'}
-                        disabled={posted}
-                        onClick={() => addDoc(kind)}
-                      >
-                        {t(`wb.rcv.doc.${kind}`)}
-                        {docs.includes(kind) ? ` · ${t('wb.rcv.attached')}` : ''}
-                      </Button>
-                    ))}
-                  </div>
-                  {docs.length === 0 ? (
-                    <p className="text-sm text-[var(--text-muted)]">{t('wb.rcv.docEmpty')}</p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {stage.id === 'ocr' ? (
-                <div className="space-y-3">
-                  <p className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-                    {t('wb.rcv.demoOcrBanner')}
-                  </p>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ocrIntro')}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {!ocrEditing ? (
-                        <Button
-                          type="button"
-                          variant={ocrFlaggedCount > 0 ? 'default' : 'secondary'}
-                          disabled={posted}
-                          onClick={() => {
-                            setOcrEditing(true);
-                            setOcrAccepted(false);
-                          }}
-                        >
-                          {t('wb.rcv.ocrFixErrors')}
-                          {ocrFlaggedCount > 0 ? ` (${ocrFlaggedCount})` : ''}
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => {
-                              setOcrFields((prev) => {
-                                const next = { ...prev };
-                                for (const k of OCR_FIELD_KEYS) {
-                                  next[k] = { value: OCR_DEMO_CORRECTED[k], confidence: 99, flagged: false };
-                                }
-                                return next;
-                              });
-                              setCountQty(OCR_DEMO_CORRECTED.quantity);
-                              setQuantityVerified(false);
-                              clearMaterialMatch();
-                            }}
-                          >
-                            {t('wb.rcv.ocrApplySuggested')}
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              setOcrFields((prev) => {
-                                const next = { ...prev };
-                                for (const k of OCR_FIELD_KEYS) {
-                                  next[k] = { ...next[k], flagged: false, confidence: Math.max(next[k].confidence, 95) };
-                                }
-                                return next;
-                              });
-                              setCountQty(ocrFields.quantity.value.replace(/\D/g, '') || countQty);
-                              setQuantityVerified(false);
-                              clearMaterialMatch();
-                              setOcrEditing(false);
-                            }}
-                          >
-                            {t('wb.rcv.ocrSaveFixes')}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {ocrFlaggedCount > 0 && !ocrEditing ? (
-                    <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.ocrErrorsHint')}</p>
-                  ) : null}
-                  <div className="grid gap-2 md:grid-cols-2">
-                    {OCR_FIELD_KEYS.map((k) => {
-                      const field = ocrFields[k];
-                      const bad = field.flagged || field.confidence < 80;
-                      return (
-                        <div
-                          key={k}
-                          className={`rounded-md border px-3 py-2 ${
-                            bad ? 'border-[var(--color-danger)] bg-[var(--color-danger)]/5' : 'border-[var(--border-default)]'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[10px] uppercase text-[var(--text-muted)]">{t(`wb.rcv.ocrField.${k}`)}</p>
-                            {bad ? (
-                              <span className="text-[10px] font-semibold text-[var(--color-danger)]">{t('wb.rcv.ocrNeedsFix')}</span>
-                            ) : null}
-                          </div>
-                          {ocrEditing ? (
-                            <Input
-                              className="mt-1"
-                              value={field.value}
-                              onChange={(e) =>
-                                setOcrFields((prev) => ({
-                                  ...prev,
-                                  [k]: { ...prev[k], value: e.target.value, flagged: false },
-                                }))
-                              }
-                            />
-                          ) : (
-                            <p className="font-medium">{field.value}</p>
-                          )}
-                          <p className={`text-[10px] ${bad ? 'text-[var(--color-danger)]' : 'text-[var(--text-muted)]'}`}>
-                            {t('wb.rcv.ocrConfidence')} {field.confidence}% · {t('wb.rcv.demoConfidenceNote')}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={ocrAccepted}
-                      disabled={ocrEditing || ocrFlaggedCount > 0 || posted}
-                      onChange={(e) => setOcrAccepted(e.target.checked)}
-                    />
-                    {t('wb.rcv.ocrAccept')}
-                  </label>
-                </div>
-              ) : null}
-
-              {stage.id === 'control' ? (
-                <DocumentControlPanel
+              {stage.id === 'truckEvidence' ? (
+                <TruckEvidenceStep
+                  truck={truck}
+                  onTruckChange={setTruck}
+                  docs={docs}
+                  onToggleDoc={toggleDoc}
+                  photos={photos}
+                  onTogglePhoto={togglePhoto}
                   disabled={posted}
-                  onResolvedChange={setControlAccepted}
-                  onRequestMaterialMatch={(line) => {
-                    setOcrFields((prev) => ({
-                      ...prev,
-                      material: {
-                        ...prev.material,
-                        value: line.product,
-                        confidence: prev.material.confidence,
-                        flagged: false,
-                      },
-                    }));
-                    clearMaterialMatch();
-                    const matchIdx = STAGES.findIndex((s) => s.id === 'materialMatch');
-                    if (matchIdx >= 0) {
-                      setStageIdx(matchIdx);
-                      setMaxReached((m) => Math.max(m, matchIdx));
-                    }
-                  }}
                 />
               ) : null}
 
-              {stage.id === 'materialMatch' ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.materialMatchHint')}</p>
+              {stage.id === 'materialCheck' ? (
+                <div className="space-y-4">
+                  <p className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+                    {t('wb.rcv.ops.stage2Interim')}
+                  </p>
+
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">{t('wb.rcv.ops.preAcceptTitle')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(
+                        [
+                          ['ok', t('wb.rcv.ops.preAccept.ok')],
+                          ['conditional', t('wb.rcv.ops.preAccept.conditional')],
+                          ['reject', t('wb.rcv.ops.preAccept.reject')],
+                        ] as const
+                      ).map(([id, label]) => (
+                        <Button
+                          key={id}
+                          type="button"
+                          size="sm"
+                          variant={preAccept === id ? 'default' : 'secondary'}
+                          disabled={posted}
+                          onClick={() => setPreAccept(id)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
 
                   <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ocrReadLabel')}</p>
-                    <p className="font-medium">{ocrFields.material.value}</p>
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
-                      {t('wb.rcv.ocrConfidence')}: %{ocrConfidence}
-                      {' · '}
-                      {t('wb.rcv.parsedDims')}: {formatDims(parseDimensions(ocrFields.material.value) ?? parseDimensions(ocrFields.dimensions.value))}
-                    </p>
+                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.incomingLabel')}</p>
+                    <Input
+                      className="mt-1"
+                      value={materialLabel}
+                      disabled={posted}
+                      onChange={(e) => {
+                        setMaterialLabel(e.target.value);
+                        clearMaterialMatch();
+                      }}
+                    />
                   </div>
 
                   {suggestedMatch ? (
-                    <div
-                      className={`rounded-md border px-3 py-3 ${
-                        suggestedMatch.status === 'STRONG_MATCH'
-                          ? 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5'
-                          : suggestedMatch.status === 'REVIEW_REQUIRED'
-                            ? 'border-[var(--border-default)]'
-                            : 'border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5'
-                      }`}
-                    >
+                    <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
                       <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.suggestedMaterial')}</p>
                       <p className="font-mono text-sm font-semibold">{suggestedMatch.material.code}</p>
                       <p className="text-sm">{suggestedMatch.material.name}</p>
@@ -671,23 +498,10 @@ export function ReceivingWorkbench() {
                             parseDimensions(suggestedMatch.material.name),
                         )}
                       </p>
-                      <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
-                        <p>
-                          {t('wb.rcv.ocrConfidence')}: <span className="font-medium">%{ocrConfidence}</span>
-                        </p>
-                        <p>
-                          {t('wb.rcv.materialMatchScore')}:{' '}
-                          <span className="font-medium">%{suggestedMatch.score}</span>
-                        </p>
-                        <p className="sm:col-span-2 font-medium">
-                          {t(`wb.rcv.matchStatus.${suggestedMatch.status}`)}
-                        </p>
-                      </div>
-                      {matchConfirmed && matchedMaterialCode === suggestedMatch.material.code ? (
-                        <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
-                          {t('wb.rcv.matchConfirmedBanner')} · {matchedMaterialCode}
-                        </p>
-                      ) : null}
+                      <p className="mt-1 text-xs">
+                        {t('wb.rcv.materialMatchScore')}: %{suggestedMatch.score} ·{' '}
+                        {t(`wb.rcv.matchStatus.${suggestedMatch.status}`)}
+                      </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button
                           type="button"
@@ -708,8 +522,10 @@ export function ReceivingWorkbench() {
                           {t('wb.rcv.pickOtherMaterial')}
                         </Button>
                       </div>
-                      {suggestedMatch.status === 'NO_MATCH' ? (
-                        <p className="mt-2 text-xs text-[var(--color-danger)]">{t('wb.rcv.noMatchHint')}</p>
+                      {matchConfirmed ? (
+                        <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
+                          {t('wb.rcv.matchConfirmedBanner')} · {matchedMaterialCode}
+                        </p>
                       ) : null}
                     </div>
                   ) : (
@@ -718,7 +534,6 @@ export function ReceivingWorkbench() {
 
                   {showMaterialPicker ? (
                     <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
-                      <p className="text-sm font-medium">{t('wb.rcv.materialPickerTitle')}</p>
                       <Input
                         value={materialSearch}
                         disabled={posted}
@@ -739,25 +554,15 @@ export function ReceivingWorkbench() {
                             </button>
                           </li>
                         ))}
-                        {pickerList.length === 0 ? (
-                          <li className="text-xs text-[var(--text-muted)]">{t('wb.rcv.noMaterialsInMaster')}</li>
-                        ) : null}
                       </ul>
                     </div>
-                  ) : null}
-
-                  {materialsQuery.isError ? (
-                    <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.materialLoadError')}</p>
                   ) : null}
                 </div>
               ) : null}
 
-              {stage.id === 'qtyVerify' ? (
+              {stage.id === 'physicalCount' ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.qtyVerifyIntro')}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    OCR miktar: <span className="font-medium">{ocrFields.quantity.value}</span> — {t('wb.rcv.qtyOcrNotTrusted')}
-                  </p>
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.stage3Interim')}</p>
                   <label className="block max-w-xs space-y-1 text-sm">
                     <span className="text-[var(--text-secondary)]">{t('wb.rcv.countedQty')}</span>
                     <Input
@@ -786,15 +591,33 @@ export function ReceivingWorkbench() {
                 </div>
               ) : null}
 
-              {stage.id === 'approve' ? (
+              {stage.id === 'compare' ? (
+                <DocumentControlPanel
+                  disabled={posted}
+                  onResolvedChange={setCompareResolved}
+                  onRequestMaterialMatch={(line) => {
+                    setMaterialLabel(line.product);
+                    clearMaterialMatch();
+                    const idx = STAGES.findIndex((s) => s.id === 'materialCheck');
+                    if (idx >= 0) {
+                      setStageIdx(idx);
+                      setMaxReached((m) => Math.max(m, idx));
+                    }
+                  }}
+                />
+              ) : null}
+
+              {stage.id === 'result' ? (
                 <div className="space-y-3">
                   <div className="grid gap-2 md:grid-cols-2">
                     {[
-                      [t('wb.rcv.doc.deliveryNote'), docs.includes('deliveryNote') ? t('wb.rcv.attached') : '—'],
-                      [t('wb.rcv.truck'), `${truck.plate} · ${truck.supplier}`],
-                      [t('wb.rcv.matchedMaterial'), matchConfirmed ? `${matchedMaterialCode} · id ${matchedMaterialId.slice(0, 8)}…` : t('wb.rcv.noMaterialMatched')],
+                      [t('wb.rcv.truck'), `${truck.plate} · ${truck.trailer} · ${truck.driver}`],
+                      [t('wb.rcv.supplier'), truck.supplier],
+                      [t('wb.rcv.ops.evidenceSummary'), `${docs.length} belge · ${photoCount} foto`],
+                      [t('wb.rcv.ops.preAcceptTitle'), preAccept === 'none' ? '—' : t(`wb.rcv.ops.preAccept.${preAccept}`)],
+                      [t('wb.rcv.matchedMaterial'), matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')],
                       [t('wb.rcv.countedQty'), `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'}`],
-                      [t('wb.rcv.ocrField.material'), ocrFields.material.value],
+                      [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
                         <p className="text-[10px] uppercase text-[var(--text-muted)]">{label}</p>
@@ -812,12 +635,11 @@ export function ReceivingWorkbench() {
                       <Input value={location} disabled={posted} onChange={(e) => setLocation(e.target.value)} />
                     </label>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.approveStockNote')}</p>
                   <label className="flex items-center gap-2 text-sm font-medium">
                     <input
                       type="checkbox"
                       checked={approved}
-                      disabled={posted || !matchedMaterialCode || !quantityVerified}
+                      disabled={posted || !matchConfirmed || !quantityVerified}
                       onChange={(e) => setApproved(e.target.checked)}
                     />
                     {t('wb.rcv.approvePost')}
@@ -839,19 +661,11 @@ export function ReceivingWorkbench() {
                         .replace('{qty}', countQty)}
                     </p>
                   )}
-                  <ul className="list-inside list-disc text-sm text-[var(--text-primary)]">
-                    <li>{t('wb.rcv.postItem.txn')}</li>
-                    <li>{t('wb.rcv.postItem.receiving')}</li>
-                    <li>{t('wb.rcv.postItem.stock')}</li>
-                    <li>{t('wb.rcv.postItem.mi')}</li>
-                  </ul>
                   {posted ? (
                     <p className="text-sm font-medium text-[var(--color-primary)]">
                       {t('wb.rcv.postedBanner')}
                       {minted.gr ? ` · ${minted.gr}` : ''}
                       {minted.mi ? ` · ${minted.mi}` : ''}
-                      {' — '}
-                      {t('wizard.inLibrary')}
                     </p>
                   ) : null}
                 </div>
@@ -868,19 +682,18 @@ export function ReceivingWorkbench() {
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">{t('wb.rcv.context')}</p>
             <dl className="mt-2 space-y-2 text-xs">
               <div>
-                <dt className="text-[var(--text-muted)]">{t('wb.rcv.doc.deliveryNote')}</dt>
-                <dd className="font-medium">{docs.includes('deliveryNote') ? t('wb.rcv.attached') : '—'}</dd>
+                <dt className="text-[var(--text-muted)]">{t('wb.rcv.truckPlate')}</dt>
+                <dd className="font-medium">{truck.plate || '—'}</dd>
               </div>
               <div>
-                <dt className="text-[var(--text-muted)]">{t('wb.rcv.matchedMaterial')}</dt>
+                <dt className="text-[var(--text-muted)]">{t('wb.rcv.ops.evidenceSummary')}</dt>
                 <dd className="font-medium">
-                  {matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')}
-                  {confirmedMatchScore != null && matchConfirmed ? ` · %${confirmedMatchScore}` : ''}
+                  {docs.length} {t('wb.rcv.files')} · {photoCount} {t('wb.rcv.photos')}
                 </dd>
               </div>
               <div>
-                <dt className="text-[var(--text-muted)]">{t('wb.rcv.ocrConfidence')}</dt>
-                <dd className="font-medium">%{ocrConfidence}</dd>
+                <dt className="text-[var(--text-muted)]">{t('wb.rcv.matchedMaterial')}</dt>
+                <dd className="font-medium">{matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')}</dd>
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.rcv.countedQty')}</dt>
@@ -889,14 +702,10 @@ export function ReceivingWorkbench() {
                   {quantityVerified ? ` · ${t('wb.rcv.qtyVerifiedShort')}` : ''}
                 </dd>
               </div>
-              <div>
-                <dt className="text-[var(--text-muted)]">{t('wb.rcv.supplier')}</dt>
-                <dd className="font-medium">{truck.supplier || '—'}</dd>
-              </div>
             </dl>
           </div>
           <div className="rounded-lg border border-dashed border-[var(--border-default)] p-3 text-xs text-[var(--text-muted)]">
-            {t('wb.rcv.phase1GuardNote')}
+            {t('wb.rcv.ops.stage1GuardNote')}
           </div>
         </aside>
       </div>
@@ -920,12 +729,6 @@ export function ReceivingWorkbench() {
                     setError(postBlockedReason);
                     return;
                   }
-                  setMinted((m) => ({
-                    ...m,
-                    mi: m.mi ?? mintPreview('MI'),
-                    lot: m.lot ?? mintPreview('LOT'),
-                    pkg: m.pkg ?? mintPreview('PKG'),
-                  }));
                   persistMutation.mutate();
                 }}
               >
