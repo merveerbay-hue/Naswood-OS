@@ -12,6 +12,8 @@ import {
   type MaterialCandidate,
   type MaterialMatchResult,
 } from './materialMatch';
+import { DocumentControlPanel } from './DocumentControlPanel';
+import { DOC_CONTROL_META } from './documentControlDemo';
 
 /**
  * Phase-1 receiving pipeline (no real OCR engine yet):
@@ -80,7 +82,7 @@ export function ReceivingWorkbench() {
 
   const [truck, setTruck] = useState({
     plate: '34 ABC 123',
-    supplier: 'Nordic Timber Oy',
+    supplier: DOC_CONTROL_META.supplier as string,
     gate: '2',
   });
   const [docs, setDocs] = useState<string[]>([]);
@@ -446,6 +448,10 @@ export function ReceivingWorkbench() {
               {stage.id === 'deliveryNote' ? (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.deliveryNoteIntro')}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {t('wb.rcv.docCtrl.deliveryNote')}:{' '}
+                    <span className="font-mono font-medium text-[var(--text-primary)]">{DOC_CONTROL_META.documentNumber}</span>
+                  </p>
                   <div className="grid gap-2 sm:grid-cols-3">
                     <label className="block space-y-1 text-sm">
                       <span className="text-[var(--text-secondary)]">{t('wb.rcv.truckPlate')}</span>
@@ -609,27 +615,27 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'control' ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.controlIntro')}</p>
-                  <dl className="grid gap-2 sm:grid-cols-2">
-                    {OCR_FIELD_KEYS.map((k) => (
-                      <div key={k} className="rounded-md border border-[var(--border-default)] px-3 py-2">
-                        <dt className="text-[10px] uppercase text-[var(--text-muted)]">{t(`wb.rcv.ocrField.${k}`)}</dt>
-                        <dd className="text-sm font-medium">{ocrFields[k].value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.controlNotMaster')}</p>
-                  <label className="flex items-center gap-2 text-sm font-medium">
-                    <input
-                      type="checkbox"
-                      checked={controlAccepted}
-                      disabled={posted}
-                      onChange={(e) => setControlAccepted(e.target.checked)}
-                    />
-                    {t('wb.rcv.controlAccept')}
-                  </label>
-                </div>
+                <DocumentControlPanel
+                  disabled={posted}
+                  onResolvedChange={setControlAccepted}
+                  onRequestMaterialMatch={(line) => {
+                    setOcrFields((prev) => ({
+                      ...prev,
+                      material: {
+                        ...prev.material,
+                        value: line.product,
+                        confidence: prev.material.confidence,
+                        flagged: false,
+                      },
+                    }));
+                    clearMaterialMatch();
+                    const matchIdx = STAGES.findIndex((s) => s.id === 'materialMatch');
+                    if (matchIdx >= 0) {
+                      setStageIdx(matchIdx);
+                      setMaxReached((m) => Math.max(m, matchIdx));
+                    }
+                  }}
+                />
               ) : null}
 
               {stage.id === 'materialMatch' ? (
