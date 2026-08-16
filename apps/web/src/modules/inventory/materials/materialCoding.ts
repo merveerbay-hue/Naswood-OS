@@ -1,7 +1,10 @@
 /**
  * Master MaterialCode mint — user never types the code.
  * Format examples:
- *   HM-KR-PIN-001 · YM-LM-PIN-S-001 · MP-LP-AA-18-S · TW-CP-001
+ *   HM-KR-PIN-001 · HM-KR-TPIN-001 · YM-LM-PIN-S-001 · YM-LM-TPIN-S-001
+ *   MP-CP-AA-18-S · MP-TCP-AA-18-S · TW-CP-001
+ *
+ * Thermowood = same cins + ağaç, wood token prefixed with T (PIN→TPIN, CP→TCP).
  * No automatic SKU/variant generation.
  */
 
@@ -9,9 +12,12 @@ export type MainCategory = 'HM' | 'YM' | 'MP' | 'TW';
 
 export type MaterialCodingInput = {
   mainCategory: MainCategory;
-  /** HM: TR|KR|LT|LAMT · YM: LM|LAM|PR · MP ignored (from wood+quality) · TW: C|Z|S|K family */
+  /** HM: TR|KR|LT|LAMT · YM: LM|LAM|PR · MP ignored (from wood+quality) · TW: family */
   materialType: string;
-  /** Wood token: PIN|SP|… or MP LP|CP|… or TW species letter */
+  /**
+   * Effective wood token in the code (already includes T-prefix when Thermowood).
+   * PIN | TPIN | SP | TSP | CP | TCP | …
+   */
   woodToken: string;
   /** YM lamel: S|FJ · MP: S|FJ · else empty */
   productTypeToken?: string;
@@ -25,23 +31,57 @@ export type MaterialCodingInput = {
 
 const HM_TYPES = new Set(['TR', 'KR', 'LT', 'LAMT']);
 const YM_TYPES = new Set(['LM', 'LAM', 'PR']);
-const MP_WOOD = new Set(['LP', 'CP', 'KP', 'OP', 'CV', 'SP', 'IR', 'DB', 'KS', 'TK', 'LM', 'SD', 'GK', 'HS']);
-const TW_FAMILY = new Set(['CP', 'CA', 'CI', 'CY', 'CAP', 'ZP', 'ZA', 'ZI', 'ZY', 'ZAP', 'SP', 'SA', 'SI', 'SY', 'SAP', 'KP', 'KA', 'KI']);
+const MP_WOOD_BASE = new Set([
+  'LP',
+  'CP',
+  'KP',
+  'OP',
+  'CV',
+  'SP',
+  'IR',
+  'DB',
+  'KS',
+  'TK',
+  'LM',
+  'SD',
+  'GK',
+  'HS',
+]);
+const TW_FAMILY = new Set([
+  'CP',
+  'CA',
+  'CI',
+  'CY',
+  'CAP',
+  'ZP',
+  'ZA',
+  'ZI',
+  'ZY',
+  'ZAP',
+  'SP',
+  'SA',
+  'SI',
+  'SY',
+  'SAP',
+  'KP',
+  'KA',
+  'KI',
+]);
 
-export const WOOD_OPTIONS_HM: { token: string; label: string }[] = [
-  { token: 'PIN', label: 'Pine / Çam' },
-  { token: 'SP', label: 'Spruce / Ladin' },
-  { token: 'FIR', label: 'Fir / Göknar' },
-  { token: 'BEE', label: 'Beech / Kayın' },
-  { token: 'OAK', label: 'Oak / Meşe' },
-  { token: 'ASH', label: 'Ash / Dişbudak' },
-  { token: 'WAL', label: 'Walnut / Ceviz' },
-  { token: 'CHE', label: 'Chestnut / Kestane' },
-  { token: 'IRO', label: 'Iroko' },
-  { token: 'SAP', label: 'Sapelli' },
-  { token: 'AYO', label: 'Ayous' },
-  { token: 'CAP', label: 'American Pine' },
-  { token: 'TEK', label: 'Teak' },
+export const WOOD_OPTIONS_HM: { token: string; label: string; labelTr: string }[] = [
+  { token: 'PIN', label: 'Pine / Çam', labelTr: 'Çam' },
+  { token: 'SP', label: 'Spruce / Ladin', labelTr: 'Ladin' },
+  { token: 'FIR', label: 'Fir / Göknar', labelTr: 'Göknar' },
+  { token: 'BEE', label: 'Beech / Kayın', labelTr: 'Kayın' },
+  { token: 'OAK', label: 'Oak / Meşe', labelTr: 'Meşe' },
+  { token: 'ASH', label: 'Ash / Dişbudak', labelTr: 'Dişbudak' },
+  { token: 'WAL', label: 'Walnut / Ceviz', labelTr: 'Ceviz' },
+  { token: 'CHE', label: 'Chestnut / Kestane', labelTr: 'Kestane' },
+  { token: 'IRO', label: 'Iroko', labelTr: 'İroko' },
+  { token: 'SAP', label: 'Sapelli', labelTr: 'Sapelli' },
+  { token: 'AYO', label: 'Ayous', labelTr: 'Ayous' },
+  { token: 'CAP', label: 'American Pine', labelTr: 'Amerikan Çam' },
+  { token: 'TEK', label: 'Teak', labelTr: 'Teak' },
 ];
 
 export const HM_TYPE_OPTIONS = [
@@ -58,20 +98,20 @@ export const YM_TYPE_OPTIONS = [
 ];
 
 export const MP_WOOD_OPTIONS = [
-  { token: 'LP', label: 'Ladin' },
-  { token: 'CP', label: 'Çam' },
-  { token: 'KP', label: 'Kayın' },
-  { token: 'OP', label: 'Meşe' },
-  { token: 'CV', label: 'Ceviz' },
-  { token: 'SP', label: 'Sapelli' },
-  { token: 'IR', label: 'İroko' },
-  { token: 'DB', label: 'Dişbudak' },
-  { token: 'KS', label: 'Kestane' },
-  { token: 'TK', label: 'Teak' },
-  { token: 'LM', label: 'Limba' },
-  { token: 'SD', label: 'Sedir' },
-  { token: 'GK', label: 'Göknar' },
-  { token: 'HS', label: 'Huş' },
+  { token: 'LP', label: 'Ladin', labelTr: 'Ladin' },
+  { token: 'CP', label: 'Çam', labelTr: 'Çam' },
+  { token: 'KP', label: 'Kayın', labelTr: 'Kayın' },
+  { token: 'OP', label: 'Meşe', labelTr: 'Meşe' },
+  { token: 'CV', label: 'Ceviz', labelTr: 'Ceviz' },
+  { token: 'SP', label: 'Sapelli', labelTr: 'Sapelli' },
+  { token: 'IR', label: 'İroko', labelTr: 'İroko' },
+  { token: 'DB', label: 'Dişbudak', labelTr: 'Dişbudak' },
+  { token: 'KS', label: 'Kestane', labelTr: 'Kestane' },
+  { token: 'TK', label: 'Teak', labelTr: 'Teak' },
+  { token: 'LM', label: 'Limba', labelTr: 'Limba' },
+  { token: 'SD', label: 'Sedir', labelTr: 'Sedir' },
+  { token: 'GK', label: 'Göknar', labelTr: 'Göknar' },
+  { token: 'HS', label: 'Huş', labelTr: 'Huş' },
 ];
 
 export const TW_FAMILY_OPTIONS = [
@@ -102,7 +142,51 @@ function normToken(v: string): string {
     .replace(/[^A-Z0-9]/g, '');
 }
 
-/** Prefix without sequence, e.g. HM-KR-PIN or MP-LP-AA-18-S or YM-LM-PIN-S */
+/** True when token already encodes Thermowood (TPIN, TCP, …). */
+export function isThermowoodToken(woodToken: string): boolean {
+  const w = normToken(woodToken);
+  if (!w || w[0] !== 'T' || w.length < 2) return false;
+  // T alone / TEK (teak) are not thermo prefixes
+  if (w === 'TEK' || w === 'TK') return false;
+  const base = stripThermowoodToken(w);
+  return base !== w;
+}
+
+/** PIN ← TPIN, CP ← TCP. Leaves unknown tokens unchanged. */
+export function stripThermowoodToken(woodToken: string): string {
+  const w = normToken(woodToken);
+  if (!w.startsWith('T') || w.length < 2) return w;
+  if (w === 'TEK' || w === 'TK') return w;
+  const rest = w.slice(1);
+  const hmBases = new Set(WOOD_OPTIONS_HM.map((o) => o.token));
+  if (hmBases.has(rest) || MP_WOOD_BASE.has(rest)) return rest;
+  // TW family tokens are never T-prefixed this way
+  return w;
+}
+
+/**
+ * Effective code wood token.
+ * isThermowood=true → PIN→TPIN, CP→TCP.
+ * TW finished-goods category does not use this (family codes stay CP/CA/…).
+ */
+export function applyThermowoodToken(baseWoodToken: string, isThermowood: boolean): string {
+  const base = stripThermowoodToken(baseWoodToken);
+  if (!base) return '';
+  if (!isThermowood) return base;
+  if (isThermowoodToken(baseWoodToken)) return normToken(baseWoodToken);
+  return `T${base}`;
+}
+
+function isAllowedMpWood(wood: string): boolean {
+  const base = stripThermowoodToken(wood);
+  return MP_WOOD_BASE.has(base);
+}
+
+function isAllowedHmYmWood(wood: string): boolean {
+  return wood.length >= 2;
+}
+
+/** Prefix without sequence, e.g. HM-KR-TPIN or MP-TCP-AA-18-S or YM-LM-PIN-S */
 export function buildCodePrefix(input: MaterialCodingInput): string | null {
   const cat = input.mainCategory;
   const type = normToken(input.materialType);
@@ -111,11 +195,11 @@ export function buildCodePrefix(input: MaterialCodingInput): string | null {
   const q = normToken(input.quality ?? '');
 
   if (cat === 'HM') {
-    if (!HM_TYPES.has(type) || !wood) return null;
+    if (!HM_TYPES.has(type) || !isAllowedHmYmWood(wood)) return null;
     return `HM-${type}-${wood}`;
   }
   if (cat === 'YM') {
-    if (!YM_TYPES.has(type) || !wood) return null;
+    if (!YM_TYPES.has(type) || !isAllowedHmYmWood(wood)) return null;
     if (type === 'LM') {
       if (pt !== 'S' && pt !== 'FJ') return null;
       return `YM-LM-${wood}-${pt}`;
@@ -123,7 +207,7 @@ export function buildCodePrefix(input: MaterialCodingInput): string | null {
     return `YM-${type}-${wood}`;
   }
   if (cat === 'MP') {
-    if (!MP_WOOD.has(wood) || !q) return null;
+    if (!isAllowedMpWood(wood) || !q) return null;
     if (pt !== 'S' && pt !== 'FJ') return null;
     const th = input.thicknessForCode;
     if (th == null || !(th > 0)) return null;
@@ -151,21 +235,74 @@ function nextSeq(prefix: string, existingCodes: string[]): number {
 export function mintMaterialCode(input: MaterialCodingInput): string | null {
   const prefix = buildCodePrefix(input);
   if (!prefix) return null;
-  // MP codes already include thickness/type — sequence not used; uniqueness = full code
   if (input.mainCategory === 'MP') {
     const code = prefix;
     const exists = input.existingCodes.some((c) => c.trim().toUpperCase() === code.toUpperCase());
-    return exists ? null : code; // null = duplicate exact MP code
+    return exists ? null : code;
   }
   const seq = nextSeq(prefix, input.existingCodes);
   return `${prefix}-${String(seq).padStart(3, '0')}`;
 }
 
-/** Preview without allocating (shows ### or next). */
+/** Preview without allocating. */
 export function previewMaterialCode(input: MaterialCodingInput): string {
   const prefix = buildCodePrefix(input);
   if (!prefix) return '—';
   if (input.mainCategory === 'MP') return prefix;
   const seq = nextSeq(prefix, input.existingCodes);
   return `${prefix}-${String(seq).padStart(3, '0')}`;
+}
+
+function woodLabelTr(baseToken: string): string {
+  const base = stripThermowoodToken(baseToken);
+  const hm = WOOD_OPTIONS_HM.find((o) => o.token === base);
+  if (hm) return hm.labelTr;
+  const mp = MP_WOOD_OPTIONS.find((o) => o.token === base);
+  if (mp) return mp.labelTr;
+  return base;
+}
+
+function typeLabelTr(mainCategory: MainCategory, materialType: string): string {
+  if (mainCategory === 'MP') return 'Masif Panel';
+  if (mainCategory === 'TW') return 'Thermowood';
+  const all = [...HM_TYPE_OPTIONS, ...YM_TYPE_OPTIONS];
+  return all.find((o) => o.token === normToken(materialType))?.label ?? materialType;
+}
+
+/**
+ * Suggested material name — Thermowood is visible in the name itself.
+ * Examples: "Çam Kereste" · "Thermowood Çam Kereste" · "Çam Solid Lamel" · "Thermowood Çam Masif Panel AA"
+ */
+export function suggestMaterialName(input: {
+  mainCategory: MainCategory;
+  materialType: string;
+  /** Base wood (PIN/CP) — thermo flag applied separately */
+  baseWoodToken: string;
+  isThermowood: boolean;
+  productTypeToken?: string;
+  quality?: string;
+}): string {
+  if (input.mainCategory === 'TW') {
+    const fam = TW_FAMILY_OPTIONS.find((o) => o.token === normToken(input.baseWoodToken));
+    return fam ? `Thermowood ${fam.label}` : 'Thermowood';
+  }
+
+  const wood = woodLabelTr(input.baseWoodToken);
+  const kind = typeLabelTr(input.mainCategory, input.materialType);
+  const pt = normToken(input.productTypeToken ?? '');
+  const q = normToken(input.quality ?? '');
+
+  let core = `${wood} ${kind}`;
+  if (input.mainCategory === 'YM' && normToken(input.materialType) === 'LM') {
+    const ptLabel = pt === 'FJ' ? 'Finger Joint' : pt === 'S' ? 'Solid' : '';
+    core = ptLabel ? `${wood} ${ptLabel} ${kind}` : `${wood} ${kind}`;
+  }
+  if (input.mainCategory === 'MP') {
+    core = q ? `${wood} Masif Panel ${q}` : `${wood} Masif Panel`;
+    if (pt === 'FJ') core = `${core} FJ`;
+    else if (pt === 'S') core = `${core} Solid`;
+  }
+
+  if (input.isThermowood) return `Thermowood ${core}`;
+  return core;
 }

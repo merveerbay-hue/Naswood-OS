@@ -10,8 +10,10 @@ import {
   TW_FAMILY_OPTIONS,
   WOOD_OPTIONS_HM,
   YM_TYPE_OPTIONS,
+  applyThermowoodToken,
   mintMaterialCode,
   previewMaterialCode,
+  suggestMaterialName,
   type MainCategory,
 } from './materialCoding';
 import {
@@ -46,7 +48,10 @@ type DefState = {
   name: string;
   mainCategory: MainCategory;
   materialTypeToken: string;
+  /** Base wood (PIN/CP) — Thermowood applies T-prefix in the code */
   woodToken: string;
+  /** Thermowood Evet/Hayır — encodes as TPIN / TCP in MaterialCode + name */
+  isThermowood: boolean;
   productTypeToken: string;
   thicknessMm: string;
   widthMode: WidthMode;
@@ -107,6 +112,7 @@ const DEFAULT_DEF: DefState = {
   mainCategory: 'HM',
   materialTypeToken: 'KR',
   woodToken: 'PIN',
+  isThermowood: false,
   productTypeToken: '',
   thicknessMm: '50',
   widthMode: 'single',
@@ -196,16 +202,32 @@ function buildNominalFromDef(def: DefState): NominalDims {
   };
 }
 
+function effectiveWoodToken(def: DefState): string {
+  if (def.mainCategory === 'TW') return def.woodToken;
+  return applyThermowoodToken(def.woodToken, def.isThermowood);
+}
+
 function codingInput(def: DefState, existingCodes: string[]) {
   return {
     mainCategory: def.mainCategory,
     materialType: def.materialTypeToken,
-    woodToken: def.woodToken,
+    woodToken: effectiveWoodToken(def),
     productTypeToken: def.productTypeToken || undefined,
     quality: def.grade || undefined,
     thicknessForCode: def.mainCategory === 'MP' ? num(def.thicknessMm) || null : null,
     existingCodes,
   };
+}
+
+function suggestedName(def: DefState): string {
+  return suggestMaterialName({
+    mainCategory: def.mainCategory,
+    materialType: def.materialTypeToken,
+    baseWoodToken: def.woodToken,
+    isThermowood: def.mainCategory === 'TW' ? true : def.isThermowood,
+    productTypeToken: def.productTypeToken,
+    quality: def.grade,
+  });
 }
 
 function readMintedCode(row: Record<string, unknown> | null | undefined): string | null {
@@ -293,7 +315,7 @@ export function MaterialDefinitionDesigner() {
     const fp = buildDuplicateFingerprint({
       mainCategory: def.mainCategory,
       materialType: def.materialTypeToken,
-      woodSpecies: def.woodToken,
+      woodSpecies: effectiveWoodToken(def),
       productType: def.productTypeToken,
       quality: def.grade,
       dims: nominal,
@@ -369,14 +391,17 @@ export function MaterialDefinitionDesigner() {
       if (!code) throw new Error(t('md.gateMpCodeExists'));
       if (duplicate && !dupAck) throw new Error(t('md.duplicateFound'));
 
+      const woodEff = effectiveWoodToken(def);
       const definitionPayload = buildDefinitionWithNominal(
         {
           ...def,
           mainCategory: def.mainCategory,
           materialType: def.materialTypeToken,
           materialTypeToken: def.materialTypeToken,
-          species: def.woodToken,
-          woodToken: def.woodToken,
+          species: woodEff,
+          woodToken: woodEff,
+          baseWoodToken: def.woodToken,
+          isThermowood: def.mainCategory === 'TW' ? true : def.isThermowood,
           productTypeToken: def.productTypeToken,
           grade: def.grade,
           category: categoryLabel(def.mainCategory),
@@ -387,7 +412,8 @@ export function MaterialDefinitionDesigner() {
       );
 
       const description = [
-        def.woodToken,
+        woodEff,
+        def.isThermowood || def.mainCategory === 'TW' ? 'Thermowood' : null,
         dimsDisplay !== '—' ? dimsDisplay : null,
         def.materialTypeToken,
         def.grade,
@@ -417,11 +443,32 @@ export function MaterialDefinitionDesigner() {
   });
 
   function setField<K extends keyof DefState>(key: K, value: DefState[K]) {
-    setDef((d) => ({ ...d, [key]: value }));
+    setDef((d) => {
+      const next = { ...d, [key]: value };
+      if (
+        key === 'mainCategory' ||
+        key === 'materialTypeToken' ||
+        key === 'woodToken' ||
+        key === 'isThermowood' ||
+        key === 'productTypeToken' ||
+        key === 'grade'
+      ) {
+        next.name = suggestMaterialName({
+          mainCategory: next.mainCategory,
+          materialType: next.materialTypeToken,
+          baseWoodToken: next.woodToken,
+          isThermowood: next.mainCategory === 'TW' ? true : next.isThermowood,
+          productTypeToken: next.productTypeToken,
+          quality: next.grade,
+        });
+      }
+      return next;
+    });
     if (
       key === 'mainCategory' ||
       key === 'materialTypeToken' ||
       key === 'woodToken' ||
+      key === 'isThermowood' ||
       key === 'productTypeToken' ||
       key === 'grade' ||
       key === 'thicknessMm' ||
@@ -438,35 +485,37 @@ export function MaterialDefinitionDesigner() {
 
   function applyCategoryDefaults(cat: MainCategory) {
     setDef((d) => {
+      let next: DefState;
       if (cat === 'HM') {
-        return {
+        next = {
           ...d,
           mainCategory: cat,
           materialTypeToken: 'KR',
           woodToken: 'PIN',
+          isThermowood: false,
           productTypeToken: '',
           widthMode: 'single',
           stockUom: 'M3',
           grade: d.grade,
         };
-      }
-      if (cat === 'YM') {
-        return {
+      } else if (cat === 'YM') {
+        next = {
           ...d,
           mainCategory: cat,
           materialTypeToken: 'LM',
           woodToken: 'PIN',
+          isThermowood: false,
           productTypeToken: 'S',
           widthMode: 'single',
           stockUom: 'M3',
         };
-      }
-      if (cat === 'MP') {
-        return {
+      } else if (cat === 'MP') {
+        next = {
           ...d,
           mainCategory: cat,
           materialTypeToken: '',
           woodToken: 'CP',
+          isThermowood: false,
           productTypeToken: 'S',
           grade: d.grade || 'AA',
           widthMode: 'range',
@@ -477,18 +526,29 @@ export function MaterialDefinitionDesigner() {
           thicknessMm: d.thicknessMm || '18',
           stockUom: 'M2',
         };
+      } else {
+        next = {
+          ...d,
+          mainCategory: cat,
+          materialTypeToken: '',
+          woodToken: 'CP',
+          isThermowood: true,
+          productTypeToken: '',
+          widthMode: 'options',
+          widthOptions: '92/117/138',
+          lengthMm: '',
+          stockUom: 'M2',
+        };
       }
-      return {
-        ...d,
-        mainCategory: cat,
-        materialTypeToken: '',
-        woodToken: 'CP',
-        productTypeToken: '',
-        widthMode: 'options',
-        widthOptions: '92/117/138',
-        lengthMm: '',
-        stockUom: 'M2',
-      };
+      next.name = suggestMaterialName({
+        mainCategory: next.mainCategory,
+        materialType: next.materialTypeToken,
+        baseWoodToken: next.woodToken,
+        isThermowood: next.mainCategory === 'TW' ? true : next.isThermowood,
+        productTypeToken: next.productTypeToken,
+        quality: next.grade,
+      });
+      return next;
     });
     setDupAck(false);
   }
@@ -667,6 +727,22 @@ export function MaterialDefinitionDesigner() {
                     onChange={(v) => setField('woodToken', v)}
                     options={woodOptions}
                   />
+                  {def.mainCategory !== 'TW' ? (
+                    <SelectField
+                      label={t('md.fields.thermowood')}
+                      value={def.isThermowood ? 'YES' : 'NO'}
+                      onChange={(v) => setField('isThermowood', v === 'YES')}
+                      options={[
+                        { token: 'NO', label: t('md.thermowood.no') },
+                        { token: 'YES', label: t('md.thermowood.yes') },
+                      ]}
+                    />
+                  ) : (
+                    <div className="rounded-md border border-[var(--border-default)] px-3 py-2">
+                      <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.fields.thermowood')}</p>
+                      <p className="text-sm font-medium">{t('md.thermowood.twCategory')}</p>
+                    </div>
+                  )}
                   {def.mainCategory === 'YM' && def.materialTypeToken === 'LM' ? (
                     <SelectField
                       label={t('md.fields.productType')}
@@ -700,7 +776,14 @@ export function MaterialDefinitionDesigner() {
                   <div className="md:col-span-2 rounded-md border border-[var(--border-default)] px-3 py-2">
                     <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.fields.systemCode')}</p>
                     <p className="font-mono text-sm font-medium">{codePreview}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{t('md.codeNoManual')}</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">
+                      {t('md.codeNoManual')} · {t('md.fields.woodInCode')}:{' '}
+                      <span className="font-mono">{effectiveWoodToken(def)}</span>
+                      {def.isThermowood && def.mainCategory !== 'TW'
+                        ? ` (${def.woodToken} → ${effectiveWoodToken(def)})`
+                        : ''}
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)]">{t('md.thermowood.hint')}</p>
                   </div>
                 </div>
               ) : null}
@@ -876,6 +959,7 @@ export function MaterialDefinitionDesigner() {
                       [t('md.fields.dimsDisplay'), dimsDisplay],
                       [t('md.fields.stockUom'), def.stockUom],
                       [t('md.fields.mainCategory'), categoryLabel(def.mainCategory)],
+                      [t('md.fields.thermowood'), def.mainCategory === 'TW' || def.isThermowood ? t('md.thermowood.yes') : t('md.thermowood.no')],
                       [t('md.fields.grade'), def.grade || '—'],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
