@@ -26,6 +26,8 @@ function assert(cond: boolean, msg: string) {
 const seeded = seedIncomingFromDocuments();
 assert(seeded.length === 5, 'seed 5 lines');
 assert(seeded.every((l) => !l.matchConfirmed), 'no match on seed');
+assert(seeded.every((l) => l.physicalGroups.length === 0), 'no physical groups on seed');
+assert(seeded[0]!.thicknessMm === 50 && seeded[0]!.documentQty === 100, 'demo in-1 50×100×4000 / 100');
 assert(!allLinesReadyForCount(seeded), 'not ready at seed');
 
 const lumber = seeded[0]!;
@@ -64,10 +66,10 @@ assert(allLinesReadyForCount(decided), 'ready when reject skips match');
 assert(syncBatchPreAccept(decided) === 'ok', 'batch ok when any ok');
 assert(countableLines(decided).length === 4, 'reject excluded from count');
 
-const withQty: IncomingLine = { ...decided[0]!, operatorQty: '498', countStatus: 'counted' };
-assert(finalLineQty(withQty) === 498, 'operator qty');
-const vol = lumberVolumeM3(withQty, 498);
-assert(vol != null && Math.abs(vol - 498 * 0.026 * 0.14 * 3) < 1e-9, 'lumber m3');
+const withQty: IncomingLine = { ...decided[0]!, operatorQty: '98', countStatus: 'counted' };
+assert(finalLineQty(withQty) === 98, 'operator qty');
+const vol = lumberVolumeM3(withQty, 98);
+assert(vol != null && Math.abs(vol - 98 * 0.05 * 0.1 * 4) < 1e-9, 'doc lumber m3');
 
 const packaged: IncomingLine = {
   ...decided[1]!,
@@ -77,7 +79,7 @@ const packaged: IncomingLine = {
 };
 assert(packageTotal(packaged) === 300, 'uniform packages');
 
-const hit = matchIncomingByLabel(decided, 'Çam 26×140×3000');
+const hit = matchIncomingByLabel(decided, 'Çam 50×100×4000');
 assert(hit?.id === 'in-1', 'match handwriting to existing line');
 
 const allCounted = countableLines(decided).map((l) => ({

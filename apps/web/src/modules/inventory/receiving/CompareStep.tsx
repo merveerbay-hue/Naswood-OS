@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Input } from '@naswood/ui';
 import { useI18n } from '@/i18n';
-import type { IncomingLine } from './incomingLines';
+import type { IncomingLine, StockAcceptDecision } from './incomingLines';
 import {
   buildCompareRows,
   compareExceptions,
-  compareIsResolved,
+  compareReadyForResult,
   compareSummary,
   formatQty,
+  formatVolume,
   type CompareDisposition,
   type CompareFilter,
   type CompareRow,
@@ -15,6 +16,7 @@ import {
 
 type Props = {
   lines: IncomingLine[];
+  onChange: (next: IncomingLine[]) => void;
   disabled?: boolean;
   supplier?: string;
   onResolvedChange: (resolved: boolean) => void;
@@ -24,13 +26,19 @@ type Props = {
 const STATUS_DOT: Record<CompareRow['status'], string> = {
   ok: '🟢',
   diff: '🟡',
+  dimDiff: '🟠',
   unmatched: '🔴',
   rejected: '⚫',
 };
 
-/** Stage 4 — Sipariş ↔ Gelen liste ↔ Fiziksel (aynı IncomingLine kayıtları). */
+function updateLine(lines: IncomingLine[], id: string, patch: Partial<IncomingLine>): IncomingLine[] {
+  return lines.map((l) => (l.id === id ? { ...l, ...patch } : l));
+}
+
+/** Stage 4 — Sipariş ↔ Gelen ↔ Fiziksel (adet + ölçü + hacim) + stoka esas kabul. */
 export function CompareStep({
   lines,
+  onChange,
   disabled,
   supplier,
   onResolvedChange,
@@ -49,11 +57,12 @@ export function CompareStep({
   const exceptions = useMemo(() => compareExceptions(rows), [rows]);
 
   useEffect(() => {
-    onResolvedChange(compareIsResolved(rows, disposition, autoAcceptOk));
-  }, [rows, disposition, autoAcceptOk, onResolvedChange]);
+    onResolvedChange(compareReadyForResult(lines, disposition, autoAcceptOk));
+  }, [lines, disposition, autoAcceptOk, onResolvedChange]);
 
   const visibleRows = useMemo(() => {
     if (filter === 'diff') return rows.filter((r) => r.status === 'diff');
+    if (filter === 'dimDiff') return rows.filter((r) => r.status === 'dimDiff');
     if (filter === 'unmatched') return rows.filter((r) => r.status === 'unmatched');
     if (filter === 'rejected') return rows.filter((r) => r.status === 'rejected');
     if (autoAcceptOk) {
@@ -64,24 +73,18 @@ export function CompareStep({
     return rows;
   }, [rows, filter, autoAcceptOk]);
 
-  const selectedIds = useMemo(
-    () => Object.keys(selected).filter((id) => selected[id]),
-    [selected],
-  );
+  const selectedIds = useMemo(() => Object.keys(selected).filter((id) => selected[id]), [selected]);
 
-  function toggleSelect(id: string) {
-    setSelected((s) => ({ ...s, [id]: !s[id] }));
-  }
-
-  function selectVisible() {
-    setSelected((s) => {
-      const next = { ...s };
-      for (const r of visibleRows) {
-        if (r.status === 'ok' && autoAcceptOk) continue;
-        if (r.status === 'rejected') continue;
-        next[r.lineId] = true;
-      }
-      return next;
+  function setStockAccept(ids: string[], stockAccept: StockAcceptDecision, reason: string, disp: CompareDisposition) {
+    let next = lines;
+    for (const id of ids) {
+      next = updateLine(next, id, { stockAccept, stockAcceptReason: reason });
+    }
+    onChange(next);
+    setDisposition((prev) => {
+      const d = { ...prev };
+      for (const id of ids) d[id] = disp;
+      return d;
     });
   }
 
@@ -90,11 +93,22 @@ export function CompareStep({
       setActionMsg(t('wb.rcv.compare.needSelection'));
       return;
     }
-    setDisposition((prev) => {
-      const next = { ...prev };
-      for (const id of ids) next[id] = value;
-      return next;
-    });
+    if (value === 'accepted') {
+      setStockAccept(ids, 'ok', 'Karşılaştırma kabul', 'accepted');
+    } else if (value === 'conditional') {
+      setStockAccept(ids, 'conditional', 'Ölçü/miktar farkı — şartlı kabul; stoka fiziksel ölçü', 'conditional');
+    } else if (value === 'partial') {
+      setStockAccept(ids, 'conditional', `Kısmi kabul ${partialQty[ids[0] ?? ''] ?? ''}`.trim(), 'partial');
+    } else if (value === 'rejected') {
+      setStockAccept(ids, 'reject', 'Karşılaştırma red', 'rejected');
+    } else if (value === 'match') {
+      setDisposition((prev) => {
+        const d = { ...prev };
+        for (const id of ids) d[id] = 'match';
+        return d;
+      });
+      if (ids[0]) onRequestMaterialMatch?.(ids[0]);
+    }
     setActionMsg(t(`wb.rcv.compare.applied.${value}`).replace('{n}', String(ids.length)));
   }
 
@@ -102,7 +116,16 @@ export function CompareStep({
     return t(`wb.rcv.compare.status.${status}`);
   }
 
-  function dispLabel(d: CompareDisposition) {
+  function dispLabel(row: CompareRow) {
+    const line = lines.find((l) => l.id === row.lineId);
+    if (row.status === 'rejected') return t('wb.rcv.compare.disp.rejected');
+    if (row.status === 'ok' && autoAcceptOk && (line?.stockAccept === 'none' || line?.stockAccept === 'ok')) {
+      return t('wb.rcv.compare.disp.accepted');
+    }
+    if (line?.stockAccept === 'conditional') return t('wb.rcv.compare.disp.conditional');
+    if (line?.stockAccept === 'ok') return t('wb.rcv.compare.disp.accepted');
+    if (line?.stockAccept === 'reject') return t('wb.rcv.compare.disp.rejected');
+    const d = disposition[row.lineId] ?? 'none';
     if (d === 'none') return '—';
     return t(`wb.rcv.compare.disp.${d}`);
   }
@@ -111,19 +134,17 @@ export function CompareStep({
     <div className="space-y-4">
       <div className="space-y-1 border-b border-[var(--border-default)] pb-3">
         <h3 className="text-base font-semibold tracking-tight">{t('wb.rcv.compare.title')}</h3>
-        <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.compare.intro')}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.compare.introDims')}</p>
         <p className="text-xs text-[var(--text-muted)]">
           {t('wb.rcv.compare.poRef')}: <span className="font-mono">PO-DEMO-2026-014</span>
           {supplier ? (
             <>
               {' · '}
-              {t('wb.rcv.supplier')}: <span className="font-medium text-[var(--text-primary)]">{supplier}</span>
+              {t('wb.rcv.supplier')}: <span className="font-medium">{supplier}</span>
             </>
           ) : null}
-          {' · '}
-          {t('wb.rcv.compare.totalLines')}: {summary.total}
         </p>
-        <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.compare.sameLineNote')}</p>
+        <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.compare.stockBasisNote')}</p>
       </div>
 
       <div className="flex flex-wrap gap-2 text-sm">
@@ -132,6 +153,9 @@ export function CompareStep({
         </span>
         <span className="rounded-md border border-[var(--border-default)] px-3 py-1.5">
           🟡 {summary.diff} {t('wb.rcv.compare.summary.diff')}
+        </span>
+        <span className="rounded-md border border-[var(--border-default)] px-3 py-1.5">
+          🟠 {summary.dimDiff} {t('wb.rcv.compare.summary.dimDiff')}
         </span>
         <span className="rounded-md border border-[var(--border-default)] px-3 py-1.5">
           🔴 {summary.unmatched} {t('wb.rcv.compare.summary.unmatched')}
@@ -146,55 +170,30 @@ export function CompareStep({
           [
             ['all', t('wb.rcv.compare.filter.all')],
             ['diff', t('wb.rcv.compare.filter.diff')],
+            ['dimDiff', t('wb.rcv.compare.filter.dimDiff')],
             ['unmatched', t('wb.rcv.compare.filter.unmatched')],
             ['rejected', t('wb.rcv.compare.filter.rejected')],
           ] as const
         ).map(([id, label]) => (
-          <Button
-            key={id}
-            type="button"
-            size="sm"
-            variant={filter === id ? 'default' : 'secondary'}
-            disabled={disabled}
-            onClick={() => setFilter(id)}
-          >
+          <Button key={id} type="button" size="sm" variant={filter === id ? 'default' : 'secondary'} disabled={disabled} onClick={() => setFilter(id)}>
             {label}
           </Button>
         ))}
       </div>
 
       <label className="flex items-start gap-2 rounded-md border border-[var(--border-default)] px-3 py-2 text-sm">
-        <input
-          type="checkbox"
-          className="mt-0.5"
-          checked={autoAcceptOk}
-          disabled={disabled}
-          onChange={(e) => setAutoAcceptOk(e.target.checked)}
-        />
+        <input type="checkbox" className="mt-0.5" checked={autoAcceptOk} disabled={disabled} onChange={(e) => setAutoAcceptOk(e.target.checked)} />
         <span>
-          <span className="font-medium">
-            {t('wb.rcv.compare.autoAcceptOk').replace('{n}', String(summary.ok))}
-          </span>
-          <span className="mt-0.5 block text-xs text-[var(--text-muted)]">
-            {t('wb.rcv.compare.autoAcceptHint')}
-          </span>
+          <span className="font-medium">{t('wb.rcv.compare.autoAcceptOk').replace('{n}', String(summary.ok))}</span>
+          <span className="mt-0.5 block text-xs text-[var(--text-muted)]">{t('wb.rcv.compare.autoAcceptHintDims')}</span>
         </span>
       </label>
 
       <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="bg-[var(--color-surface-hover)] text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
             <tr>
-              <th className="w-10 px-3 py-2">
-                <button
-                  type="button"
-                  className="underline-offset-2 hover:underline"
-                  disabled={disabled}
-                  onClick={selectVisible}
-                >
-                  {t('wb.rcv.compare.select')}
-                </button>
-              </th>
+              <th className="w-10 px-3 py-2">{t('wb.rcv.compare.select')}</th>
               <th className="px-3 py-2">{t('wb.rcv.compare.col.product')}</th>
               <th className="px-3 py-2">{t('wb.rcv.compare.col.po')}</th>
               <th className="px-3 py-2">{t('wb.rcv.compare.col.document')}</th>
@@ -204,68 +203,51 @@ export function CompareStep({
             </tr>
           </thead>
           <tbody>
-            {filter === 'all' && autoAcceptOk && summary.ok > 1 ? (
-              <tr className="border-t border-[var(--border-default)] bg-[var(--color-surface-hover)]/40 text-xs text-[var(--text-muted)]">
-                <td colSpan={7} className="px-3 py-2">
-                  {t('wb.rcv.compare.okCollapsed').replace('{n}', String(summary.ok - 1))}
+            {visibleRows.map((row) => (
+              <tr key={row.lineId} className="border-t border-[var(--border-default)] align-top">
+                <td className="px-3 py-2">
+                  <input
+                    type="checkbox"
+                    checked={!!selected[row.lineId]}
+                    disabled={disabled || row.status === 'rejected' || (row.status === 'ok' && autoAcceptOk)}
+                    onChange={() => setSelected((s) => ({ ...s, [row.lineId]: !s[row.lineId] }))}
+                  />
                 </td>
+                <td className="px-3 py-2">
+                  <p className="font-medium">{row.name}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{row.materialCode}</p>
+                </td>
+                <td className="px-3 py-2 text-xs tabular-nums">
+                  <p>{formatQty(row.poQty, row.unit)}</p>
+                  <p className="text-[var(--text-muted)]">{row.documentDims}</p>
+                  <p className="text-[var(--text-muted)]">{formatVolume(row.poVolumeM3)}</p>
+                </td>
+                <td className="px-3 py-2 text-xs tabular-nums">
+                  <p>{formatQty(row.documentQty, row.unit)}</p>
+                  <p className="text-[var(--text-muted)]">{row.documentDims}</p>
+                  <p className="text-[var(--text-muted)]">{formatVolume(row.documentVolumeM3)}</p>
+                </td>
+                <td className="px-3 py-2 text-xs tabular-nums">
+                  <p className="font-medium">{formatQty(row.physicalQty > 0 ? row.physicalQty : null, row.unit)}</p>
+                  <p className={row.dimsDiffer ? 'font-medium text-[var(--color-danger)]' : 'text-[var(--text-muted)]'}>
+                    {row.physicalDims}
+                  </p>
+                  <p className="font-medium">{formatVolume(row.physicalVolumeM3)}</p>
+                </td>
+                <td className="px-3 py-2">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span aria-hidden>{STATUS_DOT[row.status]}</span>
+                    {statusLabel(row.status)}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-xs">{dispLabel(row)}</td>
               </tr>
-            ) : null}
-            {visibleRows.map((row) => {
-              const d =
-                row.status === 'rejected'
-                  ? ('rejected' as CompareDisposition)
-                  : row.status === 'ok' && autoAcceptOk
-                    ? ('accepted' as CompareDisposition)
-                    : (disposition[row.lineId] ?? 'none');
-              return (
-                <tr key={row.lineId} className="border-t border-[var(--border-default)]">
-                  <td className="px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={!!selected[row.lineId]}
-                      disabled={
-                        disabled ||
-                        row.status === 'rejected' ||
-                        (row.status === 'ok' && autoAcceptOk)
-                      }
-                      onChange={() => toggleSelect(row.lineId)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <p className="font-medium">{row.name}</p>
-                    <p className="text-xs text-[var(--text-muted)]">
-                      {row.dims} · {row.materialCode}
-                    </p>
-                  </td>
-                  <td className="px-3 py-2 tabular-nums">{formatQty(row.poQty, row.unit)}</td>
-                  <td className="px-3 py-2 tabular-nums">{formatQty(row.documentQty, row.unit)}</td>
-                  <td className="px-3 py-2 tabular-nums font-medium">
-                    {formatQty(row.physicalQty > 0 ? row.physicalQty : null, row.unit)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span aria-hidden>{STATUS_DOT[row.status]}</span>
-                      {statusLabel(row.status)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {d === 'partial' && partialQty[row.lineId] ? (
-                      <span>
-                        {dispLabel(d)} ({partialQty[row.lineId]})
-                      </span>
-                    ) : (
-                      dispLabel(d)
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {selectedIds.some((id) => rows.find((r) => r.lineId === id)?.status === 'diff') ? (
+      {selectedIds.length > 0 ? (
         <div className="flex flex-wrap items-end gap-2">
           <label className="block text-xs text-[var(--text-muted)]">
             {t('wb.rcv.compare.partialQty')}
@@ -273,54 +255,37 @@ export function CompareStep({
               className="mt-1 w-32"
               type="number"
               disabled={disabled}
-              value={partialQty[selectedIds[0]] ?? ''}
-              onChange={(e) => setPartialQty((p) => ({ ...p, [selectedIds[0]]: e.target.value }))}
+              value={partialQty[selectedIds[0]!] ?? ''}
+              onChange={(e) => setPartialQty((p) => ({ ...p, [selectedIds[0]!]: e.target.value }))}
             />
           </label>
         </div>
       ) : null}
 
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-          {t('wb.rcv.compare.bulk')}
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{t('wb.rcv.compare.bulk')}</p>
         <div className="flex flex-wrap gap-2">
           <Button type="button" disabled={disabled} onClick={() => applyDisposition(selectedIds, 'accepted')}>
             {t('wb.rcv.compare.actions.accept')}
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={disabled}
-            onClick={() => applyDisposition(selectedIds, 'partial')}
-          >
+          <Button type="button" disabled={disabled} onClick={() => applyDisposition(selectedIds, 'conditional')}>
+            {t('wb.rcv.compare.actions.conditional')}
+          </Button>
+          <Button type="button" variant="secondary" disabled={disabled} onClick={() => applyDisposition(selectedIds, 'partial')}>
             {t('wb.rcv.compare.actions.partial')}
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={disabled}
-            onClick={() => {
-              applyDisposition(selectedIds, 'match');
-              if (selectedIds[0]) onRequestMaterialMatch?.(selectedIds[0]);
-            }}
-          >
+          <Button type="button" variant="secondary" disabled={disabled} onClick={() => applyDisposition(selectedIds, 'match')}>
             {t('wb.rcv.compare.actions.match')}
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={disabled}
-            onClick={() => applyDisposition(selectedIds, 'rejected')}
-          >
+          <Button type="button" variant="secondary" disabled={disabled} onClick={() => applyDisposition(selectedIds, 'rejected')}>
             {t('wb.rcv.compare.actions.reject')}
           </Button>
         </div>
       </div>
 
       {actionMsg ? <p className="text-xs text-[var(--text-secondary)]">{actionMsg}</p> : null}
-      {exceptions.length > 0 && !compareIsResolved(rows, disposition, autoAcceptOk) ? (
-        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.compare.resolveHint')}</p>
+      {exceptions.length > 0 && !compareReadyForResult(lines, disposition, autoAcceptOk) ? (
+        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.compare.resolveHintDims')}</p>
       ) : (
         <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.compare.resolvedOk')}</p>
       )}

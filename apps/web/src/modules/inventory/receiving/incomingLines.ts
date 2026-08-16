@@ -6,6 +6,21 @@ export type PreAcceptDecision = 'none' | 'ok' | 'conditional' | 'reject';
 
 export type CountStatus = 'pending' | 'counting' | 'counted' | 'recheck';
 
+export type MeasureSource = 'manual' | 'ai' | 'handwriting' | 'excel';
+
+export type StockAcceptDecision = 'none' | 'ok' | 'conditional' | 'reject';
+
+/** One physical measure group (same gerçek ölçü). Do not average different dims. */
+export type PhysicalMeasureGroup = {
+  id: string;
+  qty: string;
+  thicknessMm: string;
+  widthMm: string;
+  lengthMm: string;
+  source: MeasureSource;
+  note: string;
+};
+
 export type PackageRow = { id: string; qty: string };
 
 export type LogRow = { id: string; diameterCm: string; lengthM: string };
@@ -43,6 +58,11 @@ export type IncomingLine = {
   matchedMaterialId: string;
   matchedMaterialCode: string;
   matchScore: number | null;
+  /** Stage 3 — physical measure groups (adet + gerçek ölçü). Document dims stay on thicknessMm/widthMm/lengthMm. */
+  physicalGroups: PhysicalMeasureGroup[];
+  /** Stage 4 — stock acceptance (conditional when physical dims differ from document). */
+  stockAccept: StockAcceptDecision;
+  stockAcceptReason: string;
   /** Stage 3 count */
   countStatus: CountStatus;
   aiQty: string;
@@ -88,6 +108,9 @@ export function emptyIncomingLineFields(line: LineIdentity): Pick<
   | 'matchedMaterialId'
   | 'matchedMaterialCode'
   | 'matchScore'
+  | 'physicalGroups'
+  | 'stockAccept'
+  | 'stockAcceptReason'
   | 'aiQty'
   | 'operatorQty'
   | 'packages'
@@ -107,6 +130,9 @@ export function emptyIncomingLineFields(line: LineIdentity): Pick<
     matchedMaterialId: '',
     matchedMaterialCode: '',
     matchScore: null,
+    physicalGroups: [],
+    stockAccept: 'none',
+    stockAcceptReason: '',
     aiQty: '',
     operatorQty: '',
     packages: '',
@@ -161,13 +187,13 @@ export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
   buildDemoLine({
     id: 'in-1',
     name: 'Çam Kereste',
-    thicknessMm: 26,
-    widthMm: 140,
-    lengthMm: 3000,
+    thicknessMm: 50,
+    widthMm: 100,
+    lengthMm: 4000,
     kind: 'lumber',
     unit: 'adet',
-    documentQty: 500,
-    poQty: 500,
+    documentQty: 100,
+    poQty: 100,
     preAccept: 'ok',
   }),
   buildDemoLine({
@@ -307,7 +333,55 @@ export function countableLines(lines: IncomingLine[]): IncomingLine[] {
   return lines.filter((l) => l.preAccept === 'ok' || l.preAccept === 'conditional');
 }
 
+function parseMm(v: string): number | null {
+  const n = Number(String(v).replace(',', '.'));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function createEmptyPhysicalGroup(
+  lineId: string,
+  source: MeasureSource = 'manual',
+  seed?: Partial<PhysicalMeasureGroup>,
+): PhysicalMeasureGroup {
+  return {
+    id: `${lineId}-pg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    qty: seed?.qty ?? '',
+    thicknessMm: seed?.thicknessMm ?? '',
+    widthMm: seed?.widthMm ?? '',
+    lengthMm: seed?.lengthMm ?? '',
+    source: seed?.source ?? source,
+    note: seed?.note ?? '',
+  };
+}
+
+/** Volume of one group: adet × T × W × L (mm → m). */
+export function groupVolumeM3(group: PhysicalMeasureGroup): number | null {
+  const qty = parseMm(group.qty);
+  const t = parseMm(group.thicknessMm);
+  const w = parseMm(group.widthMm);
+  const len = parseMm(group.lengthMm);
+  if (qty == null || t == null || w == null || len == null) return null;
+  return (qty * t * w * len) / 1_000_000_000;
+}
+
+export function formatGroupDims(group: PhysicalMeasureGroup): string {
+  const t = group.thicknessMm.trim();
+  const w = group.widthMm.trim();
+  const len = group.lengthMm.trim();
+  if (!t || !w || !len) return '—';
+  return `${t}×${w}×${len} mm`;
+}
+
+export function groupIsComplete(group: PhysicalMeasureGroup): boolean {
+  return groupVolumeM3(group) != null || (parseMm(group.qty) != null && !group.thicknessMm && !group.widthMm);
+}
+
+/** Sum of physical group qtys; falls back to operator/ai/log. */
 export function finalLineQty(line: IncomingLine): number {
+  if (line.physicalGroups.length > 0) {
+    const sum = line.physicalGroups.reduce((s, g) => s + (parseMm(g.qty) ?? 0), 0);
+    if (sum > 0) return sum;
+  }
   const op = Number(String(line.operatorQty).replace(',', '.'));
   if (Number.isFinite(op) && op > 0) return op;
   if (line.kind === 'log') {
@@ -319,11 +393,73 @@ export function finalLineQty(line: IncomingLine): number {
   return 0;
 }
 
-/** m³ from piece count × dims in mm. */
+/** Total physical m³ from groups; else document dims × qty (legacy display). */
+export function linePhysicalVolumeM3(line: IncomingLine): number | null {
+  if (line.physicalGroups.length > 0) {
+    let total = 0;
+    let any = false;
+    for (const g of line.physicalGroups) {
+      const v = groupVolumeM3(g);
+      if (v != null) {
+        total += v;
+        any = true;
+      }
+    }
+    return any ? total : null;
+  }
+  return lumberVolumeM3(line, finalLineQty(line));
+}
+
+/** Document/nominal dims (material card / gelen liste) — never mutated by physical measure. */
+export function formatDocumentDims(line: IncomingLine): string {
+  return formatLineDims(line);
+}
+
+/** Physical dims summary (one group or "N grup"). */
+export function formatPhysicalDims(line: IncomingLine): string {
+  const complete = line.physicalGroups.filter((g) => parseMm(g.thicknessMm) && parseMm(g.widthMm) && parseMm(g.lengthMm));
+  if (complete.length === 0) return '—';
+  if (complete.length === 1) return formatGroupDims(complete[0]!);
+  return complete.map((g) => `${parseMm(g.qty) ?? '?'}@${formatGroupDims(g)}`).join(' · ');
+}
+
+/** Stock basis = physical groups (after ok/conditional stockAccept). */
+export function stockBasisQty(line: IncomingLine): number {
+  if (line.stockAccept === 'reject' || line.preAccept === 'reject') return 0;
+  return finalLineQty(line);
+}
+
+export function stockBasisVolumeM3(line: IncomingLine): number | null {
+  if (line.stockAccept === 'reject' || line.preAccept === 'reject') return null;
+  return linePhysicalVolumeM3(line);
+}
+
+export function stockBasisDimsLabel(line: IncomingLine): string {
+  if (line.stockAccept === 'reject' || line.preAccept === 'reject') return '—';
+  const phys = formatPhysicalDims(line);
+  return phys !== '—' ? phys : formatDocumentDims(line);
+}
+
+export function physicalDimsDifferFromDocument(line: IncomingLine): boolean {
+  if (!lineHasDims(line) || line.physicalGroups.length === 0) return false;
+  return line.physicalGroups.some((g) => {
+    const t = parseMm(g.thicknessMm);
+    const w = parseMm(g.widthMm);
+    const len = parseMm(g.lengthMm);
+    if (t == null || w == null || len == null) return false;
+    return t !== line.thicknessMm || w !== line.widthMm || len !== line.lengthMm;
+  });
+}
+
+/** m³ from piece count × dims in mm (document dims — for PO/doc volume only). */
 export function lumberVolumeM3(line: IncomingLine, qty: number): number | null {
   if (line.thicknessMm == null || line.widthMm == null || line.lengthMm == null) return null;
   if (!Number.isFinite(qty) || qty <= 0) return null;
   return (qty * line.thicknessMm * line.widthMm * line.lengthMm) / 1_000_000_000;
+}
+
+export function volumeFromMm(qty: number, thicknessMm: number, widthMm: number, lengthMm: number): number {
+  return (qty * thicknessMm * widthMm * lengthMm) / 1_000_000_000;
 }
 
 export function packageTotal(line: IncomingLine): number | null {
@@ -338,12 +474,32 @@ export function packageTotal(line: IncomingLine): number | null {
 }
 
 export function lineIsCounted(line: IncomingLine): boolean {
-  return line.countStatus === 'counted' && finalLineQty(line) > 0;
+  if (line.countStatus !== 'counted') return false;
+  if (line.physicalGroups.length > 0) {
+    return (
+      finalLineQty(line) > 0 &&
+      line.physicalGroups.every(
+        (g) =>
+          parseMm(g.qty) != null &&
+          (line.kind === 'log' ||
+            (parseMm(g.thicknessMm) != null && parseMm(g.widthMm) != null && parseMm(g.lengthMm) != null)),
+      )
+    );
+  }
+  return finalLineQty(line) > 0;
 }
 
 export function allCountableCounted(lines: IncomingLine[]): boolean {
   const list = countableLines(lines);
   return list.length > 0 && list.every(lineIsCounted);
+}
+
+export function allCountableStockAccepted(lines: IncomingLine[]): boolean {
+  const list = countableLines(lines);
+  return (
+    list.length > 0 &&
+    list.every((l) => l.stockAccept === 'ok' || l.stockAccept === 'conditional' || l.stockAccept === 'reject')
+  );
 }
 
 /** Rough match handwriting/excel product text → incoming line id. */

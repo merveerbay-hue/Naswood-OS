@@ -4,20 +4,25 @@ import { useI18n } from '@/i18n';
 import {
   allCountableCounted,
   countableLines,
+  createEmptyPhysicalGroup,
   finalLineQty,
+  formatGroupDims,
   formatLineDims,
-  lumberVolumeM3,
+  formatPhysicalDims,
+  groupVolumeM3,
+  linePhysicalVolumeM3,
   matchIncomingByLabel,
   packageTotal,
   type CountStatus,
   type IncomingLine,
   type MaterialKind,
+  type MeasureSource,
   type PackageRow,
+  type PhysicalMeasureGroup,
 } from './incomingLines';
 
 export type CountMethod = 'photo' | 'handwriting' | 'excel' | 'manual';
 
-/** @deprecated Session qty helpers — stock now uses incoming line finals. */
 export type PhysicalCountState = {
   method: CountMethod;
   documentQty: string;
@@ -52,14 +57,12 @@ export function createDefaultPhysicalCount(): PhysicalCountState {
   };
 }
 
-/** Aggregate final qty for single-line stock post (primary lumber, else first counted). */
 export function finalPhysicalQtyFromLines(lines: IncomingLine[]): number {
   const counted = countableLines(lines).filter((l) => l.countStatus === 'counted' && finalLineQty(l) > 0);
   const primary = counted.find((l) => l.kind === 'lumber') ?? counted[0];
   return primary ? finalLineQty(primary) : 0;
 }
 
-/** @deprecated Prefer finalPhysicalQtyFromLines */
 export function finalPhysicalQty(state: PhysicalCountState): number {
   const op = Number(String(state.operatorQty).replace(',', '.'));
   if (Number.isFinite(op) && op > 0) return op;
@@ -85,16 +88,18 @@ const STATUS_KEY: Record<CountStatus, string> = {
   recheck: 'wb.rcv.ops.count.status.recheck',
 };
 
-const DEMO_HANDWRITING: { label: string; qty: string }[] = [
-  { label: 'Çam Kereste 26×140×3000', qty: '498' },
-  { label: 'Çam Kereste 26×92×3000', qty: '296' },
-  { label: 'Çam Tomruk', qty: '42' },
+type HandRow = { label: string; qty: string; thicknessMm: string; widthMm: string; lengthMm: string };
+
+const DEMO_HANDWRITING: HandRow[] = [
+  { label: 'Çam Kereste 50×100×4000', qty: '98', thicknessMm: '45', widthMm: '90', lengthMm: '4000' },
+  { label: 'Çam Kereste 26×92×3000', qty: '296', thicknessMm: '26', widthMm: '92', lengthMm: '3000' },
+  { label: 'Çam Tomruk', qty: '42', thicknessMm: '', widthMm: '', lengthMm: '' },
 ];
 
-const DEMO_EXCEL: { label: string; qty: string }[] = [
-  { label: 'Çam Kereste 26×140×3000', qty: '498' },
-  { label: 'Çam Kereste 26×92×3000', qty: '300' },
-  { label: 'Thermowood Deck 26×140×3000', qty: '98' },
+const DEMO_EXCEL: HandRow[] = [
+  { label: 'Çam Kereste 50×100×4000', qty: '60', thicknessMm: '45', widthMm: '90', lengthMm: '4000' },
+  { label: 'Çam Kereste 50×100×4000', qty: '38', thicknessMm: '46', widthMm: '92', lengthMm: '4000' },
+  { label: 'Çam Kereste 26×92×3000', qty: '300', thicknessMm: '26', widthMm: '92', lengthMm: '3000' },
 ];
 
 type Props = {
@@ -107,7 +112,11 @@ function updateLine(lines: IncomingLine[], id: string, patch: Partial<IncomingLi
   return lines.map((l) => (l.id === id ? { ...l, ...patch } : l));
 }
 
-/** Stage 3 — Fiziksel sayım: gelen ürün satırlarından (yeni malzeme yok). */
+function needsPhysicalDims(kind: MaterialKind): boolean {
+  return kind === 'lumber' || kind === 'lamella' || kind === 'thermowood' || kind === 'panel' || kind === 'packaged';
+}
+
+/** Stage 3 — Fiziksel sayım: adet + gerçek ölçü grupları (malzeme kartı nominal ölçü değişmez). */
 export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
   const { t } = useI18n();
   const [method, setMethod] = useState<CountMethod>('manual');
@@ -128,13 +137,25 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
   }, [countable]);
 
   const allDone = allCountableCounted(lines);
+  const pkgTot = selected ? packageTotal(selected) : null;
+  const physVol = selected ? linePhysicalVolumeM3(selected) : null;
 
   function selectLine(id: string) {
     setSelectedId(id);
     const line = lines.find((l) => l.id === id);
-    if (line && line.countStatus === 'pending') {
-      onChange(updateLine(lines, id, { countStatus: 'counting' }));
+    if (!line) return;
+    const patch: Partial<IncomingLine> = {};
+    if (line.countStatus === 'pending') patch.countStatus = 'counting';
+    if (line.physicalGroups.length === 0 && needsPhysicalDims(line.kind)) {
+      patch.physicalGroups = [
+        createEmptyPhysicalGroup(line.id, 'manual', {
+          thicknessMm: line.thicknessMm != null ? String(line.thicknessMm) : '',
+          widthMm: line.widthMm != null ? String(line.widthMm) : '',
+          lengthMm: line.lengthMm != null ? String(line.lengthMm) : '',
+        }),
+      ];
     }
+    if (Object.keys(patch).length > 0) onChange(updateLine(lines, id, patch));
   }
 
   function patchSelected(patch: Partial<IncomingLine>) {
@@ -142,13 +163,69 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
     onChange(updateLine(lines, selected.id, { ...patch, countStatus: patch.countStatus ?? 'counting' }));
   }
 
+  function setGroups(physicalGroups: PhysicalMeasureGroup[]) {
+    if (!selected) return;
+    const qtySum = physicalGroups.reduce((s, g) => s + (Number(String(g.qty).replace(',', '.')) || 0), 0);
+    patchSelected({
+      physicalGroups,
+      operatorQty: qtySum > 0 ? String(qtySum) : selected.operatorQty,
+    });
+  }
+
+  function patchGroup(id: string, patch: Partial<PhysicalMeasureGroup>) {
+    if (!selected) return;
+    const groups = (selected.physicalGroups.length ? selected.physicalGroups : []).map((g) =>
+      g.id === id ? { ...g, ...patch } : g,
+    );
+    setGroups(groups);
+  }
+
+  function addMeasureGroup() {
+    if (!selected) return;
+    const base = selected.physicalGroups.length
+      ? selected.physicalGroups
+      : [
+          createEmptyPhysicalGroup(selected.id, 'manual', {
+            thicknessMm: selected.thicknessMm != null ? String(selected.thicknessMm) : '',
+            widthMm: selected.widthMm != null ? String(selected.widthMm) : '',
+            lengthMm: selected.lengthMm != null ? String(selected.lengthMm) : '',
+          }),
+        ];
+    setGroups([
+      ...base,
+      createEmptyPhysicalGroup(selected.id, 'manual', {
+        thicknessMm: selected.thicknessMm != null ? String(selected.thicknessMm) : '',
+        widthMm: selected.widthMm != null ? String(selected.widthMm) : '',
+        lengthMm: selected.lengthMm != null ? String(selected.lengthMm) : '',
+      }),
+    ]);
+  }
+
   function confirmSelected() {
     if (!selected) return;
-    const qty = finalLineQty({ ...selected, operatorQty: selected.operatorQty || selected.aiQty });
+    let groups = selected.physicalGroups;
+    if (groups.length === 0 && selected.operatorQty) {
+      groups = [
+        createEmptyPhysicalGroup(selected.id, 'manual', {
+          qty: selected.operatorQty,
+          thicknessMm: selected.thicknessMm != null ? String(selected.thicknessMm) : '',
+          widthMm: selected.widthMm != null ? String(selected.widthMm) : '',
+          lengthMm: selected.lengthMm != null ? String(selected.lengthMm) : '',
+        }),
+      ];
+    }
+    const qty = finalLineQty({ ...selected, physicalGroups: groups, operatorQty: selected.operatorQty || selected.aiQty });
     if (qty <= 0) return;
+    if (needsPhysicalDims(selected.kind)) {
+      const incomplete = groups.some(
+        (g) => !g.qty || !g.thicknessMm || !g.widthMm || !g.lengthMm || groupVolumeM3(g) == null,
+      );
+      if (incomplete) return;
+    }
     onChange(
       updateLine(lines, selected.id, {
-        operatorQty: selected.operatorQty || selected.aiQty,
+        physicalGroups: groups,
+        operatorQty: String(qty),
         countStatus: 'counted',
       }),
     );
@@ -160,10 +237,18 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
   }
 
   function applyPackageToOperator() {
-    if (!selected) return;
-    const total = packageTotal(selected);
-    if (total == null) return;
-    patchSelected({ operatorQty: String(total) });
+    if (!selected || pkgTot == null) return;
+    const base =
+      selected.physicalGroups.length > 0
+        ? selected.physicalGroups
+        : [
+            createEmptyPhysicalGroup(selected.id, 'manual', {
+              thicknessMm: selected.thicknessMm != null ? String(selected.thicknessMm) : '',
+              widthMm: selected.widthMm != null ? String(selected.widthMm) : '',
+              lengthMm: selected.lengthMm != null ? String(selected.lengthMm) : '',
+            }),
+          ];
+    setGroups(base.map((g, i) => (i === 0 ? { ...g, qty: String(pkgTot) } : g)));
   }
 
   function addPackageRow() {
@@ -172,30 +257,30 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
     patchSelected({ packageRows: [...selected.packageRows, row] });
   }
 
-  function runPhotoAi() {
-    if (!selected) return;
-    const suggestion =
-      selected.kind === 'log'
-        ? String(selected.documentQty)
-        : String(Math.max(1, selected.documentQty - 4));
-    onChange(
-      updateLine(lines, selected.id, {
-        aiQty: suggestion,
-        countStatus: 'counting',
-        note: t('wb.rcv.ops.count.aiPhotoNote'),
-      }),
-    );
-    setBulkNote(t('wb.rcv.ops.count.aiPhotoNote'));
-  }
-
-  function applyMatchedSuggestions(pairs: { label: string; qty: string }[], note: string) {
+  function applyMatchedSuggestions(pairs: HandRow[], note: string, source: MeasureSource) {
     let next = [...lines];
+    const byLine = new Map<string, PhysicalMeasureGroup[]>();
     for (const pair of pairs) {
       const hit = matchIncomingByLabel(next, pair.label);
       if (!hit) continue;
-      next = updateLine(next, hit.id, {
-        aiQty: pair.qty,
-        countStatus: hit.countStatus === 'counted' ? 'counted' : 'counting',
+      const group = createEmptyPhysicalGroup(hit.id, source, {
+        qty: pair.qty,
+        thicknessMm: pair.thicknessMm || (hit.thicknessMm != null ? String(hit.thicknessMm) : ''),
+        widthMm: pair.widthMm || (hit.widthMm != null ? String(hit.widthMm) : ''),
+        lengthMm: pair.lengthMm || (hit.lengthMm != null ? String(hit.lengthMm) : ''),
+        note,
+      });
+      const list = byLine.get(hit.id) ?? [];
+      list.push(group);
+      byLine.set(hit.id, list);
+    }
+    for (const [id, groups] of byLine) {
+      const qtySum = groups.reduce((s, g) => s + (Number(g.qty) || 0), 0);
+      next = updateLine(next, id, {
+        physicalGroups: groups,
+        aiQty: String(qtySum),
+        operatorQty: String(qtySum),
+        countStatus: 'counting',
         note,
       });
     }
@@ -203,29 +288,62 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
     setBulkNote(note);
   }
 
+  function runPhotoAi() {
+    if (!selected) return;
+    const qty = String(Math.max(1, selected.documentQty - 2));
+    const groups = [
+      createEmptyPhysicalGroup(selected.id, 'ai', {
+        qty,
+        thicknessMm:
+          selected.thicknessMm != null ? String(Math.max(1, selected.thicknessMm - 5)) : '',
+        widthMm: selected.widthMm != null ? String(Math.max(1, selected.widthMm - 10)) : '',
+        lengthMm: selected.lengthMm != null ? String(selected.lengthMm) : '',
+        note: t('wb.rcv.ops.count.aiPhotoNote'),
+      }),
+    ];
+    onChange(
+      updateLine(lines, selected.id, {
+        physicalGroups: groups,
+        aiQty: qty,
+        operatorQty: qty,
+        countStatus: 'counting',
+        note: t('wb.rcv.ops.count.aiPhotoNote'),
+      }),
+    );
+    setBulkNote(t('wb.rcv.ops.count.aiPhotoNote'));
+  }
+
   function runHandwritingAi() {
-    applyMatchedSuggestions(DEMO_HANDWRITING, t('wb.rcv.ops.count.aiHandwritingNote'));
+    applyMatchedSuggestions(DEMO_HANDWRITING, t('wb.rcv.ops.count.aiHandwritingNote'), 'handwriting');
   }
 
   function runExcelParse() {
-    applyMatchedSuggestions(DEMO_EXCEL, t('wb.rcv.ops.count.aiExcelNote'));
+    applyMatchedSuggestions(DEMO_EXCEL, t('wb.rcv.ops.count.aiExcelNote'), 'excel');
   }
 
   function acceptAiAsOperator() {
     if (!selected?.aiQty) return;
-    patchSelected({ operatorQty: selected.aiQty });
+    if (selected.physicalGroups.length > 0) {
+      setGroups(selected.physicalGroups.map((g) => ({ ...g, source: 'manual' as const })));
+      return;
+    }
+    setGroups([
+      createEmptyPhysicalGroup(selected.id, 'manual', {
+        qty: selected.aiQty,
+        thicknessMm: selected.thicknessMm != null ? String(selected.thicknessMm) : '',
+        widthMm: selected.widthMm != null ? String(selected.widthMm) : '',
+        lengthMm: selected.lengthMm != null ? String(selected.lengthMm) : '',
+      }),
+    ]);
   }
 
-  const vol =
-    selected && (selected.kind === 'lumber' || selected.kind === 'thermowood' || selected.kind === 'lamella')
-      ? lumberVolumeM3(selected, finalLineQty(selected) || Number(selected.operatorQty) || 0)
-      : null;
-  const pkgTot = selected ? packageTotal(selected) : null;
+  const groups = selected?.physicalGroups ?? [];
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.count.introLines')}</p>
+      <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.ops.count.introPhysicalDims')}</p>
       <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.noNewMaterial')}</p>
+      <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.cardDimsUnchanged')}</p>
 
       <div className="flex flex-wrap gap-3 text-sm">
         <span className="rounded-md border border-[var(--border-default)] px-3 py-1.5">
@@ -237,11 +355,6 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
         <span className="rounded-md border border-[var(--border-default)] px-3 py-1.5">
           {t('wb.rcv.ops.count.summaryPending')}: <strong className="tabular-nums">{totals.pending}</strong>
         </span>
-        {totals.recheck > 0 ? (
-          <span className="rounded-md border border-[var(--color-danger)]/40 px-3 py-1.5 text-[var(--color-danger)]">
-            {t('wb.rcv.ops.count.summaryRecheck')}: <strong className="tabular-nums">{totals.recheck}</strong>
-          </span>
-        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -269,14 +382,8 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
       {method === 'photo' ? (
         <section className="space-y-3 rounded-md border border-[var(--border-default)] px-3 py-3">
           <p className="text-sm font-medium">{t('wb.rcv.ops.count.photoTitle')}</p>
-          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.photoHint')}</p>
           <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={photoCaptured}
-              disabled={disabled}
-              onChange={(e) => setPhotoCaptured(e.target.checked)}
-            />
+            <input type="checkbox" checked={photoCaptured} disabled={disabled} onChange={(e) => setPhotoCaptured(e.target.checked)} />
             {t('wb.rcv.ops.count.photoCaptured')}
           </label>
           <Button type="button" size="sm" variant="secondary" disabled={disabled || !photoCaptured || !selected} onClick={runPhotoAi}>
@@ -289,34 +396,23 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
       {method === 'handwriting' ? (
         <section className="space-y-3 rounded-md border border-[var(--border-default)] px-3 py-3">
           <p className="text-sm font-medium">{t('wb.rcv.ops.count.handwritingTitle')}</p>
-          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.handwritingMatchHint')}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.handwritingDimsHint')}</p>
           <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={handwritingPhoto}
-              disabled={disabled}
-              onChange={(e) => setHandwritingPhoto(e.target.checked)}
-            />
+            <input type="checkbox" checked={handwritingPhoto} disabled={disabled} onChange={(e) => setHandwritingPhoto(e.target.checked)} />
             {t('wb.rcv.ops.count.handwritingPhoto')}
           </label>
           <Button type="button" size="sm" variant="secondary" disabled={disabled || !handwritingPhoto} onClick={runHandwritingAi}>
             {t('wb.rcv.ops.count.runAiRead')}
           </Button>
-          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.aiNotFinal')}</p>
         </section>
       ) : null}
 
       {method === 'excel' ? (
         <section className="space-y-3 rounded-md border border-[var(--border-default)] px-3 py-3">
           <p className="text-sm font-medium">{t('wb.rcv.ops.count.excelTitle')}</p>
-          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.excelMatchHint')}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.excelDimsHint')}</p>
           <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={excelUploaded}
-              disabled={disabled}
-              onChange={(e) => setExcelUploaded(e.target.checked)}
-            />
+            <input type="checkbox" checked={excelUploaded} disabled={disabled} onChange={(e) => setExcelUploaded(e.target.checked)} />
             {t('wb.rcv.ops.count.excelUploaded')}
           </label>
           <Button type="button" size="sm" variant="secondary" disabled={disabled || !excelUploaded} onClick={runExcelParse}>
@@ -328,18 +424,17 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
       {bulkNote ? <p className="text-xs text-[var(--text-muted)]">{bulkNote}</p> : null}
 
       {countable.length === 0 ? (
-        <p className="rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2 text-sm text-[var(--color-danger)]">
-          {t('wb.rcv.ops.count.noCountable')}
-        </p>
+        <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.ops.count.noCountable')}</p>
       ) : (
         <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
-          <table className="w-full min-w-[560px] text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-[var(--color-surface-hover)] text-[10px] uppercase text-[var(--text-muted)]">
               <tr>
                 <th className="px-3 py-2">{t('wb.rcv.ops.count.colName')}</th>
-                <th className="px-3 py-2">{t('wb.rcv.ops.count.colDims')}</th>
-                <th className="px-3 py-2">{t('wb.rcv.ops.count.colKind')}</th>
+                <th className="px-3 py-2">{t('wb.rcv.ops.count.colDocDims')}</th>
+                <th className="px-3 py-2">{t('wb.rcv.ops.count.colPhysDims')}</th>
                 <th className="px-3 py-2">{t('wb.rcv.ops.count.colDocQty')}</th>
+                <th className="px-3 py-2">{t('wb.rcv.ops.count.colPhysQty')}</th>
                 <th className="px-3 py-2">{t('wb.rcv.ops.count.colStatus')}</th>
               </tr>
             </thead>
@@ -354,10 +449,11 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
                   >
                     <td className="px-3 py-2 font-medium">{line.name}</td>
                     <td className="px-3 py-2 tabular-nums text-[var(--text-secondary)]">{formatLineDims(line)}</td>
-                    <td className="px-3 py-2">{KIND_LABEL[line.kind]}</td>
+                    <td className="px-3 py-2 tabular-nums text-xs">{formatPhysicalDims(line)}</td>
                     <td className="px-3 py-2 tabular-nums">
                       {line.documentQty} {line.unit}
                     </td>
+                    <td className="px-3 py-2 tabular-nums">{finalLineQty(line) || '—'}</td>
                     <td className="px-3 py-2">{t(STATUS_KEY[line.countStatus])}</td>
                   </tr>
                 );
@@ -370,180 +466,127 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
       {selected ? (
         <section className="space-y-4 rounded-md border border-[var(--border-default)] px-3 py-3">
           <div>
-            <h3 className="text-sm font-semibold tracking-tight">
-              {selected.name} · {formatLineDims(selected)}
-            </h3>
+            <h3 className="text-sm font-semibold tracking-tight">{selected.name}</h3>
             <p className="text-xs text-[var(--text-muted)]">
-              {KIND_LABEL[selected.kind]} · {t('wb.rcv.ops.count.documentQty')}: {selected.documentQty} {selected.unit}
-              {selected.preAccept === 'conditional' ? ` · ${t('wb.rcv.ops.preAccept.conditional')}` : ''}
+              {KIND_LABEL[selected.kind]} · {t('wb.rcv.ops.count.documentDims')}: {formatLineDims(selected)} ·{' '}
+              {t('wb.rcv.ops.count.documentQty')}: {selected.documentQty} {selected.unit}
             </p>
+            {selected.matchedMaterialCode ? (
+              <p className="text-xs text-[var(--text-muted)]">
+                {t('wb.rcv.ops.check.materialMatch')}: {selected.matchedMaterialCode}{' '}
+                <span className="text-[var(--text-secondary)]">({t('wb.rcv.ops.count.cardDimsUnchanged')})</span>
+              </p>
+            ) : null}
           </div>
 
-          {(selected.kind === 'lumber' ||
-            selected.kind === 'packaged' ||
-            selected.kind === 'thermowood' ||
-            selected.kind === 'lamella') && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.packageMath')}</h4>
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="block space-y-1 text-xs text-[var(--text-muted)]">
-                  {t('wb.rcv.ops.count.packages')}
-                  <Input
-                    className="w-24"
-                    value={selected.packages}
-                    disabled={disabled}
-                    onChange={(e) => patchSelected({ packages: e.target.value })}
-                  />
-                </label>
-                <span className="pb-2 text-sm">×</span>
-                <label className="block space-y-1 text-xs text-[var(--text-muted)]">
-                  {t('wb.rcv.ops.count.perPackage')}
-                  <Input
-                    className="w-24"
-                    value={selected.perPackage}
-                    disabled={disabled}
-                    onChange={(e) => patchSelected({ perPackage: e.target.value })}
-                  />
-                </label>
-                <span className="pb-2 text-sm">=</span>
-                <p className="pb-2 text-sm font-medium tabular-nums">{pkgTot ?? '—'}</p>
-                <Button type="button" size="sm" variant="secondary" disabled={disabled || pkgTot == null} onClick={applyPackageToOperator}>
-                  {t('wb.rcv.ops.count.applyPackage')}
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.unevenPackages')}</p>
-                  <Button type="button" size="sm" variant="secondary" disabled={disabled} onClick={addPackageRow}>
-                    {t('wb.rcv.ops.count.addPackageRow')}
-                  </Button>
-                </div>
-                {selected.packageRows.map((row, idx) => (
-                  <div key={row.id} className="flex items-center gap-2">
-                    <span className="text-xs text-[var(--text-muted)]">
-                      {t('wb.rcv.ops.count.packageN').replace('{n}', String(idx + 1))}
-                    </span>
-                    <Input
-                      className="w-24"
-                      value={row.qty}
-                      disabled={disabled}
-                      onChange={(e) => {
-                        const packageRows = selected.packageRows.map((r) =>
-                          r.id === row.id ? { ...r, qty: e.target.value } : r,
-                        );
-                        patchSelected({ packageRows });
-                      }}
-                    />
-                  </div>
-                ))}
-                {selected.packageRows.length > 0 ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={disabled || pkgTot == null}
-                    onClick={applyPackageToOperator}
-                  >
-                    {t('wb.rcv.ops.count.applyPackageRows')}
-                  </Button>
-                ) : null}
-              </div>
+          {(selected.kind === 'lumber' || selected.kind === 'packaged' || selected.kind === 'thermowood') && (
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                {t('wb.rcv.ops.count.packages')}
+                <Input className="w-24" value={selected.packages} disabled={disabled} onChange={(e) => patchSelected({ packages: e.target.value })} />
+              </label>
+              <span className="pb-2">×</span>
+              <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                {t('wb.rcv.ops.count.perPackage')}
+                <Input className="w-24" value={selected.perPackage} disabled={disabled} onChange={(e) => patchSelected({ perPackage: e.target.value })} />
+              </label>
+              <p className="pb-2 text-sm font-medium tabular-nums">= {pkgTot ?? '—'}</p>
+              <Button type="button" size="sm" variant="secondary" disabled={disabled || pkgTot == null} onClick={applyPackageToOperator}>
+                {t('wb.rcv.ops.count.applyPackage')}
+              </Button>
+              <Button type="button" size="sm" variant="secondary" disabled={disabled} onClick={addPackageRow}>
+                {t('wb.rcv.ops.count.addPackageRow')}
+              </Button>
             </div>
           )}
 
           {selected.kind === 'log' ? (
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.logTitle')}</h4>
-              <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.logHint')}</p>
-              <div className="flex flex-wrap gap-3">
-                <label className="block space-y-1 text-xs text-[var(--text-muted)]">
-                  {t('wb.rcv.ops.count.logCount')}
-                  <Input
-                    className="w-28"
-                    value={selected.logCount}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      patchSelected({
-                        logCount: e.target.value,
-                        operatorQty: e.target.value,
-                      })
-                    }
-                  />
-                </label>
-                <label className="block space-y-1 text-xs text-[var(--text-muted)]">
-                  {t('wb.rcv.ops.count.logTotalM3')}
-                  <Input
-                    className="w-28"
-                    value={selected.logTotalM3}
-                    disabled={disabled}
-                    onChange={(e) => patchSelected({ logTotalM3: e.target.value })}
-                  />
-                </label>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                {t('wb.rcv.ops.count.logCount')}
+                <Input
+                  className="w-28"
+                  value={selected.logCount}
+                  disabled={disabled}
+                  onChange={(e) => patchSelected({ logCount: e.target.value, operatorQty: e.target.value })}
+                />
+              </label>
+              <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                {t('wb.rcv.ops.count.logTotalM3')}
+                <Input className="w-28" value={selected.logTotalM3} disabled={disabled} onChange={(e) => patchSelected({ logTotalM3: e.target.value })} />
+              </label>
             </div>
           ) : null}
 
-          {(selected.kind === 'panel' || selected.kind === 'other') && (
-            <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.unitFieldsHint')}</p>
-          )}
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.documentQty')}</p>
-              <p className="mt-1 text-lg font-semibold tabular-nums">
-                {selected.documentQty} {selected.unit}
-              </p>
+          {needsPhysicalDims(selected.kind) ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.physicalGroups')}</h4>
+                <Button type="button" size="sm" variant="secondary" disabled={disabled} onClick={addMeasureGroup}>
+                  {t('wb.rcv.ops.count.addMeasureGroup')}
+                </Button>
+              </div>
+              <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.ops.count.physicalGroupsHint')}</p>
+              {groups.map((g, idx) => {
+                const vol = groupVolumeM3(g);
+                return (
+                  <div key={g.id} className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-3">
+                    <p className="text-xs font-medium">
+                      {t('wb.rcv.ops.count.groupN').replace('{n}', String(idx + 1))} · {g.source}
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-5">
+                      <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                        {t('wb.rcv.ops.count.physicalQty')}
+                        <Input value={g.qty} disabled={disabled} onChange={(e) => patchGroup(g.id, { qty: e.target.value })} />
+                      </label>
+                      <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                        {t('wb.rcv.ops.count.realThickness')}
+                        <Input value={g.thicknessMm} disabled={disabled} onChange={(e) => patchGroup(g.id, { thicknessMm: e.target.value })} />
+                      </label>
+                      <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                        {t('wb.rcv.ops.count.realWidth')}
+                        <Input value={g.widthMm} disabled={disabled} onChange={(e) => patchGroup(g.id, { widthMm: e.target.value })} />
+                      </label>
+                      <label className="block space-y-1 text-xs text-[var(--text-muted)]">
+                        {t('wb.rcv.ops.count.realLength')}
+                        <Input value={g.lengthMm} disabled={disabled} onChange={(e) => patchGroup(g.id, { lengthMm: e.target.value })} />
+                      </label>
+                      <div className="rounded-md bg-[var(--color-surface-hover)] px-2 py-1">
+                        <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.autoVolume')}</p>
+                        <p className="text-sm font-semibold tabular-nums">{vol != null ? `${vol.toFixed(3)} m³` : '—'}</p>
+                        <p className="text-[10px] text-[var(--text-muted)]">{formatGroupDims(g)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="rounded-md border border-[var(--border-default)] px-3 py-3">
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.aiQty')}</p>
-              <Input
-                className="mt-1"
-                value={selected.aiQty}
-                disabled={disabled}
-                onChange={(e) => patchSelected({ aiQty: e.target.value })}
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="mt-2"
-                disabled={disabled || !selected.aiQty}
-                onClick={acceptAiAsOperator}
-              >
-                {t('wb.rcv.ops.count.acceptAi')}
-              </Button>
-            </div>
-            <div className="rounded-md border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 px-3 py-3">
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.ops.count.operatorQty')}</p>
-              <Input
-                className="mt-1"
-                value={selected.operatorQty}
-                disabled={disabled}
-                onChange={(e) => patchSelected({ operatorQty: e.target.value })}
-              />
-              <p className="mt-1 text-[10px] text-[var(--text-muted)]">{t('wb.rcv.ops.count.operatorWins')}</p>
-              {vol != null ? (
-                <p className="mt-2 text-xs tabular-nums text-[var(--text-secondary)]">
-                  {t('wb.rcv.ops.count.autoVolume')}: {vol.toFixed(4)} m³
-                </p>
-              ) : null}
-            </div>
-          </div>
+          ) : null}
 
           <div className="rounded-md border border-[var(--border-default)] px-3 py-2 text-sm">
             {t('wb.rcv.ops.count.summaryFinal')}:{' '}
             <span className="font-semibold tabular-nums">
               {finalLineQty(selected) || '—'} {selected.unit}
             </span>
+            {' · '}
+            {t('wb.rcv.ops.count.physicalDims')}: <span className="font-medium">{formatPhysicalDims(selected)}</span>
+            {' · '}
+            {t('wb.rcv.ops.count.autoVolume')}:{' '}
+            <span className="font-semibold tabular-nums">{physVol != null ? `${physVol.toFixed(3)} m³` : '—'}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" disabled={disabled || finalLineQty({ ...selected, operatorQty: selected.operatorQty || selected.aiQty }) <= 0} onClick={confirmSelected}>
+            <Button type="button" disabled={disabled || finalLineQty(selected) <= 0} onClick={confirmSelected}>
               {t('wb.rcv.ops.count.confirmLine')}
             </Button>
             <Button type="button" variant="secondary" disabled={disabled} onClick={markRecheck}>
               {t('wb.rcv.ops.count.markRecheck')}
             </Button>
+            {selected.aiQty ? (
+              <Button type="button" variant="secondary" disabled={disabled} onClick={acceptAiAsOperator}>
+                {t('wb.rcv.ops.count.acceptAi')}
+              </Button>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -553,7 +596,7 @@ export function PhysicalCountStep({ lines, onChange, disabled }: Props) {
         {t('wb.rcv.ops.count.verifyAllLines')}
       </label>
       {!allDone && countable.length > 0 ? (
-        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.ops.count.needAllCounted')}</p>
+        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.ops.count.needAllCountedDims')}</p>
       ) : null}
     </div>
   );

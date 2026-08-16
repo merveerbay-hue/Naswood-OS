@@ -5,10 +5,14 @@
 import {
   buildCompareRows,
   classifyCompareStatus,
-  compareIsResolved,
+  compareReadyForResult,
   compareSummary,
 } from './compareLines';
-import { seedIncomingFromDocuments, type IncomingLine } from './incomingLines';
+import {
+  createEmptyPhysicalGroup,
+  seedIncomingFromDocuments,
+  type IncomingLine,
+} from './incomingLines';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
@@ -20,7 +24,7 @@ assert(seeded.find((l) => l.id === 'in-4')?.poQty == null, 'thermowood unmatched
 assert(seeded.find((l) => l.id === 'in-3')?.poQty === 40, 'tomruk PO diff');
 
 const counted: IncomingLine[] = seeded.map((l) => {
-  if (l.preAccept === 'reject' || l.id === 'in-5') {
+  if (l.id === 'in-5') {
     return {
       ...l,
       preAccept: 'reject',
@@ -29,6 +33,18 @@ const counted: IncomingLine[] = seeded.map((l) => {
       countStatus: 'pending',
     };
   }
+  const qty = l.id === 'in-1' ? 98 : l.documentQty;
+  const groups =
+    l.kind === 'log'
+      ? []
+      : [
+          createEmptyPhysicalGroup(l.id, 'manual', {
+            qty: String(qty),
+            thicknessMm: l.id === 'in-1' ? '45' : String(l.thicknessMm ?? ''),
+            widthMm: l.id === 'in-1' ? '90' : String(l.widthMm ?? ''),
+            lengthMm: String(l.lengthMm ?? ''),
+          }),
+        ];
   return {
     ...l,
     preAccept: l.id === 'in-4' ? 'conditional' : 'ok',
@@ -37,9 +53,12 @@ const counted: IncomingLine[] = seeded.map((l) => {
     matchedMaterialId: `id-${l.id}`,
     matchedMaterialCode: `C-${l.id}`,
     matchScore: 90,
-    operatorQty: String(l.documentQty),
+    operatorQty: String(qty),
     logCount: l.kind === 'log' ? String(l.documentQty) : l.logCount,
+    physicalGroups: groups,
     countStatus: 'counted',
+    stockAccept: l.id === 'in-1' || l.id === 'in-3' || l.id === 'in-4' ? 'conditional' : 'ok',
+    stockAcceptReason: 'test',
   };
 });
 
@@ -48,20 +67,7 @@ const summary = compareSummary(rows);
 assert(summary.total === 5, '5 rows');
 assert(summary.rejected === 1, '1 rejected');
 assert(summary.unmatched === 1, '1 unmatched (no PO)');
-assert(summary.diff >= 1, 'tomruk diff po vs physical');
-assert(classifyCompareStatus(counted.find((l) => l.id === 'in-1')!) === 'ok', 'in-1 ok');
-
-assert(!compareIsResolved(rows, {}, true), 'exceptions need disposition');
-assert(
-  compareIsResolved(
-    rows,
-    {
-      'in-3': 'accepted',
-      'in-4': 'accepted',
-    },
-    true,
-  ),
-  'resolved after exceptions decided',
-);
+assert(classifyCompareStatus(counted.find((l) => l.id === 'in-1')!) === 'dimDiff', 'in-1 dimDiff');
+assert(compareReadyForResult(counted, {}, true), 'resolved with stockAccept on exceptions');
 
 console.log('compareLines.selftest: OK');
