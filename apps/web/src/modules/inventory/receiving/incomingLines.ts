@@ -29,6 +29,8 @@ export type IncomingLine = {
   kind: MaterialKind;
   unit: 'adet' | 'm3' | 'm2';
   documentQty: number;
+  /** Purchase order / sipariş qty (null = not on PO). Demo for Stage 4 compare. */
+  poQty: number | null;
   /** Stage 2 — per-line moisture */
   targetMoisturePct: string;
   moistureSamples: MoistureSample[];
@@ -127,6 +129,7 @@ type DemoSpec = {
   kind: MaterialKind;
   unit: 'adet' | 'm3' | 'm2';
   documentQty: number;
+  poQty: number | null;
   preAccept: PreAcceptDecision;
   packages?: string;
   perPackage?: string;
@@ -144,6 +147,7 @@ function buildDemoLine(s: DemoSpec): IncomingLine {
     kind: s.kind,
     unit: s.unit,
     documentQty: s.documentQty,
+    poQty: s.poQty,
     preAccept: s.preAccept,
     ...empty,
     packages: s.packages ?? '',
@@ -163,6 +167,7 @@ export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
     kind: 'lumber',
     unit: 'adet',
     documentQty: 500,
+    poQty: 500,
     preAccept: 'ok',
   }),
   buildDemoLine({
@@ -174,6 +179,7 @@ export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
     kind: 'lumber',
     unit: 'adet',
     documentQty: 300,
+    poQty: 300,
     preAccept: 'ok',
     packages: '6',
     perPackage: '50',
@@ -187,6 +193,7 @@ export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
     kind: 'log',
     unit: 'adet',
     documentQty: 42,
+    poQty: 40,
     preAccept: 'ok',
     logCount: '42',
   }),
@@ -199,6 +206,7 @@ export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
     kind: 'thermowood',
     unit: 'adet',
     documentQty: 100,
+    poQty: null,
     preAccept: 'conditional',
     packages: '4',
     perPackage: '25',
@@ -212,6 +220,7 @@ export const DEMO_INCOMING_FROM_DOCUMENTS: IncomingLine[] = [
     kind: 'panel',
     unit: 'adet',
     documentQty: 20,
+    poQty: 20,
     preAccept: 'reject',
   }),
 ];

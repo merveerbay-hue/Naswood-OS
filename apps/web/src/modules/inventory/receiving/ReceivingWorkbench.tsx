@@ -5,7 +5,6 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Inpu
 import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 import { type MaterialCandidate } from './materialMatch';
-import { DocumentControlPanel } from './DocumentControlPanel';
 import {
   TruckEvidenceStep,
   type EvidenceDocKind,
@@ -19,6 +18,7 @@ import {
 } from './MaterialCheckStep';
 import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountStep';
 import { IncomingLineCheckPanel } from './IncomingLineCheckPanel';
+import { CompareStep } from './CompareStep';
 import {
   allCountableCounted,
   allLinesReadyForCount,
@@ -35,7 +35,7 @@ import {
  * Real ops receiving rail (6 stages):
  * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
  *
- * Stages 1–3 implemented. Stages 4–6 keep the safe stock path until built next.
+ * Stages 1–4 implemented. Stages 5–6 keep the safe stock path until built next.
  */
 type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
@@ -194,7 +194,7 @@ export function ReceivingWorkbench() {
         if (!allCountableCounted(incomingLines)) return t('wb.rcv.ops.count.needAllCounted');
         return null;
       case 'compare':
-        return !compareResolved ? t('wb.rcv.gateNeedControl') : null;
+        return !compareResolved ? t('wb.rcv.compare.gateNeedResolve') : null;
       case 'result':
         return !approved ? t('wb.rcv.gateNeedApprove') : null;
       case 'stock':
@@ -477,15 +477,18 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'compare' ? (
-                <DocumentControlPanel
+                <CompareStep
+                  lines={incomingLines}
+                  supplier={truck.supplier}
                   disabled={posted}
                   onResolvedChange={setCompareResolved}
-                  onRequestMaterialMatch={() => {
+                  onRequestMaterialMatch={(lineId) => {
                     const idx = STAGES.findIndex((s) => s.id === 'materialCheck');
                     if (idx >= 0) {
                       setStageIdx(idx);
                       setMaxReached((m) => Math.max(m, idx));
                     }
+                    void lineId;
                   }}
                 />
               ) : null}
