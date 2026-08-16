@@ -2,7 +2,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
-import { createResource, searchResource } from '@/api/business';
+import { createResource, searchAllResource, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
 import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
@@ -119,8 +119,8 @@ export function MaterialListPage() {
 
   const importMutation = useMutation({
     mutationFn: async () => {
-      const page = await searchResource<{ code: string }>('materials');
-      const existing = new Set((page.items ?? []).map((m) => String(m.code ?? '').toUpperCase()));
+      const all = await searchAllResource<{ code: string }>('materials');
+      const existing = new Set(all.map((m) => String(m.code ?? '').toUpperCase()));
       const items = masterSeed.items as MasterSeedItem[];
       let created = 0;
       let skipped = 0;

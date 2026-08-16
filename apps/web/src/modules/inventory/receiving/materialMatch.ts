@@ -91,8 +91,19 @@ export function parseDefinitionDims(definitionJson?: string | null): MaterialDim
   try {
     const def = JSON.parse(definitionJson) as Record<string, unknown>;
     const thickness = Number(def.NominalThicknessMm ?? def.nominalThicknessMm ?? def.thicknessMm);
-    const width = Number(def.NominalWidthMm ?? def.nominalWidthMm ?? def.widthMm);
     const length = Number(def.NominalLengthMm ?? def.nominalLengthMm ?? def.lengthMm);
+    let width = Number(def.NominalWidthMm ?? def.nominalWidthMm ?? def.widthMm);
+    // Range / options cards: do not invent a single commercial width for matching display.
+    // Prefer single NominalWidthMm; else mid of min–max when both present and equal-ish for match baseline.
+    if (!(Number.isFinite(width) && width > 0)) {
+      const wMin = Number(def.NominalWidthMinMm ?? def.nominalWidthMinMm);
+      const wMax = Number(def.NominalWidthMaxMm ?? def.nominalWidthMaxMm);
+      if (Number.isFinite(wMin) && Number.isFinite(wMax) && wMin > 0 && wMax > 0) {
+        width = (wMin + wMax) / 2;
+      } else if (Array.isArray(def.NominalWidthOptionsMm) && def.NominalWidthOptionsMm.length > 0) {
+        width = Number(def.NominalWidthOptionsMm[0]);
+      }
+    }
     if (![thickness, width, length].every((n) => Number.isFinite(n) && n > 0)) return null;
     return { thickness, width, length, unit: 'mm' };
   } catch {
