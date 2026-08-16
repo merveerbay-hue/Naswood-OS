@@ -55,9 +55,11 @@ public sealed class MaterialIdentity : BusinessEntity
         decimal quantity,
         string unitOfMeasure,
         string goodsReceiptNumber,
+        string status = "Active",
         string companyId = "COMP-001",
         string? plantId = "PLANT-001")
     {
+        var normalized = string.IsNullOrWhiteSpace(status) ? "Active" : status.Trim();
         return new MaterialIdentity(
             UuidV7.NewGuid(),
             identityNumber,
@@ -67,7 +69,7 @@ public sealed class MaterialIdentity : BusinessEntity
             locationCode,
             quantity,
             unitOfMeasure,
-            "Active",
+            normalized,
             goodsReceiptNumber,
             companyId,
             plantId);

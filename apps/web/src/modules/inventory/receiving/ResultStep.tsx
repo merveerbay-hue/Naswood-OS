@@ -205,10 +205,6 @@ export function ResultStep({
           </span>
         </span>
       </label>
-
-      {!warehouse.trim() || !location.trim() ? (
-        <p className="text-xs text-[var(--color-danger)]">{t('wb.rcv.result.needWh')}</p>
-      ) : null}
     </div>
   );
 }

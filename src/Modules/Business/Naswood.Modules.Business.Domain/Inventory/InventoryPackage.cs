@@ -59,10 +59,12 @@ public sealed class InventoryPackage : BusinessEntity
         decimal quantity,
         string unitOfMeasure,
         string? barcode = null,
+        string status = "Available",
         string companyId = "COMP-001",
         string? plantId = "PLANT-001")
     {
         var code = string.IsNullOrWhiteSpace(barcode) ? packageNumber : barcode.Trim();
+        var normalized = string.IsNullOrWhiteSpace(status) ? "Available" : status.Trim();
         return new InventoryPackage(
             UuidV7.NewGuid(),
             packageNumber,
@@ -74,7 +76,7 @@ public sealed class InventoryPackage : BusinessEntity
             quantity,
             unitOfMeasure,
             code,
-            "Available",
+            normalized,
             companyId,
             plantId);
     }

@@ -24,6 +24,7 @@ public interface IInventoryMovementRepository
 {
     Task AddAsync(InventoryMovement entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<InventoryMovement> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(string documentNumber, CancellationToken cancellationToken = default);
 }
 
 public sealed record ExecuteGoodsReceiptCommand(
@@ -92,8 +93,35 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 "INV-POST-012",
                 "Demo OCR extract cannot be posted as a real goods receipt."));
 
+        var receiptNumber = SystemIdentifier.Ensure(command.Number, "GR");
+
+        // RULE 8 / 23 — idempotent: same GR number already Posted → return existing, no new movements
+        var existing = await _receipts.GetByNumberAsync(receiptNumber, cancellationToken).ConfigureAwait(false);
+        if (existing is not null
+            && string.Equals(existing.Status, "Posted", StringComparison.OrdinalIgnoreCase))
+        {
+            var priorMoves = await _movements.ListByDocumentAsync(existing.Number, cancellationToken).ConfigureAwait(false);
+            var priorLines = priorMoves.Select(m => new StockPostLineResultDto
+            {
+                MaterialCode = m.MaterialCode,
+                MaterialIdentityNumber = m.MaterialIdentityNumber,
+                PackageNumber = m.PackageNumber,
+                LotNumber = m.LotNumber,
+                MovementNumber = m.MovementNumber,
+                Quantity = m.Quantity
+            }).ToArray();
+            return Result.Success(new ExecuteStockDocumentResultDto
+            {
+                DocumentId = existing.Id,
+                DocumentNumber = existing.Number,
+                Status = existing.Status,
+                Lines = priorLines,
+                IdempotentReplay = true
+            });
+        }
+
         var receipt = GoodsReceipt.Create(
-            SystemIdentifier.Ensure(command.Number, "GR"),
+            receiptNumber,
             command.WarehouseCode.Trim(),
             command.Reference ?? string.Empty,
             "Posted",
@@ -136,6 +164,9 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
 
             // Prefer canonical master code casing.
             materialCode = material.Code;
+            var warehouseCode = string.IsNullOrWhiteSpace(line.WarehouseCode)
+                ? receipt.WarehouseCode
+                : line.WarehouseCode.Trim();
             var locationCode = string.IsNullOrWhiteSpace(line.LocationCode) ? "RECV" : line.LocationCode.Trim();
             var lotNumber = string.IsNullOrWhiteSpace(line.LotNumber)
                 ? SystemIdentifier.Ensure(null, "LOT")
@@ -148,21 +179,28 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 ? SystemIdentifier.Ensure(null, "PKG")
                 : line.PackageNumber.Trim();
 
+            var isQuarantine = string.Equals(line.StockStatus?.Trim(), "Quarantine", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(line.StockStatus?.Trim(), "Hold", StringComparison.OrdinalIgnoreCase);
+            var packageStatus = isQuarantine ? "Quarantine" : "Available";
+            var identityStatus = isQuarantine ? "Hold" : "Active";
+            var batchStatus = isQuarantine ? "Hold" : "Active";
+            var balanceStatus = isQuarantine ? "Hold" : "Active";
+
             var identity = MaterialIdentity.CreateRoot(
-                miNumber, materialCode, lotNumber, receipt.WarehouseCode, locationCode, line.Quantity, uom, receipt.Number);
+                miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, receipt.Number, identityStatus);
             await _identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
 
             var package = InventoryPackage.Create(
-                packageNumber, miNumber, materialCode, lotNumber, receipt.WarehouseCode, locationCode, line.Quantity, uom, line.Barcode);
+                packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, line.Barcode, packageStatus);
             await _packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
 
-            var batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, "Active");
+            var batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, batchStatus);
             await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
 
-            var balance = await _balances.FindByKeyAsync(materialCode, receipt.WarehouseCode, locationCode, lotNumber, cancellationToken).ConfigureAwait(false);
+            var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, cancellationToken).ConfigureAwait(false);
             if (balance is null)
             {
-                balance = InventoryBalance.Create(materialCode, receipt.WarehouseCode, locationCode, lotNumber, line.Quantity, 0, "Active");
+                balance = InventoryBalance.Create(materialCode, warehouseCode, locationCode, lotNumber, line.Quantity, 0, balanceStatus);
                 await _balances.AddAsync(balance, cancellationToken).ConfigureAwait(false);
             }
             else
@@ -172,7 +210,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
 
             var movement = InventoryMovement.Post(
                 "GoodsReceipt", "In", receipt.Number, materialCode, miNumber, packageNumber,
-                receipt.WarehouseCode, locationCode, lotNumber, line.Quantity, uom, command.Notes ?? string.Empty);
+                warehouseCode, locationCode, lotNumber, line.Quantity, uom, command.Notes ?? string.Empty);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
 
             results.Add(new StockPostLineResultDto
@@ -192,7 +230,8 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             DocumentId = receipt.Id,
             DocumentNumber = receipt.Number,
             Status = receipt.Status,
-            Lines = results
+            Lines = results,
+            IdempotentReplay = false
         });
     }
 

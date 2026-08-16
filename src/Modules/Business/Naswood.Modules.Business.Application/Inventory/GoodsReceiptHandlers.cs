@@ -9,6 +9,7 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public interface IGoodsReceiptRepository
 {
     Task<GoodsReceipt?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<GoodsReceipt?> GetByNumberAsync(string number, CancellationToken cancellationToken = default);
     Task AddAsync(GoodsReceipt entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<GoodsReceipt> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
 }

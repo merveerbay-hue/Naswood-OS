@@ -5,6 +5,8 @@ public sealed class StockPostLineRequestDto
     public string MaterialCode { get; init; } = string.Empty;
     /// <summary>Optional material master Id — must match MaterialCode when provided.</summary>
     public string? MaterialId { get; init; }
+    /// <summary>Optional per-line warehouse; falls back to receipt WarehouseCode.</summary>
+    public string? WarehouseCode { get; init; }
     public string LocationCode { get; init; } = string.Empty;
     public string LotNumber { get; init; } = string.Empty;
     public string PackageNumber { get; init; } = string.Empty;
@@ -12,6 +14,8 @@ public sealed class StockPostLineRequestDto
     public decimal Quantity { get; init; }
     public string UnitOfMeasure { get; init; } = "Piece";
     public string Barcode { get; init; } = string.Empty;
+    /// <summary>Available (default) or Quarantine — conditional accept uses Quarantine.</summary>
+    public string? StockStatus { get; init; }
 }
 
 public sealed class ExecuteGoodsReceiptRequestDto
@@ -55,6 +59,8 @@ public sealed class ExecuteStockDocumentResultDto
     public required string DocumentNumber { get; init; }
     public required string Status { get; init; }
     public required IReadOnlyList<StockPostLineResultDto> Lines { get; init; }
+    /// <summary>True when an existing Posted GR was returned without creating new movements.</summary>
+    public bool IdempotentReplay { get; init; }
 }
 
 public sealed class InventoryPackageDto

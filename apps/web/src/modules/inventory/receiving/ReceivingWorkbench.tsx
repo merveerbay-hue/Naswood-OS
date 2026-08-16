@@ -1,7 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@naswood/ui';
 import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 import { type MaterialCandidate } from './materialMatch';
@@ -20,6 +20,7 @@ import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountSte
 import { IncomingLineCheckPanel } from './IncomingLineCheckPanel';
 import { CompareStep } from './CompareStep';
 import { ResultStep } from './ResultStep';
+import { StockStep } from './StockStep';
 import {
   allCountableCounted,
   allLinesReadyForCount,
@@ -30,18 +31,22 @@ import {
   lineMaterialMatched,
   linePhysicalVolumeM3,
   seedIncomingFromDocuments,
-  stockBasisDimsLabel,
   stockBasisQty,
   stockBasisVolumeM3,
   syncBatchPreAccept,
   type IncomingLine,
 } from './incomingLines';
+import {
+  acceptedStockLines,
+  buildDefaultDistributions,
+  buildExecuteLines,
+  validateDistributions,
+  type StockDistributionRow,
+} from './stockDistribution';
 
 /**
  * Real ops receiving rail (6 stages):
- * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
- *
- * Stages 1–5 implemented. Stage 6 keeps the safe stock post path.
+ * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stoklaştırma
  */
 type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
@@ -59,10 +64,6 @@ const STAGES: StageDef[] = [
   { id: 'result', titleKey: 'wb.rcv.ops.step.result', hintKey: 'wb.rcv.ops.step.resultHint' },
   { id: 'stock', titleKey: 'wb.rcv.ops.step.stock', hintKey: 'wb.rcv.ops.step.stockHint' },
 ];
-
-/** Placeholder until Stage 1 seeds incoming lines. */
-const PLACEHOLDER_MATERIAL_LABEL = 'Thermowood Deck 26×140×3000';
-
 function mintPreview(prefix: string) {
   const seq =
     new Date().toISOString().slice(2, 10).replace(/-/g, '') +
@@ -107,31 +108,27 @@ export function ReceivingWorkbench() {
   const [compareResolved, setCompareResolved] = useState(false);
   const [warehouse, setWarehouse] = useState('WH-RM');
   const [location, setLocation] = useState('A-03-02');
+  const [distributions, setDistributions] = useState<StockDistributionRow[]>([]);
+  const [grNumber] = useState(() => mintPreview('GR'));
+  const [sharedLot] = useState(() => mintPreview('LOT'));
 
   const preAccept = syncBatchPreAccept(incomingLines);
   const countable = useMemo(() => countableLines(incomingLines), [incomingLines]);
   const quantityVerified = allCountableCounted(incomingLines);
+  const stockAcceptedLines = useMemo(() => acceptedStockLines(incomingLines), [incomingLines]);
+  const matchConfirmed = stockAcceptedLines.length > 0 && stockAcceptedLines.every(lineMaterialMatched);
   const primaryStockLine = useMemo(() => {
-    const counted = countable.filter(
-      (l) =>
-        l.countStatus === 'counted' &&
-        lineMaterialMatched(l) &&
-        l.stockAccept !== 'reject' &&
-        (l.stockAccept === 'ok' || l.stockAccept === 'conditional' || l.stockAccept === 'none'),
-    );
-    return counted.find((l) => l.kind === 'lumber') ?? counted[0] ?? null;
-  }, [countable]);
+    return stockAcceptedLines.find((l) => l.kind === 'lumber') ?? stockAcceptedLines[0] ?? null;
+  }, [stockAcceptedLines]);
   const matchedMaterialCode = primaryStockLine?.matchedMaterialCode ?? '';
-  const matchedMaterialId = primaryStockLine?.matchedMaterialId ?? '';
-  const matchConfirmed = !!primaryStockLine && lineMaterialMatched(primaryStockLine);
   const confirmedMatchScore = primaryStockLine?.matchScore ?? null;
-  const stockQty = primaryStockLine ? stockBasisQty(primaryStockLine) : 0;
-  const stockVol = primaryStockLine ? stockBasisVolumeM3(primaryStockLine) : null;
-  const stockDims = primaryStockLine ? stockBasisDimsLabel(primaryStockLine) : '—';
+  const stockQty = stockAcceptedLines.reduce((s, l) => s + stockBasisQty(l), 0);
+  const stockVol = stockAcceptedLines.reduce((s, l) => s + (stockBasisVolumeM3(l) ?? 0), 0);
   const countQty = String(stockQty || finalPhysicalQtyFromLines(incomingLines) || '');
-  const materialLabel = primaryStockLine
-    ? `${primaryStockLine.name} ${formatLineDims(primaryStockLine)}`
-    : PLACEHOLDER_MATERIAL_LABEL;
+  const distValidation = useMemo(
+    () => validateDistributions(incomingLines, distributions),
+    [incomingLines, distributions],
+  );
 
   const materialsQuery = useQuery({
     queryKey: ['business', 'materials', 'receiving-match'],
@@ -170,23 +167,28 @@ export function ReceivingWorkbench() {
   const photoCount = Object.values(photos).filter(Boolean).length;
 
   const postBlockedReason = useMemo(() => {
-    if (!matchConfirmed || !matchedMaterialCode.trim() || !matchedMaterialId.trim()) {
+    if (posted) return null;
+    if (!matchConfirmed || stockAcceptedLines.length === 0) {
       return t('wb.rcv.gateNeedMaterialConfirm');
     }
     if (!quantityVerified) return t('wb.rcv.gateNeedQtyVerify');
     if (Number(countQty) <= 0) return t('wb.rcv.gateNeedCount');
     if (!approved) return t('wb.rcv.gateNeedApprove');
-    if (!warehouse.trim() || !location.trim()) return t('wb.rcv.gateNeedWh');
+    if (!distValidation.ok) {
+      if (distValidation.code === 'over') return t('wb.rcv.stockStep.errOver');
+      if (distValidation.code === 'under') return t('wb.rcv.stockStep.errUnder');
+      if (distValidation.code === 'missingWh') return t('wb.rcv.stockStep.errWh');
+      return t('wb.rcv.gateNeedWh');
+    }
     return null;
   }, [
+    posted,
     matchConfirmed,
-    matchedMaterialCode,
-    matchedMaterialId,
+    stockAcceptedLines.length,
     quantityVerified,
     countQty,
     approved,
-    warehouse,
-    location,
+    distValidation,
     t,
   ]);
 
@@ -211,7 +213,6 @@ export function ReceivingWorkbench() {
       case 'compare':
         return !compareResolved ? t('wb.rcv.compare.gateNeedResolve') : null;
       case 'result':
-        if (!warehouse.trim() || !location.trim()) return t('wb.rcv.result.needWh');
         if (!matchConfirmed || !quantityVerified) return t('wb.rcv.gateNeedMaterialConfirm');
         if (!approved) return t('wb.rcv.gateNeedApprove');
         return null;
@@ -232,8 +233,6 @@ export function ReceivingWorkbench() {
     countable.length,
     compareResolved,
     approved,
-    warehouse,
-    location,
     matchConfirmed,
     quantityVerified,
     postBlockedReason,
@@ -245,7 +244,21 @@ export function ReceivingWorkbench() {
   function updateIncomingLines(next: IncomingLine[]) {
     setIncomingLines(next);
     setApproved(false);
+    setDistributions([]);
   }
+
+  function ensureDistributions() {
+    setDistributions((prev) => {
+      if (prev.length > 0) return prev;
+      return buildDefaultDistributions(incomingLines, warehouse, location);
+    });
+  }
+
+  useEffect(() => {
+    if (stage.id === 'stock' && !posted && distributions.length === 0 && stockAcceptedLines.length > 0) {
+      setDistributions(buildDefaultDistributions(incomingLines, warehouse, location));
+    }
+  }, [stage.id, posted, distributions.length, stockAcceptedLines.length, incomingLines, warehouse, location]);
 
   function toggleDoc(kind: EvidenceDocKind) {
     setDocs((d) => (d.includes(kind) ? d.filter((x) => x !== kind) : [...d, kind]));
@@ -257,20 +270,37 @@ export function ReceivingWorkbench() {
 
   const persistMutation = useMutation({
     mutationFn: async () => {
+      // RULE 8 / 23 — already posted: do not create a second stock movement
+      if (posted) {
+        return {
+          documentId: '',
+          documentNumber: minted.gr || grNumber,
+          status: 'Posted',
+          lines: [] as Array<{
+            materialCode: string;
+            materialIdentityNumber: string;
+            packageNumber: string;
+            lotNumber: string;
+            movementNumber: string;
+            quantity: number;
+          }>,
+          idempotent: true,
+        };
+      }
       if (!matchConfirmed || !quantityVerified || !approved) {
         throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
       }
-      const materialCode = matchedMaterialCode.trim();
-      const materialId = matchedMaterialId.trim();
-      if (!materialCode || !materialId) throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
-      const qty = Number(countQty) || 0;
-      if (qty <= 0) throw new Error(t('wb.rcv.gateNeedCount'));
+      const validation = validateDistributions(incomingLines, distributions);
+      if (!validation.ok) {
+        if (validation.code === 'over') throw new Error(t('wb.rcv.stockStep.errOver'));
+        if (validation.code === 'under') throw new Error(t('wb.rcv.stockStep.errUnder'));
+        if (validation.code === 'missingWh') throw new Error(t('wb.rcv.stockStep.errWh'));
+        throw new Error(t('wb.rcv.gateNeedWh'));
+      }
 
-      const whCode = warehouse.trim() || 'WH-RM';
-      const locCode = location.trim() || 'RECV';
-      const mi = mintPreview('MI');
-      const lot = mintPreview('LOT');
-      const pkg = mintPreview('PKG');
+      const postLines = buildExecuteLines(incomingLines, distributions, sharedLot);
+      if (postLines.length === 0) throw new Error(t('wb.rcv.stockStep.noAccepted'));
+      const headerWh = postLines[0]!.warehouseCode;
 
       return executeStockDocument<{
         documentId: string;
@@ -284,8 +314,9 @@ export function ReceivingWorkbench() {
           movementNumber: string;
           quantity: number;
         }>;
+        idempotent?: boolean;
       }>('goods-receipts/execute', {
-        warehouseCode: whCode,
+        warehouseCode: headerWh,
         reference: truck.plate || 'MANUAL',
         quantityVerified: true,
         extractSource: 'manual',
@@ -295,43 +326,41 @@ export function ReceivingWorkbench() {
           `supplier=${truck.supplier}`,
           `plate=${truck.plate}`,
           `preAccept=${preAccept}`,
-          `materialCard=${materialCode}`,
-          `materialCardDims=${primaryStockLine ? formatLineDims(primaryStockLine) : ''}`,
-          `docQty=${primaryStockLine?.documentQty ?? ''}`,
-          `physQty=${qty}`,
-          `physDims=${stockDims}`,
-          `stockBasisQty=${qty}`,
-          `stockBasisDims=${stockDims}`,
-          `stockBasisVolumeM3=${stockVol != null ? stockVol.toFixed(4) : ''}`,
-          `stockAccept=${primaryStockLine?.stockAccept ?? 'ok'}`,
-          `stockAcceptReason=${primaryStockLine?.stockAcceptReason ?? ''}`,
-          `physGroups=${primaryStockLine?.physicalGroups.map((g) => `${g.qty}@${g.thicknessMm}x${g.widthMm}x${g.lengthMm}`).join('|') ?? ''}`,
-          `countedLines=${countable
-            .filter((l) => l.countStatus === 'counted' && l.stockAccept !== 'reject')
+          `stockBasisQtyTotal=${stockQty}`,
+          `stockBasisVolumeM3Total=${stockVol > 0 ? stockVol.toFixed(4) : ''}`,
+          `dist=${distributions
             .map(
-              (l) =>
-                `${l.name}|doc=${formatLineDims(l)}|phys=${formatPhysicalDims(l)}|q=${finalLineQty(l)}|m3=${linePhysicalVolumeM3(l)?.toFixed(3) ?? ''}|sa=${l.stockAccept}`,
+              (d) =>
+                `${d.lineId}|g=${d.groupId ?? '-'}|q=${d.qty}|wh=${d.warehouseCode}|loc=${d.locationCode}|b=${d.bucket}`,
             )
             .join(',')}`,
-          `rejected=${incomingLines.filter((l) => l.preAccept === 'reject' || l.stockAccept === 'reject').map((l) => l.name).join(',')}`,
+          `countedLines=${stockAcceptedLines
+            .map(
+              (l) =>
+                `${l.name}|card=${l.matchedMaterialCode}|doc=${formatLineDims(l)}|phys=${formatPhysicalDims(l)}|q=${finalLineQty(l)}|m3=${linePhysicalVolumeM3(l)?.toFixed(3) ?? ''}|sa=${l.stockAccept}`,
+            )
+            .join(',')}`,
+          `rejected=${incomingLines
+            .filter((l) => l.preAccept === 'reject' || l.stockAccept === 'reject')
+            .map((l) => l.name)
+            .join(',')}`,
           `quality=${materialCheck.qualityVerdict}`,
-          `loc=${locCode}`,
           `matchScore=${confirmedMatchScore ?? ''}`,
         ].join('; '),
-        number: '',
-        lines: [
-          {
-            materialCode,
-            materialId,
-            locationCode: locCode,
-            lotNumber: lot,
-            packageNumber: pkg,
-            materialIdentityNumber: mi,
-            quantity: qty,
-            unitOfMeasure: 'Piece',
-            barcode: pkg,
-          },
-        ],
+        number: grNumber,
+        lines: postLines.map((p) => ({
+          materialCode: p.materialCode,
+          materialId: p.materialId,
+          warehouseCode: p.warehouseCode,
+          locationCode: p.locationCode,
+          lotNumber: p.lotNumber,
+          packageNumber: p.packageNumber,
+          materialIdentityNumber: p.materialIdentityNumber,
+          quantity: p.quantity,
+          unitOfMeasure: p.unitOfMeasure,
+          barcode: p.barcode,
+          stockStatus: p.stockStatus,
+        })),
       });
     },
     onSuccess: async (created) => {
@@ -339,9 +368,9 @@ export function ReceivingWorkbench() {
       const line = created.lines?.[0];
       setMinted((m) => ({
         ...m,
-        gr: created.documentNumber || mintPreview('GR'),
+        gr: created.documentNumber || grNumber,
         mi: line?.materialIdentityNumber || m.mi,
-        lot: line?.lotNumber || m.lot,
+        lot: line?.lotNumber || sharedLot || m.lot,
         pkg: line?.packageNumber || m.pkg,
       }));
       setPosted(true);
@@ -354,6 +383,7 @@ export function ReceivingWorkbench() {
 
   function goNext() {
     if (stage.id === 'stock') {
+      if (posted) return;
       if (postBlockedReason) {
         setError(postBlockedReason);
         return;
@@ -364,9 +394,15 @@ export function ReceivingWorkbench() {
     if (stage.id === 'truckEvidence' && incomingLines.length === 0) {
       setIncomingLines(seedIncomingFromDocuments());
     }
+    if (stage.id === 'result') {
+      ensureDistributions();
+    }
     const next = Math.min(stageIdx + 1, STAGES.length - 1);
     setStageIdx(next);
     setMaxReached((m) => Math.max(m, next));
+    if (STAGES[next]?.id === 'stock') {
+      ensureDistributions();
+    }
   }
 
   return (
@@ -522,39 +558,27 @@ export function ReceivingWorkbench() {
                   onWarehouseChange={setWarehouse}
                   onLocationChange={setLocation}
                   approved={approved}
-                  onApprovedChange={setApproved}
-                  canApprove={matchConfirmed && quantityVerified && !!warehouse.trim() && !!location.trim()}
+                  onApprovedChange={(v) => {
+                    setApproved(v);
+                    if (v) {
+                      setDistributions(buildDefaultDistributions(incomingLines, warehouse, location));
+                    }
+                  }}
+                  canApprove={matchConfirmed && quantityVerified}
                   disabled={posted}
                 />
               ) : null}
 
               {stage.id === 'stock' ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.stockIntro')}</p>
-                  {postBlockedReason ? (
-                    <p className="rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2 text-sm text-[var(--color-danger)]">
-                      {postBlockedReason}
-                    </p>
-                  ) : (
-                    <p className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)] px-3 py-2 text-sm">
-                      {t('wb.rcv.stockReady')
-                        .replace('{material}', matchedMaterialCode)
-                        .replace('{qty}', countQty)}
-                      <span className="mt-1 block text-xs text-[var(--text-muted)]">
-                        {t('wb.rcv.result.stockBasisShort')
-                          .replace('{dims}', stockDims)
-                          .replace('{m3}', stockVol != null ? stockVol.toFixed(3) : '—')}
-                      </span>
-                    </p>
-                  )}
-                  {posted ? (
-                    <p className="text-sm font-medium text-[var(--color-primary)]">
-                      {t('wb.rcv.postedBanner')}
-                      {minted.gr ? ` · ${minted.gr}` : ''}
-                      {minted.mi ? ` · ${minted.mi}` : ''}
-                    </p>
-                  ) : null}
-                </div>
+                <StockStep
+                  lines={incomingLines}
+                  distributions={distributions}
+                  onDistributionsChange={setDistributions}
+                  posted={posted}
+                  postedDocumentNumber={minted.gr || grNumber}
+                  postBlockedReason={postBlockedReason}
+                  disabled={posted}
+                />
               ) : null}
 
               {gateMessage ? <p className="text-sm text-[var(--color-danger)]">{gateMessage}</p> : null}
@@ -579,13 +603,18 @@ export function ReceivingWorkbench() {
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.rcv.matchedMaterial')}</dt>
-                <dd className="font-medium">{matchConfirmed ? matchedMaterialCode : t('wb.rcv.noMaterialMatched')}</dd>
+                <dd className="font-medium">
+                  {matchConfirmed
+                    ? `${stockAcceptedLines.length} · ${matchedMaterialCode || '—'}`
+                    : t('wb.rcv.noMaterialMatched')}
+                </dd>
               </div>
               <div>
                 <dt className="text-[var(--text-muted)]">{t('wb.rcv.countedQty')}</dt>
                 <dd className="font-medium">
                   {countQty}
                   {quantityVerified ? ` · ${t('wb.rcv.qtyVerifiedShort')}` : ''}
+                  {stockVol > 0 ? ` · ${stockVol.toFixed(3)} m³` : ''}
                 </dd>
               </div>
             </dl>
@@ -611,6 +640,10 @@ export function ReceivingWorkbench() {
                 type="button"
                 disabled={posted || persistMutation.isPending || !!postBlockedReason}
                 onClick={() => {
+                  if (posted) return;
+                  if (distributions.length === 0) {
+                    setDistributions(buildDefaultDistributions(incomingLines, warehouse, location));
+                  }
                   if (postBlockedReason) {
                     setError(postBlockedReason);
                     return;

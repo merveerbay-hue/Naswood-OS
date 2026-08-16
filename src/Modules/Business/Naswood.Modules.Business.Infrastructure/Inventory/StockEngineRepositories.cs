@@ -94,4 +94,14 @@ public sealed class InventoryMovementRepository : IInventoryMovementRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
     }
+
+    public async Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(string documentNumber, CancellationToken cancellationToken = default)
+    {
+        var value = documentNumber.Trim();
+        return await _db.Set<InventoryMovement>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.DocumentNumber == value)
+            .OrderBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
 }
