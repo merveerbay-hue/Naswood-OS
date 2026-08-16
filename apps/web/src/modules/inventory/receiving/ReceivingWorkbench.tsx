@@ -5,7 +5,6 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Inpu
 import { executeStockDocument, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 import { type MaterialCandidate } from './materialMatch';
-import { DocumentControlPanel } from './DocumentControlPanel';
 import {
   TruckEvidenceStep,
   type EvidenceDocKind,
@@ -19,14 +18,20 @@ import {
 } from './MaterialCheckStep';
 import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountStep';
 import { IncomingLineCheckPanel } from './IncomingLineCheckPanel';
+import { CompareStep } from './CompareStep';
 import {
   allCountableCounted,
   allLinesReadyForCount,
   countableLines,
   finalLineQty,
   formatLineDims,
+  formatPhysicalDims,
   lineMaterialMatched,
+  linePhysicalVolumeM3,
   seedIncomingFromDocuments,
+  stockBasisDimsLabel,
+  stockBasisQty,
+  stockBasisVolumeM3,
   syncBatchPreAccept,
   type IncomingLine,
 } from './incomingLines';
@@ -35,7 +40,7 @@ import {
  * Real ops receiving rail (6 stages):
  * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
  *
- * Stages 1–3 implemented. Stages 4–6 keep the safe stock path until built next.
+ * Stages 1–4 implemented. Stages 5–6 keep the safe stock path until built next.
  */
 type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
@@ -104,16 +109,25 @@ export function ReceivingWorkbench() {
 
   const preAccept = syncBatchPreAccept(incomingLines);
   const countable = useMemo(() => countableLines(incomingLines), [incomingLines]);
-  const countQty = String(finalPhysicalQtyFromLines(incomingLines) || '');
   const quantityVerified = allCountableCounted(incomingLines);
   const primaryStockLine = useMemo(() => {
-    const counted = countable.filter((l) => l.countStatus === 'counted' && lineMaterialMatched(l));
+    const counted = countable.filter(
+      (l) =>
+        l.countStatus === 'counted' &&
+        lineMaterialMatched(l) &&
+        l.stockAccept !== 'reject' &&
+        (l.stockAccept === 'ok' || l.stockAccept === 'conditional' || l.stockAccept === 'none'),
+    );
     return counted.find((l) => l.kind === 'lumber') ?? counted[0] ?? null;
   }, [countable]);
   const matchedMaterialCode = primaryStockLine?.matchedMaterialCode ?? '';
   const matchedMaterialId = primaryStockLine?.matchedMaterialId ?? '';
   const matchConfirmed = !!primaryStockLine && lineMaterialMatched(primaryStockLine);
   const confirmedMatchScore = primaryStockLine?.matchScore ?? null;
+  const stockQty = primaryStockLine ? stockBasisQty(primaryStockLine) : 0;
+  const stockVol = primaryStockLine ? stockBasisVolumeM3(primaryStockLine) : null;
+  const stockDims = primaryStockLine ? stockBasisDimsLabel(primaryStockLine) : '—';
+  const countQty = String(stockQty || finalPhysicalQtyFromLines(incomingLines) || '');
   const materialLabel = primaryStockLine
     ? `${primaryStockLine.name} ${formatLineDims(primaryStockLine)}`
     : PLACEHOLDER_MATERIAL_LABEL;
@@ -194,7 +208,7 @@ export function ReceivingWorkbench() {
         if (!allCountableCounted(incomingLines)) return t('wb.rcv.ops.count.needAllCounted');
         return null;
       case 'compare':
-        return !compareResolved ? t('wb.rcv.gateNeedControl') : null;
+        return !compareResolved ? t('wb.rcv.compare.gateNeedResolve') : null;
       case 'result':
         return !approved ? t('wb.rcv.gateNeedApprove') : null;
       case 'stock':
@@ -269,38 +283,32 @@ export function ReceivingWorkbench() {
         extractSource: 'manual',
         notes: [
           `pipeline=truckEvidence>materialCheck>physicalCount>compare>result>stock`,
+          `compareResolved=${compareResolved}`,
           `supplier=${truck.supplier}`,
-          `trailer=${truck.trailer}`,
-          `driver=${truck.driver}`,
-          `arrival=${truck.arrivalDate}T${truck.arrivalTime}`,
-          `gate=${truck.gate}`,
+          `plate=${truck.plate}`,
           `preAccept=${preAccept}`,
-          `incomingLines=${incomingLines.length}`,
-          `countable=${countable.length}`,
-          `lineChecks=${incomingLines
+          `materialCard=${materialCode}`,
+          `materialCardDims=${primaryStockLine ? formatLineDims(primaryStockLine) : ''}`,
+          `docQty=${primaryStockLine?.documentQty ?? ''}`,
+          `physQty=${qty}`,
+          `physDims=${stockDims}`,
+          `stockBasisQty=${qty}`,
+          `stockBasisDims=${stockDims}`,
+          `stockBasisVolumeM3=${stockVol != null ? stockVol.toFixed(4) : ''}`,
+          `stockAccept=${primaryStockLine?.stockAccept ?? 'ok'}`,
+          `stockAcceptReason=${primaryStockLine?.stockAcceptReason ?? ''}`,
+          `physGroups=${primaryStockLine?.physicalGroups.map((g) => `${g.qty}@${g.thicknessMm}x${g.widthMm}x${g.lengthMm}`).join('|') ?? ''}`,
+          `countedLines=${countable
+            .filter((l) => l.countStatus === 'counted' && l.stockAccept !== 'reject')
             .map(
               (l) =>
-                `${l.name}|moist=${l.moistureSamples.map((s) => s.valuePct).filter(Boolean).join('/')}|dims=${l.dimSamples.filter((d) => d.thickness).length}|pa=${l.preAccept}`,
+                `${l.name}|doc=${formatLineDims(l)}|phys=${formatPhysicalDims(l)}|q=${finalLineQty(l)}|m3=${linePhysicalVolumeM3(l)?.toFixed(3) ?? ''}|sa=${l.stockAccept}`,
             )
             .join(',')}`,
-          `counted=${countable
-            .filter((l) => l.countStatus === 'counted')
-            .map((l) => `${l.name}|${formatLineDims(l)}|${finalLineQty(l)}${l.unit}`)
-            .join(',')}`,
-          `rejected=${incomingLines
-            .filter((l) => l.preAccept === 'reject')
-            .map((l) => l.name)
-            .join(',')}`,
+          `rejected=${incomingLines.filter((l) => l.preAccept === 'reject' || l.stockAccept === 'reject').map((l) => l.name).join(',')}`,
           `quality=${materialCheck.qualityVerdict}`,
-          `qualityFlags=${Object.keys(materialCheck.qualityFlags).filter((k) => materialCheck.qualityFlags[k]).join(',') || 'none'}`,
-          `photos=${photoCount}`,
-          `docs=${docs.join(',')}`,
-          `qty=${qty}`,
           `loc=${locCode}`,
-          `materialId=${materialId}`,
-          `material=${materialCode}`,
           `matchScore=${confirmedMatchScore ?? ''}`,
-          `label=${materialLabel}`,
         ].join('; '),
         number: '',
         lines: [
@@ -477,15 +485,19 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'compare' ? (
-                <DocumentControlPanel
+                <CompareStep
+                  lines={incomingLines}
+                  onChange={updateIncomingLines}
+                  supplier={truck.supplier}
                   disabled={posted}
                   onResolvedChange={setCompareResolved}
-                  onRequestMaterialMatch={() => {
+                  onRequestMaterialMatch={(lineId) => {
                     const idx = STAGES.findIndex((s) => s.id === 'materialCheck');
                     if (idx >= 0) {
                       setStageIdx(idx);
                       setMaxReached((m) => Math.max(m, idx));
                     }
+                    void lineId;
                   }}
                 />
               ) : null}
