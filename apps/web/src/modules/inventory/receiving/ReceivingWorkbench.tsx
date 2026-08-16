@@ -19,6 +19,7 @@ import {
 import { PhysicalCountStep, finalPhysicalQtyFromLines } from './PhysicalCountStep';
 import { IncomingLineCheckPanel } from './IncomingLineCheckPanel';
 import { CompareStep } from './CompareStep';
+import { ResultStep } from './ResultStep';
 import {
   allCountableCounted,
   allLinesReadyForCount,
@@ -40,7 +41,7 @@ import {
  * Real ops receiving rail (6 stages):
  * 1 Kamyon & Kanıt → 2 Malzeme kontrolü → 3 Fiziksel sayım → 4 Karşılaştırma → 5 Sonuç → 6 Stok
  *
- * Stages 1–4 implemented. Stages 5–6 keep the safe stock path until built next.
+ * Stages 1–5 implemented. Stage 6 keeps the safe stock post path.
  */
 type StageId = 'truckEvidence' | 'materialCheck' | 'physicalCount' | 'compare' | 'result' | 'stock';
 
@@ -210,7 +211,10 @@ export function ReceivingWorkbench() {
       case 'compare':
         return !compareResolved ? t('wb.rcv.compare.gateNeedResolve') : null;
       case 'result':
-        return !approved ? t('wb.rcv.gateNeedApprove') : null;
+        if (!warehouse.trim() || !location.trim()) return t('wb.rcv.result.needWh');
+        if (!matchConfirmed || !quantityVerified) return t('wb.rcv.gateNeedMaterialConfirm');
+        if (!approved) return t('wb.rcv.gateNeedApprove');
+        return null;
       case 'stock':
         return postBlockedReason;
       default:
@@ -228,6 +232,10 @@ export function ReceivingWorkbench() {
     countable.length,
     compareResolved,
     approved,
+    warehouse,
+    location,
+    matchConfirmed,
+    quantityVerified,
     postBlockedReason,
     t,
   ]);
@@ -503,82 +511,21 @@ export function ReceivingWorkbench() {
               ) : null}
 
               {stage.id === 'result' ? (
-                <div className="space-y-3">
-                  <div className="grid gap-2 md:grid-cols-2">
-                    {[
-                      [t('wb.rcv.truck'), `${truck.plate} · ${truck.trailer} · ${truck.driver}`],
-                      [t('wb.rcv.supplier'), truck.supplier],
-                      [t('wb.rcv.ops.evidenceSummary'), `${docs.length} belge · ${photoCount} foto`],
-                      [t('wb.rcv.ops.preAcceptTitle'), preAccept === 'none' ? '—' : t(`wb.rcv.ops.preAccept.${preAccept}`)],
-                      [
-                        t('wb.rcv.ops.count.summaryIncoming'),
-                        `${incomingLines.length} · ${t('wb.rcv.ops.count.summaryCounted')}: ${countable.filter((l) => l.countStatus === 'counted').length} · red: ${incomingLines.filter((l) => l.preAccept === 'reject').length}`,
-                      ],
-                      [
-                        t('wb.rcv.ops.check.moisture'),
-                        incomingLines
-                          .map(
-                            (l) =>
-                              `${l.name}:${l.moistureSamples.map((s) => s.valuePct).filter(Boolean).join('/') || '—'}`,
-                          )
-                          .join(' · ') || '—',
-                      ],
-                      [
-                        t('wb.rcv.ops.check.quality'),
-                        materialCheck.qualityVerdict === 'none'
-                          ? '—'
-                          : t(`wb.rcv.ops.check.qualityVerdict.${materialCheck.qualityVerdict}`),
-                      ],
-                      [
-                        t('wb.rcv.ops.check.dims'),
-                        incomingLines
-                          .filter((l) => l.thicknessMm != null)
-                          .map((l) => `${l.name}:${formatLineDims(l)}`)
-                          .join(' · ') || '—',
-                      ],
-                      [
-                        t('wb.rcv.matchedMaterial'),
-                        countable
-                          .map((l) =>
-                            lineMaterialMatched(l) ? `${l.name}:${l.matchedMaterialCode}` : `${l.name}:—`,
-                          )
-                          .join(' · ') || t('wb.rcv.noMaterialMatched'),
-                      ],
-                      [
-                        t('wb.rcv.countedQty'),
-                        `${countQty} · ${quantityVerified ? t('wb.rcv.qtyVerifiedShort') : '—'} · ${countable
-                          .filter((l) => l.countStatus === 'counted')
-                          .map((l) => `${l.name}:${finalLineQty(l)}`)
-                          .join(', ')}`,
-                      ],
-                      [t('wb.rcv.warehouse'), `${warehouse} · ${location}`],
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
-                        <p className="text-[10px] uppercase text-[var(--text-muted)]">{label}</p>
-                        <p className="text-sm font-medium">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="block space-y-1 text-sm">
-                      <span className="text-[var(--text-secondary)]">{t('wb.rcv.whPick')}</span>
-                      <Input value={warehouse} disabled={posted} onChange={(e) => setWarehouse(e.target.value)} />
-                    </label>
-                    <label className="block space-y-1 text-sm">
-                      <span className="text-[var(--text-secondary)]">{t('wb.rcv.locPick')}</span>
-                      <Input value={location} disabled={posted} onChange={(e) => setLocation(e.target.value)} />
-                    </label>
-                  </div>
-                  <label className="flex items-center gap-2 text-sm font-medium">
-                    <input
-                      type="checkbox"
-                      checked={approved}
-                      disabled={posted || !matchConfirmed || !quantityVerified}
-                      onChange={(e) => setApproved(e.target.checked)}
-                    />
-                    {t('wb.rcv.approvePost')}
-                  </label>
-                </div>
+                <ResultStep
+                  truck={truck}
+                  docsCount={docs.length}
+                  photoCount={photoCount}
+                  lines={incomingLines}
+                  materialCheck={materialCheck}
+                  warehouse={warehouse}
+                  location={location}
+                  onWarehouseChange={setWarehouse}
+                  onLocationChange={setLocation}
+                  approved={approved}
+                  onApprovedChange={setApproved}
+                  canApprove={matchConfirmed && quantityVerified && !!warehouse.trim() && !!location.trim()}
+                  disabled={posted}
+                />
               ) : null}
 
               {stage.id === 'stock' ? (
@@ -593,6 +540,11 @@ export function ReceivingWorkbench() {
                       {t('wb.rcv.stockReady')
                         .replace('{material}', matchedMaterialCode)
                         .replace('{qty}', countQty)}
+                      <span className="mt-1 block text-xs text-[var(--text-muted)]">
+                        {t('wb.rcv.result.stockBasisShort')
+                          .replace('{dims}', stockDims)
+                          .replace('{m3}', stockVol != null ? stockVol.toFixed(3) : '—')}
+                      </span>
                     </p>
                   )}
                   {posted ? (
