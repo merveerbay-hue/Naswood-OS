@@ -25,34 +25,23 @@ import {
 } from './materialNominalDims';
 
 /**
- * INV-005 / INV-MAT-001 — Material Definition Designer
- * Manual create · system-minted MaterialCode · separate nominal fields · duplicate gate.
- * No automatic Variant/SKU generation.
+ * INV-MAT-001 — Material Definition Designer (MVP)
+ * 01 Genel · 02 Stok Kuralları · 03 Aktiflik
+ * Nominal master only — receiving physical stock lives elsewhere.
+ * No MI / Packaging / Conversion / Numbering / Costing / Release packs.
  */
 
-type PackId =
-  | 'general'
-  | 'identity'
-  | 'measurement'
-  | 'conversion'
-  | 'packaging'
-  | 'numbering'
-  | 'quality'
-  | 'traceability'
-  | 'costing'
-  | 'release';
-
+type PackId = 'general' | 'stockRules' | 'active';
 type WidthMode = 'single' | 'range' | 'options';
 
 type DefState = {
   name: string;
   mainCategory: MainCategory;
   materialTypeToken: string;
-  /** Base wood (PIN/CP) — Thermowood applies T-prefix in the code */
   woodToken: string;
-  /** Thermowood Evet/Hayır — encodes as TPIN / TCP in MaterialCode + name */
   isThermowood: boolean;
   productTypeToken: string;
+  grade: string;
   thicknessMm: string;
   widthMode: WidthMode;
   widthMm: string;
@@ -60,32 +49,11 @@ type DefState = {
   widthMaxMm: string;
   widthOptions: string;
   lengthMm: string;
-  density: string;
-  moistureBasis: string;
   stockUom: string;
-  purchaseUom: string;
-  productionUom: string;
-  salesUom: string;
-  planningUom: string;
-  costingUom: string;
-  shippingUom: string;
-  piecesPerPackage: string;
-  packageLabel: string;
-  identityClass: string;
-  lotPolicy: string;
-  /** Operator-facing: lot tracking on material definition (MI stays backend). */
+  countUom: string;
   lotTracking: boolean;
-  lotNote: string;
-  numberingSeries: string;
-  grade: string;
-  moistureMin: string;
-  moistureMax: string;
-  inspectionPlan: string;
-  genealogyRequired: boolean;
-  cocRequired: boolean;
-  evidenceRequired: boolean;
-  costingDriver: string;
-  valuationClass: string;
+  volumeCalcRequired: boolean;
+  status: 'Active' | 'Passive';
   notes: string;
 };
 
@@ -99,15 +67,24 @@ type MaterialRow = {
 
 const PACKS: { id: PackId; titleKey: string; hintKey: string }[] = [
   { id: 'general', titleKey: 'md.pack.general', hintKey: 'md.pack.generalHint' },
-  { id: 'identity', titleKey: 'md.pack.identity', hintKey: 'md.pack.identityHint' },
-  { id: 'measurement', titleKey: 'md.pack.measurement', hintKey: 'md.pack.measurementHint' },
-  { id: 'conversion', titleKey: 'md.pack.conversion', hintKey: 'md.pack.conversionHint' },
-  { id: 'packaging', titleKey: 'md.pack.packaging', hintKey: 'md.pack.packagingHint' },
-  { id: 'numbering', titleKey: 'md.pack.numbering', hintKey: 'md.pack.numberingHint' },
-  { id: 'quality', titleKey: 'md.pack.quality', hintKey: 'md.pack.qualityHint' },
-  { id: 'traceability', titleKey: 'md.pack.traceability', hintKey: 'md.pack.traceabilityHint' },
-  { id: 'costing', titleKey: 'md.pack.costing', hintKey: 'md.pack.costingHint' },
-  { id: 'release', titleKey: 'md.pack.release', hintKey: 'md.pack.releaseHint' },
+  { id: 'stockRules', titleKey: 'md.pack.stockRules', hintKey: 'md.pack.stockRulesHint' },
+  { id: 'active', titleKey: 'md.pack.active', hintKey: 'md.pack.activeHint' },
+];
+
+const STOCK_UOM_OPTIONS = [
+  { token: 'M3', label: 'M3' },
+  { token: 'M2', label: 'M2' },
+  { token: 'PCS', label: 'PCS' },
+  { token: 'KG', label: 'KG' },
+  { token: 'TON', label: 'TON' },
+];
+
+const COUNT_UOM_OPTIONS = [
+  { token: 'PCS', label: 'PCS' },
+  { token: 'PACKAGE', label: 'PACKAGE' },
+  { token: 'M3', label: 'M3' },
+  { token: 'M2', label: 'M2' },
+  { token: 'KG', label: 'KG' },
 ];
 
 const DEFAULT_DEF: DefState = {
@@ -117,6 +94,7 @@ const DEFAULT_DEF: DefState = {
   woodToken: 'PIN',
   isThermowood: false,
   productTypeToken: '',
+  grade: '',
   thicknessMm: '50',
   widthMode: 'single',
   widthMm: '100',
@@ -124,31 +102,11 @@ const DEFAULT_DEF: DefState = {
   widthMaxMm: '',
   widthOptions: '',
   lengthMm: '4000',
-  density: '480',
-  moistureBasis: '',
   stockUom: 'M3',
-  purchaseUom: 'M3',
-  productionUom: 'M3',
-  salesUom: 'M3',
-  planningUom: 'PCS',
-  costingUom: 'M3',
-  shippingUom: 'kg',
-  piecesPerPackage: '',
-  packageLabel: '',
-  identityClass: 'RM-LUMBER',
-  lotPolicy: 'Lot operational · MI lifelong',
+  countUom: 'PCS',
   lotTracking: true,
-  lotNote: '',
-  numberingSeries: 'HM/YM/MP/TW · sistem üretir',
-  grade: '',
-  moistureMin: '',
-  moistureMax: '',
-  inspectionPlan: '',
-  genealogyRequired: true,
-  cocRequired: false,
-  evidenceRequired: true,
-  costingDriver: 'm³',
-  valuationClass: 'RM-WOOD',
+  volumeCalcRequired: true,
+  status: 'Active',
   notes: '',
 };
 
@@ -175,14 +133,12 @@ function buildNominalFromDef(def: DefState): NominalDims {
   const thicknessMm = num(def.thicknessMm) || null;
   const lengthMm = num(def.lengthMm) || null;
   if (def.widthMode === 'range') {
-    const widthMinMm = num(def.widthMinMm) || null;
-    const widthMaxMm = num(def.widthMaxMm) || null;
     return {
       thicknessMm,
       widthMm: null,
       lengthMm,
-      widthMinMm,
-      widthMaxMm,
+      widthMinMm: num(def.widthMinMm) || null,
+      widthMaxMm: num(def.widthMaxMm) || null,
       widthOptionsMm: null,
     };
   }
@@ -224,17 +180,6 @@ function codingInput(def: DefState, existingCodes: string[]) {
   };
 }
 
-function suggestedName(def: DefState): string {
-  return suggestMaterialName({
-    mainCategory: def.mainCategory,
-    materialType: def.materialTypeToken,
-    baseWoodToken: def.woodToken,
-    isThermowood: def.mainCategory === 'TW' ? true : def.isThermowood,
-    productTypeToken: def.productTypeToken,
-    quality: def.grade,
-  });
-}
-
 function readMintedCode(row: Record<string, unknown> | null | undefined): string | null {
   if (!row) return null;
   for (const key of ['code', 'number', 'Code', 'Number']) {
@@ -273,6 +218,33 @@ function SelectField({
   );
 }
 
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  readOnly,
+}: {
+  label: string;
+  value: string;
+  onChange?: (v: string) => void;
+  placeholder?: string;
+  readOnly?: boolean;
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs font-medium text-[var(--text-muted)]">{label}</span>
+      <Input
+        value={value}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)}
+        className={readOnly ? 'bg-[var(--color-surface-hover)] font-mono text-sm' : ''}
+      />
+    </label>
+  );
+}
+
 export function MaterialDefinitionDesigner() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -291,8 +263,7 @@ export function MaterialDefinitionDesigner() {
       lengthMm: sp.get('lengthMm')?.trim() || DEFAULT_DEF.lengthMm,
     };
   });
-  const [approved, setApproved] = useState(false);
-  const [released, setReleased] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [mintedCode, setMintedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dupAck, setDupAck] = useState(false);
@@ -308,7 +279,7 @@ export function MaterialDefinitionDesigner() {
   );
 
   const pack = PACKS[packIdx];
-  const progress = Math.round(((packIdx + (released ? 1 : 0)) / PACKS.length) * 100);
+  const progress = Math.round(((packIdx + (saved ? 1 : 0)) / PACKS.length) * 100);
   const nominal = useMemo(() => buildNominalFromDef(def), [def]);
   const dimsDisplay = formatNominalDims(nominal);
   const codePreview = useMemo(
@@ -328,7 +299,9 @@ export function MaterialDefinitionDesigner() {
     return findDuplicateMaterial(materials, fp);
   }, [def, materials, nominal]);
 
-  const equivalents = useMemo(() => {
+  /** Preview only — volume from nominal dims when volumeCalcRequired. */
+  const volumePreviewM3 = useMemo(() => {
+    if (!def.volumeCalcRequired) return null;
     const tMm = nominal.thicknessMm ?? 0;
     const wMm =
       nominal.widthMm ??
@@ -336,21 +309,9 @@ export function MaterialDefinitionDesigner() {
         ? (nominal.widthMinMm + nominal.widthMaxMm) / 2
         : nominal.widthOptionsMm?.[0] ?? 0);
     const lMm = nominal.lengthMm ?? 0;
-    const dens = num(def.density);
-    const pcs = 1;
-    const lm = pcs * (lMm / 1000);
-    const m2 = pcs * (wMm / 1000) * (lMm / 1000);
-    const m3 = pcs * (tMm / 1000) * (wMm / 1000) * (lMm / 1000);
-    const kg = m3 * dens;
-    return {
-      pcs,
-      lm: Number(lm.toFixed(3)),
-      m2: Number(m2.toFixed(4)),
-      m3: Number(m3.toFixed(6)),
-      kg: Number(kg.toFixed(2)),
-      t: Number((kg / 1000).toFixed(4)),
-    };
-  }, [nominal, def.density]);
+    if (!(tMm > 0 && wMm > 0 && lMm > 0)) return null;
+    return Number(((tMm / 1000) * (wMm / 1000) * (lMm / 1000)).toFixed(6));
+  }, [def.volumeCalcRequired, nominal]);
 
   const gateMessage = useMemo(() => {
     if (pack.id === 'general') {
@@ -365,8 +326,6 @@ export function MaterialDefinitionDesigner() {
       if (def.mainCategory === 'MP' && (!def.productTypeToken || !def.grade)) {
         return t('md.gateNeedCoding');
       }
-    }
-    if (pack.id === 'measurement') {
       if (!nominal.thicknessMm) return t('md.gateNeedDims');
       if (def.widthMode === 'single' && !nominal.widthMm) return t('md.gateNeedDims');
       if (def.widthMode === 'range' && (nominal.widthMinMm == null || nominal.widthMaxMm == null)) {
@@ -379,16 +338,18 @@ export function MaterialDefinitionDesigner() {
         return t('md.gateNeedDims');
       }
     }
-    if (pack.id === 'conversion' && !def.stockUom) return t('md.gateNeedStockUom');
-    if (pack.id === 'release') {
+    if (pack.id === 'stockRules') {
+      if (!def.stockUom) return t('md.gateNeedStockUom');
+      if (!def.countUom) return t('md.gateNeedCountUom');
+    }
+    if (pack.id === 'active') {
       if (duplicate && !dupAck) return t('md.gateNeedDupAck');
-      if (!approved) return t('md.gateNeedApprove');
       if (!mintMaterialCode(codingInput(def, existingCodes)) && def.mainCategory === 'MP') {
         return t('md.gateMpCodeExists');
       }
     }
     return null;
-  }, [pack.id, def, approved, t, nominal, duplicate, dupAck, existingCodes]);
+  }, [pack.id, def, t, nominal, duplicate, dupAck, existingCodes]);
 
   const persistMutation = useMutation({
     mutationFn: async () => {
@@ -399,7 +360,6 @@ export function MaterialDefinitionDesigner() {
       const woodEff = effectiveWoodToken(def);
       const definitionPayload = buildDefinitionWithNominal(
         {
-          ...def,
           mainCategory: def.mainCategory,
           materialType: def.materialTypeToken,
           materialTypeToken: def.materialTypeToken,
@@ -410,13 +370,17 @@ export function MaterialDefinitionDesigner() {
           productTypeToken: def.productTypeToken,
           grade: def.grade,
           category: categoryLabel(def.mainCategory),
-          // MI class / lot policy — system defaults; not operator-edited
-          identityClass: def.identityClass || 'RM-LUMBER',
-          lotPolicy: def.lotTracking ? 'Lot operational · MI lifelong' : 'Lot optional · MI lifelong',
+          stockUom: def.stockUom,
+          countUom: def.countUom,
           lotTracking: def.lotTracking,
-          lotNote: def.lotNote,
+          volumeCalcRequired: def.volumeCalcRequired,
+          volumeCalcRule: def.volumeCalcRequired ? 'pcs × T × W × L / 1e9 → m³' : null,
+          // Backend-only defaults (not shown in UI)
+          identityClass: 'RM-LUMBER',
+          lotPolicy: def.lotTracking ? 'Lot operational · MI lifelong' : 'Lot optional · MI lifelong',
           NominalIsCommercial: true,
           ActualDimsLiveInReceiving: true,
+          notes: def.notes,
         },
         nominal,
       );
@@ -438,7 +402,7 @@ export function MaterialDefinitionDesigner() {
         description,
         category: categoryLabel(def.mainCategory),
         unitOfMeasure: def.stockUom || 'PCS',
-        status: 'Active',
+        status: def.status,
         code,
         definitionJson: JSON.stringify(definitionPayload),
       });
@@ -446,7 +410,7 @@ export function MaterialDefinitionDesigner() {
     onSuccess: async (created) => {
       setError(null);
       setMintedCode(readMintedCode(created));
-      setReleased(true);
+      setSaved(true);
       await queryClient.invalidateQueries({ queryKey: ['business', 'materials'] });
     },
     onError: (e: Error) => setError(e.message),
@@ -506,7 +470,9 @@ export function MaterialDefinitionDesigner() {
           productTypeToken: '',
           widthMode: 'single',
           stockUom: 'M3',
-          grade: d.grade,
+          countUom: 'PCS',
+          volumeCalcRequired: true,
+          lotTracking: true,
         };
       } else if (cat === 'YM') {
         next = {
@@ -518,6 +484,9 @@ export function MaterialDefinitionDesigner() {
           productTypeToken: 'S',
           widthMode: 'single',
           stockUom: 'M3',
+          countUom: 'PCS',
+          volumeCalcRequired: true,
+          lotTracking: true,
         };
       } else if (cat === 'MP') {
         next = {
@@ -535,6 +504,9 @@ export function MaterialDefinitionDesigner() {
           lengthMm: '',
           thicknessMm: d.thicknessMm || '18',
           stockUom: 'M2',
+          countUom: 'PCS',
+          volumeCalcRequired: false,
+          lotTracking: true,
         };
       } else {
         next = {
@@ -548,6 +520,9 @@ export function MaterialDefinitionDesigner() {
           widthOptions: '92/117/138',
           lengthMm: '',
           stockUom: 'M2',
+          countUom: 'PCS',
+          volumeCalcRequired: false,
+          lotTracking: true,
         };
       }
       next.name = suggestMaterialName({
@@ -569,40 +544,13 @@ export function MaterialDefinitionDesigner() {
       return;
     }
     setError(null);
-    if (pack.id === 'release') {
+    if (pack.id === 'active') {
       persistMutation.mutate();
       return;
     }
     const next = Math.min(packIdx + 1, PACKS.length - 1);
     setPackIdx(next);
     setMaxReached((m) => Math.max(m, next));
-  }
-
-  function Field({
-    label,
-    value,
-    onChange,
-    placeholder,
-    readOnly,
-  }: {
-    label: string;
-    value: string;
-    onChange?: (v: string) => void;
-    placeholder?: string;
-    readOnly?: boolean;
-  }) {
-    return (
-      <label className="block space-y-1">
-        <span className="text-xs font-medium text-[var(--text-muted)]">{label}</span>
-        <Input
-          value={value}
-          readOnly={readOnly}
-          placeholder={placeholder}
-          onChange={(e) => onChange?.(e.target.value)}
-          className={readOnly ? 'bg-[var(--color-surface-hover)] font-mono text-sm' : ''}
-        />
-      </label>
-    );
   }
 
   const typeOptions =
@@ -627,9 +575,7 @@ export function MaterialDefinitionDesigner() {
           <div className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 py-2 text-right">
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{t('wizard.systemCode')}</p>
             <p className="font-mono text-sm font-medium">
-              {mintedCode
-                ? `${mintedCode} · ${dimsDisplay}`
-                : `${codePreview} · ${dimsDisplay}`}
+              {mintedCode ? `${mintedCode} · ${dimsDisplay}` : `${codePreview} · ${dimsDisplay}`}
             </p>
             <p className="text-[10px] text-[var(--text-muted)]">{t('md.codeWithDimsHint')}</p>
           </div>
@@ -651,9 +597,6 @@ export function MaterialDefinitionDesigner() {
           <p className="font-medium text-[var(--text-primary)]">{t('md.duplicateFound')}</p>
           <p className="mt-1 text-[var(--text-secondary)]">
             {duplicate.code} · {duplicate.name}
-            {duplicate.definitionJson
-              ? ` · ${formatNominalDims({ thicknessMm: nominal.thicknessMm, widthMm: nominal.widthMm, lengthMm: nominal.lengthMm, widthMinMm: nominal.widthMinMm, widthMaxMm: nominal.widthMaxMm, widthOptionsMm: nominal.widthOptionsMm })}`
-              : ''}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {duplicate.id ? (
@@ -661,7 +604,10 @@ export function MaterialDefinitionDesigner() {
                 type="button"
                 variant="secondary"
                 onClick={() =>
-                  navigate({ to: '/inventory/master-data/materials/$id', params: { id: String(duplicate.id) } })
+                  navigate({
+                    to: '/inventory/master-data/materials/$id',
+                    params: { id: String(duplicate.id) },
+                  })
                 }
               >
                 {t('md.useExisting')}
@@ -675,7 +621,7 @@ export function MaterialDefinitionDesigner() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_280px]">
+      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
         <aside className="space-y-1 rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-2">
           <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
             {t('md.rulePacks')}
@@ -684,7 +630,7 @@ export function MaterialDefinitionDesigner() {
             <button
               key={p.id}
               type="button"
-              disabled={i > maxReached && !released}
+              disabled={i > maxReached && !saved}
               onClick={() => i <= maxReached && setPackIdx(i)}
               className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm ${
                 i === packIdx
@@ -708,64 +654,49 @@ export function MaterialDefinitionDesigner() {
             </CardHeader>
             <CardContent className="space-y-4">
               {pack.id === 'general' ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Field label={t('md.fields.name')} value={def.name} onChange={(v) => setField('name', v)} />
-                  <SelectField
-                    label={t('md.fields.mainCategory')}
-                    value={def.mainCategory}
-                    onChange={(v) => applyCategoryDefaults(v as MainCategory)}
-                    options={[
-                      { token: 'HM', label: 'Hammadde (HM)' },
-                      { token: 'YM', label: 'Yarı Mamul (YM)' },
-                      { token: 'MP', label: 'Masif Panel (MP)' },
-                      { token: 'TW', label: 'Thermowood (TW)' },
-                    ]}
-                  />
-                  {typeOptions.length > 0 ? (
+                <div className="space-y-4">
+                  <p className="text-xs text-[var(--text-secondary)]">{t('md.nominalLaw')}</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Field label={t('md.fields.name')} value={def.name} onChange={(v) => setField('name', v)} />
                     <SelectField
-                      label={t('md.fields.materialType')}
-                      value={def.materialTypeToken}
-                      onChange={(v) => setField('materialTypeToken', v)}
-                      options={typeOptions}
-                    />
-                  ) : null}
-                  <SelectField
-                    label={
-                      def.mainCategory === 'TW' ? t('md.fields.twFamily') : t('md.fields.species')
-                    }
-                    value={def.woodToken}
-                    onChange={(v) => setField('woodToken', v)}
-                    options={woodOptions}
-                  />
-                  {def.mainCategory !== 'TW' ? (
-                    <SelectField
-                      label={t('md.fields.thermowood')}
-                      value={def.isThermowood ? 'YES' : 'NO'}
-                      onChange={(v) => setField('isThermowood', v === 'YES')}
+                      label={t('md.fields.mainCategory')}
+                      value={def.mainCategory}
+                      onChange={(v) => applyCategoryDefaults(v as MainCategory)}
                       options={[
-                        { token: 'NO', label: t('md.thermowood.no') },
-                        { token: 'YES', label: t('md.thermowood.yes') },
+                        { token: 'HM', label: 'Hammadde (HM)' },
+                        { token: 'YM', label: 'Yarı Mamul (YM)' },
+                        { token: 'MP', label: 'Masif Panel (MP)' },
+                        { token: 'TW', label: 'Thermowood (TW)' },
                       ]}
                     />
-                  ) : (
-                    <div className="rounded-md border border-[var(--border-default)] px-3 py-2">
-                      <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.fields.thermowood')}</p>
-                      <p className="text-sm font-medium">{t('md.thermowood.twCategory')}</p>
-                    </div>
-                  )}
-                  {def.mainCategory === 'YM' && def.materialTypeToken === 'LM' ? (
+                    {typeOptions.length > 0 ? (
+                      <SelectField
+                        label={t('md.fields.materialType')}
+                        value={def.materialTypeToken}
+                        onChange={(v) => setField('materialTypeToken', v)}
+                        options={typeOptions}
+                      />
+                    ) : null}
                     <SelectField
-                      label={t('md.fields.productType')}
-                      value={def.productTypeToken}
-                      onChange={(v) => setField('productTypeToken', v)}
-                      options={[
-                        { token: 'S', label: 'Solid (S)' },
-                        { token: 'FJ', label: 'Finger Joint (FJ)' },
-                      ]}
+                      label={
+                        def.mainCategory === 'TW' ? t('md.fields.twFamily') : t('md.fields.species')
+                      }
+                      value={def.woodToken}
+                      onChange={(v) => setField('woodToken', v)}
+                      options={woodOptions}
                     />
-                  ) : null}
-                  {def.mainCategory === 'MP' ? (
-                    <>
+                    {def.mainCategory !== 'TW' ? (
+                      <SelectField
+                        label={t('md.fields.thermowood')}
+                        value={def.isThermowood ? 'YES' : 'NO'}
+                        onChange={(v) => setField('isThermowood', v === 'YES')}
+                        options={[
+                          { token: 'NO', label: t('md.thermowood.no') },
+                          { token: 'YES', label: t('md.thermowood.yes') },
+                        ]}
+                      />
+                    ) : null}
+                    {def.mainCategory === 'YM' && def.materialTypeToken === 'LM' ? (
                       <SelectField
                         label={t('md.fields.productType')}
                         value={def.productTypeToken}
@@ -775,61 +706,35 @@ export function MaterialDefinitionDesigner() {
                           { token: 'FJ', label: 'Finger Joint (FJ)' },
                         ]}
                       />
+                    ) : null}
+                    {def.mainCategory === 'MP' ? (
+                      <>
+                        <SelectField
+                          label={t('md.fields.productType')}
+                          value={def.productTypeToken}
+                          onChange={(v) => setField('productTypeToken', v)}
+                          options={[
+                            { token: 'S', label: 'Solid (S)' },
+                            { token: 'FJ', label: 'Finger Joint (FJ)' },
+                          ]}
+                        />
+                        <Field
+                          label={t('md.fields.grade')}
+                          value={def.grade}
+                          onChange={(v) => setField('grade', v.toUpperCase())}
+                          placeholder="AA"
+                        />
+                      </>
+                    ) : (
                       <Field
                         label={t('md.fields.grade')}
                         value={def.grade}
-                        onChange={(v) => setField('grade', v.toUpperCase())}
-                        placeholder="AA"
+                        onChange={(v) => setField('grade', v)}
+                        placeholder="opsiyonel"
                       />
-                    </>
-                  ) : null}
-                  <div className="md:col-span-2 rounded-md border border-[var(--border-default)] px-3 py-2">
-                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.fields.systemCode')}</p>
-                    <p className="font-mono text-sm font-medium">{codePreview}</p>
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
-                      {t('md.codeNoManual')} · {t('md.fields.woodInCode')}:{' '}
-                      <span className="font-mono">{effectiveWoodToken(def)}</span>
-                      {def.isThermowood && def.mainCategory !== 'TW'
-                        ? ` (${def.woodToken} → ${effectiveWoodToken(def)})`
-                        : ''}
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)]">{t('md.thermowood.hint')}</p>
+                    )}
                   </div>
-                </div>
-              ) : null}
 
-              {pack.id === 'identity' ? (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{t('md.lotPack.title')}</p>
-                  <p className="text-xs text-[var(--text-secondary)]">{t('md.lotPack.intro')}</p>
-                  <label className="flex items-center gap-2 text-sm font-medium">
-                    <input
-                      type="checkbox"
-                      checked={def.lotTracking}
-                      onChange={(e) => setField('lotTracking', e.target.checked)}
-                    />
-                    {t('md.lotPack.tracking')}
-                  </label>
-                  <div className="rounded-md border border-[var(--border-default)] px-3 py-2">
-                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.lotPack.number')}</p>
-                    <p className="font-mono text-sm font-medium">{t('md.lotPack.autoPreview')}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{t('md.lotPack.autoHint')}</p>
-                  </div>
-                  <Field
-                    label={t('md.lotPack.note')}
-                    value={def.lotNote}
-                    onChange={(v) => setField('lotNote', v)}
-                    placeholder={t('md.lotPack.notePh')}
-                  />
-                  <p className="rounded-md border border-[var(--border-default)] px-3 py-2 text-xs text-[var(--text-secondary)]">
-                    {t('md.identityLaw')}
-                  </p>
-                </div>
-              ) : null}
-
-              {pack.id === 'measurement' ? (
-                <div className="space-y-4">
-                  <p className="text-xs text-[var(--text-secondary)]">{t('md.nominalLaw')}</p>
                   <div className="grid gap-3 md:grid-cols-3">
                     <Field
                       label={t('md.fields.thickness')}
@@ -881,107 +786,99 @@ export function MaterialDefinitionDesigner() {
                       label={t('md.fields.length')}
                       value={def.lengthMm}
                       onChange={(v) => setField('lengthMm', v)}
-                      placeholder={def.mainCategory === 'MP' || def.mainCategory === 'TW' ? 'opsiyonel' : ''}
+                      placeholder={
+                        def.mainCategory === 'MP' || def.mainCategory === 'TW' ? 'opsiyonel' : ''
+                      }
                     />
-                    <Field
-                      label={t('md.fields.density')}
-                      value={def.density}
-                      onChange={(v) => setField('density', v)}
+                    <SelectField
+                      label={t('md.fields.stockUom')}
+                      value={def.stockUom}
+                      onChange={(v) => setField('stockUom', v)}
+                      options={STOCK_UOM_OPTIONS}
                     />
-                    <Field
-                      label={t('md.fields.moistureBasis')}
-                      value={def.moistureBasis}
-                      onChange={(v) => setField('moistureBasis', v)}
+                    <SelectField
+                      label={t('md.fields.countUom')}
+                      value={def.countUom}
+                      onChange={(v) => setField('countUom', v)}
+                      options={COUNT_UOM_OPTIONS}
                     />
                   </div>
+
                   <div className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)] px-3 py-2">
                     <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.fields.dimsDisplay')}</p>
                     <p className="font-mono text-sm font-medium">{dimsDisplay}</p>
                   </div>
-                </div>
-              ) : null}
-
-              {pack.id === 'conversion' ? (
-                <div className="space-y-3">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Field label={t('md.fields.stockUom')} value={def.stockUom} onChange={(v) => setField('stockUom', v)} />
-                    <Field label={t('md.fields.purchaseUom')} value={def.purchaseUom} onChange={(v) => setField('purchaseUom', v)} />
-                    <Field label={t('md.fields.productionUom')} value={def.productionUom} onChange={(v) => setField('productionUom', v)} />
-                    <Field label={t('md.fields.salesUom')} value={def.salesUom} onChange={(v) => setField('salesUom', v)} />
-                    <Field label={t('md.fields.planningUom')} value={def.planningUom} onChange={(v) => setField('planningUom', v)} />
-                    <Field label={t('md.fields.costingUom')} value={def.costingUom} onChange={(v) => setField('costingUom', v)} />
-                    <Field label={t('md.fields.shippingUom')} value={def.shippingUom} onChange={(v) => setField('shippingUom', v)} />
+                  <div className="rounded-md border border-[var(--border-default)] px-3 py-2">
+                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.fields.systemCode')}</p>
+                    <p className="font-mono text-sm font-medium">{codePreview}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{t('md.codeNoManual')}</p>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)]">{t('md.conversionLaw')}</p>
                 </div>
               ) : null}
 
-              {pack.id === 'packaging' ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Field label={t('md.fields.piecesPerPackage')} value={def.piecesPerPackage} onChange={(v) => setField('piecesPerPackage', v)} />
-                  <Field label={t('md.fields.packageLabel')} value={def.packageLabel} onChange={(v) => setField('packageLabel', v)} />
-                  <p className="md:col-span-2 text-xs text-[var(--text-secondary)]">{t('md.packagingLaw')}</p>
+              {pack.id === 'stockRules' ? (
+                <div className="space-y-4">
+                  <p className="text-xs text-[var(--text-secondary)]">{t('md.stockRulesLaw')}</p>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={def.lotTracking}
+                      onChange={(e) => setField('lotTracking', e.target.checked)}
+                    />
+                    {t('md.fields.lotTracking')}
+                  </label>
+                  <p className="text-xs text-[var(--text-muted)]">{t('md.lotPack.autoHint')}</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <SelectField
+                      label={t('md.fields.stockUom')}
+                      value={def.stockUom}
+                      onChange={(v) => setField('stockUom', v)}
+                      options={STOCK_UOM_OPTIONS}
+                    />
+                    <SelectField
+                      label={t('md.fields.countUom')}
+                      value={def.countUom}
+                      onChange={(v) => setField('countUom', v)}
+                      options={COUNT_UOM_OPTIONS}
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={def.volumeCalcRequired}
+                      onChange={(e) => setField('volumeCalcRequired', e.target.checked)}
+                    />
+                    {t('md.fields.volumeCalc')}
+                  </label>
+                  {def.volumeCalcRequired ? (
+                    <div className="rounded-md border border-[var(--border-default)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+                      <p>{t('md.volumeCalcHint')}</p>
+                      {volumePreviewM3 != null ? (
+                        <p className="mt-1 font-mono text-sm text-[var(--text-primary)]">
+                          1 PCS → {volumePreviewM3} m³ ({dimsDisplay})
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[var(--text-muted)]">{t('md.volumeCalcNeedDims')}</p>
+                      )}
+                    </div>
+                  ) : null}
+                  <p className="text-xs text-[var(--text-muted)]">{t('md.receivingVsNominal')}</p>
                 </div>
               ) : null}
 
-              {pack.id === 'numbering' ? (
-                <div className="space-y-3">
-                  <Field label={t('md.fields.numberingSeries')} value={def.numberingSeries} readOnly />
-                  <Field label={t('md.fields.systemCode')} value={codePreview} readOnly />
-                  <p className="text-xs text-[var(--text-secondary)]">{t('md.numberingLaw')}</p>
-                </div>
-              ) : null}
-
-              {pack.id === 'quality' ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Field label={t('md.fields.grade')} value={def.grade} onChange={(v) => setField('grade', v)} />
-                  <Field label={t('md.fields.inspectionPlan')} value={def.inspectionPlan} onChange={(v) => setField('inspectionPlan', v)} />
-                  <Field label={t('md.fields.moistureMin')} value={def.moistureMin} onChange={(v) => setField('moistureMin', v)} />
-                  <Field label={t('md.fields.moistureMax')} value={def.moistureMax} onChange={(v) => setField('moistureMax', v)} />
-                </div>
-              ) : null}
-
-              {pack.id === 'traceability' ? (
-                <div className="space-y-3">
-                  {(
-                    [
-                      ['genealogyRequired', t('md.fields.genealogyRequired')],
-                      ['cocRequired', t('md.fields.cocRequired')],
-                      ['evidenceRequired', t('md.fields.evidenceRequired')],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <label key={key} className="flex items-center gap-2 text-sm font-medium">
-                      <input
-                        type="checkbox"
-                        checked={def[key]}
-                        onChange={(e) => setField(key, e.target.checked)}
-                      />
-                      {label}
-                    </label>
-                  ))}
-                  <p className="text-xs text-[var(--text-secondary)]">{t('md.traceLaw')}</p>
-                </div>
-              ) : null}
-
-              {pack.id === 'costing' ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Field label={t('md.fields.costingDriver')} value={def.costingDriver} onChange={(v) => setField('costingDriver', v)} />
-                  <Field label={t('md.fields.valuationClass')} value={def.valuationClass} onChange={(v) => setField('valuationClass', v)} />
-                  <p className="md:col-span-2 text-xs text-[var(--text-secondary)]">{t('md.costingLaw')}</p>
-                </div>
-              ) : null}
-
-              {pack.id === 'release' ? (
-                <div className="space-y-3">
+              {pack.id === 'active' ? (
+                <div className="space-y-4">
                   <div className="grid gap-2 md:grid-cols-2">
                     {[
                       [t('md.fields.name'), def.name],
                       [t('md.fields.systemCode'), codePreview],
                       [t('md.fields.dimsDisplay'), dimsDisplay],
                       [t('md.fields.stockUom'), def.stockUom],
-                      [t('md.fields.mainCategory'), categoryLabel(def.mainCategory)],
-                      [t('md.fields.thermowood'), def.mainCategory === 'TW' || def.isThermowood ? t('md.thermowood.yes') : t('md.thermowood.no')],
-                      [t('md.fields.grade'), def.grade || '—'],
+                      [t('md.fields.countUom'), def.countUom],
+                      [
+                        t('md.fields.lotTracking'),
+                        def.lotTracking ? t('md.thermowood.yes') : t('md.thermowood.no'),
+                      ],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
                         <p className="text-[10px] uppercase text-[var(--text-muted)]">{label}</p>
@@ -989,21 +886,30 @@ export function MaterialDefinitionDesigner() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-[var(--text-secondary)]">{t('md.receivingVsNominal')}</p>
                   <label className="flex items-center gap-2 text-sm font-medium">
-                    <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} />
-                    {t('md.approveRelease')}
+                    <input
+                      type="checkbox"
+                      checked={def.status === 'Active'}
+                      onChange={(e) => setField('status', e.target.checked ? 'Active' : 'Passive')}
+                    />
+                    {t('md.fields.active')}
                   </label>
-                  {released ? (
+                  <Field
+                    label={t('md.fields.notes')}
+                    value={def.notes}
+                    onChange={(v) => setField('notes', v)}
+                    placeholder={t('md.fields.notesPh')}
+                  />
+                  {saved ? (
                     <p className="text-sm font-medium text-[var(--color-primary)]">
-                      {t('md.releasedBanner')}
+                      {t('md.savedBanner')}
                       {mintedCode ? ` · ${mintedCode} · ${dimsDisplay}` : ''}
                     </p>
                   ) : null}
                 </div>
               ) : null}
 
-              {gateMessage && pack.id !== 'release' ? (
+              {gateMessage && pack.id !== 'active' ? (
                 <p className="text-sm text-[var(--color-danger)]">{gateMessage}</p>
               ) : null}
               {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
@@ -1012,18 +918,18 @@ export function MaterialDefinitionDesigner() {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={packIdx === 0 || released}
+                  disabled={packIdx === 0 || saved}
                   onClick={() => setPackIdx((i) => Math.max(0, i - 1))}
                 >
                   {t('md.back')}
                 </Button>
-                {!released ? (
+                {!saved ? (
                   <Button
                     type="button"
                     disabled={Boolean(gateMessage) || persistMutation.isPending}
                     onClick={goNext}
                   >
-                    {pack.id === 'release' ? t('md.release') : t('md.next')}
+                    {pack.id === 'active' ? t('md.save') : t('md.next')}
                   </Button>
                 ) : (
                   <Button type="button" onClick={() => navigate({ to: '/inventory/master-data/materials' })}>
@@ -1036,45 +942,17 @@ export function MaterialDefinitionDesigner() {
         </main>
 
         <aside className="space-y-3">
-          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-              {t('md.conversionPreview')}
-            </p>
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">{t('md.conversionPreviewHint')}</p>
-            <dl className="mt-3 space-y-1.5 text-sm">
-              <div className="flex justify-between gap-2">
-                <dt className="text-[var(--text-muted)]">{t('md.eq.pcs')}</dt>
-                <dd className="font-mono font-medium">{equivalents.pcs}</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-[var(--text-muted)]">{t('md.eq.lm')}</dt>
-                <dd className="font-mono font-medium">{equivalents.lm}</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-[var(--text-muted)]">{t('md.eq.m2')}</dt>
-                <dd className="font-mono font-medium">{equivalents.m2}</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-[var(--text-muted)]">{t('md.eq.m3')}</dt>
-                <dd className="font-mono font-medium">{equivalents.m3}</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-[var(--text-muted)]">{t('md.eq.kg')}</dt>
-                <dd className="font-mono font-medium">{equivalents.kg}</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-[var(--text-muted)]">{t('md.eq.t')}</dt>
-                <dd className="font-mono font-medium">{equivalents.t}</dd>
-              </div>
-            </dl>
-          </div>
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 text-xs text-[var(--text-secondary)]">
             <p className="font-semibold text-[var(--text-primary)]">{t('md.layersTitle')}</p>
             <ul className="mt-2 list-inside list-disc space-y-1">
               <li>{t('md.layer.definition')}</li>
-              <li>{t('md.layer.identity')}</li>
-              <li>{t('md.layer.product')}</li>
+              <li>{t('md.layer.receiving')}</li>
+              <li>{t('md.layer.stock')}</li>
             </ul>
+          </div>
+          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 text-xs text-[var(--text-muted)]">
+            <p className="font-semibold text-[var(--text-primary)]">{t('md.removedPacksTitle')}</p>
+            <p className="mt-1">{t('md.removedPacksHint')}</p>
           </div>
         </aside>
       </div>
