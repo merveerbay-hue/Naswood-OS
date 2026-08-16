@@ -114,6 +114,8 @@ public sealed class RefreshTokenCommandHandler
                 Email = user.Email,
                 CompanyId = session.CompanyId,
                 PlantId = session.PlantId,
+                HomePlantId = user.HomePlantId ?? session.PlantId,
+                PlantIds = user.PlantIds.ToArray(),
                 Roles = user.Roles.ToArray()
             }
         });

@@ -38,7 +38,7 @@ export function runWarehouseCatalogSelftest(): void {
     locationCode: "A-01",
   });
   assert(a !== b, "same material different WH = different stock key");
-  assert(a.startsWith("HDW-BOLT-001|LOT-1|WH-HDW"), "key shape");
+  assert(a.startsWith("HDW-BOLT-001|LOT-1|WH-HDW") || a.includes("|HDW-BOLT-001|LOT-1|WH-HDW"), "key shape");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

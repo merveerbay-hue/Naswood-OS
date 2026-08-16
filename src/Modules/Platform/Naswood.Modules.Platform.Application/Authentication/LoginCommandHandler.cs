@@ -233,6 +233,8 @@ public sealed class LoginCommandHandler
                 Email = user.Email,
                 CompanyId = companyId,
                 PlantId = plantId,
+                HomePlantId = user.HomePlantId ?? plantId,
+                PlantIds = user.PlantIds.ToArray(),
                 Roles = user.Roles.ToArray()
             }
         };

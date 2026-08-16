@@ -45,6 +45,7 @@ public sealed class JwtTokenService : ITokenService
         DateTimeOffset issuedAt)
     {
         var expires = issuedAt.AddMinutes(_options.AccessTokenMinutes);
+        var homePlantId = user.HomePlantId ?? plantId;
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString("D")),
@@ -52,8 +53,14 @@ public sealed class JwtTokenService : ITokenService
             new(JwtRegisteredClaimNames.Jti, accessTokenId.ToString("D")),
             new("session_id", sessionId.ToString("D")),
             new("company_id", companyId),
-            new("plant_id", plantId)
+            new("plant_id", plantId),
+            new("home_plant_id", homePlantId)
         };
+
+        foreach (var assignedPlant in user.PlantIds)
+        {
+            claims.Add(new Claim("plant_ids", assignedPlant));
+        }
 
         if (!string.IsNullOrWhiteSpace(user.Email))
         {

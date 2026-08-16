@@ -34,14 +34,16 @@ public sealed record ExecuteGoodsReceiptCommand(
     string Notes,
     bool QuantityVerified,
     string ExtractSource,
-    IReadOnlyList<StockPostLineRequestDto> Lines) : ICommand<Result<ExecuteStockDocumentResultDto>>;
+    IReadOnlyList<StockPostLineRequestDto> Lines,
+    string? PlantId = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
 
 public sealed record ExecuteGoodsIssueCommand(
     string Number,
     string WarehouseCode,
     string Reference,
     string Notes,
-    IReadOnlyList<StockPostLineRequestDto> Lines) : ICommand<Result<ExecuteStockDocumentResultDto>>;
+    IReadOnlyList<StockPostLineRequestDto> Lines,
+    string? PlantId = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
 
 public sealed record SearchInventoryPackageQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedInventoryPackageDto>>;
 public sealed record SearchMaterialIdentityQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedMaterialIdentityDto>>;
@@ -56,6 +58,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
     private readonly IMaterialIdentityRepository _identities;
     private readonly IInventoryPackageRepository _packages;
     private readonly IInventoryMovementRepository _movements;
+    private readonly ILocationRepository _locations;
     private readonly IBusinessUnitOfWork _uow;
 
     public ExecuteGoodsReceiptCommandHandler(
@@ -66,6 +69,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         IMaterialIdentityRepository identities,
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
+        ILocationRepository locations,
         IBusinessUnitOfWork uow)
     {
         _receipts = receipts;
@@ -75,6 +79,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         _identities = identities;
         _packages = packages;
         _movements = movements;
+        _locations = locations;
         _uow = uow;
     }
 
@@ -120,12 +125,14 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             });
         }
 
+        var plantId = string.IsNullOrWhiteSpace(command.PlantId) ? "PLANT-001" : command.PlantId.Trim();
         var receipt = GoodsReceipt.Create(
             receiptNumber,
             command.WarehouseCode.Trim(),
             command.Reference ?? string.Empty,
             "Posted",
-            Truncate(command.Notes, 2000));
+            Truncate(command.Notes, 2000),
+            plantId: plantId);
         receipt.MarkPosted();
         await _receipts.AddAsync(receipt, cancellationToken).ConfigureAwait(false);
 
@@ -168,6 +175,17 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 ? receipt.WarehouseCode
                 : line.WarehouseCode.Trim();
             var locationCode = string.IsNullOrWhiteSpace(line.LocationCode) ? "RECV" : line.LocationCode.Trim();
+
+            // Inactive locations must not receive new stock.
+            var location = await _locations.FindByWarehouseAndCodeAsync(warehouseCode, locationCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (location is not null
+                && !string.Equals(location.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-015",
+                    $"Lokasyon '{locationCode}' pasif — yeni mal kabul yapılamaz."));
+            }
+
             var lotNumber = string.IsNullOrWhiteSpace(line.LotNumber)
                 ? SystemIdentifier.Ensure(null, "LOT")
                 : line.LotNumber.Trim();
@@ -205,10 +223,10 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 batch.ApplyReceipt(line.Quantity, batchStatus == "Hold" ? "Hold" : null);
             }
 
-            var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, cancellationToken).ConfigureAwait(false);
+            var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, plantId, cancellationToken).ConfigureAwait(false);
             if (balance is null)
             {
-                balance = InventoryBalance.Create(materialCode, warehouseCode, locationCode, lotNumber, line.Quantity, 0, balanceStatus);
+                balance = InventoryBalance.Create(materialCode, warehouseCode, locationCode, lotNumber, line.Quantity, 0, balanceStatus, plantId: plantId);
                 await _balances.AddAsync(balance, cancellationToken).ConfigureAwait(false);
             }
             else
@@ -297,12 +315,14 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
         if (string.IsNullOrWhiteSpace(command.WarehouseCode))
             return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-002", "WarehouseCode is required."));
 
+        var plantId = string.IsNullOrWhiteSpace(command.PlantId) ? "PLANT-001" : command.PlantId.Trim();
         var issue = GoodsIssue.Create(
             SystemIdentifier.Ensure(command.Number, "GI"),
             command.WarehouseCode.Trim(),
             command.Reference ?? string.Empty,
             "Posted",
-            Truncate(command.Notes, 2000));
+            Truncate(command.Notes, 2000),
+            plantId: plantId);
         issue.MarkPosted();
         await _issues.AddAsync(issue, cancellationToken).ConfigureAwait(false);
 
@@ -347,7 +367,7 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
                     identity?.Reduce(line.Quantity);
                 }
 
-                var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, cancellationToken).ConfigureAwait(false);
+                var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, plantId, cancellationToken).ConfigureAwait(false);
                 if (balance is null)
                     return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-011", $"No stock balance for {materialCode}/{warehouseCode}/{locationCode}/{lotNumber}. Receive stock first."));
                 balance.ApplyIssue(line.Quantity);

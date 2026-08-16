@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource, searchAllResource } from '@/api/business';
+import { useAuth } from '@/auth/useAuth';
 import { useI18n } from '@/i18n';
+import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
 import {
   WAREHOUSE_CATALOG,
   WAREHOUSE_TYPE_OPTIONS,
@@ -15,6 +17,7 @@ import {
 /**
  * INV-WH-001 — Warehouse define
  * Open warehouses on demand from catalog types. Material ≠ Warehouse binding.
+ * Uniqueness is PlantId + Code (same WH-RM allowed on F01 and F02).
  */
 
 type FormState = {
@@ -26,26 +29,29 @@ type FormState = {
   plantId: string;
 };
 
-const DEFAULT: FormState = {
-  code: 'WH-RM',
-  name: 'Hammadde Deposu',
-  warehouseType: 'RAW_MATERIAL',
-  description: 'Kereste, panel, thermowood hammaddeleri',
-  status: 'Active',
-  plantId: 'PLANT-001',
-};
-
 export function WarehouseDefinePage() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<FormState>(DEFAULT);
+  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const [form, setForm] = useState<FormState>({
+    code: 'WH-RM',
+    name: 'Hammadde Deposu',
+    warehouseType: 'RAW_MATERIAL',
+    description: 'Kereste, panel, thermowood hammaddeleri',
+    status: 'Active',
+    plantId: homePlantId,
+  });
   const [error, setError] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
 
   const existingQuery = useQuery({
-    queryKey: ['business', 'warehouses', 'all-for-define'],
-    queryFn: () => searchAllResource<{ code?: string }>('warehouses'),
+    queryKey: ['business', 'warehouses', 'all-for-define', form.plantId || homePlantId],
+    queryFn: () =>
+      searchAllResource<{ code?: string }>('warehouses', undefined, {
+        plantId: form.plantId || homePlantId,
+      }),
   });
   const existingCodes = useMemo(
     () => new Set((existingQuery.data ?? []).map((w) => String(w.code ?? '').toUpperCase())),
@@ -64,7 +70,7 @@ export function WarehouseDefinePage() {
       warehouseType: item.warehouseType,
       description: item.description,
       status: 'Active',
-      plantId: form.plantId,
+      plantId: form.plantId || homePlantId,
     });
     setError(null);
   }
@@ -82,7 +88,7 @@ export function WarehouseDefinePage() {
         warehouseType: form.warehouseType,
         description: form.description.trim(),
         status: form.status,
-        plantId: form.plantId || 'PLANT-001',
+        plantId: form.plantId || homePlantId,
       });
     },
     onSuccess: async (created) => {
@@ -171,10 +177,11 @@ export function WarehouseDefinePage() {
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-xs font-medium text-[var(--text-muted)]">{t('wizard.wh.plant')}</span>
+              <span className="text-xs font-medium text-[var(--text-muted)]">Ana Üs</span>
               <Input
-                value={form.plantId}
-                onChange={(e) => setForm((f) => ({ ...f, plantId: e.target.value }))}
+                value={`${plantDisplayName(form.plantId || homePlantId)} (${form.plantId || homePlantId})`}
+                readOnly
+                disabled
               />
             </label>
             <label className="flex items-center gap-2 text-sm font-medium">

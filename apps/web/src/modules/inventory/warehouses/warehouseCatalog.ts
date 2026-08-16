@@ -172,14 +172,16 @@ export function findCatalogItem(code: string): WarehouseCatalogItem | undefined 
   return WAREHOUSE_CATALOG.find((w) => w.warehouseCode.toUpperCase() === c);
 }
 
-/** Stock relation: Material + Lot + Warehouse + Location — never Material→Warehouse master link. */
+/** Stock relation: Plant + Material + Lot + Warehouse + Location — never Material→Warehouse master link. */
 export function stockBalanceKey(parts: {
   materialCode: string;
   lotNumber: string;
   warehouseCode: string;
   locationCode: string;
+  plantId?: string;
 }): string {
-  return [parts.materialCode, parts.lotNumber, parts.warehouseCode, parts.locationCode]
+  return [parts.plantId ?? '', parts.materialCode, parts.lotNumber, parts.warehouseCode, parts.locationCode]
     .map((x) => String(x || '').trim().toUpperCase())
+    .filter((x, i) => i > 0 || x.length > 0)
     .join('|');
 }

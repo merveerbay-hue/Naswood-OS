@@ -53,7 +53,7 @@ public class AuthUserTests
     }
 
     [Fact]
-    public void ResolveCompanyAndPlant_requires_selection_when_multiple()
+    public void ResolveCompanyAndPlant_uses_home_plant_when_plant_not_requested()
     {
         var user = AuthUser.Create(
             "operator",
@@ -64,14 +64,23 @@ public class AuthUserTests
             ["PLANT-001", "PLANT-002"],
             ["Operator"]);
 
-        var missing = user.ResolveCompanyAndPlant(null, null);
-        Assert.True(missing.IsFailure);
-        Assert.Equal("AUTH-009", missing.Error!.Code);
+        // Company still required when multiple.
+        var missingCompany = user.ResolveCompanyAndPlant(null, null);
+        Assert.True(missingCompany.IsFailure);
+        Assert.Equal("AUTH-009", missingCompany.Error!.Code);
 
-        var resolved = user.ResolveCompanyAndPlant("COMP-002", "PLANT-001");
+        // HomeFactory = first PlantId (Ana Üs) when plant not specified.
+        var home = user.ResolveCompanyAndPlant("COMP-001", null);
+        Assert.True(home.IsSuccess);
+        Assert.Equal("PLANT-001", home.Value.PlantId);
+        Assert.Equal("PLANT-001", user.HomePlantId);
+
+        var resolved = user.ResolveCompanyAndPlant("COMP-002", "PLANT-002");
         Assert.True(resolved.IsSuccess);
         Assert.Equal("COMP-002", resolved.Value.CompanyId);
-        Assert.Equal("PLANT-001", resolved.Value.PlantId);
+        Assert.Equal("PLANT-002", resolved.Value.PlantId);
+        // Home does not change when resolving another plant for a session.
+        Assert.Equal("PLANT-001", user.HomePlantId);
     }
 }
 

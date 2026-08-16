@@ -192,8 +192,13 @@ public static class OrganizationCatalogSeed
 
     public static IReadOnlyList<Domain.Organization.PlantReference> CreatePlants() =>
     [
-        Domain.Organization.PlantReference.Create("PLANT-001", "Primary Plant", "COMP-001"),
-        Domain.Organization.PlantReference.Create("BUCAK", "Bucak Plant", "NASWOOD")
+        // Legacy ids kept for existing inventory rows (PlantId ≈ Factory).
+        Domain.Organization.PlantReference.Create("PLANT-001", "Bucak Fabrikası", "COMP-001"),
+        Domain.Organization.PlantReference.Create("BUCAK", "Bucak Fabrikası", "NASWOOD"),
+        // Canonical two-factory model (INV-008)
+        Domain.Organization.PlantReference.Create("F01", "Bucak Fabrikası", "COMP-001"),
+        Domain.Organization.PlantReference.Create("F02", "İkinci Fabrika", "COMP-001"),
+        Domain.Organization.PlantReference.Create("PLANT-002", "İkinci Fabrika", "COMP-001")
     ];
 
     public static IReadOnlyList<Domain.Organization.DepartmentReference> CreateDepartments() =>

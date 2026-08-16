@@ -69,6 +69,7 @@ using (var scope = app.Services.CreateScope())
         """
         ALTER TABLE IF EXISTS business.business_inventory_material ADD COLUMN IF NOT EXISTS "DefinitionJson" text NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_warehouse ADD COLUMN IF NOT EXISTS "Description" character varying(500) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_location ADD COLUMN IF NOT EXISTS "Description" character varying(500) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_goodsreceipt ALTER COLUMN "Notes" TYPE text;
         ALTER TABLE IF EXISTS business.business_inventory_goodsissue ALTER COLUMN "Notes" TYPE text;
         """).ConfigureAwait(false);

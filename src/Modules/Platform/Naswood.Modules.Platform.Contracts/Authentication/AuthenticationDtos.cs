@@ -56,7 +56,14 @@ public sealed class AuthenticatedUserDto
 
     public required string CompanyId { get; init; }
 
+    /// <summary>Session working plant.</summary>
     public required string PlantId { get; init; }
+
+    /// <summary>Ana Üs — HomeFactoryId equivalent.</summary>
+    public required string HomePlantId { get; init; }
+
+    /// <summary>Authorized plants (Ana Üs + Diğer Tesis).</summary>
+    public required IReadOnlyList<string> PlantIds { get; init; }
 
     public required IReadOnlyList<string> Roles { get; init; }
 }
@@ -73,7 +80,14 @@ public sealed class CurrentUserDto
 
     public required string CompanyId { get; init; }
 
+    /// <summary>Session working plant.</summary>
     public required string PlantId { get; init; }
+
+    /// <summary>Ana Üs — HomeFactoryId equivalent.</summary>
+    public required string HomePlantId { get; init; }
+
+    /// <summary>Authorized plants (Ana Üs + Diğer Tesis).</summary>
+    public required IReadOnlyList<string> PlantIds { get; init; }
 
     public required Guid SessionId { get; init; }
 

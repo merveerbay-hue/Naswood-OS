@@ -9,7 +9,7 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public interface IInventoryBalanceRepository
 {
     Task<InventoryBalance?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<InventoryBalance?> FindByKeyAsync(string materialCode, string warehouseCode, string locationCode, string batchNumber, CancellationToken cancellationToken = default);
+    Task<InventoryBalance?> FindByKeyAsync(string materialCode, string warehouseCode, string locationCode, string batchNumber, string? plantId = null, CancellationToken cancellationToken = default);
     Task AddAsync(InventoryBalance entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<InventoryBalance> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
 }
