@@ -194,8 +194,16 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, line.Barcode, packageStatus);
             await _packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
 
-            var batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, batchStatus);
-            await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+            var batch = await _batches.GetByNumberAndMaterialAsync(lotNumber, materialCode, cancellationToken).ConfigureAwait(false);
+            if (batch is null)
+            {
+                batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, batchStatus);
+                await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                batch.ApplyReceipt(line.Quantity, batchStatus == "Hold" ? "Hold" : null);
+            }
 
             var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, cancellationToken).ConfigureAwait(false);
             if (balance is null)
@@ -208,9 +216,18 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 balance.ApplyReceipt(line.Quantity);
             }
 
+            var physNote = FormatActualDims(line.ActualThicknessMm, line.ActualWidthMm, line.ActualLengthMm);
+            var movementNotes = string.Join(" | ", new[]
+            {
+                command.Notes ?? string.Empty,
+                string.IsNullOrEmpty(physNote) ? null : $"phys={physNote}",
+                $"pkg={packageNumber}",
+                $"status={packageStatus}",
+            }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
             var movement = InventoryMovement.Post(
                 "GoodsReceipt", "In", receipt.Number, materialCode, miNumber, packageNumber,
-                warehouseCode, locationCode, lotNumber, line.Quantity, uom, command.Notes ?? string.Empty);
+                warehouseCode, locationCode, lotNumber, line.Quantity, uom, Truncate(movementNotes, 2000));
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
 
             results.Add(new StockPostLineResultDto
@@ -239,6 +256,12 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
     {
         if (string.IsNullOrEmpty(value)) return string.Empty;
         return value.Length <= max ? value : value[..max];
+    }
+
+    private static string FormatActualDims(decimal? t, decimal? w, decimal? l)
+    {
+        if (t is null or <= 0 || w is null or <= 0 || l is null or <= 0) return string.Empty;
+        return $"{t:0.####}×{w:0.####}×{l:0.####}";
     }
 }
 
@@ -456,6 +479,7 @@ public sealed class SearchInventoryMovementQueryHandler : IQueryHandler<SearchIn
                 Direction = e.Direction,
                 DocumentNumber = e.DocumentNumber,
                 MaterialCode = e.MaterialCode,
+                LotNumber = e.LotNumber,
                 PackageNumber = e.PackageNumber,
                 Quantity = e.Quantity,
                 WarehouseCode = e.WarehouseCode,

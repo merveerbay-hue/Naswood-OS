@@ -281,8 +281,8 @@ export function LotListPage() {
   return (
     <EntityListScreen
       screenId="INV-010"
-      title="Lot / Parti (operasyonel)"
-      description="Lot = parti özniteliği. Yaşam boyu kimlik için Material Identity listesini kullanın."
+      title="Lot / Parti"
+      description="Lot = sevkiyat / parti. Aynı Lot altında farklı ölçü grupları, depolar ve kalite durumları olabilir. MI operatör ekranında gösterilmez."
       route="batches"
       fields={useInvFields().batch}
       createLabel={t('inventory.newLot')}
@@ -295,13 +295,13 @@ export function PackageListPage() {
     <EntityListScreen
       screenId="INV-PKG"
       title="Paketler"
-      description="Stok paketleri — barkod / paket no ile arama"
+      description="Fiziksel paket — Lot altında. Paket yeni Lot değildir."
       route="packages"
       fields={[
         { key: 'PackageNumber', label: 'Paket' },
         { key: 'Barcode', label: 'Barkod' },
         { key: 'MaterialCode', label: 'Malzeme' },
-        { key: 'MaterialIdentityNumber', label: 'MI' },
+        { key: 'LotNumber', label: 'Lot' },
         { key: 'WarehouseCode', label: 'Depo' },
         { key: 'LocationCode', label: 'Lokasyon' },
         { key: 'Quantity', label: 'Miktar', type: 'number' },
@@ -316,8 +316,8 @@ export function MaterialIdentityListPage() {
   return (
     <EntityListScreen
       screenId="INV-MI"
-      title="Material Identity"
-      description="Fiziksel kimlik düğümleri (receiving root MI)"
+      title="Material Identity (sistem)"
+      description="Arka plan teknik kimlik — operatör mal kabulde MI seçmez. Ana menüde gösterilmez."
       route="material-identities"
       fields={[
         { key: 'IdentityNumber', label: 'MI' },
@@ -339,7 +339,7 @@ export function InventoryMovementListPage() {
     <EntityListScreen
       screenId="INV-MV"
       title="Stok Hareketleri"
-      description="Transaction Engine kayıtları (In/Out)"
+      description="Material · Lot · Paket · Depo — MI teknik kimlik arka planda."
       route="inventory-movements"
       fields={[
         { key: 'MovementNumber', label: 'Hareket' },
@@ -347,6 +347,7 @@ export function InventoryMovementListPage() {
         { key: 'Direction', label: 'Yön' },
         { key: 'DocumentNumber', label: 'Belge' },
         { key: 'MaterialCode', label: 'Malzeme' },
+        { key: 'LotNumber', label: 'Lot' },
         { key: 'PackageNumber', label: 'Paket' },
         { key: 'Quantity', label: 'Miktar', type: 'number' },
         { key: 'WarehouseCode', label: 'Depo' },

@@ -41,6 +41,15 @@ public sealed class Batch : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /** Accumulate received qty onto an existing operational lot (same BatchNumber + MaterialCode). */
+    public void ApplyReceipt(decimal quantity, string? status = null)
+    {
+        if (quantity <= 0) return;
+        Quantity += quantity;
+        if (!string.IsNullOrWhiteSpace(status)) Status = status;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

@@ -1159,9 +1159,9 @@ export const tr = {
       stockStep: {
         title: 'Stoklaştırma — dağıtım + post',
         intro:
-          'Stok miktarı = kabul edilen fiziksel miktar. Belge miktarı stoğa yazılmaz. Depo/lokasyon her kalem için ayrıdır.',
+          'Stok miktarı = kabul edilen fiziksel miktar. Belge miktarı stoğa yazılmaz. Depo/lokasyon her kalem için ayrıdır. Aynı mal kabul = aynı Lot.',
         rules:
-          'Dağıtım toplamı kabul miktarına eşit olmalı · aşamaz · red stoğa girmez · şartlı karantinaya ayrılabilir · aynı GR iki kez stoklanamaz.',
+          'Dağıtım toplamı kabul miktarına eşit olmalı · aşamaz · red stoğa girmez · şartlı karantinaya ayrılabilir · ölçü/depo/kalite farkı yeni Lot açmaz · aynı GR iki kez stoklanamaz.',
         noAccepted: 'Stoka gidecek kabul satırı yok.',
         accepted: 'Kabul',
         physical: 'Fiziksel',
@@ -1409,9 +1409,18 @@ export const tr = {
         stock: 'Depo stoğu',
         audit: 'Audit trail',
         attachments: 'Kanıt arşivi (evrak + foto)',
-        mi: 'Kök Material Identity + genealogy',
+        mi: 'Kök Material Identity + genealogy (arka plan)',
         evidence: 'Evidence Archive (OCR + AI kararları)',
       },
+      lot: {
+        title: 'Parti / Lot',
+        tracking: 'Lot takibi',
+        number: 'Lot No',
+        autoHint: 'Sistem üretir — operatör yazmaz. Ölçü/depo/kalite farkı yeni Lot açmaz.',
+        note: 'Açıklama',
+        notePh: 'İsteğe bağlı lot notu',
+      },
+      lotOff: 'Lot takibi kapalı',
       postedBanner: 'Post tamam — stoğa işlendi',
     },
 
@@ -1708,8 +1717,8 @@ export const tr = {
     pack: {
       general: 'Genel',
       generalHint: 'Ürün grubu · cins · ağaç · Thermowood — MaterialCode elle yazılmaz (PIN / TPIN).',
-      identity: 'Identity',
-      identityHint: 'MI sınıfı ve Lot politikası — Material Identity Architecture.',
+      identity: 'Parti / Lot',
+      identityHint: 'Lot takibi Evet/Hayır · Lot No sistem üretir. MI sınıfı operatöre gösterilmez.',
       measurement: 'Measurement',
       measurementHint: 'Nominal kalınlık · genişlik (tek / aralık / seçenekler) · uzunluk — ayrı alanlar.',
       conversion: 'Conversion',
@@ -1783,7 +1792,18 @@ export const tr = {
       kg: 'kg',
       t: 'Ton',
     },
-    identityLaw: 'Definition MI sınıfını bağlar — fiziksel MI Receiving’de mint edilir. Lot ≠ MI.',
+    identityLaw:
+      'Lot = sevkiyat / parti. MI = arka plan teknik kimlik — operatör MI seçmez/yazmaz. Fiziksel ölçü grubu Lot altında tutulur; depo/kalite/paket yeni Lot açmaz.',
+    lotPack: {
+      title: 'Parti / Lot',
+      intro: 'Malzeme kartında lot takibi tercihi. Lot numarası mal kabulde sistem üretir.',
+      tracking: 'Lot takibi',
+      number: 'Lot No',
+      autoPreview: 'LOT-YYYY-#####',
+      autoHint: 'Örnek: LOT-2026-00125 — sistem mal kabulde oluşturur.',
+      note: 'Açıklama',
+      notePh: 'İsteğe bağlı lot notu',
+    },
     conversionLaw: 'Operatör miktarı bir kez girer; Conversion Engine eşdeğerleri üretir. Modül içi manuel hesap yasak.',
     packagingLaw: 'Kısmi kullanımda paket barkodu aynı kalır — Package Allocation Workspace.',
     numberingLaw:

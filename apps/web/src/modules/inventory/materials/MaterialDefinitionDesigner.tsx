@@ -73,6 +73,9 @@ type DefState = {
   packageLabel: string;
   identityClass: string;
   lotPolicy: string;
+  /** Operator-facing: lot tracking on material definition (MI stays backend). */
+  lotTracking: boolean;
+  lotNote: string;
   numberingSeries: string;
   grade: string;
   moistureMin: string;
@@ -134,6 +137,8 @@ const DEFAULT_DEF: DefState = {
   packageLabel: '',
   identityClass: 'RM-LUMBER',
   lotPolicy: 'Lot operational · MI lifelong',
+  lotTracking: true,
+  lotNote: '',
   numberingSeries: 'HM/YM/MP/TW · sistem üretir',
   grade: '',
   moistureMin: '',
@@ -405,6 +410,11 @@ export function MaterialDefinitionDesigner() {
           productTypeToken: def.productTypeToken,
           grade: def.grade,
           category: categoryLabel(def.mainCategory),
+          // MI class / lot policy — system defaults; not operator-edited
+          identityClass: def.identityClass || 'RM-LUMBER',
+          lotPolicy: def.lotTracking ? 'Lot operational · MI lifelong' : 'Lot optional · MI lifelong',
+          lotTracking: def.lotTracking,
+          lotNote: def.lotNote,
           NominalIsCommercial: true,
           ActualDimsLiveInReceiving: true,
         },
@@ -790,15 +800,26 @@ export function MaterialDefinitionDesigner() {
 
               {pack.id === 'identity' ? (
                 <div className="space-y-3">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{t('md.lotPack.title')}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{t('md.lotPack.intro')}</p>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={def.lotTracking}
+                      onChange={(e) => setField('lotTracking', e.target.checked)}
+                    />
+                    {t('md.lotPack.tracking')}
+                  </label>
+                  <div className="rounded-md border border-[var(--border-default)] px-3 py-2">
+                    <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('md.lotPack.number')}</p>
+                    <p className="font-mono text-sm font-medium">{t('md.lotPack.autoPreview')}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{t('md.lotPack.autoHint')}</p>
+                  </div>
                   <Field
-                    label={t('md.fields.identityClass')}
-                    value={def.identityClass}
-                    onChange={(v) => setField('identityClass', v)}
-                  />
-                  <Field
-                    label={t('md.fields.lotPolicy')}
-                    value={def.lotPolicy}
-                    onChange={(v) => setField('lotPolicy', v)}
+                    label={t('md.lotPack.note')}
+                    value={def.lotNote}
+                    onChange={(v) => setField('lotNote', v)}
+                    placeholder={t('md.lotPack.notePh')}
                   />
                   <p className="rounded-md border border-[var(--border-default)] px-3 py-2 text-xs text-[var(--text-secondary)]">
                     {t('md.identityLaw')}

@@ -9,6 +9,7 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public interface IBatchRepository
 {
     Task<Batch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Batch?> GetByNumberAndMaterialAsync(string batchNumber, string materialCode, CancellationToken cancellationToken = default);
     Task AddAsync(Batch entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Batch> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
 }

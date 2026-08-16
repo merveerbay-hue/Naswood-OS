@@ -189,9 +189,22 @@ export type ExecutePostLine = {
   unitOfMeasure: string;
   barcode: string;
   stockStatus: 'Available' | 'Quarantine';
+  /** Actual physical dims for this stock slice (not material nominal). */
+  actualThicknessMm?: number | null;
+  actualWidthMm?: number | null;
+  actualLengthMm?: number | null;
+  actualDimsLabel?: string | null;
 };
 
+/** Operational lot for a goods-receipt / shipment session — not per dim group / WH / package. */
+export function mintLotNumber(now = new Date()): string {
+  const year = now.getFullYear();
+  const seq = String(Math.floor(10000 + Math.random() * 90000)).padStart(5, '0');
+  return `LOT-${year}-${seq}`;
+}
+
 function mintPreview(prefix: string) {
+  if (prefix === 'LOT') return mintLotNumber();
   const seq =
     new Date().toISOString().slice(2, 10).replace(/-/g, '') +
     '-' +
@@ -206,7 +219,8 @@ export function buildExecuteLines(
   sharedLot?: string,
 ): ExecutePostLine[] {
   const byId = new Map(acceptedStockLines(lines).map((l) => [l.id, l]));
-  const lotBase = sharedLot?.trim() || mintPreview('LOT');
+  // One lot per receiving/shipment — shared across dim groups, warehouses, quality buckets.
+  const lot = sharedLot?.trim() || mintLotNumber();
   const result: ExecutePostLine[] = [];
 
   for (const d of dists) {
@@ -216,8 +230,11 @@ export function buildExecuteLines(
     if (qty <= 0) continue;
     const mi = mintPreview('MI');
     const pkg = mintPreview('PKG');
-    // Unique lot per stock package (sharedLot is family prefix) — avoids Batch unique clash
-    const lot = `${lotBase}-${result.length + 1}`;
+    const group = d.groupId ? line.physicalGroups.find((g) => g.id === d.groupId) ?? null : null;
+    const t = group ? Number(group.thicknessMm) : Number(line.physicalGroups[0]?.thicknessMm);
+    const w = group ? Number(group.widthMm) : Number(line.physicalGroups[0]?.widthMm);
+    const len = group ? Number(group.lengthMm) : Number(line.physicalGroups[0]?.lengthMm);
+    const dimsLabel = distributionDimsLabel(line, d.groupId);
     result.push({
       materialCode: line.matchedMaterialCode.trim(),
       materialId: line.matchedMaterialId.trim(),
@@ -230,6 +247,10 @@ export function buildExecuteLines(
       unitOfMeasure: 'Piece',
       barcode: pkg,
       stockStatus: d.bucket === 'quarantine' ? 'Quarantine' : 'Available',
+      actualThicknessMm: Number.isFinite(t) && t > 0 ? t : null,
+      actualWidthMm: Number.isFinite(w) && w > 0 ? w : null,
+      actualLengthMm: Number.isFinite(len) && len > 0 ? len : null,
+      actualDimsLabel: dimsLabel !== '—' ? dimsLabel : null,
     });
   }
   return result;
