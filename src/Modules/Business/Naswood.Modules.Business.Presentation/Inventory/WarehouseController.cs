@@ -28,12 +28,12 @@ public sealed class WarehouseController : ControllerBase
     [HttpPost("api/v1/warehouses")]
     [RequirePermission("Warehouse.Create")]
     public async Task<IActionResult> Create([FromBody] UpsertWarehouseRequestDto request, CancellationToken cancellationToken)
-        => (await _dispatcher.SendAsync(new CreateWarehouseCommand(request.Code, request.Name, request.WarehouseType, request.Status, request.PlantId), cancellationToken).ConfigureAwait(false)).ToActionResult(this, successMessage: "Warehouse created.");
+        => (await _dispatcher.SendAsync(new CreateWarehouseCommand(request.Code, request.Name, request.WarehouseType, request.Status, request.PlantId, request.Description ?? string.Empty), cancellationToken).ConfigureAwait(false)).ToActionResult(this, successMessage: "Warehouse created.");
 
     [HttpPut("api/v1/warehouses/{id:guid}")]
     [RequirePermission("Warehouse.Update")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpsertWarehouseRequestDto request, CancellationToken cancellationToken)
-        => (await _dispatcher.SendAsync(new UpdateWarehouseCommand(id, request.Code, request.Name, request.WarehouseType, request.Status, request.PlantId), cancellationToken).ConfigureAwait(false)).ToActionResult(this, successMessage: "Warehouse updated.");
+        => (await _dispatcher.SendAsync(new UpdateWarehouseCommand(id, request.Code, request.Name, request.WarehouseType, request.Status, request.PlantId, request.Description), cancellationToken).ConfigureAwait(false)).ToActionResult(this, successMessage: "Warehouse updated.");
 
     [HttpDelete("api/v1/warehouses/{id:guid}")]
     [RequirePermission("Warehouse.Delete")]

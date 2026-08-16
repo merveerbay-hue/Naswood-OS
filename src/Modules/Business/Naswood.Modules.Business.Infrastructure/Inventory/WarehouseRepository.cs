@@ -11,7 +11,18 @@ public sealed class WarehouseRepository : IWarehouseRepository
     public WarehouseRepository(BusinessDbContext db) => _db = db;
 
     public Task<Warehouse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        _db.Set<Warehouse>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        _db.Set<Warehouse>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+    public Task<Warehouse?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var value = (code ?? string.Empty).Trim();
+        if (value.Length == 0)
+            return Task.FromResult<Warehouse?>(null);
+        var lower = value.ToLowerInvariant();
+        return _db.Set<Warehouse>().FirstOrDefaultAsync(
+            x => !x.IsDeleted && x.Code.ToLower() == lower,
+            cancellationToken);
+    }
 
     public async Task AddAsync(Warehouse entity, CancellationToken cancellationToken = default) =>
         await _db.Set<Warehouse>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -22,7 +33,11 @@ public sealed class WarehouseRepository : IWarehouseRepository
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
-            query = query.Where(x => EF.Functions.ILike(x.Name, "%" + value + "%"));
+            query = query.Where(x =>
+                EF.Functions.ILike(x.Name, "%" + value + "%")
+                || EF.Functions.ILike(x.Code, "%" + value + "%")
+                || EF.Functions.ILike(x.WarehouseType, "%" + value + "%")
+                || EF.Functions.ILike(x.Description, "%" + value + "%"));
         }
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await query.OrderByDescending(x => x.CreatedAt)

@@ -19,6 +19,7 @@ import {
   type StockBucket,
   type StockDistributionRow,
 } from './stockDistribution';
+import { WAREHOUSE_CATALOG } from '@/modules/inventory/warehouses/warehouseCatalog';
 
 type Props = {
   lines: IncomingLine[];
@@ -62,7 +63,7 @@ export function StockStep({
     updateRow(id, {
       bucket,
       locationCode: bucket === 'quarantine' ? 'K-01' : 'A-03',
-      warehouseCode: bucket === 'quarantine' ? 'WH-QI' : 'WH-RM',
+      warehouseCode: bucket === 'quarantine' ? 'WH-QA' : 'WH-RM',
     });
   }
 
@@ -117,6 +118,13 @@ export function StockStep({
         <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.stockStep.noAccepted')}</p>
       ) : (
         <div className="space-y-4">
+          <datalist id="rcv-wh-catalog">
+            {WAREHOUSE_CATALOG.map((w) => (
+              <option key={w.warehouseCode} value={w.warehouseCode}>
+                {w.warehouseName}
+              </option>
+            ))}
+          </datalist>
           {accepted.map((line) => {
             const lineDists = distributions.filter((d) => d.lineId === line.id);
             const acceptedQty = stockBasisQty(line);
@@ -203,6 +211,7 @@ export function StockStep({
                                 className="w-28"
                                 value={d.warehouseCode}
                                 disabled={disabled || posted}
+                                list="rcv-wh-catalog"
                                 onChange={(e) => updateRow(d.id, { warehouseCode: e.target.value })}
                               />
                             </td>
