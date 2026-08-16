@@ -11,7 +11,12 @@ interface EntityDetailScreenProps {
   route: string;
   id: string;
   listPath: string;
-  fields: { key: string; label: string; status?: boolean }[];
+  fields: {
+    key: string;
+    label: string;
+    status?: boolean;
+    formatValue?: (row: Record<string, unknown>) => string;
+  }[];
 }
 
 function toCamelKey(key: string): string {
@@ -68,6 +73,8 @@ export function EntityDetailScreen({ screenId, title, route, id, listPath, field
                   <dd className="mt-0.5 text-sm font-medium">
                     {field.status ? (
                       <StatusBadge status={String(readField(row ?? {}, field.key) ?? '')} />
+                    ) : field.formatValue && row ? (
+                      field.formatValue(row)
                     ) : (
                       String(readField(row ?? {}, field.key) ?? '—')
                     )}
