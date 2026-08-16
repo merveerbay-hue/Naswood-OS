@@ -189,7 +189,8 @@ export const tr = {
     masterImportCta: 'Master listeyi ölçülü yükle',
     masterImportDone: 'Yüklendi: {created} yeni · {skipped} mevcut · toplam {total}',
     warehousesTitle: 'Depolar',
-    warehousesDesc: 'Ana veri · depo dizini.',
+    warehousesDesc:
+      'Üretim + teknik/işletme depoları. Tür master desteklenir; depolar ihtiyaç halinde açılır. Malzeme↔depo bağlanmaz — stok: Material + Lot + WH + Loc.',
     newWarehouse: 'Depo tanımla',
     warehouseDetail: 'Depo Detayı',
     locationsTitle: 'Lokasyonlar',
@@ -567,7 +568,8 @@ export const tr = {
     materialDesc:
       'Material Definition Designer — kural paketleri · MAT-… Numbering ile. Create formu değil.',
     warehouseTitle: 'Depo tanımla',
-    warehouseDesc: 'Depo adı, tip, fabrika — WH-… otomatik.',
+    warehouseDesc:
+      'Depo türü master (RAW_MATERIAL … PPE …). Katalogdan ihtiyaç halinde açın — hepsi zorunlu değil. Malzeme karta bağlanmaz.',
     planningTitle: 'Üretim planlama',
     planningDesc: 'Ürün (isim) → teknik paket → hat → kapasite → Release (PO-… otomatik).',
     bomTitle: 'BOM Builder',
@@ -631,6 +633,21 @@ export const tr = {
       type: 'Depo tipi',
       plant: 'Fabrika',
       owner: 'Sorumlu',
+      code: 'Depo kodu',
+      description: 'Açıklama',
+      active: 'Aktif',
+      formHint: 'WarehouseCode · Name · Type · Description · Active',
+      noMaterialBind:
+        'Malzeme ↔ depo bağlanmaz. Aynı malzeme WH-HDW veya WH-MRO’da olabilir. Stok: Material + Lot + Warehouse + Location.',
+      catalogTitle: 'Önerilen depolar',
+      catalogHint: 'İhtiyaca göre açın. Hepsi fiziksel olarak oluşturulmaz.',
+      alreadyOpen: 'zaten açık',
+      needName: 'Depo adı gerekli.',
+      needCode: 'Depo kodu gerekli.',
+      codeExists: 'Bu depo kodu zaten kullanılıyor.',
+      created: 'Depo açıldı',
+      groupProduction: 'Üretim / Malzeme',
+      groupTechnical: 'Teknik / İşletme',
     },
     prd: {
       product: 'Ürün', revision: 'Revizyon', dims: 'Ölçü', tech: 'Teknik paket',

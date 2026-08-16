@@ -139,7 +139,7 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   dists[1]!.warehouseCode = 'WH-RM';
   dists[1]!.locationCode = 'A-03';
   dists[0]!.bucket = 'quarantine';
-  dists[0]!.warehouseCode = 'WH-QI';
+  dists[0]!.warehouseCode = 'WH-QA';
   dists[0]!.locationCode = 'K-01';
   const v = validateDistributions([line], dists);
   assert(v.ok, 'TEST8 validate');
@@ -149,6 +149,7 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   const q = posts.find((p) => p.stockStatus === 'Quarantine');
   const a = posts.find((p) => p.stockStatus === 'Available');
   assert(q?.quantity === 20, 'TEST8 quarantine qty');
+  assert(q?.warehouseCode === 'WH-QA', 'TEST8 quarantine WH-QA');
   assert(a?.quantity === 80, 'TEST8 available qty');
   console.log('TEST8 OK — şartlı / kullanılabilir ayrılabilir');
 }

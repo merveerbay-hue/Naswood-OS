@@ -64,34 +64,8 @@ export function CycleCountWizardPage() {
 /** Material Definition Designer — not a Create/ProcessWizard form. */
 export { MaterialDefinitionDesigner as MaterialDefinePage } from '@/modules/inventory/materials/MaterialDefinitionDesigner';
 
-export function WarehouseDefinePage() {
-  const { t } = useI18n();
-  return (
-    <ProcessWizard
-      screenId="INV-WH-001"
-      title={t('wizard.warehouseTitle')}
-      description={t('wizard.warehouseDesc')}
-      finishLabel={t('wizard.saveRelease')}
-      libraryPath="/inventory/master-data/warehouses"
-      libraryLabel={t('wizard.backToLibrary')}
-      autoCodeHint="WH-…"
-      persistRoute="warehouses"
-      mapBody={(v) => ({ name: v.name || 'Depo', warehouseType: v.type || 'General', status: 'Active', code: '', plantId: v.plant || 'PLANT-001' })}
-      steps={[
-        {
-          title: t('wizard.wh.general'),
-          fields: [
-            { key: 'name', label: t('wizard.wh.name'), placeholder: 'Ana Depo' },
-            { key: 'type', label: t('wizard.wh.type') },
-            { key: 'plant', label: t('wizard.wh.plant') },
-            { key: 'owner', label: t('wizard.wh.owner') },
-          ],
-        },
-        { title: t('wizard.saveRelease') },
-      ]}
-    />
-  );
-}
+/** Warehouse define — catalog types; open on demand. */
+export { WarehouseDefinePage } from '@/modules/inventory/warehouses/WarehouseDefinePage';
 
 export function PlanningWizardPage() {
   const { t } = useI18n();

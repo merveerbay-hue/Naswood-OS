@@ -47,6 +47,7 @@ function useInvFields() {
       { key: 'Code', label: t('inventory.fields.code') },
       { key: 'Name', label: t('inventory.fields.name') },
       { key: 'WarehouseType', label: t('inventory.fields.type') },
+      { key: 'Description', label: t('inventory.fields.description') },
       { key: 'Status', label: t('inventory.fields.status'), status: true },
     ] as EntityField[],
     location: [

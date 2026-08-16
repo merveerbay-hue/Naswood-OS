@@ -89,6 +89,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.PlantId).HasMaxLength(200);
             entity.Property(x => x.WarehouseType).HasMaxLength(200);
+            entity.Property(x => x.Description).HasMaxLength(500);
             entity.Property(x => x.Status).HasMaxLength(200);
             entity.HasIndex(x => x.Code);
         });

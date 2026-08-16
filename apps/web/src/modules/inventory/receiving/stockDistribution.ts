@@ -63,7 +63,7 @@ export function buildDefaultDistributions(
   for (const line of acceptedStockLines(lines)) {
     const bucket = defaultBucketForLine(line);
     const loc = bucket === 'quarantine' ? 'K-01' : locAvail;
-    const whCode = bucket === 'quarantine' && !defaultWarehouse.trim() ? 'WH-QI' : wh;
+    const whCode = bucket === 'quarantine' && !defaultWarehouse.trim() ? 'WH-QA' : wh;
 
     if (line.physicalGroups.length > 0) {
       for (const g of line.physicalGroups) {
