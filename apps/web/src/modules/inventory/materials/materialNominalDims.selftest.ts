@@ -1,65 +1,92 @@
-/**
- * Nominal dims beside MaterialCode — selftest.
- * Run: npx tsx apps/web/src/modules/inventory/materials/materialNominalDims.selftest.ts
- */
-import seed from './masterMaterialSeed.json';
 import {
-  formatMaterialCodeWithDims,
+  buildDuplicateFingerprint,
+  buildDefinitionWithNominal,
+  findDuplicateMaterial,
   formatNominalDims,
-  readNominalDims,
-  seedItemToCreateBody,
-  seedItemToDefinitionJson,
-  type MasterSeedItem,
-} from './materialNominalDims';
+  parseDefinitionNominal,
+  parseMasterOlcuToNominal,
+} from "./materialNominalDims";
 
-function assert(cond: boolean, msg: string) {
+function assert(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
 }
 
-const items = seed.items as MasterSeedItem[];
-assert(items.length >= 800, `seed size ${items.length}`);
+export function runMaterialNominalDimsSelftest(): void {
+  const kereste = parseMasterOlcuToNominal("50x100x4000");
+  assert(kereste?.thicknessMm === 50, "t");
+  assert(kereste?.widthMm === 100, "w");
+  assert(kereste?.lengthMm === 4000, "l");
+  assert(formatNominalDims(kereste!) === "50 × 100 × 4000 mm", "fmt kereste");
 
-const mp = items.find((i) => i.materialCode === 'MP-LP-AA-18-S');
-assert(!!mp, 'MP-LP-AA-18-S present');
-assert(mp!.nominalThicknessMm === 18, 'MP thickness');
-assert(mp!.nominalWidthMm === 1220, 'MP width nominal 1220');
-assert(mp!.nominalLengthMm === 2440, 'MP length default 2440');
-assert(mp!.label?.includes('18×1220×2440'), `MP label ${mp!.label}`);
-assert(
-  formatMaterialCodeWithDims({
-    code: mp!.materialCode,
-    nominalThicknessMm: mp!.nominalThicknessMm,
-    nominalWidthMm: mp!.nominalWidthMm,
-    nominalLengthMm: mp!.nominalLengthMm,
-  }) === 'MP-LP-AA-18-S · 18×1220×2440 mm',
-  'MP code·dims',
-);
+  const panel = parseMasterOlcuToNominal("18 mm / 1200-1220 mm");
+  assert(panel?.thicknessMm === 18, "panel t");
+  assert(panel?.widthMinMm === 1200 && panel?.widthMaxMm === 1220, "panel range");
+  assert(panel?.widthMm == null, "panel no single width");
+  assert(!panel?.lengthMm, "panel no forced length");
+  assert(formatNominalDims(panel!) === "18 × 1200–1220 mm", "fmt panel");
 
-const tw = items.find((i) => i.materialCode === 'TW-CP-001');
-assert(!!tw, 'TW-CP-001');
-assert(tw!.nominalThicknessMm === 16, 'TW thickness');
-assert(tw!.dimsLabel?.includes('16×'), `TW dims ${tw!.dimsLabel}`);
-assert(formatMaterialCodeWithDims({ code: tw!.materialCode, ...tw! }).startsWith('TW-CP-001 ·'), 'TW label');
+  const singleW = parseMasterOlcuToNominal("18 mm / 1220 mm");
+  assert(singleW?.widthMm === 1220, "single width stays single");
+  assert(singleW?.widthMinMm == null, "no forced min");
 
-const hm = items.find((i) => i.materialCode === 'HM-KR-PIN-001');
-assert(!!hm, 'HM-KR-PIN-001 family');
-assert(!hm!.nominalThicknessMm, 'HM family has no forced dims');
-assert(formatMaterialCodeWithDims({ code: hm!.materialCode }) === 'HM-KR-PIN-001', 'HM code only');
+  const tw = parseMasterOlcuToNominal("16 mm / 92-117-138 mm");
+  assert(tw?.widthOptionsMm?.join(",") === "92,117,138", "tw options");
+  assert(formatNominalDims(tw!) === "16 × 92/117/138 mm", "fmt tw");
 
-const body = seedItemToCreateBody(mp!);
-assert(body.code === 'MP-LP-AA-18-S', 'create code');
-const def = JSON.parse(seedItemToDefinitionJson(mp!));
-assert(def.NominalThicknessMm === 18, 'def NominalThicknessMm');
-assert(def.thicknessMm === '18', 'def thicknessMm alias');
-assert(readNominalDims({ definitionJson: body.definitionJson })?.thicknessMm === 18, 'read back');
-assert(formatNominalDims(readNominalDims({ definitionJson: body.definitionJson })) === '18×1220×2440 mm', 'fmt');
+  const slash = parseMasterOlcuToNominal("26 mm / 68/92/118/140/166 mm");
+  assert(slash?.widthOptionsMm?.length === 5, "slash options");
 
-const withDims = items.filter((i) => i.dimsLabel).length;
-assert(withDims === 777, `with dims ${withDims}`);
+  const fp1 = buildDuplicateFingerprint({
+    mainCategory: "HM",
+    materialType: "KR",
+    woodSpecies: "PIN",
+    productType: "",
+    quality: "A",
+    dims: kereste!,
+  });
+  const fp2 = buildDuplicateFingerprint({
+    mainCategory: "HM",
+    materialType: "KR",
+    woodSpecies: "PIN",
+    productType: "",
+    quality: "A",
+    dims: kereste!,
+  });
+  assert(fp1.thicknessMm === fp2.thicknessMm && fp1.widthMm === fp2.widthMm, "dup stable");
 
-console.log('materialNominalDims.selftest: ALL OK', {
-  seed: items.length,
-  withDims,
-  mp: mp!.label,
-  tw: tw!.label,
-});
+  const wider = parseMasterOlcuToNominal("50x120x4000")!;
+  const fp3 = buildDuplicateFingerprint({
+    mainCategory: "HM",
+    materialType: "KR",
+    woodSpecies: "PIN",
+    productType: "",
+    quality: "A",
+    dims: wider,
+  });
+  assert(fp1.widthMm !== fp3.widthMm, "different width different card");
+
+  const merged = buildDefinitionWithNominal(
+    { mainCategory: "HM", materialType: "KR", species: "PIN", grade: "A" },
+    kereste!,
+  );
+  const read = parseDefinitionNominal(JSON.stringify(merged));
+  assert(read?.thicknessMm === 50 && read?.widthMm === 100 && read?.lengthMm === 4000, "roundtrip");
+
+  const dup = findDuplicateMaterial(
+    [
+      {
+        code: "HM-KR-PIN-001",
+        category: "HM",
+        name: "Çam Kereste",
+        definitionJson: JSON.stringify(merged),
+      },
+    ],
+    fp1,
+  );
+  assert(dup?.code === "HM-KR-PIN-001", "find duplicate");
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runMaterialNominalDimsSelftest();
+  console.log("materialNominalDims.selftest: OK");
+}

@@ -8,10 +8,30 @@ export interface PagedResult<T> {
   totalPages: number;
 }
 
-export async function searchResource<T>(route: string, q?: string): Promise<PagedResult<T>> {
-  const params = new URLSearchParams({ page: '1', pageSize: '50' });
+export async function searchResource<T>(
+  route: string,
+  q?: string,
+  opts?: { page?: number; pageSize?: number },
+): Promise<PagedResult<T>> {
+  const params = new URLSearchParams({
+    page: String(opts?.page ?? 1),
+    pageSize: String(opts?.pageSize ?? 50),
+  });
   if (q) params.set('q', q);
   return apiRequest<PagedResult<T>>(`/api/v1/${route}?${params}`, { method: 'GET', auth: true });
+}
+
+/** Page through all results (API caps pageSize at 100). */
+export async function searchAllResource<T>(route: string, q?: string): Promise<T[]> {
+  const pageSize = 100;
+  const first = await searchResource<T>(route, q, { page: 1, pageSize });
+  const items = [...(first.items ?? [])];
+  const totalPages = Math.max(1, first.totalPages || 1);
+  for (let page = 2; page <= totalPages; page += 1) {
+    const next = await searchResource<T>(route, q, { page, pageSize });
+    items.push(...(next.items ?? []));
+  }
+  return items;
 }
 
 export async function createResource<T>(route: string, body: unknown): Promise<T> {

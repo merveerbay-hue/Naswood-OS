@@ -75,7 +75,14 @@ public sealed class CreateMaterialCommandHandler : ICommandHandler<CreateMateria
     public CreateMaterialCommandHandler(IMaterialRepository repo, IBusinessUnitOfWork uow) { _repo = repo; _uow = uow; }
     public async Task<Result<MaterialDto>> HandleAsync(CreateMaterialCommand command, CancellationToken cancellationToken = default)
     {
-        var e = Material.Create(SystemIdentifier.Ensure(command.Code, "MAT"), command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status, command.DefinitionJson ?? string.Empty);
+        var code = SystemIdentifier.Ensure(command.Code, "MAT");
+        if (!string.IsNullOrWhiteSpace(command.Code))
+        {
+            var existing = await _repo.GetByCodeAsync(code, cancellationToken).ConfigureAwait(false);
+            if (existing is not null && !existing.IsDeleted)
+                return Result.Failure<MaterialDto>(Error.Conflict("BUS-MAT-CODE", "Bu malzeme kodu zaten kullanılıyor."));
+        }
+        var e = Material.Create(code, command.Name, command.Description, command.Category, command.UnitOfMeasure, command.Status, command.DefinitionJson ?? string.Empty);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(MaterialMapper.ToDto(e));
