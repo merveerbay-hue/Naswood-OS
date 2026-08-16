@@ -835,7 +835,6 @@ export function GoodsIssueWorkbench() {
                 <th className="px-2 py-2">{t('wb.iss.wh')}</th>
                 <th className="px-2 py-2">{t('wb.iss.loc')}</th>
                 <th className="px-2 py-2">{t('wb.iss.colLot')}</th>
-                <th className="px-2 py-2">{t('wb.iss.colMi')}</th>
                 <th className="px-2 py-2">{t('wb.iss.colSpecies')}</th>
                 <th className="px-2 py-2">{t('wb.iss.colDims')}</th>
                 <th className="px-2 py-2">{t('wb.iss.colQuality')}</th>
@@ -853,7 +852,7 @@ export function GoodsIssueWorkbench() {
                 <Fragment key={g.key || 'all'}>
                   {g.key ? (
                     <tr className="bg-[var(--color-primary)]/5">
-                      <td colSpan={editable ? 16 : 14} className="px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                      <td colSpan={editable ? 15 : 13} className="px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">
                         {g.key}
                       </td>
                     </tr>
@@ -877,7 +876,6 @@ export function GoodsIssueWorkbench() {
                       <td className="px-2 py-1.5">{r.warehouse}</td>
                       <td className="px-2 py-1.5 font-mono">{r.location}</td>
                       <td className="px-2 py-1.5 font-mono">{r.lot}</td>
-                      <td className="px-2 py-1.5 font-mono text-[10px]">{r.mi}</td>
                       <td className="px-2 py-1.5">{r.species}</td>
                       <td className="px-2 py-1.5">{r.dimensions}</td>
                       <td className="px-2 py-1.5">{r.quality}</td>

@@ -24,7 +24,6 @@ export const inventoryWorkspaces: WorkspaceDefinition[] = [
       { id: 'inv-014', label: 'Stok Bakiyesi', path: '/inventory/stock/balances', screenId: 'INV-014' },
       { id: 'inv-010', label: 'Lot / Parti', path: '/inventory/stock/lots', screenId: 'INV-010' },
       { id: 'inv-pkg', label: 'Paketler', path: '/inventory/stock/packages', screenId: 'INV-PKG' },
-      { id: 'inv-mi', label: 'Material Identity', path: '/inventory/stock/identities', screenId: 'INV-MI' },
       { id: 'inv-mv', label: 'Stok Hareketleri', path: '/inventory/stock/movements', screenId: 'INV-MV' },
     ],
   },

@@ -16,6 +16,10 @@ public sealed class StockPostLineRequestDto
     public string Barcode { get; init; } = string.Empty;
     /// <summary>Available (default) or Quarantine — conditional accept uses Quarantine.</summary>
     public string? StockStatus { get; init; }
+    /// <summary>Actual physical thickness (mm) — not material nominal.</summary>
+    public decimal? ActualThicknessMm { get; init; }
+    public decimal? ActualWidthMm { get; init; }
+    public decimal? ActualLengthMm { get; init; }
 }
 
 public sealed class ExecuteGoodsReceiptRequestDto
@@ -120,6 +124,7 @@ public sealed class InventoryMovementDto
     public required string Direction { get; init; }
     public required string DocumentNumber { get; init; }
     public required string MaterialCode { get; init; }
+    public required string LotNumber { get; init; }
     public required string PackageNumber { get; init; }
     public required decimal Quantity { get; init; }
     public required string WarehouseCode { get; init; }

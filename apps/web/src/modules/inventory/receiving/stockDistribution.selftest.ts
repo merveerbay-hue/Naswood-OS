@@ -145,11 +145,30 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   assert(v.ok, 'TEST8 validate');
   const posts = buildExecuteLines([line], dists, 'LOT-TEST8');
   assert(posts.length === 2, 'TEST8 two post lines');
+  assert(posts.every((p) => p.lotNumber === 'LOT-TEST8'), 'TEST8 same lot for both buckets');
   const q = posts.find((p) => p.stockStatus === 'Quarantine');
   const a = posts.find((p) => p.stockStatus === 'Available');
   assert(q?.quantity === 20, 'TEST8 quarantine qty');
   assert(a?.quantity === 80, 'TEST8 available qty');
   console.log('TEST8 OK — şartlı / kullanılabilir ayrılabilir');
+}
+
+// --- TEST 8b: same lot across two physical dim groups + two WH ---
+{
+  const line = lumberLine();
+  const dists = buildDefaultDistributions([line], 'WH-RM', 'A-03');
+  dists[0]!.warehouseCode = 'WH-A';
+  dists[0]!.locationCode = 'A-03';
+  dists[1]!.warehouseCode = 'WH-B';
+  dists[1]!.locationCode = 'B-02';
+  const posts = buildExecuteLines([line], dists, 'LOT-2026-00125');
+  assert(posts.length === 2, 'TEST8b two groups');
+  assert(posts[0]!.lotNumber === posts[1]!.lotNumber, 'TEST8b same lot');
+  assert(posts[0]!.lotNumber === 'LOT-2026-00125', 'TEST8b lot value');
+  assert(posts[0]!.materialIdentityNumber !== posts[1]!.materialIdentityNumber, 'TEST8b distinct MI backend');
+  assert(posts[0]!.packageNumber !== posts[1]!.packageNumber, 'TEST8b distinct PKG');
+  assert(posts[0]!.actualThicknessMm === 45 && posts[1]!.actualThicknessMm === 46, 'TEST8b actual dims');
+  console.log('TEST8b OK — one lot · two phys groups · two WH · MI/PKG backend');
 }
 
 // --- TEST 9: idempotent post payload stable GR number (FE contract) ---

@@ -13,6 +13,21 @@ public sealed class BatchRepository : IBatchRepository
     public Task<Batch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<Batch>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Batch?> GetByNumberAndMaterialAsync(string batchNumber, string materialCode, CancellationToken cancellationToken = default)
+    {
+        var lot = (batchNumber ?? string.Empty).Trim();
+        var mat = (materialCode ?? string.Empty).Trim();
+        if (lot.Length == 0 || mat.Length == 0)
+            return Task.FromResult<Batch?>(null);
+        var lotLower = lot.ToLowerInvariant();
+        var matLower = mat.ToLowerInvariant();
+        return _db.Set<Batch>().FirstOrDefaultAsync(
+            x => !x.IsDeleted
+                && x.BatchNumber.ToLower() == lotLower
+                && x.MaterialCode.ToLower() == matLower,
+            cancellationToken);
+    }
+
     public async Task AddAsync(Batch entity, CancellationToken cancellationToken = default) =>
         await _db.Set<Batch>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 

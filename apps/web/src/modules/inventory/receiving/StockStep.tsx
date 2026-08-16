@@ -28,6 +28,11 @@ type Props = {
   postedDocumentNumber?: string;
   postBlockedReason: string | null;
   disabled?: boolean;
+  lotNumber: string;
+  lotTracking: boolean;
+  onLotTrackingChange: (v: boolean) => void;
+  lotNote: string;
+  onLotNoteChange: (v: string) => void;
 };
 
 /** Stage 6 — Stoklaştırma: satır/grup bazlı depo·lokasyon dağıtımı + çift stok engeli. */
@@ -39,6 +44,11 @@ export function StockStep({
   postedDocumentNumber,
   postBlockedReason,
   disabled,
+  lotNumber,
+  lotTracking,
+  onLotTrackingChange,
+  lotNote,
+  onLotNoteChange,
 }: Props) {
   const { t } = useI18n();
   const accepted = acceptedStockLines(lines);
@@ -62,6 +72,35 @@ export function StockStep({
         <h3 className="text-base font-semibold tracking-tight">{t('wb.rcv.stockStep.title')}</h3>
         <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.stockStep.intro')}</p>
         <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.stockStep.rules')}</p>
+      </div>
+
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          {t('wb.rcv.lot.title')}
+        </p>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={lotTracking}
+            disabled={disabled || posted}
+            onChange={(e) => onLotTrackingChange(e.target.checked)}
+          />
+          {t('wb.rcv.lot.tracking')}
+        </label>
+        <div>
+          <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.lot.number')}</p>
+          <p className="font-mono text-sm font-medium">{lotTracking ? lotNumber : '—'}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.lot.autoHint')}</p>
+        </div>
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-[var(--text-muted)]">{t('wb.rcv.lot.note')}</span>
+          <Input
+            value={lotNote}
+            disabled={disabled || posted}
+            onChange={(e) => onLotNoteChange(e.target.value)}
+            placeholder={t('wb.rcv.lot.notePh')}
+          />
+        </label>
       </div>
 
       {posted ? (
