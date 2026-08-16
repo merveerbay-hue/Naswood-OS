@@ -13,6 +13,11 @@ public sealed class GoodsReceiptRepository : IGoodsReceiptRepository
     public Task<GoodsReceipt?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<GoodsReceipt>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<GoodsReceipt?> GetByNumberAsync(string number, CancellationToken cancellationToken = default) =>
+        _db.Set<GoodsReceipt>().FirstOrDefaultAsync(
+            x => !x.IsDeleted && x.Number == number,
+            cancellationToken);
+
     public async Task AddAsync(GoodsReceipt entity, CancellationToken cancellationToken = default) =>
         await _db.Set<GoodsReceipt>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
