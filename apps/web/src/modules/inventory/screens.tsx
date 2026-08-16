@@ -1,18 +1,44 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
-import { searchResource } from '@/api/business';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
+import { createResource, searchResource } from '@/api/business';
 import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
 import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
+import {
+  formatMaterialCodeWithDims,
+  formatNominalDims,
+  readNominalDims,
+  seedItemToCreateBody,
+  type MasterSeedItem,
+} from '@/modules/inventory/materials/materialNominalDims';
+import masterSeed from '@/modules/inventory/materials/masterMaterialSeed.json';
+
+function materialDimsSource(row: Record<string, unknown>) {
+  return {
+    code: String(row.code ?? row.Code ?? ''),
+    name: String(row.name ?? row.Name ?? ''),
+    description: String(row.description ?? row.Description ?? ''),
+    definitionJson: String(row.definitionJson ?? row.DefinitionJson ?? ''),
+  };
+}
 
 function useInvFields() {
   const { t } = useI18n();
   const f = {
     material: [
-      { key: 'Code', label: t('inventory.fields.code') },
+      {
+        key: 'Code',
+        label: t('inventory.fields.code'),
+        formatValue: (row) => formatMaterialCodeWithDims(materialDimsSource(row)),
+      },
+      {
+        key: 'NominalDims',
+        label: t('inventory.fields.nominalDims'),
+        formatValue: (row) => formatNominalDims(readNominalDims(materialDimsSource(row))),
+      },
       { key: 'Name', label: t('inventory.fields.name') },
-      { key: 'Description', label: t('inventory.fields.description') },
       { key: 'Category', label: t('inventory.fields.category') },
       { key: 'UnitOfMeasure', label: t('inventory.fields.uom') },
       { key: 'Status', label: t('inventory.fields.status'), status: true },
@@ -87,17 +113,81 @@ function useInvFields() {
 export function MaterialListPage() {
   const { t } = useI18n();
   const fields = useInvFields().material;
+  const queryClient = useQueryClient();
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [importErr, setImportErr] = useState<string | null>(null);
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      const page = await searchResource<{ code: string }>('materials');
+      const existing = new Set((page.items ?? []).map((m) => String(m.code ?? '').toUpperCase()));
+      const items = masterSeed.items as MasterSeedItem[];
+      let created = 0;
+      let skipped = 0;
+      for (const item of items) {
+        if (existing.has(item.materialCode.toUpperCase())) {
+          skipped += 1;
+          continue;
+        }
+        const body = seedItemToCreateBody(item);
+        await createResource('materials', body);
+        existing.add(item.materialCode.toUpperCase());
+        created += 1;
+      }
+      return { created, skipped, total: items.length };
+    },
+    onSuccess: async (r) => {
+      setImportErr(null);
+      setImportMsg(
+        t('inventory.masterImportDone')
+          .replace('{created}', String(r.created))
+          .replace('{skipped}', String(r.skipped))
+          .replace('{total}', String(r.total)),
+      );
+      await queryClient.invalidateQueries({ queryKey: ['business', 'materials'] });
+    },
+    onError: (e: Error) => setImportErr(e.message),
+  });
+
+  const seedCount = useMemo(() => (masterSeed.items as MasterSeedItem[]).length, []);
+
   return (
-    <EntityListScreen
-      screenId="INV-004"
-      title={t('inventory.materialsTitle')}
-      description={t('inventory.materialsDesc')}
-      route="materials"
-      fields={fields}
-      detailPath={(id) => `/inventory/master-data/materials/${id}`}
-      createLabel={t('inventory.newMaterial')}
-      jobPath="/inventory/master-data/define-material"
-    />
+    <div className="space-y-3">
+      <EntityListScreen
+        screenId="INV-004"
+        title={t('inventory.materialsTitle')}
+        description={t('inventory.materialsDescDims')}
+        route="materials"
+        fields={fields}
+        detailPath={(id) => `/inventory/master-data/materials/${id}`}
+        createLabel={t('inventory.newMaterial')}
+        jobPath="/inventory/master-data/define-material"
+      />
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{t('inventory.masterImportTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-[var(--text-secondary)]">
+            {t('inventory.masterImportHint').replace('{n}', String(seedCount))}
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={importMutation.isPending}
+            onClick={() => {
+              setImportMsg(null);
+              setImportErr(null);
+              importMutation.mutate();
+            }}
+          >
+            {importMutation.isPending ? t('saving') : t('inventory.masterImportCta')}
+          </Button>
+          {importMsg ? <p className="text-sm text-[var(--color-primary)]">{importMsg}</p> : null}
+          {importErr ? <p className="text-sm text-[var(--color-danger)]">{importErr}</p> : null}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

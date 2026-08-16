@@ -179,8 +179,15 @@ export const tr = {
     materialsTitle: 'Malzeme Tanımları',
     materialsDesc:
       'Material Definition kütüphanesi — Identity · Measurement · Conversion · Packaging · Quality · Traceability · Costing. Pasif Material Master kartı değil.',
+    materialsDescDims:
+      'Her kart: MaterialCode + nominal ölçü. Kodun yanında ölçü zorunlu (örn. MP-LP-AA-18-S · 18×1220×2440 mm). Gerçek sevkiyat ölçüsü mal kabulde tutulur.',
     newMaterial: 'Malzeme tanımla',
     materialDetail: 'Malzeme Tanımı',
+    masterImportTitle: 'Master liste (ölçülü)',
+    masterImportHint:
+      'NASWOOD master v3 — {n} kart. Kod + nominal kalınlık/genişlik/uzunluk. Mevcut kodlar atlanır.',
+    masterImportCta: 'Master listeyi ölçülü yükle',
+    masterImportDone: 'Yüklendi: {created} yeni · {skipped} mevcut · toplam {total}',
     warehousesTitle: 'Depolar',
     warehousesDesc: 'Ana veri · depo dizini.',
     newWarehouse: 'Depo tanımla',
@@ -219,7 +226,8 @@ export const tr = {
     reportCountAccuracy: 'Sayım doğruluğu',
     reportCountAccuracyDesc: 'Çevrim sayımı fark özeti',
     fields: {
-      code: 'Kod',
+      code: 'Kod · ölçü',
+      nominalDims: 'Nominal ölçü',
       name: 'Ad',
       description: 'Açıklama',
       category: 'Kategori',
@@ -1668,6 +1676,7 @@ export const tr = {
     openLibrary: 'Kütüphaneyi aç',
     openDesigner: 'Material Definition Designer',
     detailHint: 'Pasif kart değil — kural paketlerini düzenlemek için',
+    codeWithDimsHint: 'Kod · nominal ölçü (kart ölçüsü; sevkiyat gerçeği değil)',
     rulePacks: 'Kural paketleri',
     back: 'Geri',
     next: 'İleri',

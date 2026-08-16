@@ -35,7 +35,9 @@ public sealed class MaterialRepository : IMaterialRepository
             var value = q.Trim();
             query = query.Where(x =>
                 EF.Functions.ILike(x.Name, "%" + value + "%")
-                || EF.Functions.ILike(x.Code, "%" + value + "%"));
+                || EF.Functions.ILike(x.Code, "%" + value + "%")
+                || EF.Functions.ILike(x.Description, "%" + value + "%")
+                || EF.Functions.ILike(x.DefinitionJson, "%" + value + "%"));
         }
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await query.OrderByDescending(x => x.CreatedAt)

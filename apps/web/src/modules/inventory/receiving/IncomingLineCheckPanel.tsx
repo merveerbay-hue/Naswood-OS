@@ -10,6 +10,7 @@ import {
   type MaterialCandidate,
   type MaterialMatchResult,
 } from './materialMatch';
+import { formatMaterialCodeWithDims } from '@/modules/inventory/materials/materialNominalDims';
 import {
   formatLineDims,
   lineChecksComplete,
@@ -219,7 +220,12 @@ export function IncomingLineCheckPanel({
                     {line.preAccept === 'reject'
                       ? '—'
                       : lineMaterialMatched(line)
-                        ? line.matchedMaterialCode
+                        ? formatMaterialCodeWithDims({
+                            code: line.matchedMaterialCode,
+                            definitionJson:
+                              materialCandidates.find((m) => m.id === line.matchedMaterialId)
+                                ?.definitionJson ?? null,
+                          })
                         : t('wb.rcv.ops.check.samplePending')}
                   </td>
                   <td className="px-3 py-2 text-xs">
@@ -449,7 +455,13 @@ export function IncomingLineCheckPanel({
                 </div>
                 {selected.matchConfirmed ? (
                   <p className="mt-2 text-sm font-medium text-[var(--color-primary)]">
-                    {t('wb.rcv.matchConfirmedBanner')} · {selected.matchedMaterialCode}
+                    {t('wb.rcv.matchConfirmedBanner')} ·{' '}
+                    {formatMaterialCodeWithDims({
+                      code: selected.matchedMaterialCode,
+                      definitionJson:
+                        materialCandidates.find((m) => m.id === selected.matchedMaterialId)
+                          ?.definitionJson ?? null,
+                    })}
                     {selected.matchScore != null ? ` · %${selected.matchScore}` : ''}
                   </p>
                 ) : null}

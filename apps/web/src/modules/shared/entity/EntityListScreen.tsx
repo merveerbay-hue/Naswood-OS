@@ -13,6 +13,8 @@ export interface EntityField {
   status?: boolean;
   /** When true, shown in grid but never in create form (system identifier). */
   systemId?: boolean;
+  /** Custom cell text (e.g. MaterialCode · nominal dims). */
+  formatValue?: (row: Record<string, unknown>) => string;
 }
 
 const SYSTEM_ID_KEYS = new Set([
@@ -218,12 +220,17 @@ export function EntityListScreen({
                       <tr key={id} className="border-b border-[var(--border-default)] hover:bg-[var(--color-surface-hover)]/60">
                         {columns.map((c) => {
                           const value = readField(row, c.key);
+                          const display = c.formatValue
+                            ? c.formatValue(row)
+                            : value == null
+                              ? '—'
+                              : String(value);
                           return (
                             <td key={c.key} className="px-2 py-2">
                               {c.status || c.key.toLowerCase() === 'status' ? (
                                 <StatusBadge status={value == null ? null : String(value)} />
                               ) : (
-                                String(value ?? '—')
+                                display
                               )}
                             </td>
                           );

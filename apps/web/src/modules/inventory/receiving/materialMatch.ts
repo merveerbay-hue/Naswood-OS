@@ -90,9 +90,9 @@ export function parseDefinitionDims(definitionJson?: string | null): MaterialDim
   if (!definitionJson?.trim()) return null;
   try {
     const def = JSON.parse(definitionJson) as Record<string, unknown>;
-    const thickness = Number(def.thicknessMm);
-    const width = Number(def.widthMm);
-    const length = Number(def.lengthMm);
+    const thickness = Number(def.NominalThicknessMm ?? def.nominalThicknessMm ?? def.thicknessMm);
+    const width = Number(def.NominalWidthMm ?? def.nominalWidthMm ?? def.widthMm);
+    const length = Number(def.NominalLengthMm ?? def.nominalLengthMm ?? def.lengthMm);
     if (![thickness, width, length].every((n) => Number.isFinite(n) && n > 0)) return null;
     return { thickness, width, length, unit: 'mm' };
   } catch {
