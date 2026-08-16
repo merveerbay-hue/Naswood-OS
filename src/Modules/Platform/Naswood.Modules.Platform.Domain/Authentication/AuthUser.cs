@@ -137,6 +137,11 @@ public sealed class AuthUser : AggregateRoot<Guid>
 
     public IReadOnlyCollection<string> PlantIds => _plantIds.AsReadOnly();
 
+    /// <summary>
+    /// Home factory (Ana Üs). First assigned plant — not changed by Diğer Tesis view context.
+    /// </summary>
+    public string? HomePlantId => _plantIds.Count > 0 ? _plantIds[0] : null;
+
     public IReadOnlyCollection<string> Roles => _roles.AsReadOnly();
 
     /// <summary>
@@ -310,7 +315,10 @@ public sealed class AuthUser : AggregateRoot<Guid>
             return Result.Failure<(string CompanyId, string PlantId)>(AuthErrors.CompanyOrPlantRequired());
         }
 
-        var plantId = ResolveSingleOrRequested(_plantIds, requestedPlantId);
+        // Plant / Factory: explicit request, else HomePlantId (first assigned) — no per-login factory picker required.
+        var plantId = !string.IsNullOrWhiteSpace(requestedPlantId)
+            ? requestedPlantId.Trim()
+            : HomePlantId;
         if (plantId is null)
         {
             return Result.Failure<(string CompanyId, string PlantId)>(AuthErrors.CompanyOrPlantRequired());

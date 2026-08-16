@@ -86,11 +86,13 @@ export function AppHeader() {
           <select
             id="header-plant"
             className="h-9 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm"
-            value={user?.plantId ?? ''}
+            value={user?.homePlantId ?? user?.plantId ?? ''}
             disabled
-            title={t('plantSwitchSoon')}
+            title="Ana Üs (HomeFactory) — oturum tesis bağlamı"
           >
-            <option value={user?.plantId ?? ''}>{user?.plantId ?? 'Tesis'}</option>
+            <option value={user?.homePlantId ?? user?.plantId ?? ''}>
+              Ana Üs: {user?.homePlantId ?? user?.plantId ?? 'Tesis'}
+            </option>
           </select>
         </div>
 

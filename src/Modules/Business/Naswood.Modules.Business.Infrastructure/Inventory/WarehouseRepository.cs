@@ -24,12 +24,37 @@ public sealed class WarehouseRepository : IWarehouseRepository
             cancellationToken);
     }
 
+    public Task<Warehouse?> GetByCodeAndPlantAsync(string code, string? plantId, CancellationToken cancellationToken = default)
+    {
+        var value = (code ?? string.Empty).Trim();
+        if (value.Length == 0)
+            return Task.FromResult<Warehouse?>(null);
+        var lower = value.ToLowerInvariant();
+        var plant = (plantId ?? string.Empty).Trim();
+        return _db.Set<Warehouse>().FirstOrDefaultAsync(
+            x => !x.IsDeleted
+                && x.Code.ToLower() == lower
+                && (plant.Length == 0 || x.PlantId == plant),
+            cancellationToken);
+    }
+
     public async Task AddAsync(Warehouse entity, CancellationToken cancellationToken = default) =>
         await _db.Set<Warehouse>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public async Task<(IReadOnlyList<Warehouse> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<Warehouse> Items, int Total)> SearchAsync(
+        string? q,
+        string? plantId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
     {
         var query = _db.Set<Warehouse>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
@@ -44,5 +69,26 @@ public sealed class WarehouseRepository : IWarehouseRepository
             .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
+    }
+
+    public async Task<bool> HasLocationsOrStockAsync(string warehouseCode, string? plantId, CancellationToken cancellationToken = default)
+    {
+        var wh = warehouseCode.Trim().ToLowerInvariant();
+        var plant = (plantId ?? string.Empty).Trim();
+
+        var hasLoc = await _db.Set<Location>().AsNoTracking().AnyAsync(
+            x => !x.IsDeleted
+                && x.WarehouseCode.ToLower() == wh
+                && (plant.Length == 0 || x.PlantId == plant),
+            cancellationToken).ConfigureAwait(false);
+        if (hasLoc) return true;
+
+        var hasStock = await _db.Set<InventoryBalance>().AsNoTracking().AnyAsync(
+            x => !x.IsDeleted
+                && x.WarehouseCode.ToLower() == wh
+                && (plant.Length == 0 || x.PlantId == plant)
+                && x.QuantityOnHand != 0,
+            cancellationToken).ConfigureAwait(false);
+        return hasStock;
     }
 }

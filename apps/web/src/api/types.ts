@@ -30,6 +30,10 @@ export interface AuthenticatedUser {
   email: string | null;
   companyId: string;
   plantId: string;
+  /** Ana Üs — HomeFactoryId equivalent. */
+  homePlantId: string;
+  /** Authorized plants (Ana Üs + Diğer Tesis). */
+  plantIds: string[];
   roles: string[];
 }
 
@@ -48,6 +52,8 @@ export interface CurrentUser {
   email: string | null;
   companyId: string;
   plantId: string;
+  homePlantId: string;
+  plantIds: string[];
   sessionId: string;
   roles: string[];
 }

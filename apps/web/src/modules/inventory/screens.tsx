@@ -14,6 +14,7 @@ import {
   type MasterSeedItem,
 } from '@/modules/inventory/materials/materialNominalDims';
 import masterSeed from '@/modules/inventory/materials/masterMaterialSeed.json';
+import { LocationListPage as LocationListPageImpl } from '@/modules/inventory/locations/LocationListPage';
 
 function materialDimsSource(row: Record<string, unknown>) {
   return {
@@ -250,17 +251,7 @@ export function WarehouseDetailPage() {
 }
 
 export function LocationListPage() {
-  const { t } = useI18n();
-  return (
-    <EntityListScreen
-      screenId="INV-008"
-      title={t('inventory.locationsTitle')}
-      description={t('inventory.locationsDesc')}
-      route="locations"
-      fields={useInvFields().location}
-      createLabel={t('inventory.newLocation')}
-    />
-  );
+  return <LocationListPageImpl />;
 }
 
 export function StockBalancePage() {

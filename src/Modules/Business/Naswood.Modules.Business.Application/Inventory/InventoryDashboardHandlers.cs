@@ -48,8 +48,8 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
         CancellationToken cancellationToken = default)
     {
         var materials = await _materials.SearchAsync(null, 1, 1, cancellationToken).ConfigureAwait(false);
-        var warehouses = await _warehouses.SearchAsync(null, 1, 1, cancellationToken).ConfigureAwait(false);
-        var locations = await _locations.SearchAsync(null, 1, 1, cancellationToken).ConfigureAwait(false);
+        var warehouses = await _warehouses.SearchAsync(null, null, 1, 1, cancellationToken).ConfigureAwait(false);
+        var locations = await _locations.SearchAsync(null, null, null, null, 1, 1, cancellationToken).ConfigureAwait(false);
         var balances = await _balances.SearchAsync(null, 1, 500, cancellationToken).ConfigureAwait(false);
         var receipts = await _goodsReceipts.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
         var issues = await _goodsIssues.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);

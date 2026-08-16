@@ -19,6 +19,10 @@ public sealed class StockEngineController : ControllerBase
     [RequirePermission("GoodsReceipt.Execute")]
     public async Task<IActionResult> ExecuteReceipt([FromBody] ExecuteGoodsReceiptRequestDto request, CancellationToken cancellationToken)
     {
+        var (plantId, error) = PlantClaims.ResolveRequestedPlant(User, request.PlantId);
+        if (error is not null)
+            return BadRequest(new { success = false, message = error });
+
         var result = await _dispatcher.SendAsync(
             new ExecuteGoodsReceiptCommand(
                 request.Number,
@@ -27,7 +31,8 @@ public sealed class StockEngineController : ControllerBase
                 request.Notes,
                 request.QuantityVerified,
                 request.ExtractSource ?? string.Empty,
-                request.Lines),
+                request.Lines,
+                plantId),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Goods receipt posted to stock.");
     }
@@ -36,8 +41,18 @@ public sealed class StockEngineController : ControllerBase
     [RequirePermission("GoodsIssue.Execute")]
     public async Task<IActionResult> ExecuteIssue([FromBody] ExecuteGoodsIssueRequestDto request, CancellationToken cancellationToken)
     {
+        var (plantId, error) = PlantClaims.ResolveRequestedPlant(User, request.PlantId);
+        if (error is not null)
+            return BadRequest(new { success = false, message = error });
+
         var result = await _dispatcher.SendAsync(
-            new ExecuteGoodsIssueCommand(request.Number, request.WarehouseCode, request.Reference, request.Notes, request.Lines),
+            new ExecuteGoodsIssueCommand(
+                request.Number,
+                request.WarehouseCode,
+                request.Reference,
+                request.Notes,
+                request.Lines,
+                plantId),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Goods issue posted to stock.");
     }

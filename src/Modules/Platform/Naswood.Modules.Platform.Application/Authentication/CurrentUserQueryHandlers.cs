@@ -66,6 +66,8 @@ public sealed class GetCurrentUserQueryHandler : IQueryHandler<GetCurrentUserQue
             Email = user.Email,
             CompanyId = session.CompanyId,
             PlantId = session.PlantId,
+            HomePlantId = user.HomePlantId ?? session.PlantId,
+            PlantIds = user.PlantIds.ToArray(),
             SessionId = session.Id,
             Roles = user.Roles.ToArray()
         });

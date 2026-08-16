@@ -91,7 +91,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.WarehouseType).HasMaxLength(200);
             entity.Property(x => x.Description).HasMaxLength(500);
             entity.Property(x => x.Status).HasMaxLength(200);
-            entity.HasIndex(x => x.Code);
+            entity.HasIndex(x => new { x.PlantId, x.Code });
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.Location>(entity =>
@@ -105,7 +105,9 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.WarehouseCode).HasMaxLength(200);
             entity.Property(x => x.LocationType).HasMaxLength(200);
+            entity.Property(x => x.Description).HasMaxLength(500);
             entity.Property(x => x.Status).HasMaxLength(200);
+            entity.HasIndex(x => new { x.PlantId, x.WarehouseCode, x.Code });
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryBalance>(entity =>

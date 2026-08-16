@@ -10,15 +10,17 @@ public interface IWarehouseRepository
 {
     Task<Warehouse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Warehouse?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<Warehouse?> GetByCodeAndPlantAsync(string code, string? plantId, CancellationToken cancellationToken = default);
     Task AddAsync(Warehouse entity, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<Warehouse> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Warehouse> Items, int Total)> SearchAsync(string? q, string? plantId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<bool> HasLocationsOrStockAsync(string warehouseCode, string? plantId, CancellationToken cancellationToken = default);
 }
 
-public sealed record SearchWarehouseQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedWarehouseDto>>;
-public sealed record GetWarehouseByIdQuery(Guid Id) : IQuery<Result<WarehouseDto>>;
-public sealed record CreateWarehouseCommand(string Code, string Name, string WarehouseType, string Status, string? PlantId, string Description = "") : ICommand<Result<WarehouseDto>>;
-public sealed record UpdateWarehouseCommand(Guid Id, string Code, string Name, string WarehouseType, string Status, string? PlantId, string? Description = null) : ICommand<Result<WarehouseDto>>;
-public sealed record DeleteWarehouseCommand(Guid Id) : ICommand<Result>;
+public sealed record SearchWarehouseQuery(string? Q, int Page, int PageSize, string? PlantId, IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<PagedWarehouseDto>>;
+public sealed record GetWarehouseByIdQuery(Guid Id, IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<WarehouseDto>>;
+public sealed record CreateWarehouseCommand(string Code, string Name, string WarehouseType, string Status, string? PlantId, string Description = "", IReadOnlyList<string>? AllowedPlantIds = null) : ICommand<Result<WarehouseDto>>;
+public sealed record UpdateWarehouseCommand(Guid Id, string Code, string Name, string WarehouseType, string Status, string? PlantId, string? Description = null, IReadOnlyList<string>? AllowedPlantIds = null) : ICommand<Result<WarehouseDto>>;
+public sealed record DeleteWarehouseCommand(Guid Id, IReadOnlyList<string>? AllowedPlantIds = null) : ICommand<Result>;
 
 /// <summary>Supported WarehouseType codes — production + technical/ops. Material is never bound to a warehouse.</summary>
 public static class WarehouseTypes
@@ -72,9 +74,14 @@ public sealed class SearchWarehouseQueryHandler : IQueryHandler<SearchWarehouseQ
     public SearchWarehouseQueryHandler(IWarehouseRepository repo) => _repo = repo;
     public async Task<Result<PagedWarehouseDto>> HandleAsync(SearchWarehouseQuery query, CancellationToken cancellationToken = default)
     {
+        if (query.AllowedPlantIds is { Count: > 0 }
+            && !string.IsNullOrWhiteSpace(query.PlantId)
+            && !PlantAccess.CanAccess(query.AllowedPlantIds, query.PlantId))
+            return Result.Failure<PagedWarehouseDto>(Error.Forbidden("BUS-WH-403", "Bu tesise erişim yetkiniz yok."));
+
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(query.Q, query.PlantId, page, pageSize, cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedWarehouseDto
         {
             Items = items.Select(WarehouseMapper.ToDto).ToArray(),
@@ -92,6 +99,8 @@ public sealed class GetWarehouseByIdQueryHandler : IQueryHandler<GetWarehouseByI
     {
         var e = await _repo.GetByIdAsync(query.Id, cancellationToken).ConfigureAwait(false);
         if (e is null || e.IsDeleted) return Result.Failure<WarehouseDto>(Error.NotFound("BUS-001", "Warehouse was not found."));
+        if (query.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(query.AllowedPlantIds, e.PlantId))
+            return Result.Failure<WarehouseDto>(Error.Forbidden("BUS-WH-403", "Bu tesise erişim yetkiniz yok."));
         return Result.Success(WarehouseMapper.ToDto(e));
     }
 }
@@ -110,13 +119,19 @@ public sealed class CreateWarehouseCommandHandler : ICommandHandler<CreateWareho
         if (!WarehouseTypes.IsKnown(warehouseType))
             return Result.Failure<WarehouseDto>(Error.Validation("BUS-WH-002", $"Unknown WarehouseType '{command.WarehouseType}'."));
 
-        var code = SystemIdentifier.Ensure(command.Code, "WH");
-        var existing = await _repo.GetByCodeAsync(code, cancellationToken).ConfigureAwait(false);
+        var plantId = PlantAccess.Normalize(command.PlantId);
+        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, plantId))
+            return Result.Failure<WarehouseDto>(Error.Forbidden("BUS-WH-403", "Bu tesiste depo oluşturma yetkiniz yok."));
+
+        var code = string.IsNullOrWhiteSpace(command.Code)
+            ? SystemIdentifier.Ensure(null, "WH")
+            : command.Code.Trim().ToUpperInvariant();
+        var existing = await _repo.GetByCodeAndPlantAsync(code, plantId, cancellationToken).ConfigureAwait(false);
         if (existing is not null && !existing.IsDeleted)
-            return Result.Failure<WarehouseDto>(Error.Conflict("BUS-WH-003", "Bu depo kodu zaten kullanılıyor."));
+            return Result.Failure<WarehouseDto>(Error.Conflict("BUS-WH-003", "Bu tesiste bu depo kodu zaten kullanılıyor."));
 
         var status = string.IsNullOrWhiteSpace(command.Status) ? "Active" : command.Status.Trim();
-        var e = Warehouse.Create(code, command.Name.Trim(), warehouseType, status, plantId: command.PlantId, description: command.Description ?? string.Empty);
+        var e = Warehouse.Create(code, command.Name.Trim(), warehouseType, status, plantId: plantId, description: command.Description ?? string.Empty);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(WarehouseMapper.ToDto(e));
@@ -132,6 +147,8 @@ public sealed class UpdateWarehouseCommandHandler : ICommandHandler<UpdateWareho
     {
         var e = await _repo.GetByIdAsync(command.Id, cancellationToken).ConfigureAwait(false);
         if (e is null || e.IsDeleted) return Result.Failure<WarehouseDto>(Error.NotFound("BUS-001", "Warehouse was not found."));
+        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, e.PlantId))
+            return Result.Failure<WarehouseDto>(Error.Forbidden("BUS-WH-403", "Bu tesiste depo değiştirme yetkiniz yok."));
 
         var warehouseType = WarehouseTypes.Normalize(command.WarehouseType);
         if (!WarehouseTypes.IsKnown(warehouseType))
@@ -152,7 +169,19 @@ public sealed class DeleteWarehouseCommandHandler : ICommandHandler<DeleteWareho
     {
         var e = await _repo.GetByIdAsync(command.Id, cancellationToken).ConfigureAwait(false);
         if (e is null || e.IsDeleted) return Result.Failure(Error.NotFound("BUS-001", "Warehouse was not found."));
-        e.SoftDelete();
+        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, e.PlantId))
+            return Result.Failure(Error.Forbidden("BUS-WH-403", "Bu tesiste depo silme yetkiniz yok."));
+
+        var blocked = await _repo.HasLocationsOrStockAsync(e.Code, e.PlantId, cancellationToken).ConfigureAwait(false);
+        if (blocked)
+        {
+            e.Update(e.Code, e.Name, e.WarehouseType, "Inactive", e.PlantId, e.Description);
+        }
+        else
+        {
+            e.SoftDelete();
+        }
+
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success();
     }

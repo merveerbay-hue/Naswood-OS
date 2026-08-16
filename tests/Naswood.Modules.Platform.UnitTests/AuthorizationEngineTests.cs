@@ -178,6 +178,10 @@ public class AuthorizationEngineTests
         public string? CompanyId => null;
 
         public string? PlantId => null;
+
+        public string? HomePlantId => null;
+
+        public IReadOnlyList<string> AllowedPlantIds => Array.Empty<string>();
     }
 
     private sealed class StubUnitOfWork : Application.Authentication.IPlatformUnitOfWork

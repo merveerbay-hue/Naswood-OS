@@ -74,7 +74,14 @@ public interface IAuthRequestContext
 
     string? CompanyId { get; }
 
+    /// <summary>Session working plant (may be Diğer Tesis view context).</summary>
     string? PlantId { get; }
+
+    /// <summary>Account home factory (Ana Üs) — first assigned plant.</summary>
+    string? HomePlantId { get; }
+
+    /// <summary>All plants the user may access.</summary>
+    IReadOnlyList<string> AllowedPlantIds { get; }
 }
 
 public interface IOutboxWriter

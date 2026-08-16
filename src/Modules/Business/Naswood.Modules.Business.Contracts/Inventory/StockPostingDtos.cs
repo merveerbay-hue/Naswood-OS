@@ -35,6 +35,8 @@ public sealed class ExecuteGoodsReceiptRequestDto
     /// Allowed for post: <c>ocr</c>, <c>manual</c>, or empty when lines are operator-confirmed masters.
     /// </summary>
     public string ExtractSource { get; init; } = string.Empty;
+    /// <summary>Factory / Plant. Defaults to session Ana Üs when omitted.</summary>
+    public string? PlantId { get; init; }
     public IReadOnlyList<StockPostLineRequestDto> Lines { get; init; } = Array.Empty<StockPostLineRequestDto>();
 }
 
@@ -44,6 +46,8 @@ public sealed class ExecuteGoodsIssueRequestDto
     public string WarehouseCode { get; init; } = string.Empty;
     public string Reference { get; init; } = string.Empty;
     public string Notes { get; init; } = string.Empty;
+    /// <summary>Factory / Plant. Defaults to session Ana Üs when omitted.</summary>
+    public string? PlantId { get; init; }
     public IReadOnlyList<StockPostLineRequestDto> Lines { get; init; } = Array.Empty<StockPostLineRequestDto>();
 }
 

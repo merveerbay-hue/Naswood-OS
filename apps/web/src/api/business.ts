@@ -11,24 +11,31 @@ export interface PagedResult<T> {
 export async function searchResource<T>(
   route: string,
   q?: string,
-  opts?: { page?: number; pageSize?: number },
+  opts?: { page?: number; pageSize?: number; plantId?: string; warehouseCode?: string; locationType?: string },
 ): Promise<PagedResult<T>> {
   const params = new URLSearchParams({
     page: String(opts?.page ?? 1),
     pageSize: String(opts?.pageSize ?? 50),
   });
   if (q) params.set('q', q);
+  if (opts?.plantId) params.set('plantId', opts.plantId);
+  if (opts?.warehouseCode) params.set('warehouseCode', opts.warehouseCode);
+  if (opts?.locationType) params.set('locationType', opts.locationType);
   return apiRequest<PagedResult<T>>(`/api/v1/${route}?${params}`, { method: 'GET', auth: true });
 }
 
 /** Page through all results (API caps pageSize at 100). */
-export async function searchAllResource<T>(route: string, q?: string): Promise<T[]> {
+export async function searchAllResource<T>(
+  route: string,
+  q?: string,
+  opts?: { plantId?: string },
+): Promise<T[]> {
   const pageSize = 100;
-  const first = await searchResource<T>(route, q, { page: 1, pageSize });
+  const first = await searchResource<T>(route, q, { page: 1, pageSize, plantId: opts?.plantId });
   const items = [...(first.items ?? [])];
   const totalPages = Math.max(1, first.totalPages || 1);
   for (let page = 2; page <= totalPages; page += 1) {
-    const next = await searchResource<T>(route, q, { page, pageSize });
+    const next = await searchResource<T>(route, q, { page, pageSize, plantId: opts?.plantId });
     items.push(...(next.items ?? []));
   }
   return items;
