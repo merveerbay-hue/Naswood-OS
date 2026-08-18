@@ -1,0 +1,6 @@
+{
+  "name": "naswood-os-dev",
+  "install": "pnpm install\ncurl -fsSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0\nexport PATH=\"$HOME/.dotnet:$PATH\"",
+  "start": "sudo pg_ctlcluster 16 main start || true\nexport PATH=\"$HOME/.dotnet:$PATH:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node | tail -1)/bin\"\ncd /workspace && (test -f package.json || cd /tmp/naswood-web) && ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/Hosts/Naswood.Api/Naswood.Api.csproj --no-launch-profile &\npnpm --filter @naswood/web dev --host 0.0.0.0 --port 5173",
+  "ports": [5173, 5080]
+}
