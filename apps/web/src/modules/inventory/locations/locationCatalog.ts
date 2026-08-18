@@ -10,6 +10,8 @@ export type LocationTypeCode =
   | 'BLOCK'
   | 'QUARANTINE_AREA'
   | 'PACKAGE_AREA'
+  | 'STAGING'
+  | 'WIP'
   | 'OTHER';
 
 export const LOCATION_TYPE_OPTIONS: { token: LocationTypeCode; label: string }[] = [
@@ -19,6 +21,8 @@ export const LOCATION_TYPE_OPTIONS: { token: LocationTypeCode; label: string }[]
   { token: 'BLOCK', label: 'Blok' },
   { token: 'QUARANTINE_AREA', label: 'Karantina Alanı' },
   { token: 'PACKAGE_AREA', label: 'Paket Alanı' },
+  { token: 'STAGING', label: 'Staging / Bekleme' },
+  { token: 'WIP', label: 'WIP / Üretim Ara Stok' },
   { token: 'OTHER', label: 'Diğer' },
 ];
 

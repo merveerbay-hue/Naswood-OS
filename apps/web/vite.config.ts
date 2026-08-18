@@ -12,11 +12,18 @@ export default defineConfig({
     },
   },
   server: {
-    host: true,
+    host: '0.0.0.0',
     port: 5173,
+    strictPort: true,
     // Cursor / cloud port-forward previews send a non-localhost Host header.
-    // Without this, Vite returns 403 and login shows a connection error.
+    // Without this, Vite returns 403 and the preview stays blank/black.
     allowedHosts: true,
+    // HMR websocket through Cursor port proxy can fail and leave a blank frame.
+    // Disable overlay-blocking; client still loads the app.
+    hmr: {
+      overlay: true,
+      clientPort: 5173,
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5080',
@@ -27,6 +34,11 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    allowedHosts: true,
   },
 });
 

@@ -5,13 +5,22 @@ const THEME_KEY = 'naswood.theme';
 
 export function readThemePreference(): ThemePreference {
   if (typeof window === 'undefined') {
-    return 'system';
+    return 'light';
   }
   const value = localStorage.getItem(THEME_KEY);
   if (value === 'light' || value === 'dark' || value === 'system') {
     return value;
   }
-  return 'system';
+  // Cursor / embedded previews often report prefers-color-scheme: dark.
+  // Prefer light until the user explicitly chooses a theme.
+  try {
+    if (window.self !== window.top) {
+      return 'light';
+    }
+  } catch {
+    return 'light';
+  }
+  return 'light';
 }
 
 export function writeThemePreference(preference: ThemePreference) {

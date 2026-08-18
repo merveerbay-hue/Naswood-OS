@@ -147,7 +147,8 @@ export function LocationListPage() {
           <p className="text-xs font-medium text-[var(--text-muted)]">INV-008</p>
           <h2 className="text-xl font-semibold tracking-tight">{t('inventory.locationsTitle')}</h2>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Fabrika → Depo → Lokasyon. Stoklar Ana Üs kapsamında tutulur.
+            Fabrika → Depo → Lokasyon. Stoklar Ana Üs kapsamında tutulur. Staging/WIP stok
+            lokasyonudur; İş Merkezi (Work Center) değildir.
           </p>
         </div>
         <Button type="button" onClick={() => setShowCreate((v) => !v)}>

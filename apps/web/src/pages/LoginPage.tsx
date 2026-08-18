@@ -54,25 +54,38 @@ export function LoginPage() {
   });
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
+    <main
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10"
+      style={{ background: '#f8fafc' }}
+    >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(230,126,34,0.18),_transparent_55%),linear-gradient(160deg,#1a2330_0%,#2f3a45_45%,#1f2937_100%)]"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse at top, rgba(230,126,34,0.16), transparent 55%), linear-gradient(160deg, #fff7ed 0%, #f8fafc 42%, #eef2f7 100%)',
+        }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:repeating-linear-gradient(90deg,transparent,transparent_24px,rgba(255,255,255,0.35)_25px)]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(47,58,69,0.35) 25px)',
+        }}
       />
 
       <section className="relative z-10 w-full max-w-md animate-[fade-up_420ms_ease-out]">
-        <div className="mb-8 text-center text-white">
+        <div className="mb-8 text-center" style={{ color: '#111827' }}>
           <p className="text-4xl font-semibold tracking-tight sm:text-5xl">{t('appName')}</p>
-          <p className="mt-3 text-sm text-white/75">{t('login.subtitle')}</p>
+          <p className="mt-3 text-sm" style={{ color: '#4b5563' }}>
+            {t('login.subtitle')}
+          </p>
         </div>
 
         <form
           onSubmit={onSubmit}
-          className="rounded-[var(--radius-lg)] border border-white/10 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8"
+          className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-white p-6 shadow-xl sm:p-8"
           noValidate
         >
           <div className="space-y-4">

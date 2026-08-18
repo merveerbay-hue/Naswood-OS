@@ -1,5 +1,10 @@
 import { Button, Input } from '@naswood/ui';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { searchAllResource } from '@/api/business';
+import { useAuth } from '@/auth/useAuth';
 import { useI18n } from '@/i18n';
+import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
 import {
   finalLineQty,
   formatDocumentDims,
@@ -20,6 +25,9 @@ import {
   type StockDistributionRow,
 } from './stockDistribution';
 import { WAREHOUSE_CATALOG } from '@/modules/inventory/warehouses/warehouseCatalog';
+
+type WarehouseOpt = { code?: string; name?: string; status?: string; plantId?: string };
+type LocationOpt = { code?: string; name?: string; warehouseCode?: string; status?: string };
 
 type Props = {
   lines: IncomingLine[];
@@ -52,8 +60,40 @@ export function StockStep({
   onLotNoteChange,
 }: Props) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const workingPlantId = user?.plantId || user?.homePlantId || 'PLANT-001';
+  const homePlantId = user?.homePlantId || workingPlantId;
   const accepted = acceptedStockLines(lines);
   const validation = validateDistributions(lines, distributions);
+
+  const warehousesQuery = useQuery({
+    queryKey: ['business', 'warehouses', 'rcv', workingPlantId],
+    queryFn: () => searchAllResource<WarehouseOpt>('warehouses', undefined, { plantId: workingPlantId }),
+  });
+  const locationsQuery = useQuery({
+    queryKey: ['business', 'locations', 'rcv', workingPlantId],
+    queryFn: () => searchAllResource<LocationOpt>('locations', undefined, { plantId: workingPlantId }),
+  });
+
+  const activeWarehouses = useMemo(() => {
+    const fromApi = (warehousesQuery.data ?? []).filter(
+      (w) => String(w.status ?? 'Active').toLowerCase() === 'active',
+    );
+    if (fromApi.length > 0) return fromApi;
+    // Fallback catalog codes until plant warehouses are opened.
+    return WAREHOUSE_CATALOG.map((w) => ({ code: w.warehouseCode, name: w.warehouseName, status: 'Active' }));
+  }, [warehousesQuery.data]);
+
+  const locationsByWh = useMemo(() => {
+    const map = new Map<string, LocationOpt[]>();
+    for (const loc of locationsQuery.data ?? []) {
+      if (String(loc.status ?? 'Active').toLowerCase() !== 'active') continue;
+      const wh = String(loc.warehouseCode ?? '').toUpperCase();
+      if (!map.has(wh)) map.set(wh, []);
+      map.get(wh)!.push(loc);
+    }
+    return map;
+  }, [locationsQuery.data]);
 
   function updateRow(id: string, patch: Partial<StockDistributionRow>) {
     onDistributionsChange(distributions.map((d) => (d.id === id ? { ...d, ...patch } : d)));
@@ -73,7 +113,15 @@ export function StockStep({
         <h3 className="text-base font-semibold tracking-tight">{t('wb.rcv.stockStep.title')}</h3>
         <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.stockStep.intro')}</p>
         <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.stockStep.rules')}</p>
+        <p className="text-xs text-[var(--text-muted)]">
+          Ana Üs: {plantDisplayName(homePlantId)} ({homePlantId})
+          {workingPlantId.toUpperCase() !== homePlantId.toUpperCase()
+            ? ` · Çalışma tesisi: ${plantDisplayName(workingPlantId)} (${workingPlantId})`
+            : ''}
+          {' · '}Depo/lokasyon yalnızca bu tesisin aktif kayıtlarından.
+        </p>
       </div>
+
 
       <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
@@ -119,11 +167,23 @@ export function StockStep({
       ) : (
         <div className="space-y-4">
           <datalist id="rcv-wh-catalog">
-            {WAREHOUSE_CATALOG.map((w) => (
-              <option key={w.warehouseCode} value={w.warehouseCode}>
-                {w.warehouseName}
+            {activeWarehouses.map((w) => (
+              <option key={String(w.code)} value={String(w.code)}>
+                {String(w.name ?? w.code)}
               </option>
             ))}
+          </datalist>
+          <datalist id="rcv-loc-catalog">
+            {(locationsQuery.data ?? [])
+              .filter((l) => String(l.status ?? 'Active').toLowerCase() === 'active')
+              .map((l) => (
+                <option
+                  key={`${l.warehouseCode}-${l.code}`}
+                  value={String(l.code)}
+                >
+                  {String(l.warehouseCode)} · {String(l.name ?? l.code)}
+                </option>
+              ))}
           </datalist>
           {accepted.map((line) => {
             const lineDists = distributions.filter((d) => d.lineId === line.id);
@@ -212,7 +272,21 @@ export function StockStep({
                                 value={d.warehouseCode}
                                 disabled={disabled || posted}
                                 list="rcv-wh-catalog"
-                                onChange={(e) => updateRow(d.id, { warehouseCode: e.target.value })}
+                                onChange={(e) =>
+                                  updateRow(d.id, {
+                                    warehouseCode: e.target.value,
+                                    // Clear location when WH changes if it no longer belongs.
+                                    locationCode: locationsByWh
+                                      .get(e.target.value.trim().toUpperCase())
+                                      ?.some(
+                                        (l) =>
+                                          String(l.code).toUpperCase() ===
+                                          d.locationCode.trim().toUpperCase(),
+                                      )
+                                      ? d.locationCode
+                                      : d.locationCode,
+                                  })
+                                }
                               />
                             </td>
                             <td className="px-2 py-2">
@@ -220,6 +294,7 @@ export function StockStep({
                                 className="w-24"
                                 value={d.locationCode}
                                 disabled={disabled || posted}
+                                list="rcv-loc-catalog"
                                 onChange={(e) => updateRow(d.id, { locationCode: e.target.value })}
                               />
                             </td>

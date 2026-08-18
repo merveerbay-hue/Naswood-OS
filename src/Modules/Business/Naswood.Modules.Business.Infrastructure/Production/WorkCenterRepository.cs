@@ -16,13 +16,26 @@ public sealed class WorkCenterRepository : IWorkCenterRepository
     public async Task AddAsync(WorkCenter entity, CancellationToken cancellationToken = default) =>
         await _db.Set<WorkCenter>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public async Task<(IReadOnlyList<WorkCenter> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<WorkCenter> Items, int Total)> SearchAsync(
+        string? q,
+        string? plantId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
     {
         var query = _db.Set<WorkCenter>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
-            query = query.Where(x => EF.Functions.ILike(x.Name, "%" + value + "%"));
+            query = query.Where(x =>
+                EF.Functions.ILike(x.Name, "%" + value + "%")
+                || EF.Functions.ILike(x.Code, "%" + value + "%"));
         }
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await query.OrderByDescending(x => x.CreatedAt)

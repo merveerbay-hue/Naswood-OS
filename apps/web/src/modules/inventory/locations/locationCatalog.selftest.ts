@@ -8,6 +8,7 @@ import {
   locationUniquenessKey,
   plantDisplayName,
   stockBalanceKeyWithPlant,
+  type LocationTypeCode,
 } from './locationCatalog';
 
 function assert(cond: unknown, msg: string): asserts cond {
@@ -15,11 +16,18 @@ function assert(cond: unknown, msg: string): asserts cond {
 }
 
 export function runLocationCatalogSelftest(): void {
-  assert(LOCATION_TYPE_OPTIONS.length === 7, '7 location types');
+  assert(LOCATION_TYPE_OPTIONS.length === 9, '9 location types');
   assert(isKnownLocationType('OPEN_AREA'), 'open');
   assert(isKnownLocationType('FIELD'), 'field');
   assert(isKnownLocationType('QUARANTINE_AREA'), 'qa');
+  assert(isKnownLocationType('STAGING'), 'staging');
+  assert(isKnownLocationType('WIP'), 'wip');
   assert(!isKnownLocationType('FOO'), 'unknown');
+  // WIP/Staging are stock locations — not work centers
+  assert(
+    LOCATION_TYPE_OPTIONS.every((o) => o.token !== ('WORK_CENTER' as LocationTypeCode)),
+    'no work-center type on location',
+  );
 
   assert(plantDisplayName('F01') === 'Bucak Fabrikası', 'F01 name');
   assert(plantDisplayName('PLANT-001') === 'Bucak Fabrikası', 'legacy plant');
