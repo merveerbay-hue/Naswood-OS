@@ -21,13 +21,20 @@ import {
   removeDistributionRow,
   sliceVolumeM3,
   validateDistributions,
+  type DistributionAllowlist,
   type StockBucket,
   type StockDistributionRow,
 } from './stockDistribution';
-import { WAREHOUSE_CATALOG } from '@/modules/inventory/warehouses/warehouseCatalog';
 
-type WarehouseOpt = { code?: string; name?: string; status?: string; plantId?: string };
-type LocationOpt = { code?: string; name?: string; warehouseCode?: string; status?: string };
+type WarehouseOpt = { code?: string; name?: string; status?: string; plantId?: string; warehouseType?: string };
+type LocationOpt = {
+  code?: string;
+  name?: string;
+  warehouseCode?: string;
+  status?: string;
+  locationType?: string;
+  plantId?: string;
+};
 
 type Props = {
   lines: IncomingLine[];
@@ -61,33 +68,33 @@ export function StockStep({
 }: Props) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const workingPlantId = user?.plantId || user?.homePlantId || 'PLANT-001';
-  const homePlantId = user?.homePlantId || workingPlantId;
+  // Rule 1 — default operational context is HomeFactory (homePlantId).
+  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const postingPlantId = user?.plantId || homePlantId;
   const accepted = acceptedStockLines(lines);
-  const validation = validateDistributions(lines, distributions);
 
   const warehousesQuery = useQuery({
-    queryKey: ['business', 'warehouses', 'rcv', workingPlantId],
-    queryFn: () => searchAllResource<WarehouseOpt>('warehouses', undefined, { plantId: workingPlantId }),
+    queryKey: ['business', 'warehouses', 'rcv', postingPlantId],
+    queryFn: () => searchAllResource<WarehouseOpt>('warehouses', undefined, { plantId: postingPlantId }),
   });
   const locationsQuery = useQuery({
-    queryKey: ['business', 'locations', 'rcv', workingPlantId],
-    queryFn: () => searchAllResource<LocationOpt>('locations', undefined, { plantId: workingPlantId }),
+    queryKey: ['business', 'locations', 'rcv', postingPlantId],
+    queryFn: () => searchAllResource<LocationOpt>('locations', undefined, { plantId: postingPlantId }),
   });
 
   const activeWarehouses = useMemo(() => {
-    const fromApi = (warehousesQuery.data ?? []).filter(
-      (w) => String(w.status ?? 'Active').toLowerCase() === 'active',
+    return (warehousesQuery.data ?? []).filter(
+      (w) =>
+        String(w.code ?? '').trim() &&
+        String(w.status ?? 'Active').toLowerCase() === 'active',
     );
-    if (fromApi.length > 0) return fromApi;
-    // Fallback catalog codes until plant warehouses are opened.
-    return WAREHOUSE_CATALOG.map((w) => ({ code: w.warehouseCode, name: w.warehouseName, status: 'Active' }));
   }, [warehousesQuery.data]);
 
   const locationsByWh = useMemo(() => {
     const map = new Map<string, LocationOpt[]>();
     for (const loc of locationsQuery.data ?? []) {
       if (String(loc.status ?? 'Active').toLowerCase() !== 'active') continue;
+      if (!String(loc.code ?? '').trim()) continue;
       const wh = String(loc.warehouseCode ?? '').toUpperCase();
       if (!map.has(wh)) map.set(wh, []);
       map.get(wh)!.push(loc);
@@ -95,17 +102,88 @@ export function StockStep({
     return map;
   }, [locationsQuery.data]);
 
+  const allowlist: DistributionAllowlist | null = useMemo(() => {
+    if (warehousesQuery.isLoading || locationsQuery.isLoading) return null;
+    const warehouseCodes = new Set(
+      activeWarehouses.map((w) => String(w.code).trim().toUpperCase()).filter(Boolean),
+    );
+    const locationsByWarehouse = new Map<string, ReadonlySet<string>>();
+    for (const [wh, locs] of locationsByWh) {
+      locationsByWarehouse.set(
+        wh,
+        new Set(locs.map((l) => String(l.code).trim().toUpperCase()).filter(Boolean)),
+      );
+    }
+    return { warehouseCodes, locationsByWarehouse };
+  }, [activeWarehouses, locationsByWh, warehousesQuery.isLoading, locationsQuery.isLoading]);
+
+  const validation = validateDistributions(lines, distributions, allowlist);
+
   function updateRow(id: string, patch: Partial<StockDistributionRow>) {
     onDistributionsChange(distributions.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   }
 
+  function pickDefaultForBucket(bucket: StockBucket): { warehouseCode: string; locationCode: string } {
+    if (bucket === 'quarantine') {
+      const qaLoc = [...locationsByWh.values()]
+        .flat()
+        .find((l) => String(l.locationType ?? '').toUpperCase() === 'QUARANTINE_AREA');
+      if (qaLoc?.code && qaLoc.warehouseCode) {
+        return {
+          warehouseCode: String(qaLoc.warehouseCode),
+          locationCode: String(qaLoc.code),
+        };
+      }
+      const qaWh =
+        activeWarehouses.find((w) => String(w.code).toUpperCase() === 'WH-QA') ??
+        activeWarehouses.find((w) => String(w.warehouseType ?? '').toUpperCase().includes('QA'));
+      if (qaWh?.code) {
+        const locs = locationsByWh.get(String(qaWh.code).toUpperCase()) ?? [];
+        return {
+          warehouseCode: String(qaWh.code),
+          locationCode: String(locs[0]?.code ?? ''),
+        };
+      }
+    }
+    const rm =
+      activeWarehouses.find((w) => String(w.code).toUpperCase() === 'WH-RM') ?? activeWarehouses[0];
+    if (!rm?.code) return { warehouseCode: '', locationCode: '' };
+    const locs = locationsByWh.get(String(rm.code).toUpperCase()) ?? [];
+    const preferred =
+      locs.find((l) => !['STAGING', 'WIP', 'QUARANTINE_AREA'].includes(String(l.locationType ?? '').toUpperCase())) ??
+      locs[0];
+    return {
+      warehouseCode: String(rm.code),
+      locationCode: String(preferred?.code ?? ''),
+    };
+  }
+
   function setBucket(id: string, bucket: StockBucket) {
+    const picked = pickDefaultForBucket(bucket);
     updateRow(id, {
       bucket,
-      locationCode: bucket === 'quarantine' ? 'K-01' : 'A-03',
-      warehouseCode: bucket === 'quarantine' ? 'WH-QA' : 'WH-RM',
+      warehouseCode: picked.warehouseCode,
+      locationCode: picked.locationCode,
     });
   }
+
+  function onWarehouseChange(id: string, warehouseCode: string) {
+    const locs = locationsByWh.get(warehouseCode.trim().toUpperCase()) ?? [];
+    const current = distributions.find((d) => d.id === id);
+    const stillValid = locs.some(
+      (l) =>
+        String(l.code).toUpperCase() === String(current?.locationCode ?? '').trim().toUpperCase(),
+    );
+    updateRow(id, {
+      warehouseCode,
+      locationCode: stillValid ? (current?.locationCode ?? '') : String(locs[0]?.code ?? ''),
+    });
+  }
+
+  const mastersEmpty =
+    !warehousesQuery.isLoading &&
+    !locationsQuery.isLoading &&
+    (activeWarehouses.length === 0 || locationsByWh.size === 0);
 
   return (
     <div className="space-y-5">
@@ -115,13 +193,12 @@ export function StockStep({
         <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.stockStep.rules')}</p>
         <p className="text-xs text-[var(--text-muted)]">
           Ana Üs: {plantDisplayName(homePlantId)} ({homePlantId})
-          {workingPlantId.toUpperCase() !== homePlantId.toUpperCase()
-            ? ` · Çalışma tesisi: ${plantDisplayName(workingPlantId)} (${workingPlantId})`
+          {postingPlantId.toUpperCase() !== homePlantId.toUpperCase()
+            ? ` · Çalışma tesisi: ${plantDisplayName(postingPlantId)} (${postingPlantId})`
             : ''}
-          {' · '}Depo/lokasyon yalnızca bu tesisin aktif kayıtlarından.
+          {' · '}Depo/lokasyon yalnızca bu tesisin aktif kayıtlarından (API doğrulamalı).
         </p>
       </div>
-
 
       <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
@@ -162,29 +239,17 @@ export function StockStep({
         </p>
       ) : null}
 
+      {mastersEmpty ? (
+        <p className="rounded-md border border-[var(--color-warning,var(--color-danger))]/40 bg-[var(--color-warning,var(--color-danger))]/5 px-3 py-2 text-sm">
+          Bu tesis için aktif depo veya lokasyon tanımı yok. Önce Depo / Lokasyon master kayıtlarını
+          oluşturun; aksi halde mal kabul stok girişi yapılamaz.
+        </p>
+      ) : null}
+
       {accepted.length === 0 ? (
         <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.stockStep.noAccepted')}</p>
       ) : (
         <div className="space-y-4">
-          <datalist id="rcv-wh-catalog">
-            {activeWarehouses.map((w) => (
-              <option key={String(w.code)} value={String(w.code)}>
-                {String(w.name ?? w.code)}
-              </option>
-            ))}
-          </datalist>
-          <datalist id="rcv-loc-catalog">
-            {(locationsQuery.data ?? [])
-              .filter((l) => String(l.status ?? 'Active').toLowerCase() === 'active')
-              .map((l) => (
-                <option
-                  key={`${l.warehouseCode}-${l.code}`}
-                  value={String(l.code)}
-                >
-                  {String(l.warehouseCode)} · {String(l.name ?? l.code)}
-                </option>
-              ))}
-          </datalist>
           {accepted.map((line) => {
             const lineDists = distributions.filter((d) => d.lineId === line.id);
             const acceptedQty = stockBasisQty(line);
@@ -252,6 +317,7 @@ export function StockStep({
                           ? (line.physicalGroups.find((g) => g.id === d.groupId) ?? null)
                           : null;
                         const sliceVol = sliceVolumeM3(line, group, parseQtySafe(d.qty));
+                        const rowLocs = locationsByWh.get(d.warehouseCode.trim().toUpperCase()) ?? [];
                         return (
                           <tr key={d.id} className="border-t border-[var(--border-default)] align-top">
                             <td className="px-2 py-2 text-xs">{distributionDimsLabel(line, d.groupId)}</td>
@@ -267,36 +333,37 @@ export function StockStep({
                               {sliceVol != null ? sliceVol.toFixed(3) : '—'}
                             </td>
                             <td className="px-2 py-2">
-                              <Input
-                                className="w-28"
+                              <select
+                                className="h-9 w-36 rounded-md border border-[var(--border-default)] bg-transparent px-2 text-xs"
                                 value={d.warehouseCode}
-                                disabled={disabled || posted}
-                                list="rcv-wh-catalog"
-                                onChange={(e) =>
-                                  updateRow(d.id, {
-                                    warehouseCode: e.target.value,
-                                    // Clear location when WH changes if it no longer belongs.
-                                    locationCode: locationsByWh
-                                      .get(e.target.value.trim().toUpperCase())
-                                      ?.some(
-                                        (l) =>
-                                          String(l.code).toUpperCase() ===
-                                          d.locationCode.trim().toUpperCase(),
-                                      )
-                                      ? d.locationCode
-                                      : d.locationCode,
-                                  })
-                                }
-                              />
+                                disabled={disabled || posted || activeWarehouses.length === 0}
+                                onChange={(e) => onWarehouseChange(d.id, e.target.value)}
+                              >
+                                <option value="">— Depo —</option>
+                                {activeWarehouses.map((w) => (
+                                  <option key={String(w.code)} value={String(w.code)}>
+                                    {String(w.code)}
+                                    {w.name ? ` · ${w.name}` : ''}
+                                  </option>
+                                ))}
+                              </select>
                             </td>
                             <td className="px-2 py-2">
-                              <Input
-                                className="w-24"
+                              <select
+                                className="h-9 w-36 rounded-md border border-[var(--border-default)] bg-transparent px-2 text-xs"
                                 value={d.locationCode}
-                                disabled={disabled || posted}
-                                list="rcv-loc-catalog"
+                                disabled={disabled || posted || !d.warehouseCode || rowLocs.length === 0}
                                 onChange={(e) => updateRow(d.id, { locationCode: e.target.value })}
-                              />
+                              >
+                                <option value="">— Lokasyon —</option>
+                                {rowLocs.map((l) => (
+                                  <option key={String(l.code)} value={String(l.code)}>
+                                    {String(l.code)}
+                                    {l.name ? ` · ${l.name}` : ''}
+                                    {l.locationType ? ` (${l.locationType})` : ''}
+                                  </option>
+                                ))}
+                              </select>
                             </td>
                             <td className="px-2 py-2">
                               <select
@@ -355,6 +422,16 @@ export function StockStep({
       ) : null}
       {!posted && !validation.ok && validation.code === 'missingWh' ? (
         <p className="text-sm text-[var(--color-danger)]">{t('wb.rcv.stockStep.errWh')}</p>
+      ) : null}
+      {!posted && !validation.ok && validation.code === 'invalidWh' ? (
+        <p className="text-sm text-[var(--color-danger)]">
+          Seçilen depo bu tesisin aktif depoları arasında değil.
+        </p>
+      ) : null}
+      {!posted && !validation.ok && validation.code === 'invalidLoc' ? (
+        <p className="text-sm text-[var(--color-danger)]">
+          Seçilen lokasyon, seçili deponun aktif lokasyonları arasında değil.
+        </p>
       ) : null}
 
       {postBlockedReason && !posted ? (

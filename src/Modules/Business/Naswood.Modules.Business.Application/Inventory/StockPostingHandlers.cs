@@ -35,7 +35,8 @@ public sealed record ExecuteGoodsReceiptCommand(
     bool QuantityVerified,
     string ExtractSource,
     IReadOnlyList<StockPostLineRequestDto> Lines,
-    string? PlantId = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
+    string? PlantId = null,
+    IReadOnlyList<string>? AllowedPlantIds = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
 
 public sealed record ExecuteGoodsIssueCommand(
     string Number,
@@ -43,7 +44,8 @@ public sealed record ExecuteGoodsIssueCommand(
     string Reference,
     string Notes,
     IReadOnlyList<StockPostLineRequestDto> Lines,
-    string? PlantId = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
+    string? PlantId = null,
+    IReadOnlyList<string>? AllowedPlantIds = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
 
 public sealed record SearchInventoryPackageQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedInventoryPackageDto>>;
 public sealed record SearchMaterialIdentityQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedMaterialIdentityDto>>;
@@ -129,6 +131,11 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         }
 
         var plantId = string.IsNullOrWhiteSpace(command.PlantId) ? "PLANT-001" : command.PlantId.Trim();
+        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, plantId))
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                "INV-POST-403",
+                "Bu tesise mal kabul yetkiniz yok."));
+
         var receipt = GoodsReceipt.Create(
             receiptNumber,
             command.WarehouseCode.Trim(),
@@ -177,27 +184,55 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             var warehouseCode = string.IsNullOrWhiteSpace(line.WarehouseCode)
                 ? receipt.WarehouseCode
                 : line.WarehouseCode.Trim();
-            var locationCode = string.IsNullOrWhiteSpace(line.LocationCode) ? "RECV" : line.LocationCode.Trim();
+            var locationCode = string.IsNullOrWhiteSpace(line.LocationCode) ? string.Empty : line.LocationCode.Trim();
+            if (string.IsNullOrWhiteSpace(warehouseCode))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-002",
+                    $"Line {lineNo}: WarehouseCode is required."));
+            if (string.IsNullOrWhiteSpace(locationCode))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-018",
+                    $"Line {lineNo}: LocationCode is required."));
 
-            // Inactive warehouses must not receive new stock.
+            // Warehouse must exist in the posting plant and be Active.
             var warehouse = await _warehouses.GetByCodeAndPlantAsync(warehouseCode, plantId, cancellationToken).ConfigureAwait(false);
-            if (warehouse is not null
-                && !string.Equals(warehouse.Status, "Active", StringComparison.OrdinalIgnoreCase))
-            {
+            if (warehouse is null || warehouse.IsDeleted)
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-017",
+                    $"Depo '{warehouseCode}' bu tesiste ({plantId}) tanımlı değil — mal kabul yapılamaz."));
+            if (!string.Equals(warehouse.Status, "Active", StringComparison.OrdinalIgnoreCase))
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
                     "INV-POST-016",
                     $"Depo '{warehouseCode}' pasif — yeni mal kabul yapılamaz."));
-            }
+            if (!string.IsNullOrWhiteSpace(warehouse.PlantId)
+                && !string.Equals(warehouse.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                    "INV-POST-403",
+                    $"Depo '{warehouseCode}' seçili fabrikaya ({plantId}) ait değil."));
 
-            // Inactive locations must not receive new stock.
+            // Location must exist under that warehouse + plant and be Active.
             var location = await _locations.FindByWarehouseAndCodeAsync(warehouseCode, locationCode, plantId, cancellationToken).ConfigureAwait(false);
-            if (location is not null
-                && !string.Equals(location.Status, "Active", StringComparison.OrdinalIgnoreCase))
-            {
+            if (location is null || location.IsDeleted)
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-019",
+                    $"Lokasyon '{locationCode}' depo '{warehouseCode}' / tesis '{plantId}' altında tanımlı değil."));
+            if (!string.Equals(location.Status, "Active", StringComparison.OrdinalIgnoreCase))
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
                     "INV-POST-015",
                     $"Lokasyon '{locationCode}' pasif — yeni mal kabul yapılamaz."));
-            }
+            if (!string.Equals(location.WarehouseCode, warehouseCode, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-020",
+                    $"Lokasyon '{locationCode}' seçilen depoya ({warehouseCode}) ait değil."));
+            if (!string.IsNullOrWhiteSpace(location.PlantId)
+                && !string.Equals(location.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                    "INV-POST-403",
+                    $"Lokasyon '{locationCode}' seçili fabrikaya ({plantId}) ait değil."));
+
+            // Canonical casing from masters.
+            warehouseCode = warehouse.Code;
+            locationCode = location.Code;
 
             var lotNumber = string.IsNullOrWhiteSpace(line.LotNumber)
                 ? SystemIdentifier.Ensure(null, "LOT")
@@ -332,6 +367,11 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
             return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-002", "WarehouseCode is required."));
 
         var plantId = string.IsNullOrWhiteSpace(command.PlantId) ? "PLANT-001" : command.PlantId.Trim();
+        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, plantId))
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                "INV-POST-403",
+                "Bu tesise mal çıkış yetkiniz yok."));
+
         var issue = GoodsIssue.Create(
             SystemIdentifier.Ensure(command.Number, "GI"),
             command.WarehouseCode.Trim(),

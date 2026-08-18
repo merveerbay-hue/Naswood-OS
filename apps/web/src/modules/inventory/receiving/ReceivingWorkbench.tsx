@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@naswood/ui';
-import { executeStockDocument, searchResource } from '@/api/business';
+import { executeStockDocument, searchAllResource, searchResource } from '@/api/business';
 import { useAuth } from '@/auth/useAuth';
 import { useI18n } from '@/i18n';
 import { type MaterialCandidate } from './materialMatch';
@@ -43,6 +43,7 @@ import {
   buildExecuteLines,
   mintLotNumber,
   validateDistributions,
+  type DistributionAllowlist,
   type StockDistributionRow,
 } from './stockDistribution';
 
@@ -85,7 +86,9 @@ function nowTime() {
 export function ReceivingWorkbench() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const workingPlantId = user?.plantId || user?.homePlantId || 'PLANT-001';
+  // Rule 1 — default posting context is HomeFactory (homePlantId).
+  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const postingPlantId = user?.plantId || homePlantId;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [stageIdx, setStageIdx] = useState(0);
@@ -110,13 +113,70 @@ export function ReceivingWorkbench() {
   const [materialCheck, setMaterialCheck] = useState<MaterialCheckState>(() => createDefaultMaterialCheck());
   const [incomingLines, setIncomingLines] = useState<IncomingLine[]>([]);
   const [compareResolved, setCompareResolved] = useState(false);
-  const [warehouse, setWarehouse] = useState('WH-RM');
-  const [location, setLocation] = useState('A-03-02');
+  const [warehouse, setWarehouse] = useState('');
+  const [location, setLocation] = useState('');
   const [distributions, setDistributions] = useState<StockDistributionRow[]>([]);
   const [grNumber] = useState(() => mintPreview('GR'));
   const [sharedLot] = useState(() => mintLotNumber());
   const [lotNote, setLotNote] = useState('');
   const [lotTracking, setLotTracking] = useState(true);
+
+  const warehousesQuery = useQuery({
+    queryKey: ['business', 'warehouses', 'rcv-wb', postingPlantId],
+    queryFn: () =>
+      searchAllResource<{ code?: string; status?: string }>('warehouses', undefined, {
+        plantId: postingPlantId,
+      }),
+  });
+  const locationsQuery = useQuery({
+    queryKey: ['business', 'locations', 'rcv-wb', postingPlantId],
+    queryFn: () =>
+      searchAllResource<{ code?: string; warehouseCode?: string; status?: string }>(
+        'locations',
+        undefined,
+        { plantId: postingPlantId },
+      ),
+  });
+
+  const postingAllowlist: DistributionAllowlist | null = useMemo(() => {
+    if (warehousesQuery.isLoading || locationsQuery.isLoading) return null;
+    const warehouseCodes = new Set(
+      (warehousesQuery.data ?? [])
+        .filter((w) => String(w.status ?? 'Active').toLowerCase() === 'active')
+        .map((w) => String(w.code ?? '').trim().toUpperCase())
+        .filter(Boolean),
+    );
+    const locationsByWarehouse = new Map<string, ReadonlySet<string>>();
+    for (const loc of locationsQuery.data ?? []) {
+      if (String(loc.status ?? 'Active').toLowerCase() !== 'active') continue;
+      const wh = String(loc.warehouseCode ?? '').trim().toUpperCase();
+      const code = String(loc.code ?? '').trim().toUpperCase();
+      if (!wh || !code) continue;
+      const set = new Set(locationsByWarehouse.get(wh) ?? []);
+      set.add(code);
+      locationsByWarehouse.set(wh, set);
+    }
+    return { warehouseCodes, locationsByWarehouse };
+  }, [warehousesQuery.data, warehousesQuery.isLoading, locationsQuery.data, locationsQuery.isLoading]);
+
+  useEffect(() => {
+    if (warehouse.trim() && location.trim()) return;
+    const whs = (warehousesQuery.data ?? []).filter(
+      (w) => String(w.status ?? 'Active').toLowerCase() === 'active' && String(w.code ?? '').trim(),
+    );
+    if (whs.length === 0) return;
+    const preferred =
+      whs.find((w) => String(w.code).toUpperCase() === 'WH-RM') ?? whs[0]!;
+    const whCode = String(preferred.code);
+    const locs = (locationsQuery.data ?? []).filter(
+      (l) =>
+        String(l.status ?? 'Active').toLowerCase() === 'active' &&
+        String(l.warehouseCode ?? '').toUpperCase() === whCode.toUpperCase() &&
+        String(l.code ?? '').trim(),
+    );
+    if (!warehouse.trim()) setWarehouse(whCode);
+    if (!location.trim() && locs[0]?.code) setLocation(String(locs[0].code));
+  }, [warehousesQuery.data, locationsQuery.data, warehouse, location]);
 
   const preAccept = syncBatchPreAccept(incomingLines);
   const countable = useMemo(() => countableLines(incomingLines), [incomingLines]);
@@ -132,8 +192,8 @@ export function ReceivingWorkbench() {
   const stockVol = stockAcceptedLines.reduce((s, l) => s + (stockBasisVolumeM3(l) ?? 0), 0);
   const countQty = String(stockQty || finalPhysicalQtyFromLines(incomingLines) || '');
   const distValidation = useMemo(
-    () => validateDistributions(incomingLines, distributions),
-    [incomingLines, distributions],
+    () => validateDistributions(incomingLines, distributions, postingAllowlist),
+    [incomingLines, distributions, postingAllowlist],
   );
 
   const materialsQuery = useQuery({
@@ -184,6 +244,12 @@ export function ReceivingWorkbench() {
       if (distValidation.code === 'over') return t('wb.rcv.stockStep.errOver');
       if (distValidation.code === 'under') return t('wb.rcv.stockStep.errUnder');
       if (distValidation.code === 'missingWh') return t('wb.rcv.stockStep.errWh');
+      if (distValidation.code === 'invalidWh') {
+        return 'Seçilen depo bu tesisin aktif depoları arasında değil.';
+      }
+      if (distValidation.code === 'invalidLoc') {
+        return 'Seçilen lokasyon, seçili deponun aktif lokasyonları arasında değil.';
+      }
       return t('wb.rcv.gateNeedWh');
     }
     return null;
@@ -296,11 +362,17 @@ export function ReceivingWorkbench() {
       if (!matchConfirmed || !quantityVerified || !approved) {
         throw new Error(t('wb.rcv.gateNeedMaterialConfirm'));
       }
-      const validation = validateDistributions(incomingLines, distributions);
+      const validation = validateDistributions(incomingLines, distributions, postingAllowlist);
       if (!validation.ok) {
         if (validation.code === 'over') throw new Error(t('wb.rcv.stockStep.errOver'));
         if (validation.code === 'under') throw new Error(t('wb.rcv.stockStep.errUnder'));
         if (validation.code === 'missingWh') throw new Error(t('wb.rcv.stockStep.errWh'));
+        if (validation.code === 'invalidWh') {
+          throw new Error('Seçilen depo bu tesisin aktif depoları arasında değil.');
+        }
+        if (validation.code === 'invalidLoc') {
+          throw new Error('Seçilen lokasyon, seçili deponun aktif lokasyonları arasında değil.');
+        }
         throw new Error(t('wb.rcv.gateNeedWh'));
       }
 
@@ -326,7 +398,7 @@ export function ReceivingWorkbench() {
         reference: truck.plate || 'MANUAL',
         quantityVerified: true,
         extractSource: 'manual',
-        plantId: workingPlantId,
+        plantId: postingPlantId,
         notes: [
           `lot=${sharedLot}`,
           `lotTracking=${lotTracking}`,

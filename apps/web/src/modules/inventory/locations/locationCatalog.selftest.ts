@@ -63,6 +63,23 @@ export function runLocationCatalogSelftest(): void {
     locationCode: 'A-03',
   });
   assert(s1 !== s2, 'stock keys isolated by factory');
+
+  // Same material+lot at two locations within one factory = two balances
+  const a03 = stockBalanceKeyWithPlant({
+    plantId: 'F01',
+    materialCode: 'HM-KR-PIN-001',
+    lotNumber: 'LOT-001',
+    warehouseCode: 'WH-RM',
+    locationCode: 'A-03',
+  });
+  const a04 = stockBalanceKeyWithPlant({
+    plantId: 'F01',
+    materialCode: 'HM-KR-PIN-001',
+    lotNumber: 'LOT-001',
+    warehouseCode: 'WH-RM',
+    locationCode: 'A-04',
+  });
+  assert(a03 !== a04, 'same lot two locations stay separate');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
