@@ -54,4 +54,37 @@ public sealed class StockTransferController : ControllerBase
         var result = await _dispatcher.SendAsync(new DeleteStockTransferCommand(id), cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "StockTransfer deleted.");
     }
+
+    /// <summary>
+    /// Intra-factory location transfer: posts source ApplyIssue + dest ApplyReceipt + TRANSFER_OUT/IN ledger pair.
+    /// </summary>
+    [HttpPost("api/v1/transfers/execute")]
+    [RequirePermission("StockTransfer.Create")]
+    public async Task<IActionResult> Execute([FromBody] ExecuteStockTransferRequestDto request, CancellationToken cancellationToken)
+    {
+        var (plantId, error) = PlantClaims.ResolveRequestedPlant(User, request.PlantId);
+        if (error is not null)
+            return BadRequest(new { success = false, message = error });
+
+        var allowed = PlantClaims.AllowedPlantIds(User);
+        var result = await _dispatcher.SendAsync(
+            new ExecuteStockTransferCommand(
+                request.Number,
+                request.MaterialCode,
+                request.LotNumber,
+                request.FromWarehouseCode,
+                request.FromLocationCode,
+                request.ToWarehouseCode,
+                request.ToLocationCode,
+                request.Quantity,
+                request.UnitOfMeasure,
+                request.PackageNumber,
+                request.MaterialIdentityNumber,
+                request.Notes,
+                plantId,
+                request.ToPlantId,
+                allowed),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Stock location transfer posted.");
+    }
 }

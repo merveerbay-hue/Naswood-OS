@@ -84,6 +84,16 @@ public sealed class MaterialIdentity : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>Intra-factory relocate — does not change material, lot, qty, or status.</summary>
+    public void Relocate(string warehouseCode, string locationCode)
+    {
+        if (string.IsNullOrWhiteSpace(warehouseCode)) throw new InvalidOperationException("Warehouse is required.");
+        if (string.IsNullOrWhiteSpace(locationCode)) throw new InvalidOperationException("Location is required.");
+        WarehouseCode = warehouseCode.Trim();
+        LocationCode = locationCode.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;
