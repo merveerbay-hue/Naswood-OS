@@ -15,8 +15,11 @@ function AuthenticatedShellFrame() {
 
   if (isBootstrapping) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--color-background)]">
-        <p className="text-[var(--text-secondary)]">{t('loadingSession')}</p>
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: '#ffffff', color: '#4b5563' }}
+      >
+        <p className="text-sm font-medium">{t('loadingSession')}</p>
       </div>
     );
   }
