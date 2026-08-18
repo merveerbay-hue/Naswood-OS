@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@naswood/ui';
 import { executeStockDocument, searchResource } from '@/api/business';
+import { useAuth } from '@/auth/useAuth';
 import { useI18n } from '@/i18n';
 import { type MaterialCandidate } from './materialMatch';
 import {
@@ -83,6 +84,8 @@ function nowTime() {
 
 export function ReceivingWorkbench() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const workingPlantId = user?.plantId || user?.homePlantId || 'PLANT-001';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [stageIdx, setStageIdx] = useState(0);
@@ -323,6 +326,7 @@ export function ReceivingWorkbench() {
         reference: truck.plate || 'MANUAL',
         quantityVerified: true,
         extractSource: 'manual',
+        plantId: workingPlantId,
         notes: [
           `lot=${sharedLot}`,
           `lotTracking=${lotTracking}`,

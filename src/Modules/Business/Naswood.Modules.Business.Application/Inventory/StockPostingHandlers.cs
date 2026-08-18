@@ -59,6 +59,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
     private readonly IInventoryPackageRepository _packages;
     private readonly IInventoryMovementRepository _movements;
     private readonly ILocationRepository _locations;
+    private readonly IWarehouseRepository _warehouses;
     private readonly IBusinessUnitOfWork _uow;
 
     public ExecuteGoodsReceiptCommandHandler(
@@ -70,6 +71,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
         ILocationRepository locations,
+        IWarehouseRepository warehouses,
         IBusinessUnitOfWork uow)
     {
         _receipts = receipts;
@@ -80,6 +82,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         _packages = packages;
         _movements = movements;
         _locations = locations;
+        _warehouses = warehouses;
         _uow = uow;
     }
 
@@ -176,6 +179,16 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 : line.WarehouseCode.Trim();
             var locationCode = string.IsNullOrWhiteSpace(line.LocationCode) ? "RECV" : line.LocationCode.Trim();
 
+            // Inactive warehouses must not receive new stock.
+            var warehouse = await _warehouses.GetByCodeAndPlantAsync(warehouseCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (warehouse is not null
+                && !string.Equals(warehouse.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-016",
+                    $"Depo '{warehouseCode}' pasif — yeni mal kabul yapılamaz."));
+            }
+
             // Inactive locations must not receive new stock.
             var location = await _locations.FindByWarehouseAndCodeAsync(warehouseCode, locationCode, plantId, cancellationToken).ConfigureAwait(false);
             if (location is not null
@@ -205,11 +218,13 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             var balanceStatus = isQuarantine ? "Hold" : "Active";
 
             var identity = MaterialIdentity.CreateRoot(
-                miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, receipt.Number, identityStatus);
+                miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, receipt.Number, identityStatus,
+                plantId: plantId);
             await _identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
 
             var package = InventoryPackage.Create(
-                packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, line.Barcode, packageStatus);
+                packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, line.Barcode, packageStatus,
+                plantId: plantId);
             await _packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
 
             var batch = await _batches.GetByNumberAndMaterialAsync(lotNumber, materialCode, cancellationToken).ConfigureAwait(false);
@@ -245,7 +260,8 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
 
             var movement = InventoryMovement.Post(
                 "GoodsReceipt", "In", receipt.Number, materialCode, miNumber, packageNumber,
-                warehouseCode, locationCode, lotNumber, line.Quantity, uom, Truncate(movementNotes, 2000));
+                warehouseCode, locationCode, lotNumber, line.Quantity, uom, Truncate(movementNotes, 2000),
+                plantId: plantId);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
 
             results.Add(new StockPostLineResultDto

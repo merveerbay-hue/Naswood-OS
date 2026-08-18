@@ -22,7 +22,10 @@ public interface ILocationRepository
     Task<bool> HasStockOrMovementAsync(string warehouseCode, string locationCode, string? plantId, CancellationToken cancellationToken = default);
 }
 
-/// <summary>Supported LocationType codes — physical area kinds inside a warehouse.</summary>
+/// <summary>
+/// Physical stock area kinds inside a warehouse.
+/// STAGING / WIP hold inventory as Location — they are NOT Work Centers.
+/// </summary>
 public static class LocationTypes
 {
     public static readonly HashSet<string> All = new(StringComparer.OrdinalIgnoreCase)
@@ -32,17 +35,26 @@ public static class LocationTypes
         "RACK",
         "BLOCK",
         "QUARANTINE_AREA",
+        "QUARANTINE", // alias → normalizes to QUARANTINE_AREA
         "PACKAGE_AREA",
+        "STAGING",
+        "WIP",
         "OTHER",
     };
 
     public static string Normalize(string? type)
     {
         var t = (type ?? string.Empty).Trim().ToUpperInvariant();
-        return string.IsNullOrEmpty(t) ? "OPEN_AREA" : t;
+        if (string.IsNullOrEmpty(t)) return "OPEN_AREA";
+        if (t is "QUARANTINE") return "QUARANTINE_AREA";
+        return t;
     }
 
-    public static bool IsKnown(string? type) => All.Contains(Normalize(type));
+    public static bool IsKnown(string? type)
+    {
+        var n = Normalize(type);
+        return All.Contains(n) || string.Equals(n, "QUARANTINE_AREA", StringComparison.OrdinalIgnoreCase);
+    }
 }
 
 public sealed record SearchLocationQuery(
