@@ -2,6 +2,7 @@ import { useI18n } from '@/i18n';
 import { ProcessWizard } from './ProcessWizard';
 import { ReceivingWorkbench } from '@/modules/inventory/receiving/ReceivingWorkbench';
 import { GoodsIssueWorkbench } from '@/modules/inventory/issuing/GoodsIssueWorkbench';
+import { LocationTransferPage } from '@/modules/inventory/transfer/LocationTransferPage';
 
 /** INV-RCV-001 — Receiving Workbench (not Create/CRUD form). */
 export function ReceivingWizardPage() {
@@ -13,28 +14,9 @@ export function IssueWizardPage() {
   return <GoodsIssueWorkbench />;
 }
 
+/** INV-TRF-001 — Intra-factory stock location transfer (posts balances + ledger). */
 export function TransferWizardPage() {
-  const { t } = useI18n();
-  return (
-    <ProcessWizard
-      screenId="INV-TRF-001"
-      title={t('wizard.transferTitle')}
-      description={t('wizard.transferDesc')}
-      finishLabel={t('wizard.post')}
-      libraryPath="/inventory/operations/transfers"
-      libraryLabel={t('wizard.backToLibrary')}
-      autoCodeHint="TR-…"
-      persistRoute="transfers"
-      mapBody={(v) => ({ fromWarehouseCode: v.from || 'WH-RM', toWarehouseCode: v.to || 'WH-FG', status: 'Draft', notes: v.mat || '', number: '' })}
-      steps={[
-        { title: t('wizard.trf.material'), fields: [{ key: 'mat', label: t('wizard.trf.material'), placeholder: t('wizard.nameFirstHint') }] },
-        { title: t('wizard.trf.from'), fields: [{ key: 'from', label: t('wizard.trf.from') }] },
-        { title: t('wizard.trf.to'), fields: [{ key: 'to', label: t('wizard.trf.to') }] },
-        { title: t('wizard.trf.qty'), fields: [{ key: 'qty', label: t('wizard.trf.qty'), type: 'number' }] },
-        { title: t('wizard.post') },
-      ]}
-    />
-  );
+  return <LocationTransferPage />;
 }
 
 export function CycleCountWizardPage() {

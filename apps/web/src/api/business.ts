@@ -58,7 +58,7 @@ export async function getDashboard<T>(route: string): Promise<T> {
 }
 
 export async function executeStockDocument<T>(
-  route: 'goods-receipts/execute' | 'goods-issues/execute',
+  route: 'goods-receipts/execute' | 'goods-issues/execute' | 'transfers/execute',
   body: unknown,
 ): Promise<T> {
   return apiRequest<T>(`/api/v1/${route}`, { method: 'POST', auth: true, body });
