@@ -102,12 +102,25 @@ export function distributionSumForLine(dists: StockDistributionRow[], lineId: st
 
 export type DistributionValidation =
   | { ok: true }
-  | { ok: false; code: 'empty' | 'over' | 'under' | 'missingWh' | 'badQty'; message: string; lineId?: string };
+  | {
+      ok: false;
+      code: 'empty' | 'over' | 'under' | 'missingWh' | 'invalidWh' | 'invalidLoc' | 'badQty';
+      message: string;
+      lineId?: string;
+    };
+
+/** Optional plant-scoped allowlist — FE mirror of API WH/Loc ownership checks. */
+export type DistributionAllowlist = {
+  warehouseCodes: ReadonlySet<string>;
+  /** warehouseCode (upper) → location codes (upper) */
+  locationsByWarehouse: ReadonlyMap<string, ReadonlySet<string>>;
+};
 
 /** RULE 5: distribution sum must equal accepted qty; never exceed. */
 export function validateDistributions(
   lines: IncomingLine[],
   dists: StockDistributionRow[],
+  allowlist?: DistributionAllowlist | null,
 ): DistributionValidation {
   const accepted = acceptedStockLines(lines);
   if (accepted.length === 0) {
@@ -123,6 +136,17 @@ export function validateDistributions(
     }
     if (parseQty(d.qty) <= 0) {
       return { ok: false, code: 'badQty', message: 'bad-qty', lineId: d.lineId };
+    }
+    if (allowlist) {
+      const wh = d.warehouseCode.trim().toUpperCase();
+      const loc = d.locationCode.trim().toUpperCase();
+      if (!allowlist.warehouseCodes.has(wh)) {
+        return { ok: false, code: 'invalidWh', message: 'wh-not-in-plant', lineId: d.lineId };
+      }
+      const locs = allowlist.locationsByWarehouse.get(wh);
+      if (!locs?.has(loc)) {
+        return { ok: false, code: 'invalidLoc', message: 'loc-not-in-wh', lineId: d.lineId };
+      }
     }
   }
 
@@ -272,7 +296,8 @@ export function addSplitRow(
         ...d,
         id: mintDistId(d.lineId, d.groupId),
         qty: String(b),
-        locationCode: d.bucket === 'quarantine' ? 'K-02' : 'B-02',
+        // Force operator to pick a (possibly different) active location under the same WH.
+        locationCode: '',
       },
     ];
   });

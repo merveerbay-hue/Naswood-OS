@@ -226,8 +226,10 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   dists = addSplitRow(dists, dists[0]!);
   assert(dists.length === 2, 'split → 2');
   assert(distributionSumForLine(dists, line.id) === 98, 'split preserves sum');
+  assert(dists[1]!.locationCode === '', 'split clears loc on new row');
+  dists[1]!.locationCode = 'A-04';
   const v = validateDistributions([line], dists);
-  assert(v.ok, 'split still valid');
+  assert(v.ok, 'split still valid after loc pick');
   console.log('SPLIT OK — addSplitRow preserves accepted total');
 }
 
@@ -250,6 +252,76 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   const dists = buildDefaultDistributions([line], 'WH-RM', 'A-03');
   assert(distributionSumForLine(dists, line.id) === 98, 'not 96+98');
   console.log('TEST10 OK — AI+HW not summed');
+}
+
+// --- Allowlist: WH/Loc must belong to plant-scoped active masters ---
+{
+  const line = lumberLine({
+    physicalGroups: [
+      createEmptyPhysicalGroup('in-1', 'manual', {
+        qty: '98',
+        thicknessMm: '45',
+        widthMm: '90',
+        lengthMm: '4000',
+      }),
+    ],
+  });
+  const dists = buildDefaultDistributions([line], 'WH-RM', 'A-03');
+  const allow = {
+    warehouseCodes: new Set(['WH-RM']),
+    locationsByWarehouse: new Map([['WH-RM', new Set(['A-03', 'A-04'])]]),
+  };
+  assert(validateDistributions([line], dists, allow).ok, 'allowlist ok');
+  dists[0]!.warehouseCode = 'WH-F02-ONLY';
+  assert(
+    !validateDistributions([line], dists, allow).ok &&
+      validateDistributions([line], dists, allow).code === 'invalidWh',
+    'foreign WH rejected',
+  );
+  dists[0]!.warehouseCode = 'WH-RM';
+  dists[0]!.locationCode = 'Z-99';
+  assert(
+    !validateDistributions([line], dists, allow).ok &&
+      validateDistributions([line], dists, allow).code === 'invalidLoc',
+    'loc outside WH rejected',
+  );
+  console.log('TEST-ALLOW OK — plant WH/Loc allowlist');
+}
+
+// --- Same material+lot at two locations stay separate; qty totals correctly ---
+{
+  const line = lumberLine({
+    physicalGroups: [
+      createEmptyPhysicalGroup('in-1', 'manual', {
+        qty: '60',
+        thicknessMm: '45',
+        widthMm: '90',
+        lengthMm: '4000',
+      }),
+      createEmptyPhysicalGroup('in-1', 'manual', {
+        qty: '38',
+        thicknessMm: '45',
+        widthMm: '90',
+        lengthMm: '4000',
+      }),
+    ],
+  });
+  const dists = buildDefaultDistributions([line], 'WH-RM', 'A-03');
+  dists[0]!.locationCode = 'A-03';
+  dists[1]!.locationCode = 'A-04';
+  const posts = buildExecuteLines([line], dists, 'LOT-001');
+  assert(posts.length === 2, 'two physical posts');
+  assert(posts.every((p) => p.lotNumber === 'LOT-001'), 'same lot');
+  assert(posts[0]!.locationCode === 'A-03' && posts[1]!.locationCode === 'A-04', 'two locs');
+  assert(posts.reduce((s, p) => s + p.quantity, 0) === 98, 'total 98');
+  const keys = new Set(
+    posts.map(
+      (p) =>
+        `F01|${p.materialCode}|${p.lotNumber}|${p.warehouseCode}|${p.locationCode}`.toUpperCase(),
+    ),
+  );
+  assert(keys.size === 2, 'two balance keys');
+  console.log('TEST-MULTILOC OK — same lot two locations');
 }
 
 console.log('stockDistribution.selftest: ALL OK');

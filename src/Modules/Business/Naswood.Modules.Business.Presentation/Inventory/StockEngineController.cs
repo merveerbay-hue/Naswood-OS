@@ -23,6 +23,7 @@ public sealed class StockEngineController : ControllerBase
         if (error is not null)
             return BadRequest(new { success = false, message = error });
 
+        var allowed = PlantClaims.AllowedPlantIds(User);
         var result = await _dispatcher.SendAsync(
             new ExecuteGoodsReceiptCommand(
                 request.Number,
@@ -32,7 +33,8 @@ public sealed class StockEngineController : ControllerBase
                 request.QuantityVerified,
                 request.ExtractSource ?? string.Empty,
                 request.Lines,
-                plantId),
+                plantId,
+                allowed),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Goods receipt posted to stock.");
     }
@@ -45,6 +47,7 @@ public sealed class StockEngineController : ControllerBase
         if (error is not null)
             return BadRequest(new { success = false, message = error });
 
+        var allowed = PlantClaims.AllowedPlantIds(User);
         var result = await _dispatcher.SendAsync(
             new ExecuteGoodsIssueCommand(
                 request.Number,
@@ -52,7 +55,8 @@ public sealed class StockEngineController : ControllerBase
                 request.Reference,
                 request.Notes,
                 request.Lines,
-                plantId),
+                plantId,
+                allowed),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Goods issue posted to stock.");
     }
