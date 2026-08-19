@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.AspNetCore;
@@ -17,9 +18,37 @@ public sealed class InventoryDashboardController : ControllerBase
 
     [HttpGet("api/v1/inventory/dashboard")]
     [RequirePermission("Inventory.View")]
-    public async Task<IActionResult> Get(CancellationToken cancellationToken)
+    public async Task<IActionResult> Get(
+        [FromQuery] string? plantId,
+        CancellationToken cancellationToken)
     {
-        var result = await _dispatcher.QueryAsync(new GetInventoryDashboardQuery(), cancellationToken).ConfigureAwait(false);
+        var allowed = PlantClaims.AllowedPlantIds(User);
+        var requested = string.IsNullOrWhiteSpace(plantId)
+            ? PlantClaims.HomePlantId(User) ?? PlantClaims.WorkingPlantId(User)
+            : plantId;
+        var (resolved, error) = PlantClaims.ResolveRequestedPlant(User, requested);
+        if (error is not null || resolved is null)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                success = false,
+                message = error ?? "Bu tesise erişim yetkiniz yok.",
+                errors = new[]
+                {
+                    new
+                    {
+                        code = "INV-BAL-403",
+                        category = "Forbidden",
+                        message = error ?? "Bu tesise erişim yetkiniz yok.",
+                        details = new { }
+                    }
+                }
+            });
+        }
+
+        var result = await _dispatcher.QueryAsync(
+            new GetInventoryDashboardQuery(resolved, allowed),
+            cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this);
     }
 }

@@ -73,6 +73,7 @@ export function LocationTransferPage() {
       searchResource<BalanceRow>('inventory', materialCode.trim() || undefined, {
         page: 1,
         pageSize: 100,
+        plantId,
       }),
   });
 

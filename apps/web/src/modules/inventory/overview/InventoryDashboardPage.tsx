@@ -2,7 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { getDashboard } from '@/api/business';
+import { useAuth } from '@/auth/useAuth';
 import { useI18n } from '@/i18n';
+import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
 
 interface InventoryDockItemDto {
   gate?: string;
@@ -65,9 +67,11 @@ function dockField(row: InventoryDockItemDto, camel: keyof InventoryDockItemDto,
 /** INV-001 — Warehouse Command Center (not a KPI page). */
 export function InventoryDashboardPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
   const query = useQuery({
-    queryKey: ['business', 'inventory/dashboard'],
-    queryFn: () => getDashboard<InventoryDashboardDto>('inventory/dashboard'),
+    queryKey: ['business', 'inventory/dashboard', plantId],
+    queryFn: () => getDashboard<InventoryDashboardDto>('inventory/dashboard', { plantId }),
   });
 
   const data = query.data;
@@ -154,6 +158,9 @@ export function InventoryDashboardPage() {
           <p className="text-xs font-medium text-[var(--text-muted)]">INV-001 · {t('inventory.cmdScreenType')}</p>
           <h2 className="text-xl font-semibold tracking-tight">{t('inventory.dashTitle')}</h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">{t('inventory.dashDesc')}</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Ana Üs: {plantDisplayName(plantId)} ({plantId})
+          </p>
         </div>
         <Button type="button" variant="secondary" onClick={() => void query.refetch()} disabled={query.isFetching}>
           {t('refresh')}
