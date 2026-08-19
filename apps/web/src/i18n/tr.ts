@@ -1724,6 +1724,13 @@ export const tr = {
       twCategory: 'TW ürün grubu — Thermowood (aile kodu)',
       hint: 'Thermowood = aynı cins + ağaç; kodda T öneki (PIN→TPIN, CP→TCP) ve adında “Thermowood …”. Ayrı Variant/SKU yok.',
     },
+    compliance: {
+      lotNote:
+        'Gerçek sınıflandırma yöntemi (VISUAL veya MACHINE) üretim lotu / kalite kaydında seçilecektir — kart yalnızca desteklenen yolları tanımlar.',
+      excludedHint:
+        'Thermowood, finger-jointed veya kapsam dışı ürünler EN 14081 yapısal kereste akışına dahil edilemez (Normal Stok).',
+      notApplicable: 'Uygulanmaz',
+    },
     rulePacks: 'Kural paketleri',
     back: 'Geri',
     next: 'İleri',
@@ -1780,6 +1787,8 @@ export const tr = {
       productType: 'Ürün tipi',
       systemCode: 'Malzeme kodu (sistem)',
       dimsDisplay: 'Nominal ölçü (görünüm)',
+      complianceScope: 'Ürün kapsamı',
+      supportedGradingMethods: 'Desteklenen sınıflandırma yöntemleri',
       identityClass: 'MI sınıfı',
       lotPolicy: 'Lot politikası',
       lotTracking: 'Lot takibi',
