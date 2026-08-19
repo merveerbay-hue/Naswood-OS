@@ -16,9 +16,14 @@ public sealed class GoodsIssueRepository : IGoodsIssueRepository
     public async Task AddAsync(GoodsIssue entity, CancellationToken cancellationToken = default) =>
         await _db.Set<GoodsIssue>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public async Task<(IReadOnlyList<GoodsIssue> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<GoodsIssue> Items, int Total)> SearchAsync(string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default)
     {
         var query = _db.Set<GoodsIssue>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();

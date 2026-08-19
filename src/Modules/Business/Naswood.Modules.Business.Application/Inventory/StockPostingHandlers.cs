@@ -10,21 +10,35 @@ public interface IMaterialIdentityRepository
 {
     Task AddAsync(MaterialIdentity entity, CancellationToken cancellationToken = default);
     Task<MaterialIdentity?> GetByNumberAsync(string identityNumber, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(
+        string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public interface IInventoryPackageRepository
 {
     Task AddAsync(InventoryPackage entity, CancellationToken cancellationToken = default);
     Task<InventoryPackage?> GetByNumberAsync(string packageNumber, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(
+        string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public interface IInventoryMovementRepository
 {
     Task AddAsync(InventoryMovement entity, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<InventoryMovement> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(string documentNumber, CancellationToken cancellationToken = default);
+    Task<InventoryMovement?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<InventoryMovement> Items, int Total)> SearchAsync(
+        string? q,
+        int page,
+        int pageSize,
+        string? plantId = null,
+        string? warehouseCode = null,
+        string? locationCode = null,
+        string? documentNumber = null,
+        string? materialCode = null,
+        string? lotNumber = null,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(
+        string documentNumber, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record ExecuteGoodsReceiptCommand(
@@ -47,9 +61,37 @@ public sealed record ExecuteGoodsIssueCommand(
     string? PlantId = null,
     IReadOnlyList<string>? AllowedPlantIds = null) : ICommand<Result<ExecuteStockDocumentResultDto>>;
 
-public sealed record SearchInventoryPackageQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedInventoryPackageDto>>;
-public sealed record SearchMaterialIdentityQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedMaterialIdentityDto>>;
-public sealed record SearchInventoryMovementQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedInventoryMovementDto>>;
+public sealed record SearchInventoryPackageQuery(
+    string? Q,
+    int Page,
+    int PageSize,
+    string? PlantId = null,
+    IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<PagedInventoryPackageDto>>;
+
+public sealed record SearchMaterialIdentityQuery(
+    string? Q,
+    int Page,
+    int PageSize,
+    string? PlantId = null,
+    IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<PagedMaterialIdentityDto>>;
+
+public sealed record SearchInventoryMovementQuery(
+    string? Q,
+    int Page,
+    int PageSize,
+    string? PlantId,
+    string? WarehouseCode,
+    string? LocationCode,
+    string? DocumentNumber,
+    string? MaterialCode,
+    string? LotNumber,
+    Guid? WarehouseId,
+    Guid? LocationId,
+    IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<PagedInventoryMovementDto>>;
+
+public sealed record GetInventoryMovementByIdQuery(
+    Guid Id,
+    IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<InventoryMovementDto>>;
 
 public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteGoodsReceiptCommand, Result<ExecuteStockDocumentResultDto>>
 {
@@ -110,7 +152,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         if (existing is not null
             && string.Equals(existing.Status, "Posted", StringComparison.OrdinalIgnoreCase))
         {
-            var priorMoves = await _movements.ListByDocumentAsync(existing.Number, cancellationToken).ConfigureAwait(false);
+            var priorMoves = await _movements.ListByDocumentAsync(existing.Number, existing.PlantId, cancellationToken).ConfigureAwait(false);
             var priorLines = priorMoves.Select(m => new StockPostLineResultDto
             {
                 MaterialCode = m.MaterialCode,
@@ -473,9 +515,17 @@ public sealed class SearchInventoryPackageQueryHandler : IQueryHandler<SearchInv
 
     public async Task<Result<PagedInventoryPackageDto>> HandleAsync(SearchInventoryPackageQuery query, CancellationToken cancellationToken = default)
     {
+        var plantId = string.IsNullOrWhiteSpace(query.PlantId) ? null : query.PlantId.Trim();
+        if (string.IsNullOrWhiteSpace(plantId))
+            return Result.Failure<PagedInventoryPackageDto>(Error.Validation("INV-BAL-004", "Plant / factory context is required."));
+        if (query.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(query.AllowedPlantIds, plantId))
+            return Result.Failure<PagedInventoryPackageDto>(Error.Forbidden(
+                "INV-BAL-403",
+                "Bu tesisin paketlerini görüntüleme yetkiniz yok."));
+
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, plantId, cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedInventoryPackageDto
         {
             Items = items.Select(e => new InventoryPackageDto
@@ -508,9 +558,17 @@ public sealed class SearchMaterialIdentityQueryHandler : IQueryHandler<SearchMat
 
     public async Task<Result<PagedMaterialIdentityDto>> HandleAsync(SearchMaterialIdentityQuery query, CancellationToken cancellationToken = default)
     {
+        var plantId = string.IsNullOrWhiteSpace(query.PlantId) ? null : query.PlantId.Trim();
+        if (string.IsNullOrWhiteSpace(plantId))
+            return Result.Failure<PagedMaterialIdentityDto>(Error.Validation("INV-BAL-004", "Plant / factory context is required."));
+        if (query.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(query.AllowedPlantIds, plantId))
+            return Result.Failure<PagedMaterialIdentityDto>(Error.Forbidden(
+                "INV-BAL-403",
+                "Bu tesisin malzeme kimliklerini görüntüleme yetkiniz yok."));
+
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, plantId, cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedMaterialIdentityDto
         {
             Items = items.Select(e => new MaterialIdentityDto
@@ -538,34 +596,155 @@ public sealed class SearchMaterialIdentityQueryHandler : IQueryHandler<SearchMat
 public sealed class SearchInventoryMovementQueryHandler : IQueryHandler<SearchInventoryMovementQuery, Result<PagedInventoryMovementDto>>
 {
     private readonly IInventoryMovementRepository _repo;
-    public SearchInventoryMovementQueryHandler(IInventoryMovementRepository repo) => _repo = repo;
+    private readonly IWarehouseRepository _warehouses;
+    private readonly ILocationRepository _locations;
 
-    public async Task<Result<PagedInventoryMovementDto>> HandleAsync(SearchInventoryMovementQuery query, CancellationToken cancellationToken = default)
+    public SearchInventoryMovementQueryHandler(
+        IInventoryMovementRepository repo,
+        IWarehouseRepository warehouses,
+        ILocationRepository locations)
     {
+        _repo = repo;
+        _warehouses = warehouses;
+        _locations = locations;
+    }
+
+    public async Task<Result<PagedInventoryMovementDto>> HandleAsync(
+        SearchInventoryMovementQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var plantId = string.IsNullOrWhiteSpace(query.PlantId) ? null : query.PlantId.Trim();
+        if (string.IsNullOrWhiteSpace(plantId))
+            return Result.Failure<PagedInventoryMovementDto>(Error.Validation(
+                "INV-BAL-004",
+                "Plant / factory context is required."));
+
+        if (query.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(query.AllowedPlantIds, plantId))
+            return Result.Failure<PagedInventoryMovementDto>(Error.Forbidden(
+                "INV-MOV-403",
+                "Bu tesisin stok hareketlerini görüntüleme yetkiniz yok."));
+
+        var warehouseCode = string.IsNullOrWhiteSpace(query.WarehouseCode) ? null : query.WarehouseCode.Trim();
+        var locationCode = string.IsNullOrWhiteSpace(query.LocationCode) ? null : query.LocationCode.Trim();
+
+        if (query.WarehouseId is Guid warehouseId)
+        {
+            var whById = await _warehouses.GetByIdAsync(warehouseId, cancellationToken).ConfigureAwait(false);
+            if (whById is null || whById.IsDeleted)
+                return Result.Failure<PagedInventoryMovementDto>(Error.Validation("INV-BAL-017", "Warehouse was not found."));
+            if (!string.IsNullOrWhiteSpace(whById.PlantId)
+                && !string.Equals(whById.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<PagedInventoryMovementDto>(Error.Forbidden(
+                    "INV-MOV-403",
+                    "Warehouse seçili fabrikaya ait değil."));
+            warehouseCode = whById.Code;
+        }
+        else if (!string.IsNullOrWhiteSpace(warehouseCode))
+        {
+            var wh = await _warehouses.GetByCodeAndPlantAsync(warehouseCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (wh is null || wh.IsDeleted)
+                return Result.Failure<PagedInventoryMovementDto>(Error.Validation(
+                    "INV-BAL-017",
+                    $"Depo '{warehouseCode}' bu tesiste ({plantId}) tanımlı değil."));
+            warehouseCode = wh.Code;
+        }
+
+        if (query.LocationId is Guid locationId)
+        {
+            var locById = await _locations.GetByIdAsync(locationId, cancellationToken).ConfigureAwait(false);
+            if (locById is null || locById.IsDeleted)
+                return Result.Failure<PagedInventoryMovementDto>(Error.Validation("INV-BAL-019", "Location was not found."));
+            if (!string.IsNullOrWhiteSpace(locById.PlantId)
+                && !string.Equals(locById.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<PagedInventoryMovementDto>(Error.Forbidden(
+                    "INV-MOV-403",
+                    "Location seçili fabrikaya ait değil."));
+            if (!string.IsNullOrWhiteSpace(warehouseCode)
+                && !string.Equals(locById.WarehouseCode, warehouseCode, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<PagedInventoryMovementDto>(Error.Validation(
+                    "INV-BAL-020",
+                    "Location seçilen depoya ait değil."));
+            warehouseCode ??= locById.WarehouseCode;
+            locationCode = locById.Code;
+        }
+        else if (!string.IsNullOrWhiteSpace(locationCode))
+        {
+            if (string.IsNullOrWhiteSpace(warehouseCode))
+                return Result.Failure<PagedInventoryMovementDto>(Error.Validation(
+                    "INV-BAL-018",
+                    "Location filtresi için Warehouse zorunludur."));
+            var loc = await _locations.FindByWarehouseAndCodeAsync(warehouseCode, locationCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (loc is null || loc.IsDeleted)
+                return Result.Failure<PagedInventoryMovementDto>(Error.Validation(
+                    "INV-BAL-019",
+                    $"Lokasyon '{locationCode}' depo '{warehouseCode}' / tesis '{plantId}' altında tanımlı değil."));
+            locationCode = loc.Code;
+        }
+
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(
+            query.Q,
+            page,
+            pageSize,
+            plantId,
+            warehouseCode,
+            locationCode,
+            query.DocumentNumber,
+            query.MaterialCode,
+            query.LotNumber,
+            cancellationToken).ConfigureAwait(false);
+
         return Result.Success(new PagedInventoryMovementDto
         {
-            Items = items.Select(e => new InventoryMovementDto
-            {
-                Id = e.Id,
-                MovementNumber = e.MovementNumber,
-                MovementType = e.MovementType,
-                Direction = e.Direction,
-                DocumentNumber = e.DocumentNumber,
-                MaterialCode = e.MaterialCode,
-                LotNumber = e.LotNumber,
-                PackageNumber = e.PackageNumber,
-                Quantity = e.Quantity,
-                WarehouseCode = e.WarehouseCode,
-                Status = e.Status,
-                CreatedAt = e.CreatedAt
-            }).ToArray(),
+            Items = items.Select(MapMovement).ToArray(),
             Page = page,
             PageSize = pageSize,
             TotalCount = total,
             TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
         });
+    }
+
+    internal static InventoryMovementDto MapMovement(InventoryMovement e) => new()
+    {
+        Id = e.Id,
+        MovementNumber = e.MovementNumber,
+        MovementType = e.MovementType,
+        Direction = e.Direction,
+        DocumentNumber = e.DocumentNumber,
+        MaterialCode = e.MaterialCode,
+        LotNumber = e.LotNumber,
+        PackageNumber = e.PackageNumber,
+        Quantity = e.Quantity,
+        WarehouseCode = e.WarehouseCode,
+        Status = e.Status,
+        CreatedAt = e.CreatedAt,
+        PlantId = e.PlantId,
+        LocationCode = e.LocationCode
+    };
+}
+
+public sealed class GetInventoryMovementByIdQueryHandler : IQueryHandler<GetInventoryMovementByIdQuery, Result<InventoryMovementDto>>
+{
+    private readonly IInventoryMovementRepository _repo;
+    public GetInventoryMovementByIdQueryHandler(IInventoryMovementRepository repo) => _repo = repo;
+
+    public async Task<Result<InventoryMovementDto>> HandleAsync(
+        GetInventoryMovementByIdQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var e = await _repo.GetByIdAsync(query.Id, cancellationToken).ConfigureAwait(false);
+        if (e is null || e.IsDeleted)
+            return Result.Failure<InventoryMovementDto>(Error.NotFound("BUS-001", "InventoryMovement was not found."));
+
+        if (query.AllowedPlantIds is { Count: > 0 }
+            && !PlantAccess.CanAccess(query.AllowedPlantIds, e.PlantId))
+        {
+            return Result.Failure<InventoryMovementDto>(Error.Forbidden(
+                "INV-MOV-403",
+                "Bu tesisin stok hareketlerini görüntüleme yetkiniz yok."));
+        }
+
+        return Result.Success(SearchInventoryMovementQueryHandler.MapMovement(e));
     }
 }

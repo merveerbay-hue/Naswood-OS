@@ -132,7 +132,9 @@ public sealed class InventoryMovementDto
     public required string PackageNumber { get; init; }
     public required decimal Quantity { get; init; }
     public required string WarehouseCode { get; init; }
+    public string? LocationCode { get; init; }
     public required string Status { get; init; }
+    public string? PlantId { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 }
 

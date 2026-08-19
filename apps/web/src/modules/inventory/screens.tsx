@@ -288,15 +288,16 @@ export function LotListPage() {
 }
 
 export function PackageListPage() {
+  const { user } = useAuth();
+  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
   return (
     <EntityListScreen
       screenId="INV-PKG"
       title="Paketler"
-      description="Fiziksel paket — Lot altında. Paket yeni Lot değildir."
+      description="Fiziksel paket / barkod — plant-scoped."
       route="packages"
       fields={[
         { key: 'PackageNumber', label: 'Paket' },
-        { key: 'Barcode', label: 'Barkod' },
         { key: 'MaterialCode', label: 'Malzeme' },
         { key: 'LotNumber', label: 'Lot' },
         { key: 'WarehouseCode', label: 'Depo' },
@@ -304,12 +305,15 @@ export function PackageListPage() {
         { key: 'Quantity', label: 'Miktar', type: 'number' },
         { key: 'Status', label: 'Durum', status: true },
       ]}
+      plantId={plantId}
       readOnly
     />
   );
 }
 
 export function MaterialIdentityListPage() {
+  const { user } = useAuth();
+  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
   return (
     <EntityListScreen
       screenId="INV-MI"
@@ -326,12 +330,15 @@ export function MaterialIdentityListPage() {
         { key: 'RootGoodsReceiptNumber', label: 'GR' },
         { key: 'Status', label: 'Durum', status: true },
       ]}
+      plantId={plantId}
       readOnly
     />
   );
 }
 
 export function InventoryMovementListPage() {
+  const { user } = useAuth();
+  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
   return (
     <EntityListScreen
       screenId="INV-MV"
@@ -350,6 +357,7 @@ export function InventoryMovementListPage() {
         { key: 'WarehouseCode', label: 'Depo' },
         { key: 'Status', label: 'Durum', status: true },
       ]}
+      plantId={plantId}
       readOnly
     />
   );
@@ -454,12 +462,12 @@ export function InventoryReportsPage() {
     queryFn: () => searchResource<Record<string, unknown>>('inventory', undefined, { plantId }),
   });
   const movements = useQuery({
-    queryKey: ['business', 'inventory-movements', 'report'],
-    queryFn: () => searchResource<Record<string, unknown>>('inventory-movements'),
+    queryKey: ['business', 'inventory-movements', 'report', plantId],
+    queryFn: () => searchResource<Record<string, unknown>>('inventory-movements', undefined, { plantId }),
   });
   const packages = useQuery({
-    queryKey: ['business', 'packages', 'report'],
-    queryFn: () => searchResource<Record<string, unknown>>('packages'),
+    queryKey: ['business', 'packages', 'report', plantId],
+    queryFn: () => searchResource<Record<string, unknown>>('packages', undefined, { plantId }),
   });
 
   const byWh = new Map<string, number>();

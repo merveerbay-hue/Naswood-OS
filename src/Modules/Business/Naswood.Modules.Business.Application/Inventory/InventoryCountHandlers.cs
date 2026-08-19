@@ -10,7 +10,7 @@ public interface IInventoryCountRepository
 {
     Task<InventoryCount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(InventoryCount entity, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<InventoryCount> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<InventoryCount> Items, int Total)> SearchAsync(string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record SearchInventoryCountQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedInventoryCountDto>>;
@@ -42,7 +42,7 @@ public sealed class SearchInventoryCountQueryHandler : IQueryHandler<SearchInven
     {
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken: cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedInventoryCountDto
         {
             Items = items.Select(InventoryCountMapper.ToDto).ToArray(),

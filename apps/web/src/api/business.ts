@@ -20,6 +20,9 @@ export async function searchResource<T>(
     warehouseId?: string;
     locationId?: string;
     locationType?: string;
+    documentNumber?: string;
+    materialCode?: string;
+    lotNumber?: string;
   },
 ): Promise<PagedResult<T>> {
   const params = new URLSearchParams({
@@ -33,6 +36,9 @@ export async function searchResource<T>(
   if (opts?.warehouseId) params.set('warehouseId', opts.warehouseId);
   if (opts?.locationId) params.set('locationId', opts.locationId);
   if (opts?.locationType) params.set('locationType', opts.locationType);
+  if (opts?.documentNumber) params.set('documentNumber', opts.documentNumber);
+  if (opts?.materialCode) params.set('materialCode', opts.materialCode);
+  if (opts?.lotNumber) params.set('lotNumber', opts.lotNumber);
   return apiRequest<PagedResult<T>>(`/api/v1/${route}?${params}`, { method: 'GET', auth: true });
 }
 
