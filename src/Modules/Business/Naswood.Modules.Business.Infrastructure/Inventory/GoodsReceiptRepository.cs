@@ -13,10 +13,16 @@ public sealed class GoodsReceiptRepository : IGoodsReceiptRepository
     public Task<GoodsReceipt?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<GoodsReceipt>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public Task<GoodsReceipt?> GetByNumberAsync(string number, CancellationToken cancellationToken = default) =>
-        _db.Set<GoodsReceipt>().FirstOrDefaultAsync(
-            x => !x.IsDeleted && x.Number == number,
-            cancellationToken);
+    public Task<GoodsReceipt?> GetByNumberAsync(string number, string? plantId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _db.Set<GoodsReceipt>().Where(x => !x.IsDeleted && x.Number == number);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return query.FirstOrDefaultAsync(cancellationToken);
+    }
 
     public async Task AddAsync(GoodsReceipt entity, CancellationToken cancellationToken = default) =>
         await _db.Set<GoodsReceipt>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -39,5 +45,17 @@ public sealed class GoodsReceiptRepository : IGoodsReceiptRepository
             .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
+    }
+
+    public Task<int> CountOpenAsync(string plantId, CancellationToken cancellationToken = default)
+    {
+        var plant = plantId.Trim();
+        return _db.Set<GoodsReceipt>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PlantId == plant)
+            .Where(x =>
+                x.Status.ToLower() != "posted"
+                && x.Status.ToLower() != "cancelled"
+                && x.Status.ToLower() != "closed")
+            .CountAsync(cancellationToken);
     }
 }

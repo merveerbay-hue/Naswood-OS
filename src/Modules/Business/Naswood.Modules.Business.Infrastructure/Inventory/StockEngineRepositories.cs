@@ -78,6 +78,30 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
     }
+
+    public async Task<int> CountByStatusesAsync(
+        string? plantId,
+        IReadOnlyList<string> statuses,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Set<InventoryPackage>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+
+        var normalized = statuses
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim().ToLower())
+            .Distinct()
+            .ToArray();
+        if (normalized.Length == 0)
+            return 0;
+
+        query = query.Where(x => normalized.Contains(x.Status.ToLower()));
+        return await query.CountAsync(cancellationToken).ConfigureAwait(false);
+    }
 }
 
 public sealed class InventoryMovementRepository : IInventoryMovementRepository
