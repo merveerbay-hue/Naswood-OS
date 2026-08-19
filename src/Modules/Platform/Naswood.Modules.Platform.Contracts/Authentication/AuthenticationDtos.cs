@@ -62,8 +62,11 @@ public sealed class AuthenticatedUserDto
     /// <summary>Ana Üs — HomeFactoryId equivalent.</summary>
     public required string HomePlantId { get; init; }
 
-    /// <summary>Authorized plants (Ana Üs + Diğer Tesis).</summary>
+    /// <summary>Authorized plants visible to this user (operators: Ana Üs only).</summary>
     public required IReadOnlyList<string> PlantIds { get; init; }
+
+    /// <summary>Üst Yönetici may switch working plant among PlantIds.</summary>
+    public required bool CanSwitchPlant { get; init; }
 
     public required IReadOnlyList<string> Roles { get; init; }
 }
@@ -86,12 +89,29 @@ public sealed class CurrentUserDto
     /// <summary>Ana Üs — HomeFactoryId equivalent.</summary>
     public required string HomePlantId { get; init; }
 
-    /// <summary>Authorized plants (Ana Üs + Diğer Tesis).</summary>
+    /// <summary>Authorized plants visible to this user (operators: Ana Üs only).</summary>
     public required IReadOnlyList<string> PlantIds { get; init; }
+
+    /// <summary>Üst Yönetici may switch working plant among PlantIds.</summary>
+    public required bool CanSwitchPlant { get; init; }
 
     public required Guid SessionId { get; init; }
 
     public required IReadOnlyList<string> Roles { get; init; }
+}
+
+public sealed class SwitchWorkingPlantRequestDto
+{
+    public required string PlantId { get; init; }
+}
+
+public sealed class VisiblePlantDto
+{
+    public required string Code { get; init; }
+
+    public required string Name { get; init; }
+
+    public bool IsHome { get; init; }
 }
 
 public sealed class SessionDto

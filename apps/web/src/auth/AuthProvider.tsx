@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchCurrentUser, login as loginRequest, logout as logoutRequest } from '@/api/auth';
+import {
+  fetchCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+  switchWorkingPlant,
+} from '@/api/auth';
 import { clearSession, isAuthenticated as hasStoredSession } from '@/auth/session';
 import { AuthContext, type AuthContextValue } from './auth-context';
 
@@ -41,6 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.removeQueries({ queryKey: ME_QUERY_KEY });
   }, [queryClient]);
 
+  const switchPlant = useCallback(
+    async (plantId: string) => {
+      await switchWorkingPlant(plantId);
+      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+      // Refresh plant-scoped business queries.
+      await queryClient.invalidateQueries({ queryKey: ['business'] });
+    },
+    [queryClient],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: meQuery.data ?? null,
@@ -48,8 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isBootstrapping: hasSession && meQuery.isPending,
       login,
       logout,
+      switchPlant,
     }),
-    [hasSession, login, logout, meQuery.data, meQuery.isError, meQuery.isPending],
+    [hasSession, login, logout, switchPlant, meQuery.data, meQuery.isError, meQuery.isPending],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

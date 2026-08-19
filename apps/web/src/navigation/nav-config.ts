@@ -213,6 +213,7 @@ export const navigationTree: NavItem[] = [
     roles: ['Administrator'],
     children: [
       { id: 'admin-users', label: 'Kullanıcılar', path: '/administration/users', roles: ['Administrator'] },
+      { id: 'admin-plants', label: 'Tesis / Fabrika', path: '/administration/plants', roles: ['Administrator'] },
       { id: 'admin-roles', label: 'Roller', path: '/administration/roles', roles: ['Administrator'] },
       { id: 'admin-permissions', label: 'İzinler', path: '/administration/permissions', roles: ['Administrator'] },
       { id: 'admin-files', label: 'Dosyalar', path: '/administration/files', roles: ['Administrator'] },

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { createResource, searchAllResource, searchResource } from '@/api/business';
-import { useAuth } from '@/auth/useAuth';
+import { usePlantContext } from '@/auth/usePlantContext';
 import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
 import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
@@ -257,8 +257,7 @@ export function LocationListPage() {
 
 export function StockBalancePage() {
   const { t } = useI18n();
-  const { user } = useAuth();
-  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-014"
@@ -288,8 +287,7 @@ export function LotListPage() {
 }
 
 export function PackageListPage() {
-  const { user } = useAuth();
-  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-PKG"
@@ -312,8 +310,7 @@ export function PackageListPage() {
 }
 
 export function MaterialIdentityListPage() {
-  const { user } = useAuth();
-  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-MI"
@@ -337,8 +334,7 @@ export function MaterialIdentityListPage() {
 }
 
 export function InventoryMovementListPage() {
-  const { user } = useAuth();
-  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-MV"
@@ -455,8 +451,7 @@ export function AdjustmentListPage() {
 
 export function InventoryReportsPage() {
   const { t } = useI18n();
-  const { user } = useAuth();
-  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
+  const { plantId } = usePlantContext();
   const balances = useQuery({
     queryKey: ['business', 'inventory', 'report', plantId],
     queryFn: () => searchResource<Record<string, unknown>>('inventory', undefined, { plantId }),

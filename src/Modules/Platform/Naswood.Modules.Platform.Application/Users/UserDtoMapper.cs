@@ -23,6 +23,7 @@ public static class UserDtoMapper
         LockReason = user.LockReason,
         CompanyIds = user.CompanyIds.ToArray(),
         PlantIds = user.PlantIds.ToArray(),
+        HomePlantId = user.HomePlantId,
         Roles = user.Roles.ToArray(),
         DepartmentCode = user.DepartmentCode,
         PositionCode = user.PositionCode,

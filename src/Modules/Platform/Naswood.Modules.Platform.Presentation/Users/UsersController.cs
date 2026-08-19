@@ -223,7 +223,7 @@ public sealed class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _dispatcher.SendAsync(
-                new AssignUserPlantsCommand(id, request.PlantIds),
+                new AssignUserPlantsCommand(id, request.PlantIds, request.HomePlantId),
                 cancellationToken)
             .ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Plants assigned successfully.");

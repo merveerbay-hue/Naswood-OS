@@ -1,6 +1,12 @@
 import { apiRequest } from './client';
-import type { AuthenticationResult, CurrentUser, LoginRequest } from './types';
-import { clearSession, getAccessToken, getRefreshToken, persistSession } from '@/auth/session';
+import type { AuthenticationResult, CurrentUser, LoginRequest, VisiblePlant } from './types';
+import {
+  clearSession,
+  getAccessToken,
+  getRefreshToken,
+  persistSession,
+  updateAccessToken,
+} from '@/auth/session';
 
 export async function login(request: LoginRequest): Promise<AuthenticationResult> {
   const result = await apiRequest<AuthenticationResult>('/api/v1/auth/login', {
@@ -31,6 +37,26 @@ export async function fetchCurrentUser(): Promise<CurrentUser> {
     method: 'GET',
     auth: true,
   });
+}
+
+export async function fetchVisiblePlants(): Promise<VisiblePlant[]> {
+  return apiRequest<VisiblePlant[]>('/api/v1/auth/plants', {
+    method: 'GET',
+    auth: true,
+  });
+}
+
+/** Üst Yönetici — switch working plant; Ana Üs unchanged. */
+export async function switchWorkingPlant(plantId: string): Promise<AuthenticationResult> {
+  const result = await apiRequest<AuthenticationResult>('/api/v1/auth/switch-plant', {
+    method: 'POST',
+    auth: true,
+    body: { plantId },
+  });
+  if (result.accessToken) {
+    updateAccessToken(result.accessToken);
+  }
+  return result;
 }
 
 export async function logout(): Promise<void> {

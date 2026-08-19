@@ -34,6 +34,9 @@ public sealed class UserDto
 
     public required IReadOnlyList<string> PlantIds { get; init; }
 
+    /// <summary>Ana Üs — first assigned plant / HomeFactoryId.</summary>
+    public string? HomePlantId { get; init; }
+
     public required IReadOnlyList<string> Roles { get; init; }
 
     public string? DepartmentCode { get; init; }
@@ -201,6 +204,9 @@ public sealed class AssignRolesRequestDto
 public sealed class AssignPlantsRequestDto
 {
     public required IReadOnlyList<string> PlantIds { get; init; }
+
+    /// <summary>Ana Üs — must be one of PlantIds. When omitted, first PlantId becomes home.</summary>
+    public string? HomePlantId { get; init; }
 }
 
 public sealed class UserImportResultDto

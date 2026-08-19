@@ -58,7 +58,11 @@ public sealed class AuthorizationBootstrapHostedService : IHostedService
                 .ConfigureAwait(false);
             await roles.AddAsync(AuthorizationCatalogSeed.CreateReadOnlyRole(), cancellationToken)
                 .ConfigureAwait(false);
-            _logger.LogInformation("Seeded Administrator and ReadOnly roles.");
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateExecutiveRole(), cancellationToken)
+                .ConfigureAwait(false);
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateWarehouseOperatorRole(), cancellationToken)
+                .ConfigureAwait(false);
+            _logger.LogInformation("Seeded Administrator, ReadOnly, Executive, WarehouseOperator roles.");
         }
         else
         {
@@ -77,6 +81,21 @@ public sealed class AuthorizationBootstrapHostedService : IHostedService
                         "Synced {Count} new permissions onto Administrator role.",
                         administrator.PermissionCodes.Count - before);
                 }
+            }
+
+            // Ensure persona roles exist on upgraded environments.
+            if (await roles.GetByCodeAsync("Executive", cancellationToken).ConfigureAwait(false) is null)
+            {
+                await roles.AddAsync(AuthorizationCatalogSeed.CreateExecutiveRole(), cancellationToken)
+                    .ConfigureAwait(false);
+                _logger.LogInformation("Seeded Executive role.");
+            }
+
+            if (await roles.GetByCodeAsync("WarehouseOperator", cancellationToken).ConfigureAwait(false) is null)
+            {
+                await roles.AddAsync(AuthorizationCatalogSeed.CreateWarehouseOperatorRole(), cancellationToken)
+                    .ConfigureAwait(false);
+                _logger.LogInformation("Seeded WarehouseOperator role.");
             }
         }
 

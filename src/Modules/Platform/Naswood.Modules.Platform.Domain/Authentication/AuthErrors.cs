@@ -33,4 +33,12 @@ public static class AuthErrors
 
     public static Error Validation(string message) =>
         Error.Validation("AUTH-010", message);
+
+    public static Error PlantSwitchForbidden() =>
+        Error.Forbidden(
+            "AUTH-011",
+            "Bu hesap yalnızca Ana Fabrika bağlamında çalışabilir; tesis değiştirme yetkisi yok.");
+
+    public static Error PlantNotAllowed() =>
+        Error.Forbidden("AUTH-012", "Bu tesise erişim yetkiniz yok.");
 }

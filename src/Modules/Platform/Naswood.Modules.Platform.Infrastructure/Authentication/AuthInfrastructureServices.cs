@@ -46,6 +46,9 @@ public sealed class JwtTokenService : ITokenService
     {
         var expires = issuedAt.AddMinutes(_options.AccessTokenMinutes);
         var homePlantId = user.HomePlantId ?? plantId;
+        // JWT plant_ids = visible plants only (operators never receive other factory codes).
+        var visiblePlants = PlantVisibilityPolicy.VisiblePlantIds(user.Roles, homePlantId, user.PlantIds.ToArray());
+        var canSwitch = PlantVisibilityPolicy.CanSwitchPlant(user.Roles);
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString("D")),
@@ -54,10 +57,11 @@ public sealed class JwtTokenService : ITokenService
             new("session_id", sessionId.ToString("D")),
             new("company_id", companyId),
             new("plant_id", plantId),
-            new("home_plant_id", homePlantId)
+            new("home_plant_id", homePlantId),
+            new("plant_switch", canSwitch ? "1" : "0")
         };
 
-        foreach (var assignedPlant in user.PlantIds)
+        foreach (var assignedPlant in visiblePlants)
         {
             claims.Add(new Claim("plant_ids", assignedPlant));
         }

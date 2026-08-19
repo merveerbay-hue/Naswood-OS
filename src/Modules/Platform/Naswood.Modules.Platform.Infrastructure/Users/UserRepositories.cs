@@ -166,6 +166,17 @@ public sealed class OrganizationReferenceRepository : IOrganizationReferenceRepo
         return _db.Plants.FirstOrDefaultAsync(x => x.Code == normalized, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<PlantReference>> ListActivePlantsAsync(
+        CancellationToken cancellationToken = default) =>
+        await _db.Plants.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public async Task AddPlantAsync(PlantReference plant, CancellationToken cancellationToken = default) =>
+        await _db.Plants.AddAsync(plant, cancellationToken).ConfigureAwait(false);
+
     public Task<DepartmentReference?> GetDepartmentByCodeAsync(
         string code,
         CancellationToken cancellationToken = default)
