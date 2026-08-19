@@ -169,9 +169,20 @@ public sealed class ExecuteStockTransferCommandHandler
         {
             package = await _packages.GetByNumberAsync(packageNumber, plantId, cancellationToken).ConfigureAwait(false);
             if (package is null)
+            {
+                var foreignPkg = await _packages.GetByNumberAsync(packageNumber, plantId: null, cancellationToken).ConfigureAwait(false);
+                if (foreignPkg is not null
+                    && !string.IsNullOrWhiteSpace(foreignPkg.PlantId)
+                    && !string.Equals(foreignPkg.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result.Failure<ExecuteStockTransferResultDto>(Error.Forbidden(
+                        "INV-TRF-403",
+                        $"Paket '{packageNumber}' başka bir tesise ait."));
+                }
                 return Result.Failure<ExecuteStockTransferResultDto>(Error.Validation(
                     "INV-TRF-013",
                     $"Paket '{packageNumber}' bu tesiste ({plantId}) bulunamadı."));
+            }
             if (!string.IsNullOrWhiteSpace(package.PlantId)
                 && !string.Equals(package.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
             {
@@ -198,12 +209,21 @@ public sealed class ExecuteStockTransferCommandHandler
 
         if (!string.IsNullOrWhiteSpace(miNumber))
         {
-            identity = await _identities.GetByNumberAsync(miNumber, cancellationToken).ConfigureAwait(false);
-            if (identity is not null
-                && !string.IsNullOrWhiteSpace(identity.PlantId)
-                && !string.Equals(identity.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+            identity = await _identities.GetByNumberAsync(miNumber, plantId, cancellationToken).ConfigureAwait(false);
+            if (identity is null)
             {
-                identity = null;
+                var foreignMi = await _identities.GetByNumberAsync(miNumber, plantId: null, cancellationToken).ConfigureAwait(false);
+                if (foreignMi is not null
+                    && !string.IsNullOrWhiteSpace(foreignMi.PlantId)
+                    && !string.Equals(foreignMi.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result.Failure<ExecuteStockTransferResultDto>(Error.Forbidden(
+                        "INV-TRF-403",
+                        $"MaterialIdentity '{miNumber}' başka bir tesise ait."));
+                }
+                return Result.Failure<ExecuteStockTransferResultDto>(Error.Validation(
+                    "INV-TRF-014",
+                    $"MaterialIdentity '{miNumber}' bu tesiste ({plantId}) bulunamadı."));
             }
         }
 

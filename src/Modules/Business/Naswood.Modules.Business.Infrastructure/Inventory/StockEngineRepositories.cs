@@ -13,8 +13,20 @@ public sealed class MaterialIdentityRepository : IMaterialIdentityRepository
     public async Task AddAsync(MaterialIdentity entity, CancellationToken cancellationToken = default) =>
         await _db.Set<MaterialIdentity>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public Task<MaterialIdentity?> GetByNumberAsync(string identityNumber, CancellationToken cancellationToken = default) =>
-        _db.Set<MaterialIdentity>().FirstOrDefaultAsync(x => !x.IsDeleted && x.IdentityNumber == identityNumber, cancellationToken);
+    public Task<MaterialIdentity?> GetByNumberAsync(
+        string identityNumber,
+        string? plantId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var key = identityNumber.Trim();
+        var query = _db.Set<MaterialIdentity>().Where(x => !x.IsDeleted && x.IdentityNumber == key);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return query.FirstOrDefaultAsync(cancellationToken);
+    }
 
     public async Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default)
