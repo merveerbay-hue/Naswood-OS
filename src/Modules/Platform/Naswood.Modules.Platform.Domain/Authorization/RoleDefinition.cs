@@ -10,7 +10,9 @@ public sealed class RoleDefinition : AggregateRoot<Guid>
     public static readonly HashSet<string> SystemRoleCodes = new(StringComparer.OrdinalIgnoreCase)
     {
         "Administrator",
-        "ReadOnly"
+        "ReadOnly",
+        "Executive",
+        "WarehouseOperator"
     };
 
     private readonly List<string> _permissionCodes = [];

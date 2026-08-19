@@ -74,6 +74,13 @@ public sealed class PlantReference : AggregateRoot<Guid>
             Require(companyCode),
             isActive: true);
 
+    public void Rename(string name)
+    {
+        Name = RequireName(name);
+    }
+
+    public void SetActive(bool isActive) => IsActive = isActive;
+
     private static string Require(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);

@@ -24,3 +24,8 @@ public sealed record RevokeTokenCommand(string RefreshToken) : ICommand<Result>;
 public sealed record GetCurrentUserQuery : IQuery<Result<CurrentUserDto>>;
 
 public sealed record GetCurrentSessionQuery : IQuery<Result<SessionDto>>;
+
+/// <summary>Switch working plant for this session without changing Ana Üs (HomePlantId).</summary>
+public sealed record SwitchWorkingPlantCommand(string PlantId) : ICommand<Result<AuthenticationResponseDto>>;
+
+public sealed record GetVisiblePlantsQuery : IQuery<Result<IReadOnlyList<VisiblePlantDto>>>;

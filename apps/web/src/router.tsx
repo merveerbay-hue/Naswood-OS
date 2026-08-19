@@ -13,6 +13,7 @@ import { ModulePlaceholderPage } from './pages/ModulePlaceholderPage';
 import { isAuthenticated } from './auth/session';
 import { collectNavPaths } from './navigation/nav-config';
 import { FilesPage } from './pages/FilesPage';
+import { PlantFactoryAdminPage } from './modules/admin/PlantFactoryAdminPage';
 import { InventoryWorkspaceLayout } from './modules/inventory/InventoryWorkspaceLayout';
 import { InventoryDashboardPage } from './modules/inventory/overview/InventoryDashboardPage';
 import {
@@ -160,6 +161,12 @@ const filesRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/administration/files',
   component: FilesPage,
+});
+
+const plantsAdminRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/administration/plants',
+  component: PlantFactoryAdminPage,
 });
 
 const inventoryRoute = createRoute({
@@ -460,6 +467,7 @@ const legacyProductionRedirects = [
 const implemented = new Set([
   '/',
   '/administration/files',
+  '/administration/plants',
   '/inventory',
   '/inventory/dashboard',
   '/inventory/master-data/materials',
@@ -596,6 +604,7 @@ export const routeTree = rootRoute.addChildren([
   authenticatedRoute.addChildren([
     dashboardRoute,
     filesRoute,
+    plantsAdminRoute,
     inventoryRoute.addChildren([
       inventoryIndexRoute,
       invDashboardRoute,

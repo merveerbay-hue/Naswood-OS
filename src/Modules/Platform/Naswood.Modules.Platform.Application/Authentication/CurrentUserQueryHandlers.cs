@@ -67,7 +67,11 @@ public sealed class GetCurrentUserQueryHandler : IQueryHandler<GetCurrentUserQue
             CompanyId = session.CompanyId,
             PlantId = session.PlantId,
             HomePlantId = user.HomePlantId ?? session.PlantId,
-            PlantIds = user.PlantIds.ToArray(),
+            PlantIds = PlantVisibilityPolicy.VisiblePlantIds(
+                user.Roles,
+                user.HomePlantId ?? session.PlantId,
+                user.PlantIds.ToArray()),
+            CanSwitchPlant = PlantVisibilityPolicy.CanSwitchPlant(user.Roles),
             SessionId = session.Id,
             Roles = user.Roles.ToArray()
         });

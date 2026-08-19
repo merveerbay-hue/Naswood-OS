@@ -7,6 +7,8 @@ export interface AuthContextValue {
   isBootstrapping: boolean;
   login: (request: LoginRequest) => Promise<AuthenticatedUser>;
   logout: () => Promise<void>;
+  /** Üst Yönetici — switch working plant; Ana Üs unchanged. */
+  switchPlant: (plantId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

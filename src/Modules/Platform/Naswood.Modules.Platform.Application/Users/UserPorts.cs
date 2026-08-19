@@ -47,6 +47,10 @@ public interface IOrganizationReferenceRepository
 
     Task<PlantReference?> GetPlantByCodeAsync(string code, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<PlantReference>> ListActivePlantsAsync(CancellationToken cancellationToken = default);
+
+    Task AddPlantAsync(PlantReference plant, CancellationToken cancellationToken = default);
+
     Task<DepartmentReference?> GetDepartmentByCodeAsync(string code, CancellationToken cancellationToken = default);
 
     Task<PositionReference?> GetPositionByCodeAsync(string code, CancellationToken cancellationToken = default);

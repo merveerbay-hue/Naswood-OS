@@ -48,6 +48,19 @@ export function updateTokens(tokens: { accessToken: string; refreshToken: string
   store.setItem(REFRESH_KEY, tokens.refreshToken);
 }
 
+/** Keep refresh; replace access after working-plant switch. */
+export function updateAccessToken(accessToken: string) {
+  const rememberMe = getRememberMe();
+  const store = storageFor(rememberMe);
+  const refresh = getRefreshToken();
+  clearKey(ACCESS_KEY);
+  store.setItem(ACCESS_KEY, accessToken);
+  if (refresh) {
+    clearKey(REFRESH_KEY);
+    store.setItem(REFRESH_KEY, refresh);
+  }
+}
+
 export function clearSession() {
   clearKey(ACCESS_KEY);
   clearKey(REFRESH_KEY);

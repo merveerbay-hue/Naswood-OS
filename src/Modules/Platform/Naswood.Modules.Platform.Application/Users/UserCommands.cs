@@ -70,7 +70,10 @@ public sealed record ResetUserPasswordCommand(Guid UserId, string NewPassword) :
 
 public sealed record AssignUserRolesCommand(Guid UserId, IReadOnlyList<string> Roles) : ICommand<Result<UserDto>>;
 
-public sealed record AssignUserPlantsCommand(Guid UserId, IReadOnlyList<string> PlantIds) : ICommand<Result<UserDto>>;
+public sealed record AssignUserPlantsCommand(
+    Guid UserId,
+    IReadOnlyList<string> PlantIds,
+    string? HomePlantId = null) : ICommand<Result<UserDto>>;
 
 public sealed record ImportUsersCommand(string CsvContent) : ICommand<Result<UserImportResultDto>>;
 

@@ -95,4 +95,30 @@ public sealed class AuthenticationController : ControllerBase
 
         return result.ToActionResult(this);
     }
+
+    /// <summary>
+    /// Üst Yönetici: switch working plant among authorized factories. Ana Üs (HomePlantId) unchanged.
+    /// </summary>
+    [Authorize]
+    [HttpPost("switch-plant")]
+    public async Task<IActionResult> SwitchPlant(
+        [FromBody] SwitchWorkingPlantRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .SendAsync(new SwitchWorkingPlantCommand(request.PlantId), cancellationToken)
+            .ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Working plant switched.");
+    }
+
+    /// <summary>Plants visible to the current user (operators: Ana Üs only).</summary>
+    [Authorize]
+    [HttpGet("plants")]
+    public async Task<IActionResult> VisiblePlants(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .QueryAsync(new GetVisiblePlantsQuery(), cancellationToken)
+            .ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
 }

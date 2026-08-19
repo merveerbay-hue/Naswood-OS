@@ -1,8 +1,11 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ChevronDown, LogOut, Menu, PanelLeft, Search, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button, cn } from '@naswood/ui';
+import { fetchVisiblePlants } from '@/api/auth';
 import { useAuth } from '@/auth/useAuth';
+import { usePlantContext } from '@/auth/usePlantContext';
 import { useI18n } from '@/i18n';
 import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
@@ -11,12 +14,21 @@ import { useShell } from './useShell';
 export function AppHeader() {
   const { t } = useI18n();
   const { user, logout } = useAuth();
+  const { plantId, homePlantId, canSwitchPlant, switchPlant } = usePlantContext();
   const { collapsed, toggleCollapsed } = useShell();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const plantsQuery = useQuery({
+    queryKey: ['auth', 'plants', user?.id],
+    queryFn: fetchVisiblePlants,
+    enabled: Boolean(user),
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     setMenuOpen(false);
@@ -41,6 +53,24 @@ export function AppHeader() {
       setLoggingOut(false);
     }
   };
+
+  const onPlantChange = async (next: string) => {
+    if (!next || next === plantId || !canSwitchPlant) return;
+    setSwitching(true);
+    try {
+      await switchPlant(next);
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  const plantOptions = plantsQuery.data?.length
+    ? plantsQuery.data
+    : (user?.plantIds ?? []).map((code) => ({
+        code,
+        name: code,
+        isHome: code.toUpperCase() === (homePlantId || '').toUpperCase(),
+      }));
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-[var(--border-default)] bg-[var(--color-background)]/95 px-4 backdrop-blur">
@@ -85,14 +115,21 @@ export function AppHeader() {
           </label>
           <select
             id="header-plant"
-            className="h-9 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm"
-            value={user?.homePlantId ?? user?.plantId ?? ''}
-            disabled
-            title="Ana Üs (HomeFactory) — oturum tesis bağlamı"
+            className="h-9 max-w-[14rem] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm disabled:opacity-80"
+            value={plantId}
+            disabled={!canSwitchPlant || switching || plantOptions.length <= 1}
+            title={
+              canSwitchPlant
+                ? 'Çalışma tesisini seçin — Ana Üs değişmez'
+                : 'Ana Üs (HomeFactory) — yalnızca kendi fabrikanız'
+            }
+            onChange={(e) => void onPlantChange(e.target.value)}
           >
-            <option value={user?.homePlantId ?? user?.plantId ?? ''}>
-              Ana Üs: {user?.homePlantId ?? user?.plantId ?? 'Tesis'}
-            </option>
+            {plantOptions.map((p) => (
+              <option key={p.code} value={p.code}>
+                {p.isHome ? `Ana Üs: ${p.name}` : p.name} ({p.code})
+              </option>
+            ))}
           </select>
         </div>
 
@@ -147,6 +184,9 @@ export function AppHeader() {
             <div className="border-b border-[var(--border-default)] px-3 py-2">
               <p className="truncate text-sm font-medium">{user?.name}</p>
               <p className="truncate text-xs text-[var(--text-muted)]">{user?.email ?? user?.username}</p>
+              <p className="mt-1 truncate text-[11px] text-[var(--text-muted)]">
+                Ana Üs: {homePlantId || '—'}
+              </p>
             </div>
             <button
               type="button"

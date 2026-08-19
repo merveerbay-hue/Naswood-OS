@@ -272,7 +272,10 @@ public static class AuthorizationCatalogSeed
             ("MaintenanceOrder.Execute", "Maintenance", "MaintenanceOrder", "Execute", null, "Execute Maintenance Order"),
             ("Finance.View", "Finance", null, "View", null, "View Finance"),
             ("Finance.Report.View", "Finance", "Report", "View", null, "View Finance Report"),
-            ("AI.Chat", "AI", null, "Chat", null, "Use AI Chat")
+            ("AI.Chat", "AI", null, "Chat", null, "Use AI Chat"),
+            ("Plant.Switch", "Organization", "Plant", "Switch", null, "Switch Working Plant Context"),
+            ("Plant.Manage", "Organization", "Plant", "Manage", null, "Manage Plant / Factory Master"),
+            ("Plant.Assign", "Organization", "Plant", "Assign", null, "Assign User Factory Access")
         };
 
         return specs
@@ -302,5 +305,46 @@ public static class AuthorizationCatalogSeed
                 "Maintenance.View",
                 "Finance.View",
                 "Finance.Report.View"
+            ]);
+
+    /// <summary>Üst Yönetici — may switch among authorized plants; Ana Üs unchanged.</summary>
+    public static RoleDefinition CreateExecutiveRole() =>
+        RoleDefinition.Create(
+            "Executive",
+            "Üst Yönetici",
+            [
+                "Platform.Dashboard.View",
+                "Plant.Switch",
+                "Inventory.View",
+                "Warehouse.View",
+                "Location.View",
+                "GoodsReceipt.View",
+                "GoodsIssue.View",
+                "StockTransfer.View",
+                "Purchasing.View",
+                "Sales.View",
+                "Production.View",
+                "Quality.View",
+                "Finance.Report.View"
+            ]);
+
+    /// <summary>Depo / Operatör — Ana Fabrika only.</summary>
+    public static RoleDefinition CreateWarehouseOperatorRole() =>
+        RoleDefinition.Create(
+            "WarehouseOperator",
+            "Depo Sorumlusu",
+            [
+                "Platform.Dashboard.View",
+                "Inventory.View",
+                "Warehouse.View",
+                "Location.View",
+                "GoodsReceipt.View",
+                "GoodsReceipt.Create",
+                "GoodsReceipt.Execute",
+                "GoodsIssue.View",
+                "GoodsIssue.Create",
+                "GoodsIssue.Execute",
+                "StockTransfer.View",
+                "Batch.View"
             ]);
 }

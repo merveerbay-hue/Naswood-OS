@@ -108,6 +108,15 @@ public sealed class LoginCommandHandler
             return Result.Failure<AuthenticationResponseDto>(context.Error!);
         }
 
+        // Operatör / Mühendis / Depo: login always lands on Ana Üs — cannot open another factory session.
+        var workingPlantId = context.Value.PlantId;
+        var homePlantId = user.HomePlantId ?? workingPlantId;
+        if (PlantVisibilityPolicy.IsHomeFactoryLocked(user.Roles)
+            && !string.Equals(workingPlantId, homePlantId, StringComparison.OrdinalIgnoreCase))
+        {
+            workingPlantId = homePlantId!;
+        }
+
         var accessTokenId = UuidV7.NewGuid();
         var refreshToken = _tokenService.CreateRefreshToken();
         var refreshHash = _tokenService.HashRefreshToken(refreshToken);
@@ -117,7 +126,7 @@ public sealed class LoginCommandHandler
             accessTokenId,
             refreshHash,
             context.Value.CompanyId,
-            context.Value.PlantId,
+            workingPlantId,
             device,
             command.RememberMe,
             now,
@@ -129,7 +138,7 @@ public sealed class LoginCommandHandler
             session.Id,
             accessTokenId,
             context.Value.CompanyId,
-            context.Value.PlantId,
+            workingPlantId,
             now);
 
         user.RegisterSuccessfulLogin(now, session.Id);
@@ -150,7 +159,7 @@ public sealed class LoginCommandHandler
         await PersistDomainEventsAsync(session, cancellationToken).ConfigureAwait(false);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return Result.Success(MapResponse(access, refreshToken, user, context.Value.CompanyId, context.Value.PlantId));
+        return Result.Success(MapResponse(access, refreshToken, user, context.Value.CompanyId, workingPlantId));
     }
 
     private DeviceInfo CreateDevice(LoginCommand command) =>
@@ -218,8 +227,10 @@ public sealed class LoginCommandHandler
         string refreshToken,
         AuthUser user,
         string companyId,
-        string plantId) =>
-        new()
+        string plantId)
+    {
+        var home = user.HomePlantId ?? plantId;
+        return new AuthenticationResponseDto
         {
             AccessToken = access.Token,
             RefreshToken = refreshToken,
@@ -233,9 +244,11 @@ public sealed class LoginCommandHandler
                 Email = user.Email,
                 CompanyId = companyId,
                 PlantId = plantId,
-                HomePlantId = user.HomePlantId ?? plantId,
-                PlantIds = user.PlantIds.ToArray(),
+                HomePlantId = home,
+                PlantIds = PlantVisibilityPolicy.VisiblePlantIds(user.Roles, home, user.PlantIds.ToArray()),
+                CanSwitchPlant = PlantVisibilityPolicy.CanSwitchPlant(user.Roles),
                 Roles = user.Roles.ToArray()
             }
         };
+    }
 }

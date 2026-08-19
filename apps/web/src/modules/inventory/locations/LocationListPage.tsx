@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { createResource, deleteResource, searchAllResource, searchResource } from '@/api/business';
-import { useAuth } from '@/auth/useAuth';
+import { usePlantContext } from '@/auth/usePlantContext';
 import { useI18n } from '@/i18n';
 import { StatusBadge } from '@/modules/shared/entity/StatusBadge';
 import {
@@ -56,26 +56,30 @@ const DEFAULT_FORM: FormState = {
  */
 export function LocationListPage() {
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { homePlantId, plantId: workingPlantId, visiblePlantIds, canSwitchPlant } = usePlantContext();
   const queryClient = useQueryClient();
 
-  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
-  const plantIds = user?.plantIds?.length ? user.plantIds : [homePlantId];
-  const otherPlants = plantIds.filter((p) => p.toUpperCase() !== homePlantId.toUpperCase());
+  const plantIds = visiblePlantIds.length ? visiblePlantIds : [homePlantId || 'PLANT-001'];
+  const otherPlants = canSwitchPlant
+    ? plantIds.filter((p) => p.toUpperCase() !== (homePlantId || '').toUpperCase())
+    : [];
 
-  const [viewPlantId, setViewPlantId] = useState(homePlantId);
+  const [viewPlantId, setViewPlantId] = useState(workingPlantId || homePlantId);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [q, setQ] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setViewPlantId(workingPlantId || homePlantId);
+  }, [workingPlantId, homePlantId]);
+
+  useEffect(() => {
     setViewPlantId((prev) => {
-      const ids = user?.plantIds?.length ? user.plantIds : [homePlantId];
-      if (ids.some((p) => p.toUpperCase() === prev.toUpperCase())) return prev;
+      if (plantIds.some((p) => p.toUpperCase() === prev.toUpperCase())) return prev;
       return homePlantId;
     });
-  }, [homePlantId, user?.plantIds]);
+  }, [homePlantId, plantIds]);
 
   // Keep view in sync when auth loads
   const effectiveView = useMemo(() => {

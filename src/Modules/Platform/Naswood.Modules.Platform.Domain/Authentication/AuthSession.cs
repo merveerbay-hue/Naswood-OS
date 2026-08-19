@@ -150,6 +150,18 @@ public sealed class AuthSession : AggregateRoot<Guid>
 
     public void Touch(DateTimeOffset utcNow) => LastActivityAt = utcNow;
 
+    /// <summary>
+    /// Switch session working plant (Diğer Tesis bağlamı). Does not change user HomePlantId.
+    /// Caller must ensure the session is usable and the plant is authorized.
+    /// </summary>
+    public void SwitchWorkingPlant(string plantId, Guid newAccessTokenId, DateTimeOffset utcNow)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(plantId);
+        PlantId = plantId.Trim();
+        AccessTokenId = newAccessTokenId;
+        LastActivityAt = utcNow;
+    }
+
     public void Revoke(DateTimeOffset utcNow, bool logout)
     {
         if (Status is AuthSessionStatus.Revoked or AuthSessionStatus.Closed)

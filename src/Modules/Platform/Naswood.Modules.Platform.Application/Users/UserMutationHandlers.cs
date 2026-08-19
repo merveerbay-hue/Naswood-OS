@@ -437,7 +437,18 @@ public sealed class AssignUserPlantsCommandHandler : ICommandHandler<AssignUserP
             return Result.Failure<UserDto>(org.Error!);
         }
 
-        var assigned = user.AssignPlants(command.PlantIds, _context.UserId, _clock.UtcNow);
+        var ordered = OrderPlantsWithHome(command.PlantIds, command.HomePlantId);
+        if (ordered.IsFailure)
+            return Result.Failure<UserDto>(ordered.Error!);
+
+        // Operatör / Mühendis / Depo: yalnızca Ana Fabrika atanabilir.
+        if (PlantVisibilityPolicy.RequiresSinglePlantAssignment(user.Roles) && ordered.Value.Count > 1)
+        {
+            return Result.Failure<UserDto>(UserErrors.Validation(
+                "Mühendis / Operatör / Depo Sorumlusu yalnızca Ana Fabrikaya atanabilir."));
+        }
+
+        var assigned = user.AssignPlants(ordered.Value, _context.UserId, _clock.UtcNow);
         if (assigned.IsFailure)
         {
             return Result.Failure<UserDto>(assigned.Error!);
@@ -454,6 +465,31 @@ public sealed class AssignUserPlantsCommandHandler : ICommandHandler<AssignUserP
                 cancellationToken)
             .ConfigureAwait(false);
         return Result.Success(UserDtoMapper.ToDto(user));
+    }
+
+    private static Result<IReadOnlyList<string>> OrderPlantsWithHome(
+        IReadOnlyList<string> plantIds,
+        string? homePlantId)
+    {
+        var plants = plantIds
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (plants.Count == 0)
+            return Result.Failure<IReadOnlyList<string>>(UserErrors.Validation("At least one plant is required."));
+
+        if (string.IsNullOrWhiteSpace(homePlantId))
+            return Result.Success<IReadOnlyList<string>>(plants);
+
+        var home = homePlantId.Trim();
+        if (!plants.Any(p => string.Equals(p, home, StringComparison.OrdinalIgnoreCase)))
+            return Result.Failure<IReadOnlyList<string>>(UserErrors.Validation(
+                "HomePlantId must be one of the assigned PlantIds."));
+
+        plants.RemoveAll(p => string.Equals(p, home, StringComparison.OrdinalIgnoreCase));
+        plants.Insert(0, home);
+        return Result.Success<IReadOnlyList<string>>(plants);
     }
 }
 

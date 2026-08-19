@@ -32,8 +32,10 @@ export interface AuthenticatedUser {
   plantId: string;
   /** Ana Üs — HomeFactoryId equivalent. */
   homePlantId: string;
-  /** Authorized plants (Ana Üs + Diğer Tesis). */
+  /** Visible plants (operators: Ana Üs only). */
   plantIds: string[];
+  /** Üst Yönetici may switch working plant. */
+  canSwitchPlant?: boolean;
   roles: string[];
 }
 
@@ -54,8 +56,15 @@ export interface CurrentUser {
   plantId: string;
   homePlantId: string;
   plantIds: string[];
+  canSwitchPlant?: boolean;
   sessionId: string;
   roles: string[];
+}
+
+export interface VisiblePlant {
+  code: string;
+  name: string;
+  isHome: boolean;
 }
 
 export interface LoginRequest {

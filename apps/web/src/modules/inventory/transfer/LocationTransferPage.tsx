@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { executeStockDocument, searchAllResource, searchResource } from '@/api/business';
-import { useAuth } from '@/auth/useAuth';
+import { usePlantContext } from '@/auth/usePlantContext';
 import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
 import { validateLocationTransfer } from './locationTransfer';
 
@@ -42,11 +42,14 @@ type ExecuteResult = {
  * Ana Üs varsayılan; kaynak/hedef aynı seçili tesiste kalır.
  */
 export function LocationTransferPage() {
-  const { user } = useAuth();
+  const { homePlantId, plantId: sessionPlantId, visiblePlantIds, canSwitchPlant } = usePlantContext();
   const queryClient = useQueryClient();
-  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
-  const plantIds = user?.plantIds?.length ? user.plantIds : [homePlantId];
-  const [plantId, setPlantId] = useState(homePlantId);
+  const plantIds = visiblePlantIds.length ? visiblePlantIds : [homePlantId || 'PLANT-001'];
+  const [plantId, setPlantId] = useState(sessionPlantId || homePlantId);
+
+  useEffect(() => {
+    setPlantId(sessionPlantId || homePlantId);
+  }, [sessionPlantId, homePlantId]);
 
   const [materialCode, setMaterialCode] = useState('');
   const [lotNumber, setLotNumber] = useState('');
@@ -220,8 +223,9 @@ export function LocationTransferPage() {
         </CardHeader>
         <CardContent>
           <select
-            className="h-10 w-full max-w-md rounded-md border border-[var(--border-default)] bg-transparent px-3 text-sm"
+            className="h-10 w-full max-w-md rounded-md border border-[var(--border-default)] bg-transparent px-3 text-sm disabled:opacity-80"
             value={plantId}
+            disabled={!canSwitchPlant || plantIds.length <= 1}
             onChange={(e) => {
               setPlantId(e.target.value);
               setFromWarehouseCode('');
