@@ -163,53 +163,59 @@ export function LocationListPage() {
       <div className="grid gap-3 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Ana Üs</CardDescription>
+            <CardDescription>Ana Fabrika</CardDescription>
             <CardTitle className="text-base">
               {plantDisplayName(homePlantId)}{' '}
               <span className="text-sm font-normal text-[var(--text-muted)]">({homePlantId})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Button
-              type="button"
-              variant={isHomeView ? 'default' : 'secondary'}
-              size="sm"
-              onClick={() => setViewPlantId(homePlantId)}
-            >
-              Ana Üs görünümü
-            </Button>
+            {canSwitchPlant ? (
+              <Button
+                type="button"
+                variant={isHomeView ? 'default' : 'secondary'}
+                size="sm"
+                onClick={() => setViewPlantId(homePlantId)}
+              >
+                Ana Üs görünümü
+              </Button>
+            ) : (
+              <p className="text-sm text-[var(--text-muted)]">Yalnızca kendi Ana Fabrikanız.</p>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Diğer Tesis</CardDescription>
-            <CardTitle className="text-base">
-              {otherPlants.length === 0
-                ? 'Yetkili başka tesis yok'
-                : 'Görüntüleme bağlamı (Ana Üs değişmez)'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {otherPlants.map((pid) => (
-              <Button
-                key={pid}
-                type="button"
-                variant={effectiveView.toUpperCase() === pid.toUpperCase() ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setViewPlantId(pid)}
-              >
-                {plantDisplayName(pid)} ({pid})
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
+        {canSwitchPlant ? (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Çalışma Tesisi</CardDescription>
+              <CardTitle className="text-base">
+                {otherPlants.length === 0
+                  ? 'Yetkili başka tesis yok'
+                  : 'Yetkili aktif tesisler (Ana Üs değişmez)'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {otherPlants.map((pid) => (
+                <Button
+                  key={pid}
+                  type="button"
+                  variant={effectiveView.toUpperCase() === pid.toUpperCase() ? 'default' : 'secondary'}
+                  size="sm"
+                  onClick={() => setViewPlantId(pid)}
+                >
+                  {plantDisplayName(pid)} ({pid})
+                </Button>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
 
-      {!isHomeView ? (
+      {canSwitchPlant && !isHomeView ? (
         <p className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-          Diğer Tesis üzerinde çalışıyorsunuz: <strong>{plantDisplayName(effectiveView)}</strong>. Ana
-          Üs ({plantDisplayName(homePlantId)}) değişmez. Lokasyon oluşturma bu tesise bağlanır.
+          Çalışma tesisi: <strong>{plantDisplayName(effectiveView)}</strong>. Ana Fabrika (
+          {plantDisplayName(homePlantId)}) değişmez.
         </p>
       ) : null}
 

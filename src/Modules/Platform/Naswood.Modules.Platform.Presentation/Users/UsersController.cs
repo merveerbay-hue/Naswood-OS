@@ -216,7 +216,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [HttpPost("api/v1/users/{id:guid}/assign-plant")]
-    [RequirePermission("User.Update")]
+    [RequirePermission("Plant.Assign")]
     public async Task<IActionResult> AssignPlant(
         Guid id,
         [FromBody] AssignPlantsRequestDto request,

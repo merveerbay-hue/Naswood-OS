@@ -16,9 +16,12 @@ export const HOME_FACTORY_ONLY_ROLES = [
   'Operator',
   'Engineer',
   'QualityEngineer',
+  'QualityUser',
   'WarehouseResponsible',
   'DepoSorumlusu',
   'Buyer',
+  'FieldUser',
+  'SahaKullanicisi',
   'ReadOnly',
 ] as const;
 

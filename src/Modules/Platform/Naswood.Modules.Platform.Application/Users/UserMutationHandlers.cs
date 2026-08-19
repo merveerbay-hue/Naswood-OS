@@ -75,6 +75,13 @@ public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand
             return Result.Failure<UserDto>(org.Error!);
         }
 
+        if (PlantVisibilityPolicy.RequiresSinglePlantAssignment(user.Roles)
+            && plantIds.Distinct(StringComparer.OrdinalIgnoreCase).Count() > 1)
+        {
+            return Result.Failure<UserDto>(UserErrors.Validation(
+                "Mühendis / Operatör / Depo Sorumlusu yalnızca Ana Fabrikaya atanabilir."));
+        }
+
         var profile = user.UpdateProfile(
             command.FirstName,
             command.LastName,

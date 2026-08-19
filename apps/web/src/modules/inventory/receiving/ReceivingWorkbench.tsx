@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@naswood/ui';
 import { executeStockDocument, searchAllResource, searchResource } from '@/api/business';
-import { useAuth } from '@/auth/useAuth';
+import { usePlantContext } from '@/auth/usePlantContext';
 import { useI18n } from '@/i18n';
 import { type MaterialCandidate } from './materialMatch';
 import {
@@ -85,10 +85,7 @@ function nowTime() {
 
 export function ReceivingWorkbench() {
   const { t } = useI18n();
-  const { user } = useAuth();
-  // Rule 1 — default posting context is HomeFactory (homePlantId).
-  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
-  const postingPlantId = user?.plantId || homePlantId;
+  const { homePlantId, plantId: postingPlantId } = usePlantContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [stageIdx, setStageIdx] = useState(0);

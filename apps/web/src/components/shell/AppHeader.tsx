@@ -26,7 +26,7 @@ export function AppHeader() {
   const plantsQuery = useQuery({
     queryKey: ['auth', 'plants', user?.id],
     queryFn: fetchVisiblePlants,
-    enabled: Boolean(user),
+    enabled: Boolean(user) && canSwitchPlant,
     staleTime: 60_000,
   });
 
@@ -72,6 +72,12 @@ export function AppHeader() {
         isHome: code.toUpperCase() === (homePlantId || '').toUpperCase(),
       }));
 
+  const homeLabel =
+    plantsQuery.data?.find((p) => p.code.toUpperCase() === (homePlantId || '').toUpperCase())?.name ||
+    homePlantId ||
+    plantId ||
+    '—';
+
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-[var(--border-default)] bg-[var(--color-background)]/95 px-4 backdrop-blur">
       <Button
@@ -110,27 +116,37 @@ export function AppHeader() {
           >
             <option value={user?.companyId ?? ''}>{user?.companyId ?? 'Şirket'}</option>
           </select>
-          <label className="sr-only" htmlFor="header-plant">
-            Tesis
-          </label>
-          <select
-            id="header-plant"
-            className="h-9 max-w-[14rem] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm disabled:opacity-80"
-            value={plantId}
-            disabled={!canSwitchPlant || switching || plantOptions.length <= 1}
-            title={
-              canSwitchPlant
-                ? 'Çalışma tesisini seçin — Ana Üs değişmez'
-                : 'Ana Üs (HomeFactory) — yalnızca kendi fabrikanız'
-            }
-            onChange={(e) => void onPlantChange(e.target.value)}
-          >
-            {plantOptions.map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.isHome ? `Ana Üs: ${p.name}` : p.name} ({p.code})
-              </option>
-            ))}
-          </select>
+
+          {canSwitchPlant ? (
+            <>
+              <label className="sr-only" htmlFor="header-plant">
+                Çalışma Tesisi
+              </label>
+              <select
+                id="header-plant"
+                className="h-9 max-w-[16rem] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-background)] px-2 text-sm"
+                value={plantId}
+                disabled={switching || plantOptions.length <= 1}
+                title="Çalışma tesisi — Ana Üs değişmez"
+                onChange={(e) => void onPlantChange(e.target.value)}
+              >
+                {plantOptions.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.isHome ? `Ana Üs: ${p.name}` : p.name} ({p.code})
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <div
+              className="flex h-9 max-w-[16rem] items-center rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm text-[var(--text-secondary)]"
+              title="Ana Fabrika — yalnızca kendi tesisiniz"
+            >
+              <span className="truncate">
+                Ana Fabrika: <span className="font-medium text-[var(--text-primary)]">{homeLabel}</span>
+              </span>
+            </div>
+          )}
         </div>
 
         <Button
@@ -185,7 +201,7 @@ export function AppHeader() {
               <p className="truncate text-sm font-medium">{user?.name}</p>
               <p className="truncate text-xs text-[var(--text-muted)]">{user?.email ?? user?.username}</p>
               <p className="mt-1 truncate text-[11px] text-[var(--text-muted)]">
-                Ana Üs: {homePlantId || '—'}
+                Ana Fabrika: {homePlantId || '—'}
               </p>
             </div>
             <button
