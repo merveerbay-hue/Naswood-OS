@@ -407,6 +407,7 @@ export function GoodsIssueListPage() {
 
 export function TransferListPage() {
   const { t } = useI18n();
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-019"
@@ -416,12 +417,14 @@ export function TransferListPage() {
       fields={useInvFields().transfer}
       createLabel={t('inventory.newTransfer')}
       jobPath="/inventory/operations/transfer"
+      plantId={plantId}
     />
   );
 }
 
 export function CycleCountListPage() {
   const { t } = useI18n();
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-021"
@@ -431,12 +434,14 @@ export function CycleCountListPage() {
       fields={useInvFields().count}
       createLabel={t('inventory.newCount')}
       jobPath="/inventory/counts/start"
+      plantId={plantId}
     />
   );
 }
 
 export function AdjustmentListPage() {
   const { t } = useI18n();
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-024"
@@ -445,6 +450,7 @@ export function AdjustmentListPage() {
       route="inventory-adjustments"
       fields={useInvFields().adjustment}
       createLabel={t('inventory.newAdjustment')}
+      plantId={plantId}
     />
   );
 }

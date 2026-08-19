@@ -49,10 +49,24 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
     public async Task AddAsync(InventoryPackage entity, CancellationToken cancellationToken = default) =>
         await _db.Set<InventoryPackage>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public Task<InventoryPackage?> GetByNumberAsync(string packageNumber, CancellationToken cancellationToken = default) =>
-        _db.Set<InventoryPackage>().FirstOrDefaultAsync(
-            x => !x.IsDeleted && (x.PackageNumber == packageNumber || x.Barcode == packageNumber),
-            cancellationToken);
+    public Task<InventoryPackage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Set<InventoryPackage>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+    public Task<InventoryPackage?> GetByNumberAsync(
+        string packageNumber,
+        string? plantId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var key = packageNumber.Trim();
+        var query = _db.Set<InventoryPackage>().Where(x =>
+            !x.IsDeleted && (x.PackageNumber == key || x.Barcode == key));
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return query.FirstOrDefaultAsync(cancellationToken);
+    }
 
     public async Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default)

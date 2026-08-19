@@ -167,11 +167,18 @@ public sealed class ExecuteStockTransferCommandHandler
 
         if (!string.IsNullOrWhiteSpace(packageNumber))
         {
-            package = await _packages.GetByNumberAsync(packageNumber, cancellationToken).ConfigureAwait(false);
+            package = await _packages.GetByNumberAsync(packageNumber, plantId, cancellationToken).ConfigureAwait(false);
             if (package is null)
                 return Result.Failure<ExecuteStockTransferResultDto>(Error.Validation(
                     "INV-TRF-013",
-                    $"Paket '{packageNumber}' bulunamadı."));
+                    $"Paket '{packageNumber}' bu tesiste ({plantId}) bulunamadı."));
+            if (!string.IsNullOrWhiteSpace(package.PlantId)
+                && !string.Equals(package.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure<ExecuteStockTransferResultDto>(Error.Forbidden(
+                    "INV-TRF-403",
+                    "Paket başka bir tesise ait."));
+            }
             if (!string.Equals(package.MaterialCode, materialCode, StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(package.LotNumber ?? string.Empty, lotNumber, StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(package.WarehouseCode, fromWh, StringComparison.OrdinalIgnoreCase)
@@ -192,6 +199,12 @@ public sealed class ExecuteStockTransferCommandHandler
         if (!string.IsNullOrWhiteSpace(miNumber))
         {
             identity = await _identities.GetByNumberAsync(miNumber, cancellationToken).ConfigureAwait(false);
+            if (identity is not null
+                && !string.IsNullOrWhiteSpace(identity.PlantId)
+                && !string.Equals(identity.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+            {
+                identity = null;
+            }
         }
 
         var source = await _balances.FindByKeyAsync(materialCode, fromWh, fromLoc, lotNumber, plantId, cancellationToken).ConfigureAwait(false);

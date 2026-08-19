@@ -21,8 +21,8 @@ public sealed class StockEngineController : ControllerBase
     public async Task<IActionResult> ExecuteReceipt([FromBody] ExecuteGoodsReceiptRequestDto request, CancellationToken cancellationToken)
     {
         var (plantId, error) = PlantClaims.ResolveRequestedPlant(User, request.PlantId);
-        if (error is not null)
-            return BadRequest(new { success = false, message = error });
+        if (error is not null || plantId is null)
+            return ForbiddenPlant(error, "INV-POST-403");
 
         var allowed = PlantClaims.AllowedPlantIds(User);
         var result = await _dispatcher.SendAsync(
@@ -45,8 +45,8 @@ public sealed class StockEngineController : ControllerBase
     public async Task<IActionResult> ExecuteIssue([FromBody] ExecuteGoodsIssueRequestDto request, CancellationToken cancellationToken)
     {
         var (plantId, error) = PlantClaims.ResolveRequestedPlant(User, request.PlantId);
-        if (error is not null)
-            return BadRequest(new { success = false, message = error });
+        if (error is not null || plantId is null)
+            return ForbiddenPlant(error, "INV-POST-403");
 
         var allowed = PlantClaims.AllowedPlantIds(User);
         var result = await _dispatcher.SendAsync(
@@ -77,10 +77,20 @@ public sealed class StockEngineController : ControllerBase
             : plantId;
         var (resolved, error) = PlantClaims.ResolveRequestedPlant(User, requested);
         if (error is not null || resolved is null)
-            return ForbiddenPlant(error, "INV-BAL-403");
+            return ForbiddenPlant(error, "INV-PKG-403");
 
         var result = await _dispatcher.QueryAsync(
             new SearchInventoryPackageQuery(q, page, pageSize, resolved, allowed),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+
+    [HttpGet("api/v1/packages/{id:guid}")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> GetPackageById(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new GetInventoryPackageByIdQuery(id, PlantClaims.AllowedPlantIds(User)),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this);
     }
