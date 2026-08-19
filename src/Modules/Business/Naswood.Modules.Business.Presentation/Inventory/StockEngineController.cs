@@ -118,6 +118,16 @@ public sealed class StockEngineController : ControllerBase
         return result.ToActionResult(this);
     }
 
+    [HttpGet("api/v1/material-identities/{id:guid}")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> GetIdentityById(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new GetMaterialIdentityByIdQuery(id, PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+
     [HttpGet("api/v1/inventory-movements")]
     [RequirePermission("Inventory.View")]
     public async Task<IActionResult> SearchMovements(
