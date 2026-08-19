@@ -88,6 +88,43 @@ public static class MaterialCompliance
         }
     }
 
+    /// <summary>Legacy / missing → NORMAL_STOCK.</summary>
+    public static string GetComplianceScope(string? definitionJson)
+    {
+        if (string.IsNullOrWhiteSpace(definitionJson)) return ScopeNormalStock;
+        try
+        {
+            using var doc = JsonDocument.Parse(definitionJson);
+            var scope = ReadScope(doc.RootElement);
+            return string.IsNullOrWhiteSpace(scope) ? ScopeNormalStock : scope.Trim().ToUpperInvariant();
+        }
+        catch (JsonException)
+        {
+            return ScopeNormalStock;
+        }
+    }
+
+    public static bool IsStructuralTimber(string? definitionJson) =>
+        string.Equals(GetComplianceScope(definitionJson), ScopeStructuralTimber, StringComparison.OrdinalIgnoreCase);
+
+    public static IReadOnlyList<string> GetSupportedGradingMethods(string? definitionJson)
+    {
+        if (string.IsNullOrWhiteSpace(definitionJson)) return Array.Empty<string>();
+        try
+        {
+            using var doc = JsonDocument.Parse(definitionJson);
+            return ReadMethods(doc.RootElement)
+                .Select(m => m.Trim().ToUpperInvariant())
+                .Where(m => AllowedMethods.Contains(m))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (JsonException)
+        {
+            return Array.Empty<string>();
+        }
+    }
+
     /// <summary>Normalize JSON for persistence: legacy empty → NORMAL_STOCK; strip methods on normal stock.</summary>
     public static string EnsureSafeDefaults(string? definitionJson)
     {

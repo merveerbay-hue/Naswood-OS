@@ -9,6 +9,7 @@ namespace Naswood.Modules.Business.Application.Production;
 public interface IWorkCenterRepository
 {
     Task<WorkCenter?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<WorkCenter?> GetByCodeAndPlantAsync(string code, string plantId, CancellationToken cancellationToken = default);
     Task AddAsync(WorkCenter entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<WorkCenter> Items, int Total)> SearchAsync(
         string? q,

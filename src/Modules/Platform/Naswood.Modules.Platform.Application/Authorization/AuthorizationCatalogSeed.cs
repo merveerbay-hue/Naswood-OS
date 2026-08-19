@@ -196,6 +196,9 @@ public static class AuthorizationCatalogSeed
             ("WorkCenter.Create", "Production", "WorkCenter", "Create", null, "Create WorkCenter"),
             ("WorkCenter.Update", "Production", "WorkCenter", "Update", null, "Update WorkCenter"),
             ("WorkCenter.Delete", "Production", "WorkCenter", "Delete", null, "Delete WorkCenter"),
+            ("StructuralProductionLot.View", "Production", "StructuralProductionLot", "View", null, "View StructuralProductionLot"),
+            ("StructuralProductionLot.Create", "Production", "StructuralProductionLot", "Create", null, "Create StructuralProductionLot"),
+            ("StructuralProductionLot.Update", "Production", "StructuralProductionLot", "Update", null, "Update StructuralProductionLot"),
             ("ProductionLine.View", "Production", "ProductionLine", "View", null, "View ProductionLine"),
             ("ProductionLine.Create", "Production", "ProductionLine", "Create", null, "Create ProductionLine"),
             ("ProductionLine.Update", "Production", "ProductionLine", "Update", null, "Update ProductionLine"),
@@ -324,6 +327,7 @@ public static class AuthorizationCatalogSeed
                 "Purchasing.View",
                 "Sales.View",
                 "Production.View",
+                "StructuralProductionLot.View",
                 "Quality.View",
                 "Finance.Report.View"
             ]);
@@ -345,6 +349,9 @@ public static class AuthorizationCatalogSeed
                 "GoodsIssue.Create",
                 "GoodsIssue.Execute",
                 "StockTransfer.View",
-                "Batch.View"
+                "Batch.View",
+                "StructuralProductionLot.View",
+                "StructuralProductionLot.Create",
+                "StructuralProductionLot.Update"
             ]);
 }

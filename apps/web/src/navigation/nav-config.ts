@@ -26,6 +26,11 @@ export const navigationTree: NavItem[] = [
           { id: 'inventory-issue', label: 'Mal çıkışı başlat', path: '/inventory/operations/issue' },
           { id: 'inventory-goods-issues', label: 'Çıkış kayıtları', path: '/inventory/operations/goods-issues' },
           { id: 'inventory-transfers', label: 'Transfer', path: '/inventory/operations/transfers' },
+          {
+            id: 'inventory-structural-lots',
+            label: 'Yapısal üretim lotu',
+            path: '/inventory/operations/structural-production-lots',
+          },
         ],
       },
       {
