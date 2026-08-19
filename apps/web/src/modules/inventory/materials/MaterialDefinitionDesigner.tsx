@@ -23,6 +23,15 @@ import {
   formatNominalDims,
   type NominalDims,
 } from './materialNominalDims';
+import {
+  COMPLIANCE_SCOPES,
+  GRADING_METHODS,
+  complianceDefinitionFragment,
+  isExcludedFromEn14081,
+  validateMaterialCompliance,
+  type ComplianceScope,
+  type GradingMethod,
+} from './materialCompliance';
 
 /**
  * INV-MAT-001 — Material Definition Designer (MVP)
@@ -55,6 +64,8 @@ type DefState = {
   volumeCalcRequired: boolean;
   status: 'Active' | 'Passive';
   notes: string;
+  complianceScope: ComplianceScope;
+  supportedGradingMethods: GradingMethod[];
 };
 
 type MaterialRow = {
@@ -108,6 +119,8 @@ const DEFAULT_DEF: DefState = {
   volumeCalcRequired: true,
   status: 'Active',
   notes: '',
+  complianceScope: 'NORMAL_STOCK',
+  supportedGradingMethods: [],
 };
 
 function num(v: string) {
@@ -194,19 +207,22 @@ function SelectField({
   value,
   onChange,
   options,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { token: string; label: string }[];
+  disabled?: boolean;
 }) {
   return (
     <label className="block space-y-1">
       <span className="text-xs font-medium text-[var(--text-muted)]">{label}</span>
       <select
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="flex h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
+        className="flex h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm disabled:opacity-60"
       >
         {options.map((o) => (
           <option key={o.token} value={o.token}>
@@ -347,6 +363,24 @@ export function MaterialDefinitionDesigner() {
       if (!mintMaterialCode(codingInput(def, existingCodes)) && def.mainCategory === 'MP') {
         return t('md.gateMpCodeExists');
       }
+      const compliance = validateMaterialCompliance({
+        complianceScope: def.complianceScope,
+        supportedGradingMethods: def.supportedGradingMethods,
+        mainCategory: def.mainCategory,
+        isThermowood: def.isThermowood || def.mainCategory === 'TW',
+        productTypeToken: def.productTypeToken,
+      });
+      if (!compliance.ok) return compliance.message;
+    }
+    if (pack.id === 'general' && def.complianceScope === 'STRUCTURAL_TIMBER') {
+      const compliance = validateMaterialCompliance({
+        complianceScope: def.complianceScope,
+        supportedGradingMethods: def.supportedGradingMethods,
+        mainCategory: def.mainCategory,
+        isThermowood: def.isThermowood || def.mainCategory === 'TW',
+        productTypeToken: def.productTypeToken,
+      });
+      if (!compliance.ok) return compliance.message;
     }
     return null;
   }, [pack.id, def, t, nominal, duplicate, dupAck, existingCodes]);
@@ -358,6 +392,21 @@ export function MaterialDefinitionDesigner() {
       if (duplicate && !dupAck) throw new Error(t('md.duplicateFound'));
 
       const woodEff = effectiveWoodToken(def);
+      const complianceFrag = complianceDefinitionFragment({
+        complianceScope: def.complianceScope,
+        supportedGradingMethods: def.supportedGradingMethods,
+        mainCategory: def.mainCategory,
+        isThermowood: def.isThermowood || def.mainCategory === 'TW',
+        productTypeToken: def.productTypeToken,
+      });
+      const complianceCheck = validateMaterialCompliance({
+        ...complianceFrag,
+        mainCategory: def.mainCategory,
+        isThermowood: def.isThermowood || def.mainCategory === 'TW',
+        productTypeToken: def.productTypeToken,
+      });
+      if (!complianceCheck.ok) throw new Error(complianceCheck.message);
+
       const definitionPayload = buildDefinitionWithNominal(
         {
           mainCategory: def.mainCategory,
@@ -381,6 +430,8 @@ export function MaterialDefinitionDesigner() {
           NominalIsCommercial: true,
           ActualDimsLiveInReceiving: true,
           notes: def.notes,
+          complianceScope: complianceFrag.complianceScope,
+          supportedGradingMethods: complianceFrag.supportedGradingMethods,
         },
         nominal,
       );
@@ -435,6 +486,16 @@ export function MaterialDefinitionDesigner() {
           productTypeToken: next.productTypeToken,
           quality: next.grade,
         });
+      }
+      if (
+        isExcludedFromEn14081({
+          mainCategory: next.mainCategory,
+          isThermowood: next.isThermowood || next.mainCategory === 'TW',
+          productTypeToken: next.productTypeToken,
+        })
+      ) {
+        next.complianceScope = 'NORMAL_STOCK';
+        next.supportedGradingMethods = [];
       }
       return next;
     });
@@ -533,6 +594,16 @@ export function MaterialDefinitionDesigner() {
         productTypeToken: next.productTypeToken,
         quality: next.grade,
       });
+      if (
+        isExcludedFromEn14081({
+          mainCategory: next.mainCategory,
+          isThermowood: next.isThermowood || next.mainCategory === 'TW',
+          productTypeToken: next.productTypeToken,
+        })
+      ) {
+        next.complianceScope = 'NORMAL_STOCK';
+        next.supportedGradingMethods = [];
+      }
       return next;
     });
     setDupAck(false);
@@ -735,6 +806,87 @@ export function MaterialDefinitionDesigner() {
                     )}
                   </div>
 
+                  <div className="space-y-3 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-muted)]/40 p-3">
+                    <SelectField
+                      label={t('md.fields.complianceScope')}
+                      value={
+                        isExcludedFromEn14081({
+                          mainCategory: def.mainCategory,
+                          isThermowood: def.isThermowood || def.mainCategory === 'TW',
+                          productTypeToken: def.productTypeToken,
+                        })
+                          ? 'NORMAL_STOCK'
+                          : def.complianceScope
+                      }
+                      onChange={(v) => {
+                        const scope = v as ComplianceScope;
+                        setDef((d) => ({
+                          ...d,
+                          complianceScope: scope,
+                          supportedGradingMethods:
+                            scope === 'STRUCTURAL_TIMBER' ? d.supportedGradingMethods : [],
+                        }));
+                      }}
+                      options={COMPLIANCE_SCOPES.map((s) => ({
+                        token: s.token,
+                        label: s.labelTr,
+                      }))}
+                      disabled={isExcludedFromEn14081({
+                        mainCategory: def.mainCategory,
+                        isThermowood: def.isThermowood || def.mainCategory === 'TW',
+                        productTypeToken: def.productTypeToken,
+                      })}
+                    />
+                    {isExcludedFromEn14081({
+                      mainCategory: def.mainCategory,
+                      isThermowood: def.isThermowood || def.mainCategory === 'TW',
+                      productTypeToken: def.productTypeToken,
+                    }) ? (
+                      <p className="text-xs text-[var(--text-muted)]">{t('md.compliance.excludedHint')}</p>
+                    ) : null}
+                    {def.complianceScope === 'STRUCTURAL_TIMBER' &&
+                    !isExcludedFromEn14081({
+                      mainCategory: def.mainCategory,
+                      isThermowood: def.isThermowood || def.mainCategory === 'TW',
+                      productTypeToken: def.productTypeToken,
+                    }) ? (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-[var(--text-primary)]">
+                          {t('md.fields.supportedGradingMethods')}
+                        </p>
+                        <div className="flex flex-wrap gap-4">
+                          {GRADING_METHODS.map((m) => {
+                            const checked = def.supportedGradingMethods.includes(m.token);
+                            return (
+                              <label
+                                key={m.token}
+                                className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setDef((d) => {
+                                      const set = new Set(d.supportedGradingMethods);
+                                      if (set.has(m.token)) set.delete(m.token);
+                                      else set.add(m.token);
+                                      return {
+                                        ...d,
+                                        supportedGradingMethods: [...set] as GradingMethod[],
+                                      };
+                                    });
+                                  }}
+                                />
+                                {m.labelTr}
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)]">{t('md.compliance.lotNote')}</p>
+                      </div>
+                    ) : null}
+                  </div>
+
                   <div className="grid gap-3 md:grid-cols-3">
                     <Field
                       label={t('md.fields.thickness')}
@@ -878,6 +1030,22 @@ export function MaterialDefinitionDesigner() {
                       [
                         t('md.fields.lotTracking'),
                         def.lotTracking ? t('md.thermowood.yes') : t('md.thermowood.no'),
+                      ],
+                      [
+                        t('md.fields.complianceScope'),
+                        COMPLIANCE_SCOPES.find((s) => s.token === def.complianceScope)?.labelTr ??
+                          def.complianceScope,
+                      ],
+                      [
+                        t('md.fields.supportedGradingMethods'),
+                        def.complianceScope === 'STRUCTURAL_TIMBER'
+                          ? def.supportedGradingMethods
+                              .map(
+                                (m) =>
+                                  GRADING_METHODS.find((g) => g.token === m)?.labelTr ?? m,
+                              )
+                              .join(', ') || '—'
+                          : t('md.compliance.notApplicable'),
                       ],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
