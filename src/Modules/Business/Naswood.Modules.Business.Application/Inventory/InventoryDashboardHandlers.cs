@@ -11,7 +11,6 @@ public sealed record GetInventoryDashboardQuery(
 
 public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInventoryDashboardQuery, Result<InventoryDashboardDto>>
 {
-    private readonly IMaterialRepository _materials;
     private readonly IWarehouseRepository _warehouses;
     private readonly ILocationRepository _locations;
     private readonly IInventoryBalanceRepository _balances;
@@ -23,7 +22,6 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
     private readonly IInventoryMovementRepository _movements;
 
     public GetInventoryDashboardQueryHandler(
-        IMaterialRepository materials,
         IWarehouseRepository warehouses,
         ILocationRepository locations,
         IInventoryBalanceRepository balances,
@@ -34,7 +32,6 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements)
     {
-        _materials = materials;
         _warehouses = warehouses;
         _locations = locations;
         _balances = balances;
@@ -61,21 +58,26 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
                 "INV-BAL-403",
                 "Bu tesisin stok özetini görüntüleme yetkiniz yok."));
 
-        var materials = await _materials.SearchAsync(null, 1, 1, cancellationToken).ConfigureAwait(false);
         var warehouses = await _warehouses.SearchAsync(null, plantId, 1, 1, cancellationToken).ConfigureAwait(false);
         var locations = await _locations.SearchAsync(null, plantId, null, null, 1, 1, cancellationToken).ConfigureAwait(false);
         // Server-side plant filter — never aggregate other factories' stock quantities.
         var balances = await _balances.SearchAsync(null, 1, 500, plantId, null, null, cancellationToken).ConfigureAwait(false);
-        var receipts = await _goodsReceipts.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
-        var issues = await _goodsIssues.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
-        var transfers = await _transfers.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
-        var counts = await _counts.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
-        var packages = await _packages.SearchAsync(null, 1, 200, cancellationToken).ConfigureAwait(false);
-        var movements = await _movements.SearchAsync(null, 1, 1, cancellationToken).ConfigureAwait(false);
+        var receipts = await _goodsReceipts.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var issues = await _goodsIssues.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var transfers = await _transfers.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var counts = await _counts.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var packages = await _packages.SearchAsync(null, 1, 200, plantId, cancellationToken).ConfigureAwait(false);
+        var movements = await _movements.SearchAsync(null, 1, 1, plantId, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var onHand = balances.Items.Sum(x => x.QuantityOnHand);
         var reserved = balances.Items.Sum(x => x.QuantityReserved);
         var negative = balances.Items.Count(x => x.QuantityOnHand < 0);
+        // Plant-scoped material footprint = distinct materials with balance in this factory (master remains global).
+        var plantMaterialCount = balances.Items
+            .Select(x => x.MaterialCode)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
         var holdPackages = packages.Items.Count(x =>
             string.Equals(x.Status, "Hold", StringComparison.OrdinalIgnoreCase)
             || string.Equals(x.Status, "Quarantine", StringComparison.OrdinalIgnoreCase));
@@ -91,10 +93,8 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
                        && !string.Equals(s, "Closed", StringComparison.OrdinalIgnoreCase);
             });
 
-        // Dock board: open (non-posted) receipts first, then recent posted as operational trail.
+        // Dock board: plant-scoped receipts (repo already filtered).
         var dock = receipts.Items
-            .Where(r => string.IsNullOrWhiteSpace(r.PlantId)
-                        || string.Equals(r.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.CreatedAt)
             .Take(8)
             .Select(r =>
@@ -121,7 +121,7 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
 
         return Result.Success(new InventoryDashboardDto
         {
-            MaterialCount = materials.Total,
+            MaterialCount = plantMaterialCount > 0 ? plantMaterialCount : 0,
             WarehouseCount = warehouses.Total,
             LocationCount = locations.Total,
             BalanceRows = balances.Total,

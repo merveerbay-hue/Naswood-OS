@@ -10,7 +10,7 @@ public interface IGoodsIssueRepository
 {
     Task<GoodsIssue?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(GoodsIssue entity, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<GoodsIssue> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<GoodsIssue> Items, int Total)> SearchAsync(string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record SearchGoodsIssueQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedGoodsIssueDto>>;
@@ -43,7 +43,7 @@ public sealed class SearchGoodsIssueQueryHandler : IQueryHandler<SearchGoodsIssu
     {
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken: cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedGoodsIssueDto
         {
             Items = items.Select(GoodsIssueMapper.ToDto).ToArray(),

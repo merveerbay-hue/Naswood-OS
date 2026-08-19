@@ -16,9 +16,15 @@ public sealed class MaterialIdentityRepository : IMaterialIdentityRepository
     public Task<MaterialIdentity?> GetByNumberAsync(string identityNumber, CancellationToken cancellationToken = default) =>
         _db.Set<MaterialIdentity>().FirstOrDefaultAsync(x => !x.IsDeleted && x.IdentityNumber == identityNumber, cancellationToken);
 
-    public async Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(
+        string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default)
     {
         var query = _db.Set<MaterialIdentity>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
@@ -48,9 +54,15 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
             x => !x.IsDeleted && (x.PackageNumber == packageNumber || x.Barcode == packageNumber),
             cancellationToken);
 
-    public async Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(
+        string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default)
     {
         var query = _db.Set<InventoryPackage>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
@@ -76,9 +88,53 @@ public sealed class InventoryMovementRepository : IInventoryMovementRepository
     public async Task AddAsync(InventoryMovement entity, CancellationToken cancellationToken = default) =>
         await _db.Set<InventoryMovement>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public async Task<(IReadOnlyList<InventoryMovement> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public Task<InventoryMovement?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Set<InventoryMovement>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public async Task<(IReadOnlyList<InventoryMovement> Items, int Total)> SearchAsync(
+        string? q,
+        int page,
+        int pageSize,
+        string? plantId = null,
+        string? warehouseCode = null,
+        string? locationCode = null,
+        string? documentNumber = null,
+        string? materialCode = null,
+        string? lotNumber = null,
+        CancellationToken cancellationToken = default)
     {
         var query = _db.Set<InventoryMovement>().AsNoTracking().Where(x => !x.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        if (!string.IsNullOrWhiteSpace(warehouseCode))
+        {
+            var wh = warehouseCode.Trim();
+            query = query.Where(x => x.WarehouseCode == wh);
+        }
+        if (!string.IsNullOrWhiteSpace(locationCode))
+        {
+            var loc = locationCode.Trim();
+            query = query.Where(x => x.LocationCode == loc);
+        }
+        if (!string.IsNullOrWhiteSpace(documentNumber))
+        {
+            var doc = documentNumber.Trim();
+            query = query.Where(x => x.DocumentNumber == doc);
+        }
+        if (!string.IsNullOrWhiteSpace(materialCode))
+        {
+            var mat = materialCode.Trim();
+            query = query.Where(x => x.MaterialCode == mat);
+        }
+        if (!string.IsNullOrWhiteSpace(lotNumber))
+        {
+            var lot = lotNumber.Trim();
+            query = query.Where(x => x.LotNumber == lot);
+        }
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
@@ -88,6 +144,7 @@ public sealed class InventoryMovementRepository : IInventoryMovementRepository
                 || EF.Functions.ILike(x.MaterialCode, "%" + value + "%")
                 || EF.Functions.ILike(x.PackageNumber, "%" + value + "%"));
         }
+
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await query.OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)
@@ -95,13 +152,17 @@ public sealed class InventoryMovementRepository : IInventoryMovementRepository
         return (items, total);
     }
 
-    public async Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(string documentNumber, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(
+        string documentNumber, string? plantId = null, CancellationToken cancellationToken = default)
     {
         var value = documentNumber.Trim();
-        return await _db.Set<InventoryMovement>().AsNoTracking()
-            .Where(x => !x.IsDeleted && x.DocumentNumber == value)
-            .OrderBy(x => x.CreatedAt)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+        var query = _db.Set<InventoryMovement>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.DocumentNumber == value);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return await query.OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 }

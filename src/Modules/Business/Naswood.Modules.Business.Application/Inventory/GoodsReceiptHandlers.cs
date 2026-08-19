@@ -11,7 +11,7 @@ public interface IGoodsReceiptRepository
     Task<GoodsReceipt?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<GoodsReceipt?> GetByNumberAsync(string number, CancellationToken cancellationToken = default);
     Task AddAsync(GoodsReceipt entity, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<GoodsReceipt> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<GoodsReceipt> Items, int Total)> SearchAsync(string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record SearchGoodsReceiptQuery(string? Q, int Page, int PageSize) : IQuery<Result<PagedGoodsReceiptDto>>;
@@ -44,7 +44,7 @@ public sealed class SearchGoodsReceiptQueryHandler : IQueryHandler<SearchGoodsRe
     {
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize < 1 ? 20 : Math.Min(query.PageSize, 100);
-        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken).ConfigureAwait(false);
+        var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, cancellationToken: cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedGoodsReceiptDto
         {
             Items = items.Select(GoodsReceiptMapper.ToDto).ToArray(),
