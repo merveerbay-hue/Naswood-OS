@@ -5,6 +5,7 @@ using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.AspNetCore;
 using Naswood.Modules.Platform.Application.Authentication;
 using Naswood.Modules.Platform.Contracts.Authentication;
+using Naswood.Modules.Platform.Presentation.Authorization;
 
 namespace Naswood.Modules.Platform.Presentation.Authentication;
 
@@ -98,9 +99,11 @@ public sealed class AuthenticationController : ControllerBase
 
     /// <summary>
     /// Üst Yönetici: switch working plant among authorized factories. Ana Üs (HomePlantId) unchanged.
+    /// Requires Plant.Switch (or Administrator role with that permission).
     /// </summary>
     [Authorize]
     [HttpPost("switch-plant")]
+    [RequirePermission("Plant.Switch")]
     public async Task<IActionResult> SwitchPlant(
         [FromBody] SwitchWorkingPlantRequestDto request,
         CancellationToken cancellationToken)

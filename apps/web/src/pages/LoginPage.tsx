@@ -38,7 +38,8 @@ export function LoginPage() {
         password: values.password,
         rememberMe: values.rememberMe,
         companyId: values.companyId?.trim() || undefined,
-        plantId: values.plantId?.trim() || undefined,
+        // Always HomeFactory — operators cannot choose another plant at login.
+        plantId: undefined,
       });
       await navigate({ to: '/' });
     } catch (error) {
@@ -116,33 +117,20 @@ export function LoginPage() {
               ) : null}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="companyId">
-                  {t('login.companyId')}
-                  {requireTenant ? ' *' : ''}
-                </Label>
-                <Input
-                  id="companyId"
-                  placeholder={requireTenant ? t('required') : t('optional')}
-                  autoComplete="organization"
-                  aria-required={requireTenant}
-                  {...register('companyId')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="plantId">
-                  {t('login.plantId')}
-                  {requireTenant ? ' *' : ''}
-                </Label>
-                <Input
-                  id="plantId"
-                  placeholder={requireTenant ? t('required') : t('optional')}
-                  aria-required={requireTenant}
-                  {...register('plantId')}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="companyId">
+                {t('login.companyId')}
+                {requireTenant ? ' *' : ''}
+              </Label>
+              <Input
+                id="companyId"
+                placeholder={requireTenant ? t('required') : t('optional')}
+                autoComplete="organization"
+                aria-required={requireTenant}
+                {...register('companyId')}
+              />
             </div>
+            {/* Plant/factory is always HomeFactory from the account — no login plant picker. */}
 
             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
               <input

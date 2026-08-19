@@ -215,33 +215,43 @@ export function LocationTransferPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Ana Üs / Tesis</CardTitle>
+          <CardTitle className="text-base">Ana Fabrika</CardTitle>
           <CardDescription>
-            Varsayılan: {plantDisplayName(homePlantId)} ({homePlantId}). Kaynak ve hedef aynı
-            seçili tesiste kalır.
+            {canSwitchPlant
+              ? `Varsayılan Ana Üs: ${plantDisplayName(homePlantId)} (${homePlantId}). Kaynak ve hedef aynı seçili tesiste kalır.`
+              : `Yalnızca Ana Fabrika: ${plantDisplayName(homePlantId)} (${homePlantId}).`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <select
-            className="h-10 w-full max-w-md rounded-md border border-[var(--border-default)] bg-transparent px-3 text-sm disabled:opacity-80"
-            value={plantId}
-            disabled={!canSwitchPlant || plantIds.length <= 1}
-            onChange={(e) => {
-              setPlantId(e.target.value);
-              setFromWarehouseCode('');
-              setFromLocationCode('');
-              setToWarehouseCode('');
-              setToLocationCode('');
-              setResult(null);
-            }}
-          >
-            {plantIds.map((p) => (
-              <option key={p} value={p}>
-                {plantDisplayName(p)} ({p})
-                {p.toUpperCase() === homePlantId.toUpperCase() ? ' · Ana Üs' : ''}
-              </option>
-            ))}
-          </select>
+          {canSwitchPlant ? (
+            <select
+              className="h-10 w-full max-w-md rounded-md border border-[var(--border-default)] bg-transparent px-3 text-sm"
+              value={plantId}
+              disabled={plantIds.length <= 1}
+              onChange={(e) => {
+                setPlantId(e.target.value);
+                setFromWarehouseCode('');
+                setFromLocationCode('');
+                setToWarehouseCode('');
+                setToLocationCode('');
+                setResult(null);
+              }}
+            >
+              {plantIds.map((p) => (
+                <option key={p} value={p}>
+                  {plantDisplayName(p)} ({p})
+                  {p.toUpperCase() === homePlantId.toUpperCase() ? ' · Ana Üs' : ''}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              value={`${plantDisplayName(homePlantId)} (${homePlantId})`}
+              readOnly
+              disabled
+              className="max-w-md"
+            />
+          )}
         </CardContent>
       </Card>
 

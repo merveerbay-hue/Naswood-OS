@@ -2,7 +2,7 @@ import { Button, Input } from '@naswood/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { searchAllResource } from '@/api/business';
-import { useAuth } from '@/auth/useAuth';
+import { usePlantContext } from '@/auth/usePlantContext';
 import { useI18n } from '@/i18n';
 import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
 import {
@@ -67,10 +67,7 @@ export function StockStep({
   onLotNoteChange,
 }: Props) {
   const { t } = useI18n();
-  const { user } = useAuth();
-  // Rule 1 — default operational context is HomeFactory (homePlantId).
-  const homePlantId = user?.homePlantId || user?.plantId || 'PLANT-001';
-  const postingPlantId = user?.plantId || homePlantId;
+  const { homePlantId, plantId: postingPlantId, canSwitchPlant } = usePlantContext();
   const accepted = acceptedStockLines(lines);
 
   const warehousesQuery = useQuery({
@@ -192,8 +189,8 @@ export function StockStep({
         <p className="text-sm text-[var(--text-secondary)]">{t('wb.rcv.stockStep.intro')}</p>
         <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.stockStep.rules')}</p>
         <p className="text-xs text-[var(--text-muted)]">
-          Ana Üs: {plantDisplayName(homePlantId)} ({homePlantId})
-          {postingPlantId.toUpperCase() !== homePlantId.toUpperCase()
+          Ana Fabrika: {plantDisplayName(homePlantId)} ({homePlantId})
+          {canSwitchPlant && postingPlantId.toUpperCase() !== homePlantId.toUpperCase()
             ? ` · Çalışma tesisi: ${plantDisplayName(postingPlantId)} (${postingPlantId})`
             : ''}
           {' · '}Depo/lokasyon yalnızca bu tesisin aktif kayıtlarından (API doğrulamalı).

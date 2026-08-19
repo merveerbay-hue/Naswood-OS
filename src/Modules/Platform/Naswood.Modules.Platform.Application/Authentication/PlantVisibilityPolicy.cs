@@ -8,7 +8,10 @@ namespace Naswood.Modules.Platform.Application.Authentication;
 /// </summary>
 public static class PlantVisibilityPolicy
 {
-    /// <summary>Roles allowed to switch working plant among PlantIds without changing HomePlantId.</summary>
+    /// <summary>
+    /// Roles allowed to switch working plant among PlantIds without changing HomePlantId.
+    /// Prefer assigning Executive (Plant.Switch). Extra names kept for legacy accounts.
+    /// </summary>
     public static readonly HashSet<string> PlantSwitchRoles = new(StringComparer.OrdinalIgnoreCase)
     {
         "Administrator",
@@ -18,16 +21,19 @@ public static class PlantVisibilityPolicy
         "Director"
     };
 
-    /// <summary>Roles locked to a single Home Factory (Ana Üs).</summary>
+    /// <summary>Roles locked to a single Home Factory (Ana Üs) — CanSwitchPlant = false.</summary>
     public static readonly HashSet<string> HomeFactoryOnlyRoles = new(StringComparer.OrdinalIgnoreCase)
     {
         "WarehouseOperator",
         "Operator",
         "Engineer",
         "QualityEngineer",
+        "QualityUser",
         "WarehouseResponsible",
         "DepoSorumlusu",
         "Buyer",
+        "FieldUser",
+        "SahaKullanicisi",
         "ReadOnly"
     };
 

@@ -250,6 +250,17 @@ public sealed class CreateUserCommandHandler : ICommandHandler<CreateUserCommand
             return org;
         }
 
+        var distinctPlants = command.PlantIds
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (PlantVisibilityPolicy.RequiresSinglePlantAssignment(command.Roles) && distinctPlants.Length > 1)
+        {
+            return Result.Failure(UserErrors.Validation(
+                "Mühendis / Operatör / Depo Sorumlusu yalnızca Ana Fabrikaya atanabilir."));
+        }
+
         return await OrganizationValidator.ValidateRolesAsync(_roles, command.Roles, cancellationToken)
             .ConfigureAwait(false);
     }

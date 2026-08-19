@@ -37,24 +37,23 @@ export function locationTypeLabel(type: string): string {
   return LOCATION_TYPE_OPTIONS.find((o) => o.token === t)?.label ?? String(type || '—');
 }
 
-/** Factory / Plant display (PlantId ≈ FactoryId / HomeFactoryId). */
-export const PLANT_CATALOG: { id: string; name: string }[] = [
-  { id: 'F01', name: 'Bucak Fabrikası' },
-  { id: 'PLANT-001', name: 'Bucak Fabrikası' },
-  { id: 'BUCAK', name: 'Bucak Fabrikası' },
-  { id: 'F02', name: 'İkinci Fabrika' },
-  { id: 'PLANT-002', name: 'İkinci Fabrika' },
-];
+/** Display names for known plants — N-plant safe: unknown codes fall back to the code itself. */
+const PLANT_NAME_FALLBACKS: Record<string, string> = {
+  F01: 'Bucak Fabrikası',
+  'PLANT-001': 'Bucak Fabrikası',
+  BUCAK: 'Bucak Fabrikası',
+};
 
 export function plantDisplayName(plantId: string | null | undefined): string {
   const id = String(plantId || '').trim();
   if (!id) return '—';
-  return PLANT_CATALOG.find((p) => p.id.toUpperCase() === id.toUpperCase())?.name ?? id;
+  const key = id.toUpperCase();
+  return PLANT_NAME_FALLBACKS[key] ?? id;
 }
 
 /**
  * Uniqueness key: Factory + Warehouse + LocationCode
- * Same code may exist in F01 and F02, or in different warehouses of the same factory.
+ * Same code may exist in different plants or warehouses — never merge across plants.
  */
 export function locationUniquenessKey(parts: {
   plantId: string;
@@ -66,7 +65,7 @@ export function locationUniquenessKey(parts: {
     .join('|');
 }
 
-/** Stock isolation key includes factory so F01/A-03 and F02/A-03 never mix. */
+/** Stock isolation key includes factory so the same location code never mixes across plants. */
 export function stockBalanceKeyWithPlant(parts: {
   plantId: string;
   materialCode: string;
