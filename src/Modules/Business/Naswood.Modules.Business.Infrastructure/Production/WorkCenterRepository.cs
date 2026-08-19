@@ -13,6 +13,15 @@ public sealed class WorkCenterRepository : IWorkCenterRepository
     public Task<WorkCenter?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<WorkCenter>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<WorkCenter?> GetByCodeAndPlantAsync(string code, string plantId, CancellationToken cancellationToken = default)
+    {
+        var c = code.Trim();
+        var p = plantId.Trim();
+        return _db.Set<WorkCenter>().FirstOrDefaultAsync(
+            x => !x.IsDeleted && x.Code == c && x.PlantId == p,
+            cancellationToken);
+    }
+
     public async Task AddAsync(WorkCenter entity, CancellationToken cancellationToken = default) =>
         await _db.Set<WorkCenter>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 

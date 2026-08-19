@@ -63,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<Naswood.Modules.Business.Application.Production.IFinishedGoodRepository, Naswood.Modules.Business.Infrastructure.Production.FinishedGoodRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.IScrapRepository, Naswood.Modules.Business.Infrastructure.Production.ScrapRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.IReworkRepository, Naswood.Modules.Business.Infrastructure.Production.ReworkRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IStructuralProductionLotRepository, Naswood.Modules.Business.Infrastructure.Production.StructuralProductionLotRepository>();
         return services;
     }
 }

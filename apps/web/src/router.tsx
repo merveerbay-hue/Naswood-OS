@@ -124,6 +124,8 @@ import {
   WarehouseDefinePage,
   WorkCenterDesignerPage,
 } from './modules/shared/process/processWizardPages';
+import { StructuralProductionLotListPage } from './modules/inventory/production-lot/StructuralProductionLotListPage';
+import { StructuralProductionLotCreatePage } from './modules/inventory/production-lot/StructuralProductionLotCreatePage';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -282,6 +284,16 @@ const invTransferWizardRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'operations/transfer',
   component: TransferWizardPage,
+});
+const invStructuralLotsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/structural-production-lots',
+  component: StructuralProductionLotListPage,
+});
+const invStructuralLotCreateRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'operations/structural-production-lots/new',
+  component: StructuralProductionLotCreatePage,
 });
 const invCountsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
@@ -627,6 +639,8 @@ export const routeTree = rootRoute.addChildren([
       invIssueWizardRoute,
       invTransfersRoute,
       invTransferWizardRoute,
+      invStructuralLotsRoute,
+      invStructuralLotCreateRoute,
       invCountsRoute,
       invCountWizardRoute,
       invAdjustmentsRoute,
