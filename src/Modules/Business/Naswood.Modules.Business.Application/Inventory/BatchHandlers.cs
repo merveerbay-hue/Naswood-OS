@@ -9,7 +9,15 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public interface IBatchRepository
 {
     Task<Batch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Batch?> GetByNumberAndMaterialAsync(string batchNumber, string materialCode, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Lot lookup by BatchNumber + MaterialCode.
+    /// When <paramref name="plantId"/> is set, only that plant's batch is returned (posting paths).
+    /// </summary>
+    Task<Batch?> GetByNumberAndMaterialAsync(
+        string batchNumber,
+        string materialCode,
+        string? plantId = null,
+        CancellationToken cancellationToken = default);
     Task AddAsync(Batch entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Batch> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default);
 }

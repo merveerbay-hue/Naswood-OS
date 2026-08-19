@@ -13,7 +13,11 @@ public sealed class BatchRepository : IBatchRepository
     public Task<Batch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<Batch>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public Task<Batch?> GetByNumberAndMaterialAsync(string batchNumber, string materialCode, CancellationToken cancellationToken = default)
+    public Task<Batch?> GetByNumberAndMaterialAsync(
+        string batchNumber,
+        string materialCode,
+        string? plantId = null,
+        CancellationToken cancellationToken = default)
     {
         var lot = (batchNumber ?? string.Empty).Trim();
         var mat = (materialCode ?? string.Empty).Trim();
@@ -21,11 +25,16 @@ public sealed class BatchRepository : IBatchRepository
             return Task.FromResult<Batch?>(null);
         var lotLower = lot.ToLowerInvariant();
         var matLower = mat.ToLowerInvariant();
-        return _db.Set<Batch>().FirstOrDefaultAsync(
-            x => !x.IsDeleted
-                && x.BatchNumber.ToLower() == lotLower
-                && x.MaterialCode.ToLower() == matLower,
-            cancellationToken);
+        var query = _db.Set<Batch>().Where(x =>
+            !x.IsDeleted
+            && x.BatchNumber.ToLower() == lotLower
+            && x.MaterialCode.ToLower() == matLower);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return query.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task AddAsync(Batch entity, CancellationToken cancellationToken = default) =>

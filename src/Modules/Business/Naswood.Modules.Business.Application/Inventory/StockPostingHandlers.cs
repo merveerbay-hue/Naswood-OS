@@ -9,7 +9,13 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public interface IMaterialIdentityRepository
 {
     Task AddAsync(MaterialIdentity entity, CancellationToken cancellationToken = default);
-    Task<MaterialIdentity?> GetByNumberAsync(string identityNumber, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// When <paramref name="plantId"/> is set, only that plant's MI is returned (posting paths).
+    /// </summary>
+    Task<MaterialIdentity?> GetByNumberAsync(
+        string identityNumber,
+        string? plantId = null,
+        CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
@@ -318,14 +324,21 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 plantId: plantId);
             await _packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
 
-            var batch = await _batches.GetByNumberAndMaterialAsync(lotNumber, materialCode, cancellationToken).ConfigureAwait(false);
+            var batch = await _batches.GetByNumberAndMaterialAsync(lotNumber, materialCode, plantId, cancellationToken).ConfigureAwait(false);
             if (batch is null)
             {
-                batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, batchStatus);
+                batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, batchStatus, plantId: plantId);
                 await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
             }
             else
             {
+                if (!string.IsNullOrWhiteSpace(batch.PlantId)
+                    && !string.Equals(batch.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                        "INV-POST-403",
+                        $"Line lot '{lotNumber}' belongs to another plant."));
+                }
                 batch.ApplyReceipt(line.Quantity, batchStatus == "Hold" ? "Hold" : null);
             }
 
@@ -397,6 +410,8 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
     private readonly IMaterialIdentityRepository _identities;
     private readonly IInventoryPackageRepository _packages;
     private readonly IInventoryMovementRepository _movements;
+    private readonly IWarehouseRepository _warehouses;
+    private readonly ILocationRepository _locations;
     private readonly IBusinessUnitOfWork _uow;
 
     public ExecuteGoodsIssueCommandHandler(
@@ -405,6 +420,8 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
         IMaterialIdentityRepository identities,
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
+        IWarehouseRepository warehouses,
+        ILocationRepository locations,
         IBusinessUnitOfWork uow)
     {
         _issues = issues;
@@ -412,6 +429,8 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
         _identities = identities;
         _packages = packages;
         _movements = movements;
+        _warehouses = warehouses;
+        _locations = locations;
         _uow = uow;
     }
 
@@ -428,9 +447,20 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
                 "INV-POST-403",
                 "Bu tesise mal çıkış yetkiniz yok."));
 
+        var headerWarehouse = await _warehouses.GetByCodeAndPlantAsync(command.WarehouseCode.Trim(), plantId, cancellationToken).ConfigureAwait(false);
+        if (headerWarehouse is null)
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                "INV-POST-015",
+                $"Depo '{command.WarehouseCode.Trim()}' bu tesiste ({plantId}) tanımlı değil — mal çıkış yapılamaz."));
+        if (!string.IsNullOrWhiteSpace(headerWarehouse.PlantId)
+            && !string.Equals(headerWarehouse.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                "INV-POST-403",
+                $"Depo '{headerWarehouse.Code}' seçili fabrikaya ({plantId}) ait değil."));
+
         var issue = GoodsIssue.Create(
             SystemIdentifier.Ensure(command.Number, "GI"),
-            command.WarehouseCode.Trim(),
+            headerWarehouse.Code,
             command.Reference ?? string.Empty,
             "Posted",
             Truncate(command.Notes, 2000),
@@ -452,15 +482,19 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
                 var key = !string.IsNullOrWhiteSpace(line.PackageNumber) ? line.PackageNumber.Trim() : line.Barcode.Trim();
                 package = await _packages.GetByNumberAsync(key, plantId, cancellationToken).ConfigureAwait(false);
                 if (package is null)
+                {
+                    var foreignPkg = await _packages.GetByNumberAsync(key, plantId: null, cancellationToken).ConfigureAwait(false);
+                    if (foreignPkg is not null
+                        && !string.IsNullOrWhiteSpace(foreignPkg.PlantId)
+                        && !string.Equals(foreignPkg.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                            "INV-POST-403",
+                            $"Line {lineNo}: Package '{key}' belongs to another plant."));
+                    }
                     return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
                         "INV-POST-013",
                         $"Line {lineNo}: Package '{key}' not found in plant {plantId}."));
-                if (!string.IsNullOrWhiteSpace(package.PlantId)
-                    && !string.Equals(package.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
-                        "INV-POST-403",
-                        $"Line {lineNo}: Package belongs to another plant."));
                 }
             }
 
@@ -480,25 +514,65 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
                 ?? (string.IsNullOrWhiteSpace(line.UnitOfMeasure) ? "Piece" : line.UnitOfMeasure.Trim());
             var warehouseCode = package?.WarehouseCode ?? issue.WarehouseCode;
 
+            var warehouse = await _warehouses.GetByCodeAndPlantAsync(warehouseCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (warehouse is null)
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-015",
+                    $"Line {lineNo}: Depo '{warehouseCode}' bu tesiste ({plantId}) tanımlı değil."));
+            if (!string.IsNullOrWhiteSpace(warehouse.PlantId)
+                && !string.Equals(warehouse.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                    "INV-POST-403",
+                    $"Line {lineNo}: Depo '{warehouseCode}' seçili fabrikaya ait değil."));
+
+            var location = await _locations.FindByWarehouseAndCodeAsync(warehouse.Code, locationCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (location is null)
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-019",
+                    $"Line {lineNo}: Lokasyon '{locationCode}' depo '{warehouse.Code}' / tesis '{plantId}' altında tanımlı değil."));
+            if (!string.IsNullOrWhiteSpace(location.PlantId)
+                && !string.Equals(location.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                    "INV-POST-403",
+                    $"Line {lineNo}: Lokasyon '{locationCode}' seçili fabrikaya ait değil."));
+
+            warehouseCode = warehouse.Code;
+            locationCode = location.Code;
+
             try
             {
                 if (package is not null) package.Issue(line.Quantity);
 
                 if (!string.IsNullOrWhiteSpace(miNumber))
                 {
-                    var identity = await _identities.GetByNumberAsync(miNumber, cancellationToken).ConfigureAwait(false);
-                    if (identity is not null
-                        && !string.IsNullOrWhiteSpace(identity.PlantId)
-                        && !string.Equals(identity.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                    var identity = await _identities.GetByNumberAsync(miNumber, plantId, cancellationToken).ConfigureAwait(false);
+                    if (identity is null)
                     {
-                        identity = null;
+                        var foreignMi = await _identities.GetByNumberAsync(miNumber, plantId: null, cancellationToken).ConfigureAwait(false);
+                        if (foreignMi is not null
+                            && !string.IsNullOrWhiteSpace(foreignMi.PlantId)
+                            && !string.Equals(foreignMi.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                                "INV-POST-403",
+                                $"Line {lineNo}: MaterialIdentity '{miNumber}' belongs to another plant."));
+                        }
+                        return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                            "INV-POST-014",
+                            $"Line {lineNo}: MaterialIdentity '{miNumber}' not found in plant {plantId}."));
                     }
-                    identity?.Reduce(line.Quantity);
+
+                    identity.Reduce(line.Quantity);
                 }
 
                 var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, plantId, cancellationToken).ConfigureAwait(false);
                 if (balance is null)
                     return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-011", $"No stock balance for {materialCode}/{warehouseCode}/{locationCode}/{lotNumber}. Receive stock first."));
+                if (!string.IsNullOrWhiteSpace(balance.PlantId)
+                    && !string.Equals(balance.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                        "INV-POST-403",
+                        $"Line {lineNo}: Stock balance belongs to another plant."));
                 balance.ApplyIssue(line.Quantity);
             }
             catch (InvalidOperationException ex)
@@ -506,9 +580,12 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
                 return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation("INV-POST-012", ex.Message));
             }
 
+            // Movement PlantId comes from resolved document/warehouse context — never default PLANT-001.
+            var movementPlantId = !string.IsNullOrWhiteSpace(issue.PlantId) ? issue.PlantId.Trim() : plantId;
             var movement = InventoryMovement.Post(
                 "GoodsIssue", "Out", issue.Number, materialCode, miNumber, packageNumber,
-                warehouseCode, locationCode, lotNumber, line.Quantity, uom, command.Notes ?? string.Empty);
+                warehouseCode, locationCode, lotNumber, line.Quantity, uom, command.Notes ?? string.Empty,
+                plantId: movementPlantId);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
 
             results.Add(new StockPostLineResultDto
