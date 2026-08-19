@@ -20,6 +20,11 @@ public interface IInventoryPackageRepository
     Task<InventoryPackage?> GetByNumberAsync(string packageNumber, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
+    /// <summary>Plant-scoped status aggregate — not capped by list pageSize.</summary>
+    Task<int> CountByStatusesAsync(
+        string? plantId,
+        IReadOnlyList<string> statuses,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IInventoryMovementRepository
@@ -147,8 +152,14 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
 
         var receiptNumber = SystemIdentifier.Ensure(command.Number, "GR");
 
-        // RULE 8 / 23 — idempotent: same GR number already Posted → return existing, no new movements
-        var existing = await _receipts.GetByNumberAsync(receiptNumber, cancellationToken).ConfigureAwait(false);
+        var plantId = string.IsNullOrWhiteSpace(command.PlantId) ? "PLANT-001" : command.PlantId.Trim();
+        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, plantId))
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                "INV-POST-403",
+                "Bu tesise mal kabul yetkiniz yok."));
+
+        // RULE 8 / 23 — idempotent within plant: same GR number already Posted → return existing
+        var existing = await _receipts.GetByNumberAsync(receiptNumber, plantId, cancellationToken).ConfigureAwait(false);
         if (existing is not null
             && string.Equals(existing.Status, "Posted", StringComparison.OrdinalIgnoreCase))
         {
@@ -171,12 +182,6 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 IdempotentReplay = true
             });
         }
-
-        var plantId = string.IsNullOrWhiteSpace(command.PlantId) ? "PLANT-001" : command.PlantId.Trim();
-        if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, plantId))
-            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
-                "INV-POST-403",
-                "Bu tesise mal kabul yetkiniz yok."));
 
         var receipt = GoodsReceipt.Create(
             receiptNumber,

@@ -35,4 +35,16 @@ public sealed class GoodsIssueRepository : IGoodsIssueRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
     }
+
+    public Task<int> CountOpenAsync(string plantId, CancellationToken cancellationToken = default)
+    {
+        var plant = plantId.Trim();
+        return _db.Set<GoodsIssue>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PlantId == plant)
+            .Where(x =>
+                x.Status.ToLower() != "posted"
+                && x.Status.ToLower() != "cancelled"
+                && x.Status.ToLower() != "closed")
+            .CountAsync(cancellationToken);
+    }
 }

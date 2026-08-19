@@ -66,7 +66,6 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
         var issues = await _goodsIssues.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
         var transfers = await _transfers.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
         var counts = await _counts.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
-        var packages = await _packages.SearchAsync(null, 1, 200, plantId, cancellationToken).ConfigureAwait(false);
         var movements = await _movements.SearchAsync(null, 1, 1, plantId, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var onHand = balances.Items.Sum(x => x.QuantityOnHand);
@@ -78,11 +77,19 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
             .Where(c => !string.IsNullOrWhiteSpace(c))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Count();
-        var holdPackages = packages.Items.Count(x =>
-            string.Equals(x.Status, "Hold", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(x.Status, "Quarantine", StringComparison.OrdinalIgnoreCase));
-        var availablePackages = packages.Items.Count(x =>
-            string.Equals(x.Status, "Available", StringComparison.OrdinalIgnoreCase));
+
+        // Hold / available package counts: SQL aggregates (not pageSize=200 capped).
+        var holdPackages = await _packages.CountByStatusesAsync(
+            plantId,
+            new[] { "Hold", "Quarantine" },
+            cancellationToken).ConfigureAwait(false);
+        var availablePackages = await _packages.CountByStatusesAsync(
+            plantId,
+            new[] { "Available" },
+            cancellationToken).ConfigureAwait(false);
+
+        var openReceipts = await _goodsReceipts.CountOpenAsync(plantId, cancellationToken).ConfigureAwait(false);
+        var openIssues = await _goodsIssues.CountOpenAsync(plantId, cancellationToken).ConfigureAwait(false);
 
         static int OpenDocs<T>(IReadOnlyList<T> items, Func<T, string> status) =>
             items.Count(x =>
@@ -128,8 +135,8 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
             QuantityOnHand = onHand,
             QuantityReserved = reserved,
             QuantityAvailable = onHand - reserved,
-            OpenGoodsReceipts = OpenDocs(receipts.Items, x => x.Status),
-            OpenGoodsIssues = OpenDocs(issues.Items, x => x.Status),
+            OpenGoodsReceipts = openReceipts,
+            OpenGoodsIssues = openIssues,
             OpenTransfers = OpenDocs(transfers.Items, x => x.Status),
             OpenCounts = OpenDocs(counts.Items, x => x.Status),
             NegativeBalanceRows = negative,
