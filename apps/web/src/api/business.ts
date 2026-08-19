@@ -59,8 +59,15 @@ export async function searchAllResource<T>(
   return items;
 }
 
-export async function createResource<T>(route: string, body: unknown): Promise<T> {
-  return apiRequest<T>(`/api/v1/${route}`, { method: 'POST', auth: true, body });
+export async function createResource<T>(
+  route: string,
+  body: unknown,
+  opts?: { plantId?: string },
+): Promise<T> {
+  const params = new URLSearchParams();
+  if (opts?.plantId) params.set('plantId', opts.plantId);
+  const qs = params.toString();
+  return apiRequest<T>(`/api/v1/${route}${qs ? `?${qs}` : ''}`, { method: 'POST', auth: true, body });
 }
 
 export async function deleteResource(route: string, id: string): Promise<null> {

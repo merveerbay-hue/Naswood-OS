@@ -17,7 +17,12 @@ public interface IMaterialIdentityRepository
 public interface IInventoryPackageRepository
 {
     Task AddAsync(InventoryPackage entity, CancellationToken cancellationToken = default);
-    Task<InventoryPackage?> GetByNumberAsync(string packageNumber, CancellationToken cancellationToken = default);
+    /// <summary>Plant-scoped package/barcode lookup. Prefer always passing plantId for posting paths.</summary>
+    Task<InventoryPackage?> GetByNumberAsync(
+        string packageNumber,
+        string? plantId = null,
+        CancellationToken cancellationToken = default);
+    Task<InventoryPackage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<InventoryPackage> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
     /// <summary>Plant-scoped status aggregate — not capped by list pageSize.</summary>
@@ -72,6 +77,10 @@ public sealed record SearchInventoryPackageQuery(
     int PageSize,
     string? PlantId = null,
     IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<PagedInventoryPackageDto>>;
+
+public sealed record GetInventoryPackageByIdQuery(
+    Guid Id,
+    IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<InventoryPackageDto>>;
 
 public sealed record SearchMaterialIdentityQuery(
     string? Q,
@@ -441,7 +450,18 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
             if (!string.IsNullOrWhiteSpace(line.PackageNumber) || !string.IsNullOrWhiteSpace(line.Barcode))
             {
                 var key = !string.IsNullOrWhiteSpace(line.PackageNumber) ? line.PackageNumber.Trim() : line.Barcode.Trim();
-                package = await _packages.GetByNumberAsync(key, cancellationToken).ConfigureAwait(false);
+                package = await _packages.GetByNumberAsync(key, plantId, cancellationToken).ConfigureAwait(false);
+                if (package is null)
+                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                        "INV-POST-013",
+                        $"Line {lineNo}: Package '{key}' not found in plant {plantId}."));
+                if (!string.IsNullOrWhiteSpace(package.PlantId)
+                    && !string.Equals(package.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                        "INV-POST-403",
+                        $"Line {lineNo}: Package belongs to another plant."));
+                }
             }
 
             var materialCode = package?.MaterialCode ?? line.MaterialCode.Trim();
@@ -467,6 +487,12 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
                 if (!string.IsNullOrWhiteSpace(miNumber))
                 {
                     var identity = await _identities.GetByNumberAsync(miNumber, cancellationToken).ConfigureAwait(false);
+                    if (identity is not null
+                        && !string.IsNullOrWhiteSpace(identity.PlantId)
+                        && !string.Equals(identity.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        identity = null;
+                    }
                     identity?.Reduce(line.Quantity);
                 }
 
@@ -533,26 +559,52 @@ public sealed class SearchInventoryPackageQueryHandler : IQueryHandler<SearchInv
         var (items, total) = await _repo.SearchAsync(query.Q, page, pageSize, plantId, cancellationToken).ConfigureAwait(false);
         return Result.Success(new PagedInventoryPackageDto
         {
-            Items = items.Select(e => new InventoryPackageDto
-            {
-                Id = e.Id,
-                PackageNumber = e.PackageNumber,
-                MaterialIdentityNumber = e.MaterialIdentityNumber,
-                MaterialCode = e.MaterialCode,
-                LotNumber = e.LotNumber,
-                WarehouseCode = e.WarehouseCode,
-                LocationCode = e.LocationCode,
-                Quantity = e.Quantity,
-                UnitOfMeasure = e.UnitOfMeasure,
-                Barcode = e.Barcode,
-                Status = e.Status,
-                CreatedAt = e.CreatedAt
-            }).ToArray(),
+            Items = items.Select(InventoryPackageMapper.ToDto).ToArray(),
             Page = page,
             PageSize = pageSize,
             TotalCount = total,
             TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
         });
+    }
+}
+
+public static class InventoryPackageMapper
+{
+    public static InventoryPackageDto ToDto(InventoryPackage e) => new()
+    {
+        Id = e.Id,
+        PackageNumber = e.PackageNumber,
+        MaterialIdentityNumber = e.MaterialIdentityNumber,
+        MaterialCode = e.MaterialCode,
+        LotNumber = e.LotNumber,
+        WarehouseCode = e.WarehouseCode,
+        LocationCode = e.LocationCode,
+        Quantity = e.Quantity,
+        UnitOfMeasure = e.UnitOfMeasure,
+        Barcode = e.Barcode,
+        Status = e.Status,
+        CreatedAt = e.CreatedAt
+    };
+}
+
+public sealed class GetInventoryPackageByIdQueryHandler : IQueryHandler<GetInventoryPackageByIdQuery, Result<InventoryPackageDto>>
+{
+    private readonly IInventoryPackageRepository _repo;
+    public GetInventoryPackageByIdQueryHandler(IInventoryPackageRepository repo) => _repo = repo;
+
+    public async Task<Result<InventoryPackageDto>> HandleAsync(GetInventoryPackageByIdQuery query, CancellationToken cancellationToken = default)
+    {
+        var e = await _repo.GetByIdAsync(query.Id, cancellationToken).ConfigureAwait(false);
+        if (e is null || e.IsDeleted)
+            return Result.Failure<InventoryPackageDto>(Error.NotFound("BUS-001", "Package was not found."));
+
+        if (query.AllowedPlantIds is { Count: > 0 }
+            && !PlantAccess.CanAccess(query.AllowedPlantIds, e.PlantId))
+            return Result.Failure<InventoryPackageDto>(Error.Forbidden(
+                "INV-PKG-403",
+                "Bu paketi görüntüleme yetkiniz yok."));
+
+        return Result.Success(InventoryPackageMapper.ToDto(e));
     }
 }
 

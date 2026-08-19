@@ -119,7 +119,7 @@ export function EntityListScreen({
         else body[key] = raw;
       }
       // System identifiers are minted by Numbering Service — never sent from UI.
-      return createResource(route, body);
+      return createResource(route, body, { plantId: plantId || undefined });
     },
     onSuccess: async () => {
       setError(null);
