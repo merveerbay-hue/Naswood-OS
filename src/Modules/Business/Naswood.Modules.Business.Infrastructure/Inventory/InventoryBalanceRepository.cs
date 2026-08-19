@@ -35,14 +35,41 @@ public sealed class InventoryBalanceRepository : IInventoryBalanceRepository
     public async Task AddAsync(InventoryBalance entity, CancellationToken cancellationToken = default) =>
         await _db.Set<InventoryBalance>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-    public async Task<(IReadOnlyList<InventoryBalance> Items, int Total)> SearchAsync(string? q, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<InventoryBalance> Items, int Total)> SearchAsync(
+        string? q,
+        int page,
+        int pageSize,
+        string? plantId = null,
+        string? warehouseCode = null,
+        string? locationCode = null,
+        CancellationToken cancellationToken = default)
     {
         var query = _db.Set<InventoryBalance>().AsNoTracking().Where(x => !x.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+
+        if (!string.IsNullOrWhiteSpace(warehouseCode))
+        {
+            var wh = warehouseCode.Trim();
+            query = query.Where(x => x.WarehouseCode == wh);
+        }
+
+        if (!string.IsNullOrWhiteSpace(locationCode))
+        {
+            var loc = locationCode.Trim();
+            query = query.Where(x => x.LocationCode == loc);
+        }
+
         if (!string.IsNullOrWhiteSpace(q))
         {
             var value = q.Trim();
             query = query.Where(x => EF.Functions.ILike(x.MaterialCode, "%" + value + "%"));
         }
+
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await query.OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)

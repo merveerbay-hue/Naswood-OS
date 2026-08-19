@@ -11,7 +11,16 @@ export interface PagedResult<T> {
 export async function searchResource<T>(
   route: string,
   q?: string,
-  opts?: { page?: number; pageSize?: number; plantId?: string; warehouseCode?: string; locationType?: string },
+  opts?: {
+    page?: number;
+    pageSize?: number;
+    plantId?: string;
+    warehouseCode?: string;
+    locationCode?: string;
+    warehouseId?: string;
+    locationId?: string;
+    locationType?: string;
+  },
 ): Promise<PagedResult<T>> {
   const params = new URLSearchParams({
     page: String(opts?.page ?? 1),
@@ -20,6 +29,9 @@ export async function searchResource<T>(
   if (q) params.set('q', q);
   if (opts?.plantId) params.set('plantId', opts.plantId);
   if (opts?.warehouseCode) params.set('warehouseCode', opts.warehouseCode);
+  if (opts?.locationCode) params.set('locationCode', opts.locationCode);
+  if (opts?.warehouseId) params.set('warehouseId', opts.warehouseId);
+  if (opts?.locationId) params.set('locationId', opts.locationId);
   if (opts?.locationType) params.set('locationType', opts.locationType);
   return apiRequest<PagedResult<T>>(`/api/v1/${route}?${params}`, { method: 'GET', auth: true });
 }
@@ -53,8 +65,14 @@ export async function getResource<T>(route: string, id: string): Promise<T> {
   return apiRequest<T>(`/api/v1/${route}/${id}`, { method: 'GET', auth: true });
 }
 
-export async function getDashboard<T>(route: string): Promise<T> {
-  return apiRequest<T>(`/api/v1/${route}`, { method: 'GET', auth: true });
+export async function getDashboard<T>(
+  route: string,
+  opts?: { plantId?: string },
+): Promise<T> {
+  const params = new URLSearchParams();
+  if (opts?.plantId) params.set('plantId', opts.plantId);
+  const qs = params.toString();
+  return apiRequest<T>(`/api/v1/${route}${qs ? `?${qs}` : ''}`, { method: 'GET', auth: true });
 }
 
 export async function executeStockDocument<T>(

@@ -1,10 +1,13 @@
 using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.Domain;
+using Naswood.Modules.Business.Application.Common;
 using Naswood.Modules.Business.Contracts.Inventory;
 
 namespace Naswood.Modules.Business.Application.Inventory;
 
-public sealed record GetInventoryDashboardQuery() : IQuery<Result<InventoryDashboardDto>>;
+public sealed record GetInventoryDashboardQuery(
+    string? PlantId,
+    IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<InventoryDashboardDto>>;
 
 public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInventoryDashboardQuery, Result<InventoryDashboardDto>>
 {
@@ -47,10 +50,22 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
         GetInventoryDashboardQuery query,
         CancellationToken cancellationToken = default)
     {
+        var plantId = string.IsNullOrWhiteSpace(query.PlantId) ? null : query.PlantId.Trim();
+        if (string.IsNullOrWhiteSpace(plantId))
+            return Result.Failure<InventoryDashboardDto>(Error.Validation(
+                "INV-BAL-004",
+                "Plant / factory context is required."));
+
+        if (query.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(query.AllowedPlantIds, plantId))
+            return Result.Failure<InventoryDashboardDto>(Error.Forbidden(
+                "INV-BAL-403",
+                "Bu tesisin stok özetini görüntüleme yetkiniz yok."));
+
         var materials = await _materials.SearchAsync(null, 1, 1, cancellationToken).ConfigureAwait(false);
-        var warehouses = await _warehouses.SearchAsync(null, null, 1, 1, cancellationToken).ConfigureAwait(false);
-        var locations = await _locations.SearchAsync(null, null, null, null, 1, 1, cancellationToken).ConfigureAwait(false);
-        var balances = await _balances.SearchAsync(null, 1, 500, cancellationToken).ConfigureAwait(false);
+        var warehouses = await _warehouses.SearchAsync(null, plantId, 1, 1, cancellationToken).ConfigureAwait(false);
+        var locations = await _locations.SearchAsync(null, plantId, null, null, 1, 1, cancellationToken).ConfigureAwait(false);
+        // Server-side plant filter — never aggregate other factories' stock quantities.
+        var balances = await _balances.SearchAsync(null, 1, 500, plantId, null, null, cancellationToken).ConfigureAwait(false);
         var receipts = await _goodsReceipts.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
         var issues = await _goodsIssues.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
         var transfers = await _transfers.SearchAsync(null, 1, 100, cancellationToken).ConfigureAwait(false);
@@ -78,6 +93,8 @@ public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInvento
 
         // Dock board: open (non-posted) receipts first, then recent posted as operational trail.
         var dock = receipts.Items
+            .Where(r => string.IsNullOrWhiteSpace(r.PlantId)
+                        || string.Equals(r.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.CreatedAt)
             .Take(8)
             .Select(r =>

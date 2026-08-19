@@ -48,6 +48,8 @@ interface EntityListScreenProps {
   jobPath?: string;
   /** Hide create/delete — ledger-owned or search-only resources. */
   readOnly?: boolean;
+  /** Server-side plant filter (e.g. inventory balances). */
+  plantId?: string;
 }
 
 function toCamelKey(key: string): string {
@@ -71,6 +73,7 @@ export function EntityListScreen({
   createLabel,
   jobPath,
   readOnly = false,
+  plantId,
 }: EntityListScreenProps) {
   const { t } = useI18n();
   const actionLabel = createLabel ?? t('new');
@@ -98,8 +101,11 @@ export function EntityListScreen({
   const [error, setError] = useState<string | null>(null);
 
   const listQuery = useQuery({
-    queryKey: ['business', route, q],
-    queryFn: () => searchResource<Record<string, unknown>>(route, q || undefined),
+    queryKey: ['business', route, q, plantId],
+    queryFn: () =>
+      searchResource<Record<string, unknown>>(route, q || undefined, {
+        plantId: plantId || undefined,
+      }),
   });
 
   const createMutation = useMutation({

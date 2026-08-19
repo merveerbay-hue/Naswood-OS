@@ -1,8 +1,9 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { createResource, searchAllResource, searchResource } from '@/api/business';
+import { useAuth } from '@/auth/useAuth';
 import { useI18n } from '@/i18n';
 import { EntityDetailScreen } from '@/modules/shared/entity/EntityDetailScreen';
 import { EntityListScreen, type EntityField } from '@/modules/shared/entity/EntityListScreen';
@@ -256,6 +257,8 @@ export function LocationListPage() {
 
 export function StockBalancePage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
   return (
     <EntityListScreen
       screenId="INV-014"
@@ -264,6 +267,8 @@ export function StockBalancePage() {
       route="inventory"
       fields={useInvFields().balance}
       createLabel={t('inventory.addBalance')}
+      plantId={plantId}
+      readOnly
     />
   );
 }
@@ -442,9 +447,11 @@ export function AdjustmentListPage() {
 
 export function InventoryReportsPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const plantId = user?.homePlantId || user?.plantId || 'PLANT-001';
   const balances = useQuery({
-    queryKey: ['business', 'inventory', 'report'],
-    queryFn: () => searchResource<Record<string, unknown>>('inventory'),
+    queryKey: ['business', 'inventory', 'report', plantId],
+    queryFn: () => searchResource<Record<string, unknown>>('inventory', undefined, { plantId }),
   });
   const movements = useQuery({
     queryKey: ['business', 'inventory-movements', 'report'],
