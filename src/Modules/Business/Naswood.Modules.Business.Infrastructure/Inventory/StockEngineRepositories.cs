@@ -13,6 +13,9 @@ public sealed class MaterialIdentityRepository : IMaterialIdentityRepository
     public async Task AddAsync(MaterialIdentity entity, CancellationToken cancellationToken = default) =>
         await _db.Set<MaterialIdentity>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
+    public Task<MaterialIdentity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Set<MaterialIdentity>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
     public Task<MaterialIdentity?> GetByNumberAsync(
         string identityNumber,
         string? plantId = null,

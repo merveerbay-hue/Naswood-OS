@@ -16,6 +16,7 @@ public interface IMaterialIdentityRepository
         string identityNumber,
         string? plantId = null,
         CancellationToken cancellationToken = default);
+    Task<MaterialIdentity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<MaterialIdentity> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
 }
@@ -94,6 +95,10 @@ public sealed record SearchMaterialIdentityQuery(
     int PageSize,
     string? PlantId = null,
     IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<PagedMaterialIdentityDto>>;
+
+public sealed record GetMaterialIdentityByIdQuery(
+    Guid Id,
+    IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<MaterialIdentityDto>>;
 
 public sealed record SearchInventoryMovementQuery(
     string? Q,
@@ -723,6 +728,40 @@ public sealed class SearchMaterialIdentityQueryHandler : IQueryHandler<SearchMat
             PageSize = pageSize,
             TotalCount = total,
             TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        });
+    }
+}
+
+public sealed class GetMaterialIdentityByIdQueryHandler : IQueryHandler<GetMaterialIdentityByIdQuery, Result<MaterialIdentityDto>>
+{
+    private readonly IMaterialIdentityRepository _repo;
+    public GetMaterialIdentityByIdQueryHandler(IMaterialIdentityRepository repo) => _repo = repo;
+
+    public async Task<Result<MaterialIdentityDto>> HandleAsync(GetMaterialIdentityByIdQuery query, CancellationToken cancellationToken = default)
+    {
+        var e = await _repo.GetByIdAsync(query.Id, cancellationToken).ConfigureAwait(false);
+        if (e is null || e.IsDeleted)
+            return Result.Failure<MaterialIdentityDto>(Error.NotFound("BUS-001", "MaterialIdentity was not found."));
+
+        if (query.AllowedPlantIds is { Count: > 0 }
+            && !PlantAccess.CanAccess(query.AllowedPlantIds, e.PlantId))
+            return Result.Failure<MaterialIdentityDto>(Error.Forbidden(
+                "INV-MI-403",
+                "Bu MaterialIdentity kaydını görüntüleme yetkiniz yok."));
+
+        return Result.Success(new MaterialIdentityDto
+        {
+            Id = e.Id,
+            IdentityNumber = e.IdentityNumber,
+            MaterialCode = e.MaterialCode,
+            LotNumber = e.LotNumber,
+            WarehouseCode = e.WarehouseCode,
+            LocationCode = e.LocationCode,
+            Quantity = e.Quantity,
+            UnitOfMeasure = e.UnitOfMeasure,
+            Status = e.Status,
+            RootGoodsReceiptNumber = e.RootGoodsReceiptNumber,
+            CreatedAt = e.CreatedAt
         });
     }
 }

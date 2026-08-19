@@ -274,6 +274,7 @@ export function StockBalancePage() {
 
 export function LotListPage() {
   const { t } = useI18n();
+  const { plantId } = usePlantContext();
   return (
     <EntityListScreen
       screenId="INV-010"
@@ -282,6 +283,7 @@ export function LotListPage() {
       route="batches"
       fields={useInvFields().batch}
       createLabel={t('inventory.newLot')}
+      plantId={plantId}
     />
   );
 }
