@@ -497,6 +497,8 @@ const implemented = new Set([
   '/inventory/operations/issue',
   '/inventory/operations/transfers',
   '/inventory/operations/transfer',
+  '/inventory/operations/structural-production-lots',
+  '/inventory/operations/new-structural-production-lot',
   '/inventory/counts/cycle-counts',
   '/inventory/counts/start',
   '/inventory/counts/adjustments',
