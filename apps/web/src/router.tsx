@@ -290,9 +290,10 @@ const invStructuralLotsRoute = createRoute({
   path: 'operations/structural-production-lots',
   component: StructuralProductionLotListPage,
 });
+// Separate path prefix (not …/lots/new sibling) — TanStack Router invariant on flat prefix twins.
 const invStructuralLotCreateRoute = createRoute({
   getParentRoute: () => inventoryRoute,
-  path: 'operations/structural-production-lots/new',
+  path: 'operations/new-structural-production-lot',
   component: StructuralProductionLotCreatePage,
 });
 const invCountsRoute = createRoute({
