@@ -1,10 +1,12 @@
 using Naswood.BuildingBlocks.Domain;
 using Naswood.Modules.Business.Domain.Common;
+using Naswood.Modules.Business.Domain.Production.En14081;
 
 namespace Naswood.Modules.Business.Domain.Production;
 
 /// <summary>
 /// EN 14081 structural timber production/classification run — not a Batch, Package, or stock balance.
+/// Master aggregate layers: see <see cref="En14081.StructuralProductionLotSchema"/>.
 /// </summary>
 public sealed class StructuralProductionLot : BusinessEntity
 {
@@ -119,17 +121,25 @@ public sealed class StructuralProductionLot : BusinessEntity
 
     public void TransitionStatus(string newStatus)
     {
-        if (string.Equals(Status, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Status, StructuralProductionLotSchema.LotStatus.Cancelled, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cancelled production lot cannot change status.");
-        if (string.Equals(Status, "RELEASED", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(newStatus, "QUARANTINED", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(newStatus, "CANCELLED", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Released lot can only move to QUARANTINED or CANCELLED.");
 
-        Status = newStatus.Trim().ToUpperInvariant();
-        if (string.Equals(Status, "IN_PROGRESS", StringComparison.OrdinalIgnoreCase) && StartedAt is null)
+        var normalized = StructuralProductionLotSchema.LotStatus.Normalize(newStatus);
+        var allowed = StructuralProductionLotSchema.LotStatus.Target.Any(s =>
+            string.Equals(s, normalized, StringComparison.OrdinalIgnoreCase));
+        if (!allowed)
+            throw new InvalidOperationException($"Invalid production lot status: {newStatus}");
+
+        if (string.Equals(Status, StructuralProductionLotSchema.LotStatus.Released, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalized, StructuralProductionLotSchema.LotStatus.Cancelled, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalized, StructuralProductionLotSchema.LotStatus.FpcPending, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Released lot can only move to FPC_PENDING (re-gate) or CANCELLED.");
+
+        Status = normalized;
+        if (string.Equals(Status, StructuralProductionLotSchema.LotStatus.InClassification, StringComparison.OrdinalIgnoreCase)
+            && StartedAt is null)
             StartedAt = DateTimeOffset.UtcNow;
-        if (string.Equals(Status, "RELEASED", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Status, StructuralProductionLotSchema.LotStatus.Released, StringComparison.OrdinalIgnoreCase))
         {
             CompletedAt ??= DateTimeOffset.UtcNow;
             ReleasedAt ??= DateTimeOffset.UtcNow;
@@ -139,7 +149,7 @@ public sealed class StructuralProductionLot : BusinessEntity
 
     public void MarkReleased(string? releasedBy)
     {
-        TransitionStatus("RELEASED");
+        TransitionStatus(StructuralProductionLotSchema.LotStatus.Released);
         ReleasedBy = releasedBy;
         ReleasedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -149,9 +159,9 @@ public sealed class StructuralProductionLot : BusinessEntity
     {
         if (string.IsNullOrWhiteSpace(reason))
             throw new InvalidOperationException("Cancellation reason is required.");
-        if (string.Equals(Status, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Status, StructuralProductionLotSchema.LotStatus.Cancelled, StringComparison.OrdinalIgnoreCase))
             return;
-        Status = "CANCELLED";
+        Status = StructuralProductionLotSchema.LotStatus.Cancelled;
         CancellationReason = reason.Trim();
         CancelledAt = DateTimeOffset.UtcNow;
         CancelledBy = cancelledBy;

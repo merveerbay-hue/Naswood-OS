@@ -1,11 +1,16 @@
 /**
- * EN 14081 Structural Production Lot foundation contract.
+ * EN 14081 Structural Production Lot foundation + master schema contract.
  * Run: npx tsx apps/web/src/modules/inventory/production-lot/structuralProductionLot.selftest.ts
  */
 import {
   canCreateStructuralProductionLot,
   canEditCriticalFields,
+  EN14081_PHASE_ORDER,
+  EN14081_PRODUCTION_LOT_SCHEMA_LAYERS,
+  isClassifiedButNotReleased,
+  isReleased,
   mintProductionLotNumberPreview,
+  normalizeProductionLotStatus,
   STRUCTURAL_PRODUCTION_LOT_STATUSES,
 } from './structuralProductionLotRules';
 
@@ -107,7 +112,7 @@ function assert(cond: boolean, msg: string) {
   console.log('TEST6/7 OK — foreign plant source forbidden');
 }
 
-// TEST 8 — plant context required (list/create gate)
+// TEST 8 — plant context required
 {
   const r = canCreateStructuralProductionLot({
     plantId: '',
@@ -123,9 +128,9 @@ function assert(cond: boolean, msg: string) {
 // TEST 9/10 — DRAFT editable; others immutable for critical fields
 {
   assert(canEditCriticalFields('DRAFT'), 'TEST9');
-  assert(!canEditCriticalFields('IN_PROGRESS'), 'TEST10a');
+  assert(!canEditCriticalFields('IN_CLASSIFICATION'), 'TEST10a');
   assert(!canEditCriticalFields('RELEASED'), 'TEST10b');
-  assert(!canEditCriticalFields('PENDING_QUALITY'), 'TEST10c');
+  assert(!canEditCriticalFields('CLASSIFIED'), 'TEST10c');
   console.log('TEST9/10 OK — immutability by status');
 }
 
@@ -133,6 +138,21 @@ function assert(cond: boolean, msg: string) {
 {
   assert(STRUCTURAL_PRODUCTION_LOT_STATUSES.includes('CANCELLED'), 'TEST11');
   console.log('TEST11 OK — CANCELLED status for audit cancel');
+}
+
+// SCHEMA — CLASSIFIED ≠ RELEASED
+{
+  assert(isClassifiedButNotReleased('CLASSIFIED') && !isReleased('CLASSIFIED'), 'SCHEMA classified≠released');
+  assert(isClassifiedButNotReleased('FPC_PENDING'), 'SCHEMA fpc pending');
+  assert(isReleased('RELEASED'), 'SCHEMA released');
+  assert(normalizeProductionLotStatus('IN_PROGRESS') === 'IN_CLASSIFICATION', 'SCHEMA alias');
+  assert(normalizeProductionLotStatus('PENDING_QUALITY') === 'FPC_PENDING', 'SCHEMA quality→fpc');
+  assert(EN14081_PRODUCTION_LOT_SCHEMA_LAYERS.includes('VisualClassification'), 'SCHEMA layer visual');
+  assert(EN14081_PRODUCTION_LOT_SCHEMA_LAYERS.includes('MoistureControl'), 'SCHEMA layer moisture');
+  assert(EN14081_PRODUCTION_LOT_SCHEMA_LAYERS[0] === 'LotIdentity', 'SCHEMA layer order');
+  assert(EN14081_PHASE_ORDER[0] === 'FAZ1_VisualClassification', 'SCHEMA phase1');
+  assert(EN14081_PHASE_ORDER[EN14081_PHASE_ORDER.length - 1] === 'FAZ9_CeAndDop', 'SCHEMA ce last');
+  console.log('SCHEMA OK — master layers + CLASSIFIED≠RELEASED + phase order');
 }
 
 // Numbering uses plant code (not hardcoded F01)

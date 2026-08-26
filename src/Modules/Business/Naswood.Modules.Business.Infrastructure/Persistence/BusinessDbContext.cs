@@ -797,11 +797,11 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.CancelledBy).HasMaxLength(200);
             entity.HasIndex(x => x.ProductionLotNumber).IsUnique();
             entity.HasIndex(x => x.PlantId);
-            entity.HasMany<Naswood.Modules.Business.Domain.Production.StructuralProductionLotInput>("_inputs")
+            entity.HasMany(x => x.Inputs)
                 .WithOne()
                 .HasForeignKey(x => x.ProductionLotId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.Navigation("_inputs").UsePropertyAccessMode(PropertyAccessMode.Field);
+            entity.Navigation(x => x.Inputs).HasField("_inputs").UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.StructuralProductionLotInput>(entity =>

@@ -110,8 +110,42 @@ export function canCreateStructuralProductionLot(input: StructuralProductionLotC
   return { ok: true };
 }
 
+export const STRUCTURAL_PRODUCTION_LOT_STATUSES = [
+  'DRAFT',
+  'IN_CLASSIFICATION',
+  'CLASSIFIED',
+  'FPC_PENDING',
+  'RELEASED',
+  'CANCELLED',
+] as const;
+
+/** Foundation aliases still accepted by API (normalized server-side). */
+export const STRUCTURAL_PRODUCTION_LOT_STATUS_ALIASES = [
+  'IN_PROGRESS',
+  'PENDING_CLASSIFICATION',
+  'PENDING_QUALITY',
+  'QUARANTINED',
+] as const;
+
+export function normalizeProductionLotStatus(status: string): string {
+  const s = String(status || '').trim().toUpperCase();
+  if (s === 'IN_PROGRESS' || s === 'PENDING_CLASSIFICATION') return 'IN_CLASSIFICATION';
+  if (s === 'PENDING_QUALITY' || s === 'QUARANTINED') return 'FPC_PENDING';
+  return s;
+}
+
 export function canEditCriticalFields(status: string): boolean {
   return String(status || '').toUpperCase() === 'DRAFT';
+}
+
+/** CLASSIFIED is not RELEASED — FPC / NC gates may still block. */
+export function isReleased(status: string): boolean {
+  return normalizeProductionLotStatus(status) === 'RELEASED';
+}
+
+export function isClassifiedButNotReleased(status: string): boolean {
+  const n = normalizeProductionLotStatus(status);
+  return n === 'CLASSIFIED' || n === 'FPC_PENDING';
 }
 
 export function mintProductionLotNumberPreview(plantCode: string, sequence: number): string {
@@ -119,12 +153,33 @@ export function mintProductionLotNumberPreview(plantCode: string, sequence: numb
   return `PLOT-${code}-${String(sequence).padStart(6, '0')}`;
 }
 
-export const STRUCTURAL_PRODUCTION_LOT_STATUSES = [
-  'DRAFT',
-  'IN_PROGRESS',
-  'PENDING_CLASSIFICATION',
-  'PENDING_QUALITY',
-  'RELEASED',
-  'QUARANTINED',
-  'CANCELLED',
+/** Master schema layers (mirror of domain StructuralProductionLotSchema.Layers). */
+export const EN14081_PRODUCTION_LOT_SCHEMA_LAYERS = [
+  'LotIdentity',
+  'InputTraceability',
+  'Classification',
+  'MoistureControl',
+  'VisualClassification',
+  'MachineClassification',
+  'StrengthClass',
+  'DimensionsTolerances',
+  'FpcControls',
+  'Nonconformity',
+  'CorrectiveAction',
+  'EquipmentMeasurement',
+  'Marking',
+  'Release',
+  'AuditEvidence',
+] as const;
+
+export const EN14081_PHASE_ORDER = [
+  'FAZ1_VisualClassification',
+  'FAZ2_MoistureAndMeterVerification',
+  'FAZ3_ClassificationResultAndStrengthClass',
+  'FAZ4_FpcPlanAndExecutions',
+  'FAZ5_NonconformityAndCorrectiveAction',
+  'FAZ6_MachineClassificationAndSettings',
+  'FAZ7_StockConsumptionAndGenealogy',
+  'FAZ8_MarkingAndProductIdentification',
+  'FAZ9_CeAndDop',
 ] as const;

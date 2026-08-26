@@ -12,7 +12,7 @@ public sealed class StructuralProductionLotRepository : IStructuralProductionLot
 
     public Task<StructuralProductionLot?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Set<StructuralProductionLot>()
-            .Include("_inputs")
+            .Include(x => x.Inputs)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<bool> NumberExistsAsync(string productionLotNumber, CancellationToken cancellationToken = default) =>
@@ -34,7 +34,7 @@ public sealed class StructuralProductionLotRepository : IStructuralProductionLot
     {
         var query = _db.Set<StructuralProductionLot>()
             .AsNoTracking()
-            .Include("_inputs")
+            .Include(x => x.Inputs)
             .Where(x => !x.IsDeleted);
 
         if (!string.IsNullOrWhiteSpace(plantId))

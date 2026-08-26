@@ -4,6 +4,7 @@ using Naswood.Modules.Business.Application.Common;
 using Naswood.Modules.Business.Application.Inventory;
 using Naswood.Modules.Business.Contracts.Production;
 using Naswood.Modules.Business.Domain.Production;
+using Naswood.Modules.Business.Domain.Production.En14081;
 
 namespace Naswood.Modules.Business.Application.Production;
 
@@ -408,10 +409,9 @@ public sealed class TransitionStructuralProductionLotStatusCommandHandler
         _uow = uow;
     }
 
-    private static readonly HashSet<string> Allowed = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "DRAFT", "IN_PROGRESS", "PENDING_CLASSIFICATION", "PENDING_QUALITY", "RELEASED", "QUARANTINED", "CANCELLED"
-    };
+    private static readonly HashSet<string> Allowed = new(
+        StructuralProductionLotSchema.LotStatus.AcceptedForTransition,
+        StringComparer.OrdinalIgnoreCase);
 
     public async Task<Result<StructuralProductionLotDto>> HandleAsync(
         TransitionStructuralProductionLotStatusCommand command, CancellationToken cancellationToken = default)
@@ -423,14 +423,21 @@ public sealed class TransitionStructuralProductionLotStatusCommandHandler
             return Result.Failure<StructuralProductionLotDto>(Error.Forbidden(
                 "PRD-SPL-403", "Bu yapısal üretim lotunu güncelleme yetkiniz yok."));
 
-        var status = (command.Status ?? string.Empty).Trim().ToUpperInvariant();
-        if (!Allowed.Contains(status) || status == "CANCELLED")
+        var status = StructuralProductionLotSchema.LotStatus.Normalize(command.Status);
+        if (string.IsNullOrWhiteSpace(status)
+            || status == StructuralProductionLotSchema.LotStatus.Cancelled
+            || (!Allowed.Contains(status)
+                && !StructuralProductionLotSchema.LotStatus.Target.Any(t =>
+                    string.Equals(t, status, StringComparison.OrdinalIgnoreCase))))
+        {
             return Result.Failure<StructuralProductionLotDto>(Error.Validation(
-                "PRD-SPL-STATUS", "Use Cancel endpoint for CANCELLED; status must be a valid production-lot state."));
+                "PRD-SPL-STATUS",
+                "Use Cancel endpoint for CANCELLED; status must be DRAFT|IN_CLASSIFICATION|CLASSIFIED|FPC_PENDING|RELEASED (legacy aliases accepted)."));
+        }
 
         try
         {
-            if (status == "RELEASED")
+            if (status == StructuralProductionLotSchema.LotStatus.Released)
                 e.MarkReleased(command.Actor);
             else
                 e.TransitionStatus(status);

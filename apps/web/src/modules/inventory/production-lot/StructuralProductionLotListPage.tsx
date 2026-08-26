@@ -42,7 +42,7 @@ export function StructuralProductionLotListPage() {
           </p>
         </div>
         <Link
-          to="/inventory/operations/structural-production-lots/new"
+          to="/inventory/operations/new-structural-production-lot"
           className={buttonVariants({ variant: 'default' })}
         >
           Yeni üretim lotu
