@@ -70,6 +70,10 @@ export async function createResource<T>(
   return apiRequest<T>(`/api/v1/${route}${qs ? `?${qs}` : ''}`, { method: 'POST', auth: true, body });
 }
 
+export async function updateResource<T>(route: string, id: string, body: unknown): Promise<T> {
+  return apiRequest<T>(`/api/v1/${route}/${id}`, { method: 'PUT', auth: true, body });
+}
+
 export async function deleteResource(route: string, id: string): Promise<null> {
   return apiRequest<null>(`/api/v1/${route}/${id}`, { method: 'DELETE', auth: true });
 }

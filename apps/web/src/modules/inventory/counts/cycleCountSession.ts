@@ -47,6 +47,61 @@ export function buildCountSessionNotes(draft: CycleCountOpenDraft): string {
   return parts.filter(Boolean).join('; ');
 }
 
+export type CountLine = {
+  key: string;
+  materialCode: string;
+  locationCode: string;
+  lotNumber: string;
+  systemQty: number;
+  countedQty: string;
+};
+
+export function isAdministrator(roles: string[] | null | undefined): boolean {
+  return (roles ?? []).some((r) => r.trim().toLowerCase() === 'administrator');
+}
+
+/** Logged-in staff with count permission already passed login — no second sign-in. */
+export function canSaveCountLines(roles: string[] | null | undefined): boolean {
+  if (isAdministrator(roles)) return true;
+  const set = new Set((roles ?? []).map((r) => r.trim().toLowerCase()));
+  return set.has('warehouseoperator') || set.has('executive');
+}
+
+export function canOpenCountDocument(roles: string[] | null | undefined): boolean {
+  return canSaveCountLines(roles);
+}
+
+/** Admin (and any viewer of this wizard) always sees every step's page. */
+export function canViewAllCountPages(roles: string[] | null | undefined): boolean {
+  return isAdministrator(roles) || canSaveCountLines(roles) || (roles?.length ?? 0) > 0;
+}
+
+/** Blind hides system qty from counters; Administrator still sees the sheet. */
+export function showSystemQuantity(roles: string[] | null | undefined, blindCount: boolean): boolean {
+  if (isAdministrator(roles)) return true;
+  return !blindCount;
+}
+
+export function lineVariance(line: CountLine): number | null {
+  const raw = line.countedQty.trim();
+  if (raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return n - line.systemQty;
+}
+
+export function summarizeVariances(lines: CountLine[]): { counted: number; differed: number } {
+  let counted = 0;
+  let differed = 0;
+  for (const line of lines) {
+    const v = lineVariance(line);
+    if (v === null) continue;
+    counted += 1;
+    if (v !== 0) differed += 1;
+  }
+  return { counted, differed };
+}
+
 /** Client never mints CNT-… — Numbering Service (or SystemIdentifier stand-in) assigns on persist. */
 export function buildCountSessionCreateBody(draft: CycleCountOpenDraft): {
   number: string;

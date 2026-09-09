@@ -2,7 +2,8 @@ import { Link } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
-import { createResource, searchAllResource } from '@/api/business';
+import { createResource, searchAllResource, searchResource, updateResource } from '@/api/business';
+import { useAuth } from '@/auth/useAuth';
 import { usePlantContext } from '@/auth/usePlantContext';
 import { useI18n } from '@/i18n';
 import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
@@ -10,24 +11,46 @@ import {
   COUNT_TYPES,
   FREEZE_MODES,
   buildCountSessionCreateBody,
+  canOpenCountDocument,
   canOpenCountSession,
+  canSaveCountLines,
+  lineVariance,
+  showSystemQuantity,
+  summarizeVariances,
+  type CountLine,
   type CountType,
   type FreezeMode,
 } from './cycleCountSession';
 
 type WarehouseOpt = { code?: string; name?: string; status?: string };
 type LocationOpt = { code?: string; name?: string; warehouseCode?: string; status?: string };
-type OpenedSession = { id: string; number: string; warehouseCode: string; status: string; plantId?: string };
+type BalanceRow = {
+  materialCode?: string;
+  warehouseCode?: string;
+  locationCode?: string;
+  batchNumber?: string;
+  quantityOnHand?: number;
+};
+type CountDoc = { id: string; number: string; warehouseCode: string; status: string; plantId?: string; notes?: string };
 
 const STEPS = ['scope', 'open', 'count', 'variance', 'close'] as const;
 type StepId = (typeof STEPS)[number];
 
+function lineKey(material: string, loc: string, lot: string): string {
+  return `${material}|${loc}|${lot}`.toUpperCase();
+}
+
 /**
- * INV-CNT-001 — Cycle Count Session wizard.
- * Step 2 opens the session: business fields only; CNT-… is minted by numbering.
+ * INV-CNT-001 — Cycle count wizard.
+ * Login already authorized the user. Step 2 opens a count *document*, not a second login.
+ * Administrator always sees every step page; save is gated separately.
  */
 export function CycleCountSessionPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const roles = user?.roles ?? [];
+  const canSave = canSaveCountLines(roles);
+  const canOpenDoc = canOpenCountDocument(roles);
   const queryClient = useQueryClient();
   const { homePlantId, plantId: sessionPlantId, visiblePlantIds, canSwitchPlant } = usePlantContext();
   const plantIds = visiblePlantIds.length ? visiblePlantIds : [homePlantId || 'PLANT-001'];
@@ -42,7 +65,10 @@ export function CycleCountSessionPage() {
   const [assignedTo, setAssignedTo] = useState('');
   const [blindCount, setBlindCount] = useState(false);
   const [freezeMode, setFreezeMode] = useState<FreezeMode>('None');
-  const [opened, setOpened] = useState<OpenedSession | null>(null);
+  const [opened, setOpened] = useState<CountDoc | null>(null);
+  const [lines, setLines] = useState<CountLine[]>([]);
+  const [scan, setScan] = useState('');
+  const [savedNote, setSavedNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,6 +87,34 @@ export function CycleCountSessionPage() {
     queryKey: ['business', 'locations', 'cnt', plantId],
     queryFn: () => searchAllResource<LocationOpt>('locations', undefined, { plantId }),
   });
+  const balancesQuery = useQuery({
+    queryKey: ['business', 'inventory', 'cnt', plantId, warehouseCode],
+    enabled: Boolean(warehouseCode),
+    queryFn: () =>
+      searchResource<BalanceRow>('inventory', undefined, {
+        page: 1,
+        pageSize: 100,
+        plantId,
+        warehouseCode,
+      }),
+  });
+  const openDocsQuery = useQuery({
+    queryKey: ['business', 'inventory-counts', 'open', plantId],
+    queryFn: () => searchResource<CountDoc>('inventory-counts', undefined, { page: 1, pageSize: 50, plantId }),
+  });
+
+  useEffect(() => {
+    if (opened) return;
+    const items = openDocsQuery.data?.items ?? [];
+    const existing = items.find((d) => {
+      const st = String(d.status ?? '').toLowerCase();
+      return st === 'in progress' || st === 'inprogress' || st === 'released' || st === 'draft';
+    });
+    if (existing) {
+      setOpened(existing);
+      if (existing.warehouseCode) setWarehouseCode(existing.warehouseCode);
+    }
+  }, [openDocsQuery.data, opened]);
 
   const warehouses = useMemo(
     () =>
@@ -79,6 +133,45 @@ export function CycleCountSessionPage() {
     [locationsQuery.data, warehouseCode],
   );
 
+  useEffect(() => {
+    setLines((prev) => {
+      if (prev.length > 0) return prev;
+      return [
+        { key: 'DEMO-1', materialCode: '', locationCode: '', lotNumber: '', systemQty: 0, countedQty: '' },
+        { key: 'DEMO-2', materialCode: '', locationCode: '', lotNumber: '', systemQty: 0, countedQty: '' },
+        { key: 'DEMO-3', materialCode: '', locationCode: '', lotNumber: '', systemQty: 0, countedQty: '' },
+      ];
+    });
+  }, []);
+
+  useEffect(() => {
+    const items = balancesQuery.data?.items ?? [];
+    if (!items.length) return;
+    setLines((prev) => {
+      const next = [...prev];
+      const have = new Set(next.map((l) => l.key));
+      for (const row of items) {
+        if (zone && String(row.locationCode ?? '').toUpperCase() !== zone.toUpperCase()) continue;
+        const materialCode = String(row.materialCode ?? '').trim();
+        if (!materialCode) continue;
+        const locationCode = String(row.locationCode ?? '').trim();
+        const lotNumber = String(row.batchNumber ?? '').trim();
+        const key = lineKey(materialCode, locationCode, lotNumber);
+        if (have.has(key)) continue;
+        have.add(key);
+        next.push({
+          key,
+          materialCode,
+          locationCode,
+          lotNumber,
+          systemQty: Number(row.quantityOnHand ?? 0),
+          countedQty: '',
+        });
+      }
+      return next;
+    });
+  }, [balancesQuery.data, zone]);
+
   const draft = {
     plantId,
     warehouseCode,
@@ -91,16 +184,58 @@ export function CycleCountSessionPage() {
     freezeMode,
   };
   const gate = canOpenCountSession(draft);
+  const showSys = showSystemQuantity(roles, blindCount);
+  const totals = summarizeVariances(lines);
 
   const openMutation = useMutation({
     mutationFn: async () => {
+      if (!canOpenDoc) throw new Error(t('wizard.cnt.countSaveDenied'));
       if (!gate.ok) throw new Error(gate.reason);
-      return createResource<OpenedSession>('inventory-counts', buildCountSessionCreateBody(draft), { plantId });
+      return createResource<CountDoc>('inventory-counts', buildCountSessionCreateBody(draft), { plantId });
     },
     onSuccess: async (row) => {
       setError(null);
       setOpened(row);
       await queryClient.invalidateQueries({ queryKey: ['business', 'inventory-counts'] });
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const saveLinesMutation = useMutation({
+    mutationFn: async () => {
+      if (!canSave) throw new Error(t('wizard.cnt.countSaveDenied'));
+      if (!opened) throw new Error(t('wizard.cnt.needOpen'));
+      const notes = `${opened.notes ?? ''}\nlines=${JSON.stringify(
+        lines.map((l) => ({ m: l.materialCode, loc: l.locationCode, lot: l.lotNumber, qty: l.countedQty })),
+      )}`;
+      return updateResource<CountDoc>('inventory-counts', opened.id, {
+        number: opened.number,
+        warehouseCode: opened.warehouseCode || warehouseCode,
+        status: opened.status || 'In Progress',
+        notes,
+      });
+    },
+    onSuccess: () => {
+      setError(null);
+      setSavedNote(t('wizard.cnt.countSaved'));
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const closeMutation = useMutation({
+    mutationFn: async () => {
+      if (!canSave) throw new Error(t('wizard.cnt.countSaveDenied'));
+      if (!opened) throw new Error(t('wizard.cnt.needOpen'));
+      return updateResource<CountDoc>('inventory-counts', opened.id, {
+        number: opened.number,
+        warehouseCode: opened.warehouseCode || warehouseCode,
+        status: 'Closed',
+        notes: opened.notes ?? '',
+      });
+    },
+    onSuccess: (row) => {
+      setOpened(row);
+      setError(null);
     },
     onError: (e: Error) => setError(e.message),
   });
@@ -113,6 +248,59 @@ export function CycleCountSessionPage() {
     variance: t('wizard.cnt.variance'),
     close: t('wizard.cnt.close'),
   };
+  const stepHint: Record<StepId, string> = {
+    scope: t('wizard.cnt.stepHint'),
+    open: t('wizard.cnt.openHint'),
+    count: t('wizard.cnt.countHint'),
+    variance: t('wizard.cnt.varianceHint'),
+    close: t('wizard.cnt.closeHint'),
+  };
+
+  function applyScan() {
+    const q = scan.trim().toUpperCase();
+    if (!q) return;
+    const hit = lines.find(
+      (l) =>
+        l.materialCode.toUpperCase().includes(q) ||
+        l.lotNumber.toUpperCase().includes(q) ||
+        l.locationCode.toUpperCase().includes(q),
+    );
+    if (hit) {
+      const el = document.getElementById(`cnt-qty-${hit.key}`);
+      el?.focus();
+      return;
+    }
+    setLines((prev) => [
+      ...prev,
+      {
+        key: lineKey(q, zone || warehouseCode || '—', ''),
+        materialCode: scan.trim(),
+        locationCode: zone || '',
+        lotNumber: '',
+        systemQty: 0,
+        countedQty: '',
+      },
+    ]);
+  }
+
+  function addEmptyLine() {
+    const n = lines.length + 1;
+    setLines((prev) => [
+      ...prev,
+      {
+        key: `NEW-${n}-${Date.now()}`,
+        materialCode: '',
+        locationCode: zone || '',
+        lotNumber: '',
+        systemQty: 0,
+        countedQty: '',
+      },
+    ]);
+  }
+
+  function patchLine(key: string, patch: Partial<CountLine>) {
+    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  }
 
   return (
     <div className="space-y-4">
@@ -146,9 +334,7 @@ export function CycleCountSessionPage() {
               className={`rounded-md px-3 py-1.5 text-xs font-medium ${
                 id === step
                   ? 'bg-[var(--color-primary)] text-white'
-                  : i < stepIndex || opened
-                    ? 'bg-[var(--color-surface-hover)] text-[var(--text-primary)]'
-                    : 'bg-[var(--color-surface)] text-[var(--text-muted)]'
+                  : 'bg-[var(--color-surface-hover)] text-[var(--text-primary)]'
               }`}
             >
               {i + 1}. {stepTitle[id]}
@@ -162,9 +348,7 @@ export function CycleCountSessionPage() {
           <CardTitle>
             {stepIndex + 1}. {stepTitle[step]}
           </CardTitle>
-          <CardDescription>
-            {step === 'open' ? t('wizard.cnt.openHint') : t('wizard.cnt.stepHint')}
-          </CardDescription>
+          <CardDescription>{stepHint[step]}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {step === 'scope' ? (
@@ -238,9 +422,6 @@ export function CycleCountSessionPage() {
                   <option value="C">C</option>
                 </select>
               </label>
-              {!warehousesQuery.isLoading && warehouses.length === 0 ? (
-                <p className="md:col-span-2 text-sm text-[var(--color-danger)]">{t('wizard.cnt.noWarehouse')}</p>
-              ) : null}
             </div>
           ) : null}
 
@@ -265,12 +446,7 @@ export function CycleCountSessionPage() {
                 </label>
                 <label className="space-y-1 text-sm">
                   <span className="text-[var(--text-secondary)]">{t('wizard.cnt.countDate')}</span>
-                  <Input
-                    type="date"
-                    value={countDate}
-                    disabled={Boolean(opened)}
-                    onChange={(e) => setCountDate(e.target.value)}
-                  />
+                  <Input type="date" value={countDate} disabled={Boolean(opened)} onChange={(e) => setCountDate(e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
                   <span className="text-[var(--text-secondary)]">{t('wizard.cnt.assignedTo')}</span>
@@ -306,84 +482,145 @@ export function CycleCountSessionPage() {
                   <span>{t('wizard.cnt.blind')}</span>
                 </label>
               </div>
-
-              <div className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 py-3 text-sm">
-                <p className="font-medium">{t('wizard.cnt.gateTitle')}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-[var(--text-secondary)]">
-                  <li>
-                    {warehouseCode
-                      ? `${t('wizard.cnt.gateScopeOk')} ${warehouseCode}`
-                      : t('wizard.cnt.gateScopeMissing')}
-                  </li>
-                  <li>{t('wizard.cnt.gateNumbering')}</li>
-                  <li>{t('wizard.cnt.gateBlind')}</li>
-                  <li>{t('wizard.cnt.gateAdjust')}</li>
-                  <li>
-                    {t('wizard.cnt.gatePlant')} {plantId}
-                  </li>
-                </ul>
-              </div>
-
               {opened ? (
                 <p className="text-sm font-medium text-[var(--color-primary)]">
-                  {t('wizard.cnt.openedBanner')} {opened.number} · {opened.status}
+                  {t('wizard.cnt.alreadyOpen')} {opened.number} · {opened.status}
                 </p>
               ) : (
-                <Button
-                  type="button"
-                  disabled={!gate.ok || openMutation.isPending}
-                  onClick={() => openMutation.mutate()}
-                >
+                <Button type="button" disabled={!gate.ok || !canOpenDoc || openMutation.isPending} onClick={() => openMutation.mutate()}>
                   {openMutation.isPending ? t('saving') : t('wizard.cnt.openAction')}
                 </Button>
               )}
-              {!gate.ok ? <p className="text-sm text-[var(--text-muted)]">{gate.reason}</p> : null}
+              {!opened && !gate.ok ? <p className="text-sm text-[var(--text-muted)]">{gate.reason}</p> : null}
             </div>
           ) : null}
 
           {step === 'count' ? (
-            <div className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <p>{t('wizard.cnt.countBody')}</p>
-              <p className="font-mono text-[var(--text-primary)]">
-                {opened ? opened.number : t('wizard.cnt.needOpen')}
+            <div className="space-y-3">
+              <p className="text-sm text-[var(--text-secondary)]">{t('wizard.cnt.countBody')}</p>
+              <p className="font-mono text-sm text-[var(--text-primary)]">
+                {opened?.number ?? t('wizard.cnt.countViewWithoutDoc')}
               </p>
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  className="max-w-xs"
+                  value={scan}
+                  placeholder={t('wizard.cnt.countScanPh')}
+                  onChange={(e) => setScan(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') applyScan();
+                  }}
+                />
+                <Button type="button" variant="secondary" onClick={applyScan}>
+                  {t('wizard.cnt.countScan')}
+                </Button>
+                <Button type="button" variant="secondary" onClick={addEmptyLine}>
+                  {t('wizard.cnt.countAdd')}
+                </Button>
+              </div>
+              {lines.length === 0 ? (
+                <p className="text-sm text-[var(--text-muted)]">{t('wizard.cnt.countEmpty')}</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--border-default)] text-[var(--text-muted)]">
+                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColMaterial')}</th>
+                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColLoc')}</th>
+                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColLot')}</th>
+                        {showSys ? <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColSystem')}</th> : null}
+                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColCounted')}</th>
+                        {showSys ? <th className="py-2 font-medium">{t('wizard.cnt.countColVar')}</th> : null}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lines.map((line) => {
+                        const v = lineVariance(line);
+                        return (
+                          <tr key={line.key} className="border-b border-[var(--border-default)]">
+                            <td className="py-1.5 pr-3">
+                              <Input value={line.materialCode} onChange={(e) => patchLine(line.key, { materialCode: e.target.value })} />
+                            </td>
+                            <td className="py-1.5 pr-3">
+                              <Input value={line.locationCode} onChange={(e) => patchLine(line.key, { locationCode: e.target.value })} />
+                            </td>
+                            <td className="py-1.5 pr-3">
+                              <Input value={line.lotNumber} onChange={(e) => patchLine(line.key, { lotNumber: e.target.value })} />
+                            </td>
+                            {showSys ? <td className="py-1.5 pr-3 font-mono">{line.systemQty}</td> : null}
+                            <td className="py-1.5 pr-3">
+                              <Input
+                                id={`cnt-qty-${line.key}`}
+                                type="number"
+                                value={line.countedQty}
+                                onChange={(e) => patchLine(line.key, { countedQty: e.target.value })}
+                              />
+                            </td>
+                            {showSys ? (
+                              <td className={`py-1.5 font-mono ${v && v !== 0 ? 'text-[var(--color-danger)]' : ''}`}>
+                                {v === null ? '—' : v}
+                              </td>
+                            ) : null}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <Button type="button" disabled={!canSave || !opened || saveLinesMutation.isPending} onClick={() => saveLinesMutation.mutate()}>
+                {saveLinesMutation.isPending ? t('saving') : t('wizard.cnt.countSave')}
+              </Button>
+              {!canSave ? <p className="text-sm text-[var(--text-muted)]">{t('wizard.cnt.countSaveDenied')}</p> : null}
+              {savedNote ? <p className="text-sm text-[var(--color-primary)]">{savedNote}</p> : null}
             </div>
           ) : null}
 
           {step === 'variance' ? (
-            <div className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <p>{t('wizard.cnt.varianceBody')}</p>
+            <div className="space-y-3 text-sm">
+              <p className="text-[var(--text-secondary)]">{t('wizard.cnt.varianceBody')}</p>
+              <p className="text-[var(--text-primary)]">
+                {totals.counted} sayılan · {totals.differed} fark
+              </p>
+              {totals.counted === 0 ? (
+                <p className="text-[var(--text-muted)]">{t('wizard.cnt.varianceNone')}</p>
+              ) : (
+                <ul className="space-y-1">
+                  {lines
+                    .filter((l) => {
+                      const v = lineVariance(l);
+                      return v !== null && v !== 0;
+                    })
+                    .map((l) => (
+                      <li key={l.key} className="font-mono">
+                        {l.materialCode} · {l.locationCode} · {showSys ? lineVariance(l) : t('wizard.cnt.countColCounted')}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
           ) : null}
 
           {step === 'close' ? (
-            <div className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <p>{t('wizard.cnt.closeBody')}</p>
-              {opened ? (
-                <p className="font-medium text-[var(--text-primary)]">
-                  {opened.number} · {opened.status}
-                </p>
-              ) : null}
+            <div className="space-y-3 text-sm">
+              <p className="text-[var(--text-secondary)]">{t('wizard.cnt.closeBody')}</p>
+              <p className="font-medium text-[var(--text-primary)]">
+                {opened ? `${opened.number} · ${opened.status}` : t('wizard.cnt.countViewWithoutDoc')}
+              </p>
+              <Button type="button" disabled={!canSave || !opened || closeMutation.isPending} onClick={() => closeMutation.mutate()}>
+                {closeMutation.isPending ? t('saving') : t('wizard.cnt.closeAction')}
+              </Button>
             </div>
           ) : null}
 
           {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={stepIndex === 0}
-              onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}
-            >
+            <Button type="button" variant="secondary" disabled={stepIndex === 0} onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}>
               {t('wizard.back')}
             </Button>
             {stepIndex < STEPS.length - 1 ? (
-              <Button
-                type="button"
-                disabled={step === 'scope' && !warehouseCode}
-                onClick={() => setStep(STEPS[stepIndex + 1])}
-              >
+              <Button type="button" onClick={() => setStep(STEPS[stepIndex + 1])}>
                 {t('wizard.next')}
               </Button>
             ) : (
