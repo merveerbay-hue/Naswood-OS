@@ -350,6 +350,9 @@ public static class AuthorizationCatalogSeed
                 "GoodsIssue.Execute",
                 "StockTransfer.View",
                 "Batch.View",
+                "InventoryCount.View",
+                "InventoryCount.Create",
+                "InventoryCount.Update",
                 "StructuralProductionLot.View",
                 "StructuralProductionLot.Create",
                 "StructuralProductionLot.Update"

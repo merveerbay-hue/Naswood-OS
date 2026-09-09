@@ -91,11 +91,26 @@ public sealed class AuthorizationBootstrapHostedService : IHostedService
                 _logger.LogInformation("Seeded Executive role.");
             }
 
-            if (await roles.GetByCodeAsync("WarehouseOperator", cancellationToken).ConfigureAwait(false) is null)
+            var warehouseOperator = await roles.GetByCodeAsync("WarehouseOperator", cancellationToken).ConfigureAwait(false);
+            if (warehouseOperator is null)
             {
                 await roles.AddAsync(AuthorizationCatalogSeed.CreateWarehouseOperatorRole(), cancellationToken)
                     .ConfigureAwait(false);
                 _logger.LogInformation("Seeded WarehouseOperator role.");
+            }
+            else
+            {
+                var before = warehouseOperator.PermissionCodes.Count;
+                warehouseOperator.AssignPermissions(
+                    AuthorizationCatalogSeed.CreateWarehouseOperatorRole().PermissionCodes,
+                    updatedBy: null,
+                    utcNow: DateTimeOffset.UtcNow);
+                if (warehouseOperator.PermissionCodes.Count > before)
+                {
+                    _logger.LogInformation(
+                        "Synced {Count} new permissions onto WarehouseOperator role.",
+                        warehouseOperator.PermissionCodes.Count - before);
+                }
             }
         }
 

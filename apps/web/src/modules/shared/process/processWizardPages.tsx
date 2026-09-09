@@ -19,29 +19,8 @@ export function TransferWizardPage() {
   return <LocationTransferPage />;
 }
 
-export function CycleCountWizardPage() {
-  const { t } = useI18n();
-  return (
-    <ProcessWizard
-      screenId="INV-CNT-001"
-      title={t('wizard.countTitle')}
-      description={t('wizard.countDesc')}
-      finishLabel={t('wizard.closeSession')}
-      libraryPath="/inventory/counts/cycle-counts"
-      libraryLabel={t('wizard.backToLibrary')}
-      autoCodeHint="CNT-…"
-      persistRoute="inventory-counts"
-      mapBody={(v) => ({ warehouseCode: v.scope || 'WH-RM', status: 'Draft', notes: 'cycle-count', number: '' })}
-      steps={[
-        { title: t('wizard.cnt.scope'), fields: [{ key: 'scope', label: t('wizard.cnt.scope'), placeholder: 'Ana Depo / Zone A' }] },
-        { title: t('wizard.cnt.open') },
-        { title: t('wizard.cnt.count') },
-        { title: t('wizard.cnt.variance') },
-        { title: t('wizard.cnt.close') },
-      ]}
-    />
-  );
-}
+/** INV-CNT-001 — dedicated session wizard (scope → open → count → variance → close). */
+export { CycleCountSessionPage as CycleCountWizardPage } from '@/modules/inventory/counts/CycleCountSessionPage';
 
 /** Material Definition Designer — not a Create/ProcessWizard form. */
 export { MaterialDefinitionDesigner as MaterialDefinePage } from '@/modules/inventory/materials/MaterialDefinitionDesigner';

@@ -151,9 +151,9 @@ public sealed class CreateInventoryCountCommandHandler : ICommandHandler<CreateI
                 "Warehouse must belong to the resolved plant."));
 
         var e = InventoryCount.Create(
-            command.Number,
+            SystemIdentifier.Ensure(command.Number, "CNT"),
             wh.Code,
-            command.Status,
+            string.IsNullOrWhiteSpace(command.Status) ? "In Progress" : command.Status.Trim(),
             command.Notes,
             plantId: plantId);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
