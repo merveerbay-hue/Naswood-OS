@@ -1,0 +1,28 @@
+{
+  "name": "Naswood OS",
+  "user": "ubuntu",
+  "install": "./.cursor/install.sh",
+  "start": "./.cursor/start.sh",
+  "terminals": [
+    {
+      "name": "api",
+      "command": "./.cursor/run-api.sh",
+      "description": "Naswood.Api host on http://0.0.0.0:5080 (health: /health, /health/live, /health/ready)."
+    },
+    {
+      "name": "web",
+      "command": "./.cursor/run-web.sh",
+      "description": "Vite dev server for apps/web on http://0.0.0.0:5173, proxying /api and /health to the API. Exits immediately on revisions that have no frontend."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 5173
+    },
+    {
+      "name": "api",
+      "port": 5080
+    }
+  ]
+}
