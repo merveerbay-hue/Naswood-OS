@@ -1,6 +1,28 @@
 {
-  "name": "naswood-os-dev",
-  "install": "pnpm install\ncurl -fsSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0\nexport PATH=\"$HOME/.dotnet:$PATH\"",
-  "start": "sudo pg_ctlcluster 16 main start || true\nexport PATH=\"$HOME/.dotnet:$PATH:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node | tail -1)/bin\"\ncd /workspace && (test -f package.json || cd /tmp/naswood-web) && ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/Hosts/Naswood.Api/Naswood.Api.csproj --no-launch-profile &\npnpm --filter @naswood/web dev --host 0.0.0.0 --port 5173",
-  "ports": [5173, 5080]
+  "name": "Naswood OS",
+  "user": "ubuntu",
+  "install": "./.cursor/install.sh",
+  "start": "./.cursor/start.sh",
+  "terminals": [
+    {
+      "name": "api",
+      "command": "./.cursor/run-api.sh",
+      "description": "Naswood.Api host on http://0.0.0.0:5080 (health: /health, /health/live, /health/ready)."
+    },
+    {
+      "name": "web",
+      "command": "./.cursor/run-web.sh",
+      "description": "Vite dev server for apps/web on http://0.0.0.0:5173, proxying /api and /health to the API. Exits immediately on revisions that have no frontend."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 5173
+    },
+    {
+      "name": "api",
+      "port": 5080
+    }
+  ]
 }
