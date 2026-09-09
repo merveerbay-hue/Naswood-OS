@@ -32,6 +32,7 @@ import {
   type ComplianceScope,
   type GradingMethod,
 } from './materialCompliance';
+import { MaterialCardBulkPanel } from './MaterialCardBulkPanel';
 
 /**
  * INV-MAT-001 — Material Definition Designer (MVP)
@@ -658,6 +659,8 @@ export function MaterialDefinitionDesigner() {
           </Link>
         </div>
       </div>
+
+      <MaterialCardBulkPanel materials={materials} existingCodes={existingCodes} />
 
       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-surface-hover)]">
         <div className="h-full bg-[var(--color-primary)] transition-all" style={{ width: `${progress}%` }} />
