@@ -95,6 +95,67 @@ public sealed class StockEngineController : ControllerBase
         return result.ToActionResult(this);
     }
 
+    [HttpGet("api/v1/packages/{id:guid}/passport")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> GetPackagePassport(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new GetPackagePassportByIdQuery(id, PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+
+    [HttpGet("api/v1/packages/by-barcode/{barcode}")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> GetPackageByBarcode(string barcode, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new GetPackagePassportByBarcodeQuery(barcode, PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+
+    [HttpGet("api/v1/packages/by-public/{publicId}")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> GetPackageByPublicId(string publicId, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new GetPackagePassportByPublicIdQuery(publicId, PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+
+    [HttpPost("api/v1/packages/{id:guid}/label-print")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> RecordLabelPrint(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new RecordPackageLabelPrintCommand(id, PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Etiket yazdırma kaydedildi.");
+    }
+
+    public sealed class RelocatePackageRequestDto
+    {
+        public string WarehouseCode { get; init; } = string.Empty;
+        public string LocationCode { get; init; } = string.Empty;
+    }
+
+    [HttpPost("api/v1/packages/{id:guid}/relocate")]
+    [RequirePermission("Inventory.View")]
+    public async Task<IActionResult> RelocatePackage(Guid id, [FromBody] RelocatePackageRequestDto body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new RelocatePackageCommand(
+                id,
+                body.WarehouseCode,
+                body.LocationCode,
+                PlantClaims.AllowedPlantIds(User),
+                User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Paket lokasyonu güncellendi.");
+    }
+
     [HttpGet("api/v1/material-identities")]
     [RequirePermission("Inventory.View")]
     public async Task<IActionResult> SearchIdentities(

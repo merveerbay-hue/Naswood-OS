@@ -193,8 +193,8 @@ export function rowToDraft(cells: Partial<Record<TemplateColumn, string>>): Mate
   const widthMaxMm = String(cells.WidthMaxMm ?? '').trim();
   const widthOptions = String(cells.WidthOptions ?? '').trim();
   const widthMode = parseWidthMode(cells.WidthMode ?? '', { widthMinMm, widthMaxMm, widthOptions });
-  const stockDefault = mainCategory === 'MP' || mainCategory === 'TW' ? 'M2' : 'M3';
-  const volumeDefault = mainCategory === 'HM' || mainCategory === 'YM';
+  const stockDefault = mainCategory === 'TW' ? 'M2' : 'M3';
+  const volumeDefault = mainCategory === 'HM' || mainCategory === 'YM' || mainCategory === 'MP';
   const scopeRaw = String(cells.ComplianceScope ?? '')
     .trim()
     .toUpperCase();

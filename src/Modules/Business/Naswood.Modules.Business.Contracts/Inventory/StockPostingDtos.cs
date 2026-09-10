@@ -84,7 +84,74 @@ public sealed class InventoryPackageDto
     public required string UnitOfMeasure { get; init; }
     public required string Barcode { get; init; }
     public required string Status { get; init; }
+    public string PublicId { get; init; } = string.Empty;
+    public string PhysicalGroupLabel { get; init; } = string.Empty;
+    public Guid? MaterialId { get; init; }
+    public Guid? BatchId { get; init; }
+    public Guid? WarehouseId { get; init; }
+    public Guid? LocationId { get; init; }
+    public string? PlantId { get; init; }
+    public DateTimeOffset? LabelPrintedAt { get; init; }
+    public int LabelPrintCount { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+}
+
+public sealed class PackageContentDto
+{
+    public int LineNo { get; init; }
+    public decimal? ThicknessMm { get; init; }
+    public decimal? WidthMm { get; init; }
+    public decimal? LengthMm { get; init; }
+    public decimal? PieceCount { get; init; }
+    public decimal Quantity { get; init; }
+    public string UnitOfMeasure { get; init; } = string.Empty;
+    public string Measurement { get; init; } = string.Empty;
+}
+
+public sealed class PackagePassportDto
+{
+    public required Guid Id { get; init; }
+    public required string PackageNo { get; init; }
+    public required string Barcode { get; init; }
+    public required string PublicId { get; init; }
+    public required string QrPath { get; init; }
+    public required string MaterialCode { get; init; }
+    public string MaterialName { get; init; } = string.Empty;
+    public string MaterialGroup { get; init; } = string.Empty;
+    public string MaterialType { get; init; } = string.Empty;
+    public string WoodSpecies { get; init; } = string.Empty;
+    public string Quality { get; init; } = string.Empty;
+    public string StockUnit { get; init; } = string.Empty;
+    public string CountUnit { get; init; } = string.Empty;
+    public required string LotNumber { get; init; }
+    public string SourceType { get; init; } = string.Empty;
+    public string SourceReferenceNo { get; init; } = string.Empty;
+    public required string Factory { get; init; }
+    public required string WarehouseCode { get; init; }
+    public required string LocationCode { get; init; }
+    public required string Status { get; init; }
+    public required decimal Quantity { get; init; }
+    public required string UnitOfMeasure { get; init; }
+    public decimal? TotalPieceCount { get; init; }
+    public string PhysicalGroupLabel { get; init; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? LastMovementAt { get; init; }
+    public DateTimeOffset? LabelPrintedAt { get; init; }
+    public int LabelPrintCount { get; init; }
+    public bool PackageBalanceMismatch { get; init; }
+    public IReadOnlyList<PackageContentDto> Contents { get; init; } = [];
+    public IReadOnlyList<PackageMovementRowDto> Movements { get; init; } = [];
+}
+
+public sealed class PackageMovementRowDto
+{
+    public DateTimeOffset At { get; init; }
+    public string Action { get; init; } = string.Empty;
+    public string FromLocation { get; init; } = string.Empty;
+    public string ToLocation { get; init; } = string.Empty;
+    public decimal Quantity { get; init; }
+    public string Reference { get; init; } = string.Empty;
+    public string Unit { get; init; } = string.Empty;
 }
 
 public sealed class PagedInventoryPackageDto

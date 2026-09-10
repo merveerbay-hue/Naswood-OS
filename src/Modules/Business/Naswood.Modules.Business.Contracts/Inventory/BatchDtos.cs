@@ -8,6 +8,8 @@ public sealed class BatchDto
     public decimal Quantity { get; init; }
     public DateOnly? ExpiryDate { get; init; }
     public required string Status { get; init; }
+    public string SourceType { get; init; } = string.Empty;
+    public string SourceReferenceNo { get; init; } = string.Empty;
     public required string CompanyId { get; init; }
     public string? PlantId { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }

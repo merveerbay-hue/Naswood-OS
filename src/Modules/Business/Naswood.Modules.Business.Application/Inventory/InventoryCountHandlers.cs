@@ -35,7 +35,7 @@ public sealed record CreateInventoryCountCommand(
     string? PlantId,
     IReadOnlyList<string>? AllowedPlantIds,
     string LocationCode = "",
-    string CountType = "Normal",
+    string CountType = "Opening",
     string Actor = "") : ICommand<Result<InventoryCountDto>>;
 
 public sealed record UpdateInventoryCountCommand(
@@ -255,11 +255,7 @@ public sealed class CreateInventoryCountCommandHandler : ICommandHandler<CreateI
             locationCode = loc.Code;
         }
 
-        var countType = string.Equals(command.CountType?.Trim(), "Blind", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(command.CountType?.Trim(), "Kör", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(command.CountType?.Trim(), "Kor", StringComparison.OrdinalIgnoreCase)
-            ? "Blind"
-            : "Normal";
+        var countType = InventoryCountKinds.Normalize(command.CountType);
 
         var number = string.IsNullOrWhiteSpace(command.Number)
             ? $"SC-{DateTime.UtcNow:yyyy}-{Random.Shared.Next(1, 99999):D5}"
@@ -280,7 +276,9 @@ public sealed class CreateInventoryCountCommandHandler : ICommandHandler<CreateI
 
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
 
-        var balances = await _balances.ListForCountSnapshotAsync(plantId, wh.Code, string.IsNullOrWhiteSpace(locationCode) ? null : locationCode, cancellationToken).ConfigureAwait(false);
+        var balances = InventoryCountKinds.IsOpening(countType)
+            ? Array.Empty<InventoryBalance>()
+            : await _balances.ListForCountSnapshotAsync(plantId, wh.Code, string.IsNullOrWhiteSpace(locationCode) ? null : locationCode, cancellationToken).ConfigureAwait(false);
         var lineNo = 0;
         foreach (var bal in balances)
         {

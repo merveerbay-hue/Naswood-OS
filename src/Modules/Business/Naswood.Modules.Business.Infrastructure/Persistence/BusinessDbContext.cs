@@ -137,6 +137,8 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.BatchNumber).HasMaxLength(200);
             entity.Property(x => x.MaterialCode).HasMaxLength(200);
             entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.SourceType).HasMaxLength(40);
+            entity.Property(x => x.SourceReferenceNo).HasMaxLength(80);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.GoodsReceipt>(entity =>
@@ -201,8 +203,26 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.UnitOfMeasure).HasMaxLength(50);
             entity.Property(x => x.Barcode).HasMaxLength(200);
             entity.Property(x => x.Status).HasMaxLength(50);
+            entity.Property(x => x.PublicId).HasMaxLength(40);
+            entity.Property(x => x.PhysicalGroupLabel).HasMaxLength(200);
+            entity.Property(x => x.SourcePlantId).HasMaxLength(20);
+            entity.Property(x => x.CurrentPlantId).HasMaxLength(20);
             entity.HasIndex(x => x.PackageNumber);
             entity.HasIndex(x => x.Barcode);
+            entity.HasIndex(x => x.PublicId);
+            entity.HasIndex(x => x.MaterialId);
+            entity.HasIndex(x => x.BatchId);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryPackageContent>(entity =>
+        {
+            entity.ToTable("business_inventory_packagecontent");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.UnitOfMeasure).HasMaxLength(50);
+            entity.HasIndex(x => x.PackageId);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryMovement>(entity =>
@@ -277,6 +297,8 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.LocationCode).HasMaxLength(200);
             entity.Property(x => x.BatchNumber).HasMaxLength(200);
             entity.Property(x => x.PackageNumber).HasMaxLength(200);
+            entity.Property(x => x.PhysicalGroupLabel).HasMaxLength(200);
+            entity.Property(x => x.Barcode).HasMaxLength(200);
             entity.Property(x => x.StockUnit).HasMaxLength(40);
             entity.Property(x => x.CountUnit).HasMaxLength(40);
             entity.Property(x => x.Notes).HasColumnType("text");

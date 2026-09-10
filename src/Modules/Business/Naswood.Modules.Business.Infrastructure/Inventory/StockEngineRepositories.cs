@@ -131,6 +131,41 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
         query = query.Where(x => normalized.Contains(x.Status.ToLower()));
         return await query.CountAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    public async Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default)
+        => await _db.Set<InventoryPackage>().AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => x.PackageNumber)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<InventoryPackage>> ListByBarcodeExactAsync(string barcode, CancellationToken cancellationToken = default)
+    {
+        var key = (barcode ?? string.Empty).Trim();
+        if (key.Length == 0) return Array.Empty<InventoryPackage>();
+        return await _db.Set<InventoryPackage>().Where(x => !x.IsDeleted && x.Barcode == key)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<InventoryPackage?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
+    {
+        var key = (publicId ?? string.Empty).Trim();
+        if (key.Length == 0) return null;
+        return await _db.Set<InventoryPackage>().FirstOrDefaultAsync(x => !x.IsDeleted && x.PublicId == key, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task AddContentsAsync(IReadOnlyList<InventoryPackageContent> rows, CancellationToken cancellationToken = default)
+    {
+        if (rows.Count == 0) return;
+        await _db.Set<InventoryPackageContent>().AddRangeAsync(rows, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<InventoryPackageContent>> ListContentsAsync(Guid packageId, CancellationToken cancellationToken = default)
+        => await _db.Set<InventoryPackageContent>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PackageId == packageId)
+            .OrderBy(x => x.LineNo)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }
 
 public sealed class InventoryMovementRepository : IInventoryMovementRepository
@@ -211,6 +246,20 @@ public sealed class InventoryMovementRepository : IInventoryMovementRepository
         var value = documentNumber.Trim();
         var query = _db.Set<InventoryMovement>().AsNoTracking()
             .Where(x => !x.IsDeleted && x.DocumentNumber == value);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return await query.OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<InventoryMovement>> ListByPackageNumberAsync(
+        string packageNumber, string? plantId = null, CancellationToken cancellationToken = default)
+    {
+        var value = packageNumber.Trim();
+        var query = _db.Set<InventoryMovement>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PackageNumber == value);
         if (!string.IsNullOrWhiteSpace(plantId))
         {
             var plant = plantId.Trim();

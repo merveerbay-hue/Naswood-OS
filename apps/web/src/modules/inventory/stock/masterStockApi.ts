@@ -64,6 +64,16 @@ export type MasterStockPackageRow = {
   stockUnit: string;
   stockQuantity: number;
   status: string;
+  contents?: {
+    lineNo: number;
+    thicknessMm?: number | null;
+    widthMm?: number | null;
+    lengthMm?: number | null;
+    pieceCount?: number | null;
+    quantity: number;
+    unitOfMeasure: string;
+    measurement: string;
+  }[];
 };
 
 export type MasterStockTotals = {

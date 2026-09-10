@@ -4,10 +4,13 @@ import {
   canSaveCountLines,
   canViewAllCountPages,
   isAdministrator,
+  isOpeningCount,
   lineVariance,
   showSystemQuantity,
   type CycleCountOpenDraft,
 } from './cycleCountSession';
+import { previewOpeningGroups } from '../stock/openingPackagePreview';
+import { encodeCode128B } from '../stock/code128Svg';
 import { calculateStockQty, cubicMeters, difference, resolvePolicy, squareMeters } from './inventoryCountCalc';
 import { parseCountListText } from './cycleCountAi';
 import { parseCountTable, buildFieldCountCsv } from './cycleCountExcel';
@@ -20,7 +23,7 @@ const base: CycleCountOpenDraft = {
   plantId: 'F01',
   warehouseCode: 'WH-RM',
   locationCode: '',
-  countType: 'Normal',
+  countType: 'Opening',
   notes: '',
 };
 
@@ -69,8 +72,12 @@ const hwQty = calculateStockQty(hw, { pieceCount: 4500 });
 assert(hwQty.ok && hwQty.qty === 4500, 'TEST13 4500 pcs');
 
 const panel = resolvePolicy({ unitOfMeasure: 'M2', definitionJson: '{"stockUom":"M2","mainCategory":"MP"}' });
-const m2 = calculateStockQty(panel, { widthMm: 1220, lengthMm: 2440, pieceCount: 20 });
-assert(m2.ok && Math.abs(m2.qty - squareMeters(1220, 2440, 20)) < 1e-9, 'TEST14 m2');
+assert(panel.stockUnit === 'M3' && panel.mode === 'CubicMeter', 'TEST14 MP stores m3');
+const m3Panel = calculateStockQty(panel, { thicknessMm: 18, widthMm: 1220, lengthMm: 2440, pieceCount: 20 });
+assert(m3Panel.ok && Math.abs(m3Panel.qty - cubicMeters(18, 1220, 2440, 20)) < 1e-9, 'TEST14 mp m3');
+const tw = resolvePolicy({ unitOfMeasure: 'M2', definitionJson: '{"stockUom":"M2","mainCategory":"TW"}' });
+const m2 = calculateStockQty(tw, { widthMm: 1220, lengthMm: 2440, pieceCount: 20 });
+assert(tw.mode === 'SquareMeter' && m2.ok && Math.abs(m2.qty - squareMeters(1220, 2440, 20)) < 1e-9, 'TEST14 tw m2');
 
 const log = resolvePolicy({ category: 'Tomruk', definitionJson: '{"mainCategory":"LOG"}' });
 const logQty = calculateStockQty(log, { pieceCount: 35, measuredVolumeM3: 18.4 });
@@ -83,6 +90,25 @@ assert(lineVariance({ key: '1', materialCode: 'M', locationCode: 'L', lotNumber:
 
 const body = buildCountSessionCreateBody(base);
 assert(body.number === '', 'client does not mint SC');
-assert(body.countType === 'Normal', 'normal type');
+assert(body.countType === 'Opening', 'opening type');
+assert(isOpeningCount('Opening') && !isOpeningCount('Periodic'), 'opening vs periodic');
+
+const preview = previewOpeningGroups([
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 3', qty: 0.765, unit: 'M3', thicknessMm: 25, widthMm: 90, lengthMm: 3400, key: 'a' },
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 3', qty: 0.495, unit: 'M3', thicknessMm: 25, widthMm: 90, lengthMm: 2200, key: 'b' },
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 4', qty: 0.2, unit: 'M3', key: 'c' },
+  { materialCode: 'HM-LT-PIN-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 1', qty: 1.8, unit: 'M3', key: 'd' },
+]);
+assert(preview.length === 2, 'two materials two lots');
+assert(preview.find((x) => x.materialCode === 'YM-PR-AYO-001')?.packages.length === 2, 'two stacks two packages');
+assert(preview.find((x) => x.materialCode === 'YM-PR-AYO-001')?.packages[0]?.rows.length === 2, 'same stack multi measure');
+const mixedLabel = previewOpeningGroups([
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 1', qty: 1, unit: 'M3', key: 'x' },
+  { materialCode: 'HM-LT-PIN-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 1', qty: 1, unit: 'M3', key: 'y' },
+]);
+assert(mixedLabel.length === 2, 'same istif label does not merge two materials');
+const encoded = encodeCode128B('NWPKG-F01-26-000001');
+assert(encoded[0] === 104, 'code128 start B');
+assert(encoded[encoded.length - 1] === encoded.slice(0, -1).reduce((s, v, i) => s + (i === 0 ? v : v * i), 0) % 103, 'code128 checksum');
 
 console.info('cycleCountSession.selftest: all passed');

@@ -21,6 +21,8 @@ public interface IBatchRepository
     Task AddAsync(Batch entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Batch> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> ListOpeningLotNumbersAsync(
+        string prefix, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record SearchBatchQuery(
@@ -66,6 +68,8 @@ public static class BatchMapper
         Quantity = e.Quantity,
         ExpiryDate = e.ExpiryDate,
         Status = e.Status,
+        SourceType = e.SourceType,
+        SourceReferenceNo = e.SourceReferenceNo,
         CompanyId = e.CompanyId,
         PlantId = e.PlantId,
         CreatedAt = e.CreatedAt

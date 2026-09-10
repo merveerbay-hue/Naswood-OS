@@ -36,6 +36,8 @@ import {
   WarehouseDetailPage,
   WarehouseListPage,
 } from './modules/inventory/screens';
+import { PackagePassportPage } from './modules/inventory/stock/PackagePassportPage';
+import { PackageScanPage } from './modules/inventory/stock/PackageScanPage';
 import { SupplierPage } from './pages/business/SupplierPage';
 import { PurchaseRequestPage } from './pages/business/PurchaseRequestPage';
 import { RfqPage } from './pages/business/RfqPage';
@@ -245,6 +247,21 @@ const invPackagesRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'stock/packages',
   component: PackageListPage,
+});
+const invPackageDetailRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/packages/$id',
+  component: PackagePassportPage,
+});
+const invPackagePublicRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'packages/p/$publicId',
+  component: PackagePassportPage,
+});
+const invPackageScanRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'stock/scan',
+  component: PackageScanPage,
 });
 const invIdentitiesRoute = createRoute({
   getParentRoute: () => inventoryRoute,
@@ -496,6 +513,7 @@ const implemented = new Set([
   '/inventory/stock/balances',
   '/inventory/stock/lots',
   '/inventory/stock/packages',
+  '/inventory/stock/scan',
   '/inventory/stock/identities',
   '/inventory/stock/movements',
   '/inventory/operations/goods-receipts',
@@ -641,6 +659,9 @@ export const routeTree = rootRoute.addChildren([
       invBalancesRoute,
       invLotsRoute,
       invPackagesRoute,
+      invPackageDetailRoute,
+      invPackagePublicRoute,
+      invPackageScanRoute,
       invIdentitiesRoute,
       invMovementsRoute,
       invReceiptsRoute,

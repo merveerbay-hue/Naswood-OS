@@ -198,11 +198,18 @@ public static class MasterStockProjection
         decimal? t,
         decimal? w,
         decimal? l,
-        string physicalGroupLabel)
+        string physicalGroupLabel,
+        IReadOnlyList<PackageContentDto>? contents = null)
     {
         var unit = string.IsNullOrWhiteSpace(pkg.UnitOfMeasure)
             ? StockUnitOf(material)
             : InventoryCountMath.NormalizeUnit(pkg.UnitOfMeasure);
+        var rows = contents ?? Array.Empty<PackageContentDto>();
+        var measure = rows.Count > 0
+            ? string.Join(" · ", rows.Select(c => c.Measurement).Where(s => !string.IsNullOrWhiteSpace(s)))
+            : actualMeasurement;
+        var first = rows.Count > 0 ? rows[0] : null;
+        var pieces = rows.Count > 0 ? rows.Sum(c => c.PieceCount ?? 0) : PieceCountFor(unit, pkg.Quantity);
         return new MasterStockPackageRowDto
         {
             Id = pkg.Id,
@@ -211,22 +218,23 @@ public static class MasterStockProjection
             PhysicalGroupLabel = physicalGroupLabel,
             MaterialCode = pkg.MaterialCode,
             MaterialName = material?.Name ?? string.Empty,
-            ActualMeasurement = actualMeasurement,
-            ActualThicknessMm = t,
-            ActualWidthMm = w,
-            ActualLengthMm = l,
+            ActualMeasurement = measure,
+            ActualThicknessMm = first?.ThicknessMm ?? t,
+            ActualWidthMm = first?.WidthMm ?? w,
+            ActualLengthMm = first?.LengthMm ?? l,
             Lot = pkg.LotNumber,
             Factory = pkg.PlantId ?? string.Empty,
             WarehouseCode = pkg.WarehouseCode,
             Warehouse = string.IsNullOrWhiteSpace(warehouseName) ? pkg.WarehouseCode : warehouseName,
             LocationCode = pkg.LocationCode,
             Location = string.IsNullOrWhiteSpace(locationName) ? pkg.LocationCode : locationName,
-            PieceCount = PieceCountFor(unit, pkg.Quantity),
+            PieceCount = pieces,
             StockUnit = unit,
             StockQuantity = pkg.Quantity,
             Status = pkg.Status,
             Barcode = pkg.Barcode,
-            MaterialIdentityNumber = pkg.MaterialIdentityNumber
+            MaterialIdentityNumber = pkg.MaterialIdentityNumber,
+            Contents = rows
         };
     }
 

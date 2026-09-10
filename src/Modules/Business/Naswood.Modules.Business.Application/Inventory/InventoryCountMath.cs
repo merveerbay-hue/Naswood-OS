@@ -68,15 +68,20 @@ public static class InventoryCountMath
             || cat.Contains("ELEKTRIK", StringComparison.Ordinal)
             || cat.Contains("MEKANIK", StringComparison.Ordinal);
 
-        var isPanel = stock == "M2" || main is "MP" or "PANEL";
+        var isMasifPanel = main is "MP" or "PANEL"
+            || cat.Contains("MASIF", StringComparison.Ordinal);
 
         if (isLog)
             return new MaterialCountPolicy("M3", count == "PCS" ? "PCS" : count, CountQtyMode.MeasuredVolume, DimsRequired: false);
 
-        if (isHardware || (stock == "PCS" && volumeReq != true && !isPanel))
+        if (isHardware || (stock == "PCS" && volumeReq != true && !isMasifPanel))
             return new MaterialCountPolicy(stock, count, CountQtyMode.Piece, DimsRequired: false);
 
-        if (isPanel || stock == "M2")
+        // Masif panel stock UoM is m³ (T×W×L×adet). Thermowood / explicit M2 stay m².
+        if (isMasifPanel)
+            return new MaterialCountPolicy("M3", count, CountQtyMode.CubicMeter, DimsRequired: true);
+
+        if (stock == "M2")
             return new MaterialCountPolicy("M2", count, CountQtyMode.SquareMeter, DimsRequired: true);
 
         if (stock == "M3" || volumeReq == true)
@@ -110,7 +115,7 @@ public static class InventoryCountMath
 
             case CountQtyMode.SquareMeter:
                 if (widthMm is null or <= 0 || lengthMm is null or <= 0 || pieceCount is null)
-                    return (false, "Masif panel sayımı için genişlik, boy ve adet gerekli.", 0);
+                    return (false, "m² stok (ör. thermowood) için genişlik, boy ve adet gerekli.", 0);
                 return (true, null, SquareMeters(widthMm.Value, lengthMm.Value, pieceCount.Value));
 
             case CountQtyMode.MeasuredVolume:

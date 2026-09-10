@@ -36,6 +36,7 @@ function generatedLabel(iso?: string | null): string {
 }
 
 function PackageDetailTable({ rows }: { rows: MasterStockPackageRow[] }) {
+  const [open, setOpen] = useState<string | null>(null);
   return (
     <table className="min-w-full text-xs">
       <thead>
@@ -44,10 +45,7 @@ function PackageDetailTable({ rows }: { rows: MasterStockPackageRow[] }) {
           <th className="pr-2">Barkod</th>
           <th className="pr-2">Fiziksel grup</th>
           <th className="pr-2">Malzeme</th>
-          <th className="pr-2">Kalınlık</th>
-          <th className="pr-2">Genişlik</th>
-          <th className="pr-2">Uzunluk</th>
-          <th className="pr-2">Ölçü</th>
+          <th className="pr-2">İçerik</th>
           <th className="pr-2">Lot</th>
           <th className="pr-2">Fabrika</th>
           <th className="pr-2">Depo</th>
@@ -59,35 +57,56 @@ function PackageDetailTable({ rows }: { rows: MasterStockPackageRow[] }) {
         </tr>
       </thead>
       <tbody>
-        {rows.map((p) => (
-          <tr key={p.id} className="border-t border-[var(--border-default)]">
-            <td className="py-1 pr-2 font-mono">{p.packageNo}</td>
-            <td className="pr-2 font-mono">{p.barcode || '—'}</td>
-            <td className="pr-2">{p.physicalGroupLabel || '—'}</td>
-            <td className="pr-2">
-              <div className="font-mono">{p.materialCode}</div>
-              <div>{p.materialName || '—'}</div>
-            </td>
-            <td className="pr-2 tabular-nums">{dim(p.actualThicknessMm)}</td>
-            <td className="pr-2 tabular-nums">{dim(p.actualWidthMm)}</td>
-            <td className="pr-2 tabular-nums">{dim(p.actualLengthMm)}</td>
-            <td className="pr-2">{p.actualMeasurement || '—'}</td>
-            <td className="pr-2">{p.lot || '—'}</td>
-            <td className="pr-2">{plantDisplayName(p.factory)}</td>
-            <td className="pr-2">
-              <div className="font-mono">{p.warehouseCode || p.warehouse}</div>
-              {p.warehouse && p.warehouse !== p.warehouseCode ? <div>{p.warehouse}</div> : null}
-            </td>
-            <td className="pr-2">
-              <div className="font-mono">{p.locationCode || p.location}</div>
-              {p.location && p.location !== p.locationCode ? <div>{p.location}</div> : null}
-            </td>
-            <td className="pr-2 tabular-nums">{num(p.pieceCount)}</td>
-            <td className="pr-2 tabular-nums">{p.stockQuantity}</td>
-            <td className="pr-2">{p.stockUnit}</td>
-            <td className="pr-2">{p.status}</td>
-          </tr>
-        ))}
+        {rows.map((p) => {
+          const contents = p.contents ?? [];
+          const expanded = open === p.id;
+          return (
+            <Fragment key={p.id}>
+              <tr
+                className="cursor-pointer border-t border-[var(--border-default)] hover:bg-[var(--surface-muted)]/50"
+                onClick={() => setOpen(expanded ? null : p.id)}
+              >
+                <td className="py-1 pr-2 font-mono">{p.packageNo}</td>
+                <td className="pr-2 font-mono">{p.barcode || '—'}</td>
+                <td className="pr-2">{p.physicalGroupLabel || '—'}</td>
+                <td className="pr-2">
+                  <div className="font-mono">{p.materialCode}</div>
+                  <div>{p.materialName || '—'}</div>
+                </td>
+                <td className="pr-2">{p.actualMeasurement || (contents.length ? `${contents.length} ölçü` : '—')}</td>
+                <td className="pr-2">{p.lot || '—'}</td>
+                <td className="pr-2">{plantDisplayName(p.factory)}</td>
+                <td className="pr-2">
+                  <div className="font-mono">{p.warehouseCode || p.warehouse}</div>
+                  {p.warehouse && p.warehouse !== p.warehouseCode ? <div>{p.warehouse}</div> : null}
+                </td>
+                <td className="pr-2">
+                  <div className="font-mono">{p.locationCode || p.location}</div>
+                  {p.location && p.location !== p.locationCode ? <div>{p.location}</div> : null}
+                </td>
+                <td className="pr-2 tabular-nums">{num(p.pieceCount)}</td>
+                <td className="pr-2 tabular-nums">{p.stockQuantity}</td>
+                <td className="pr-2">{p.stockUnit}</td>
+                <td className="pr-2">{p.status}</td>
+              </tr>
+              {expanded && contents.length > 0 ? (
+                <tr className="bg-[var(--surface-muted)]/30">
+                  <td colSpan={13} className="px-4 py-2">
+                    {contents.map((c) => (
+                      <div key={c.lineNo}>
+                        {c.measurement || '—'} — {c.pieceCount ?? '—'} adet
+                        {c.quantity ? ` · ${c.quantity} ${c.unitOfMeasure}` : ''}
+                      </div>
+                    ))}
+                    <div className="mt-1 font-medium">
+                      Toplam: {num(p.pieceCount)} adet · {p.stockQuantity} {p.stockUnit}
+                    </div>
+                  </td>
+                </tr>
+              ) : null}
+            </Fragment>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -230,6 +249,7 @@ export function MasterStockPage() {
           <h2 className="text-xl font-semibold tracking-tight">Master Stok</h2>
           <p className="mt-1 max-w-4xl text-sm text-[var(--text-secondary)]">
             Güncel fiziksel stok bakiyesi (InventoryBalance). Paketler ana satırı çoğaltmaz. Miktar paketten
+            türetilmez. Package ve barcode fiziksel stok kimliğidir.
             türetilmez. Excel okuma raporudur; sayım şablonu değildir.
           </p>
           {stockQuery.data?.exportGeneratedAt ? (
