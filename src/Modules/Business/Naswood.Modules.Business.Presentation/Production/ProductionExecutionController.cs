@@ -154,4 +154,14 @@ public sealed class ProductionExecutionController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Operasyon tamamlandı.");
     }
+
+    [HttpPost("api/v1/production-execution/executions/{id:guid}/cancel")]
+    [RequirePermission("Production.Execution.Cancel")]
+    public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelProductionExecutionRequestDto? body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new CancelProductionExecutionCommand(id, body ?? new CancelProductionExecutionRequestDto(), PlantClaims.AllowedPlantIds(User), User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "İcra iptal edildi.");
+    }
 }

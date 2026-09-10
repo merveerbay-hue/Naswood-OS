@@ -46,6 +46,14 @@ public sealed class CompleteProductionExecutionRequestDto
     public string LocationCode { get; init; } = string.Empty;
     public Guid? StructuralProductionLotId { get; init; }
     public IReadOnlyList<ProductionOutputLineRequestDto> Lines { get; init; } = [];
+    public string IdempotencyKey { get; init; } = string.Empty;
+}
+
+public sealed class CancelProductionExecutionRequestDto
+{
+    public string CancelReason { get; init; } = string.Empty;
+    public string Note { get; init; } = string.Empty;
+    public string IdempotencyKey { get; init; } = string.Empty;
 }
 
 public sealed class ProductionOperationPlanDto

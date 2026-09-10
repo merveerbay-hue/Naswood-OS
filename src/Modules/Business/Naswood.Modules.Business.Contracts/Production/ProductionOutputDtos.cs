@@ -37,7 +37,6 @@ public class PreviewProductionOutputRequestDto
 public sealed class PostProductionOutputRequestDto : PreviewProductionOutputRequestDto
 {
     public string Number { get; init; } = string.Empty;
-    public bool SkipSourceIssue { get; init; }
     public Guid? ProductionOperationExecutionId { get; init; }
 }
 

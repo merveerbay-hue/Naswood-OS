@@ -7,6 +7,7 @@ public static class ProductionExecutionPolicy
 {
     public static readonly string[] DowntimeReasons = ["MACHINE", "MATERIAL", "QUALITY", "SETUP", "MAINTENANCE", "OTHER"];
     public static readonly string[] ScrapReasons = ["CUTTING", "DEFECT", "CRACK", "MOISTURE", "QUALITY", "MACHINE", "SETUP", "TRIM", "OTHER"];
+    public static readonly string[] CancelReasons = ["WRONG_ORDER", "WRONG_MATERIAL", "MACHINE_FAILURE", "QUALITY", "OPERATOR_ERROR", "OTHER"];
 
     public static Result CanStart(string status)
     {
@@ -40,13 +41,12 @@ public static class ProductionExecutionPolicy
         return Fail("PRD-EXEC-001", "Operasyon tamamlanamıyor.");
     }
 
-    public static Result CanCancel(string status, bool hasPostedStock)
+    public static Result NormalizeCancelReason(string? reason)
     {
-        if (status is ProductionExecutionStatuses.Completed or ProductionExecutionStatuses.Cancelled)
-            return Fail("PRD-EXEC-003", "Kapalı icra iptal edilemez.");
-        if (hasPostedStock)
-            return Fail("PRD-EXEC-005", "Stok hareketi oluşmuş icra basit iptal edilemez; mevcut reversal kullanın.");
-        return Result.Success();
+        var r = (reason ?? string.Empty).Trim().ToUpperInvariant();
+        return CancelReasons.Contains(r)
+            ? Result.Success()
+            : Fail("PRD-EXEC-005", "Geçerli iptal nedeni seçin.");
     }
 
     public static Result NormalizeDowntimeReason(string? reason)

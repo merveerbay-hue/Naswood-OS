@@ -68,6 +68,13 @@ public sealed class ProductionOperationExecution : BusinessEntity
     public Guid? StructuralProductionLotId { get; private set; }
     public Guid? ProductionOutputId { get; private set; }
     public DateTimeOffset? IntervalStartedAt { get; private set; }
+    public string CancelReason { get; private set; } = string.Empty;
+    public string CancelNote { get; private set; } = string.Empty;
+    public string CancelledByUserId { get; private set; } = string.Empty;
+    public string CompleteIdempotencyKey { get; private set; } = string.Empty;
+    public string CompletePayloadHash { get; private set; } = string.Empty;
+    public string CancelIdempotencyKey { get; private set; } = string.Empty;
+    public string CancelPayloadHash { get; private set; } = string.Empty;
 
     public static ProductionOperationExecution Create(
         string number,
@@ -148,13 +155,34 @@ public sealed class ProductionOperationExecution : BusinessEntity
         UpdatedAt = utc;
     }
 
-    public void Cancel(DateTimeOffset utc)
+    public void Cancel(string actor, string reason, string note, DateTimeOffset utc)
     {
-        if (Status is ProductionExecutionStatuses.Completed or ProductionExecutionStatuses.Cancelled)
+        if (Status == ProductionExecutionStatuses.Cancelled)
             return;
         Status = ProductionExecutionStatuses.Cancelled;
+        CancelReason = (reason ?? string.Empty).Trim().ToUpperInvariant();
+        CancelNote = (note ?? string.Empty).Trim();
+        CancelledByUserId = actor ?? string.Empty;
         IntervalStartedAt = null;
         UpdatedAt = utc;
+    }
+
+    public void RememberCompleteIdempotency(string key, string hash)
+    {
+        if (string.IsNullOrWhiteSpace(CompleteIdempotencyKey))
+        {
+            CompleteIdempotencyKey = (key ?? string.Empty).Trim();
+            CompletePayloadHash = hash ?? string.Empty;
+        }
+    }
+
+    public void RememberCancelIdempotency(string key, string hash)
+    {
+        if (string.IsNullOrWhiteSpace(CancelIdempotencyKey))
+        {
+            CancelIdempotencyKey = (key ?? string.Empty).Trim();
+            CancelPayloadHash = hash ?? string.Empty;
+        }
     }
 
     public void AddInput(decimal qty, string unit)

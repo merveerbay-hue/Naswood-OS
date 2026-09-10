@@ -12,6 +12,7 @@ public static class ProductionExecutionEventTypes
     public const string DowntimeStart = "DOWNTIME_START";
     public const string DowntimeEnd = "DOWNTIME_END";
     public const string Cancel = "CANCEL";
+    public const string Reversal = "REVERSAL";
 }
 
 public sealed class ProductionExecutionEvent : BusinessEntity

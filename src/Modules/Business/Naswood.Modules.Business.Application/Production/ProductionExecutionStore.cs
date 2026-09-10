@@ -13,6 +13,9 @@ public interface IProductionExecutionStore
     Task AddExecutionAsync(ProductionOperationExecution entity, CancellationToken cancellationToken = default);
     Task<ProductionOperationExecution?> GetExecutionAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ProductionOperationExecution?> GetOpenByOperationAsync(Guid operationId, CancellationToken cancellationToken = default);
+    Task<ProductionOperationExecution?> GetCommittedOpenByOperationAsync(Guid operationId, CancellationToken cancellationToken = default);
+    Task<ProductionOperationExecution?> GetCommittedExecutionAsync(Guid id, CancellationToken cancellationToken = default);
+    void ClearTracker();
     Task<IReadOnlyList<ProductionOperationExecution>> ListExecutionsByOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductionOperationExecution>> ListExecutionsByWorkCenterAsync(Guid workCenterId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<string>> ListNumbersAsync(string? plantId, CancellationToken cancellationToken = default);
@@ -23,6 +26,7 @@ public interface IProductionExecutionStore
     Task AddConsumptionAsync(ProductionExecutionConsumption entity, CancellationToken cancellationToken = default);
     Task<ProductionExecutionConsumption?> GetByIdempotencyAsync(Guid executionId, string key, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductionExecutionConsumption>> ListConsumptionsAsync(Guid executionId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProductionExecutionConsumption>> ListConsumptionsBySourcePackageIdsAsync(IReadOnlyList<Guid> packageIds, CancellationToken cancellationToken = default);
 
     Task AddScrapAsync(ProductionExecutionScrap entity, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductionExecutionScrap>> ListScrapsAsync(Guid executionId, CancellationToken cancellationToken = default);

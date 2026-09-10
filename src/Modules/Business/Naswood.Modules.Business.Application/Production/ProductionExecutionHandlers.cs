@@ -61,6 +61,12 @@ public sealed record CompleteProductionExecutionCommand(
     IReadOnlyList<string>? AllowedPlantIds,
     string Actor) : ICommand<Result<ProductionExecutionPassportDto>>;
 
+public sealed record CancelProductionExecutionCommand(
+    Guid ExecutionId,
+    CancelProductionExecutionRequestDto Body,
+    IReadOnlyList<string>? AllowedPlantIds,
+    string Actor) : ICommand<Result<ProductionExecutionPassportDto>>;
+
 public sealed class ListShopFloorWorkCentersQueryHandler : IQueryHandler<ListShopFloorWorkCentersQuery, Result<IReadOnlyList<ShopFloorWorkCenterCardDto>>>
 {
     private readonly ProductionExecutionGateway _gate;
@@ -111,10 +117,18 @@ public sealed class StartProductionExecutionCommandHandler : ICommandHandler<Sta
     public async Task<Result<ProductionExecutionPassportDto>> HandleAsync(StartProductionExecutionCommand command, CancellationToken cancellationToken = default)
     {
         var r = await _gate.StartAsync(command.OperationId, command.WorkCenterId, command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
-        if (r.IsFailure) return r;
-        if (!r.Value.IdempotentReplay)
+        if (r.IsFailure || r.Value.IdempotentReplay) return r;
+        try
+        {
             await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return r;
+            return r;
+        }
+        catch (Exception ex)
+        {
+            var recovered = await _gate.TryRecoverStartAsync(command.OperationId, command.AllowedPlantIds, ex, cancellationToken).ConfigureAwait(false);
+            if (recovered is not null) return recovered;
+            throw;
+        }
     }
 }
 
@@ -176,10 +190,18 @@ public sealed class ConsumeProductionExecutionCommandHandler : ICommandHandler<C
     public async Task<Result<ProductionExecutionPassportDto>> HandleAsync(ConsumeProductionExecutionCommand command, CancellationToken cancellationToken = default)
     {
         var r = await _gate.ConsumeAsync(command.ExecutionId, command.Body, command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
-        if (r.IsFailure) return r;
-        if (!r.Value.IdempotentReplay)
+        if (r.IsFailure || r.Value.IdempotentReplay) return r;
+        try
+        {
             await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return r;
+            return r;
+        }
+        catch (Exception ex)
+        {
+            var recovered = await _gate.TryRecoverConsumeAsync(command.ExecutionId, command.Body, command.AllowedPlantIds, ex, cancellationToken).ConfigureAwait(false);
+            if (recovered is not null) return recovered;
+            throw;
+        }
     }
 }
 
@@ -241,9 +263,42 @@ public sealed class CompleteProductionExecutionCommandHandler : ICommandHandler<
     public async Task<Result<ProductionExecutionPassportDto>> HandleAsync(CompleteProductionExecutionCommand command, CancellationToken cancellationToken = default)
     {
         var r = await _gate.CompleteAsync(command.ExecutionId, command.Body, command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
-        if (r.IsFailure) return r;
-        if (!r.Value.IdempotentReplay)
+        if (r.IsFailure || r.Value.IdempotentReplay) return r;
+        try
+        {
             await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return r;
+            return r;
+        }
+        catch (Exception ex)
+        {
+            var recovered = await _gate.TryRecoverCompleteAsync(command.ExecutionId, command.AllowedPlantIds, ex, cancellationToken).ConfigureAwait(false);
+            if (recovered is not null) return recovered;
+            throw;
+        }
+    }
+}
+
+public sealed class CancelProductionExecutionCommandHandler : ICommandHandler<CancelProductionExecutionCommand, Result<ProductionExecutionPassportDto>>
+{
+    private readonly ProductionExecutionGateway _gate;
+    private readonly IBusinessUnitOfWork _uow;
+    public CancelProductionExecutionCommandHandler(ProductionExecutionGateway gate, IBusinessUnitOfWork uow)
+    { _gate = gate; _uow = uow; }
+
+    public async Task<Result<ProductionExecutionPassportDto>> HandleAsync(CancelProductionExecutionCommand command, CancellationToken cancellationToken = default)
+    {
+        var r = await _gate.CancelAsync(command.ExecutionId, command.Body, command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
+        if (r.IsFailure || r.Value.IdempotentReplay) return r;
+        try
+        {
+            await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return r;
+        }
+        catch (Exception ex)
+        {
+            var recovered = await _gate.TryRecoverCancelAsync(command.ExecutionId, command.AllowedPlantIds, ex, cancellationToken).ConfigureAwait(false);
+            if (recovered is not null) return recovered;
+            throw;
+        }
     }
 }

@@ -230,7 +230,8 @@ public sealed class ProductionOutputGateway
         PostProductionOutputRequestDto body,
         IReadOnlyList<string>? allowed,
         string actor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool skipSourceIssue = false)
     {
         var plantId = string.IsNullOrWhiteSpace(body.PlantId) ? null : body.PlantId.Trim();
         if (!string.IsNullOrWhiteSpace(body.Number))
@@ -267,7 +268,7 @@ public sealed class ProductionOutputGateway
             doc.AttachExecution(execId);
         await _outputs.AddAsync(doc, cancellationToken).ConfigureAwait(false);
 
-        var prepared = await PrepareSourcesAsync(body.Sources, c, body.SkipSourceIssue, cancellationToken).ConfigureAwait(false);
+        var prepared = await PrepareSourcesAsync(body.Sources, c, skipSourceIssue, cancellationToken).ConfigureAwait(false);
         if (prepared.IsFailure) return Result.Failure<ProductionOutputResultDto>(prepared.Error!);
 
         var inputQty = 0m;
@@ -276,7 +277,7 @@ public sealed class ProductionOutputGateway
         foreach (var row in prepared.Value)
         {
             var pkgNo = row.Package?.PackageNumber ?? "";
-            if (!body.SkipSourceIssue)
+            if (!skipSourceIssue)
             {
                 try { row.Balance.ApplyIssue(row.Request.ConsumedQuantity); }
                 catch (InvalidOperationException ex)

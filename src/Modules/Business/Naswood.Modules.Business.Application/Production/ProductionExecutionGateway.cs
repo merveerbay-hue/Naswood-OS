@@ -22,6 +22,7 @@ public sealed class ProductionExecutionGateway
     private readonly IInventoryMovementRepository _movements;
     private readonly IStructuralProductionLotRepository _plots;
     private readonly IProductionOutputRepository _outputs;
+    private readonly IProductionLotSourceRepository _lotSources;
     private readonly ProductionOutputGateway _outputGate;
 
     public ProductionExecutionGateway(
@@ -38,6 +39,7 @@ public sealed class ProductionExecutionGateway
         IInventoryMovementRepository movements,
         IStructuralProductionLotRepository plots,
         IProductionOutputRepository outputs,
+        IProductionLotSourceRepository lotSources,
         ProductionOutputGateway outputGate)
     {
         _store = store;
@@ -53,6 +55,7 @@ public sealed class ProductionExecutionGateway
         _movements = movements;
         _plots = plots;
         _outputs = outputs;
+        _lotSources = lotSources;
         _outputGate = outputGate;
     }
 
@@ -334,16 +337,24 @@ public sealed class ProductionExecutionGateway
         var loaded = await RequireActiveAsync(executionId, allowed, cancellationToken).ConfigureAwait(false);
         if (loaded.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(loaded.Error!);
         var exec = loaded.Value;
-        if (exec.Status is not (ProductionExecutionStatuses.Running or ProductionExecutionStatuses.Paused))
-            return Fail("PRD-EXEC-001", "Tüketim yalnız açık icrada yapılabilir.");
         if (exec.Status == ProductionExecutionStatuses.Completed)
             return Fail("PRD-EXEC-003", "Operasyon zaten tamamlanmış.");
+        if (exec.Status == ProductionExecutionStatuses.Cancelled)
+            return Fail("PRD-EXEC-001", "İptal edilen icra düzenlenemez.");
+        if (exec.Status is not (ProductionExecutionStatuses.Running or ProductionExecutionStatuses.Paused))
+            return Fail("PRD-EXEC-001", "Tüketim yalnız açık icrada yapılabilir.");
 
+        var payloadHash = ProductionExecutionConcurrency.ConsumeHash(body.PackageId, body.Barcode, body.Quantity, body.PackageContentId, body.PieceCount);
         if (!string.IsNullOrWhiteSpace(body.IdempotencyKey))
         {
             var replay = await _store.GetByIdempotencyAsync(exec.Id, body.IdempotencyKey, cancellationToken).ConfigureAwait(false);
             if (replay is not null)
+            {
+                if (!string.Equals(replay.PayloadHash, payloadHash, StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(replay.PayloadHash))
+                    return ProductionExecutionConcurrency.IdempotencyConflict<ProductionExecutionPassportDto>();
                 return await LoadAsync(exec.Id, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+            }
         }
 
         InventoryPackage? pkg = null;
@@ -431,7 +442,7 @@ public sealed class ProductionExecutionGateway
             exec.Id, exec.ProductionOrderId, pkg.Id, lot.Id, srcMat.Id, srcMat.Code,
             pkg.PackageNumber, pkg.Barcode, pkg.WarehouseCode, pkg.LocationCode,
             body.PackageContentId, measure, body.Quantity, pkg.UnitOfMeasure, pkg.Quantity,
-            body.IdempotencyKey ?? "", exec.PlantId);
+            body.IdempotencyKey ?? "", exec.PlantId, payloadHash: payloadHash, consumedPieceCount: body.PieceCount);
         await _store.AddConsumptionAsync(rowC, cancellationToken).ConfigureAwait(false);
         exec.AddInput(body.Quantity, pkg.UnitOfMeasure);
         _ = actor;
@@ -482,6 +493,8 @@ public sealed class ProductionExecutionGateway
         var exec = loaded.Value;
         if (exec.Status == ProductionExecutionStatuses.Completed)
             return Fail("PRD-EXEC-003", "Operasyon zaten tamamlanmış.");
+        if (exec.Status == ProductionExecutionStatuses.Cancelled)
+            return Fail("PRD-EXEC-001", "İptal edilen icra düzenlenemez.");
         var reason = ProductionExecutionPolicy.NormalizeScrapReason(body.ReasonCode);
         if (reason.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(reason.Error!);
         var qtyCheck = ProductionExecutionPolicy.GuardScrapQty(body.Quantity, exec.InputQuantity, exec.ScrapQuantity);
@@ -500,8 +513,19 @@ public sealed class ProductionExecutionGateway
         var loaded = await RequireActiveAsync(id, allowed, cancellationToken).ConfigureAwait(false);
         if (loaded.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(loaded.Error!);
         var exec = loaded.Value;
+        if (exec.Status == ProductionExecutionStatuses.Cancelled)
+            return Fail("PRD-EXEC-001", "İptal edilen icra düzenlenemez.");
+        var completeHash = ProductionExecutionConcurrency.CompleteHash(
+            body.OutputMaterialId, body.WarehouseCode, body.LocationCode, body.IdempotencyKey, body.Lines);
+        if (!string.IsNullOrWhiteSpace(body.IdempotencyKey)
+            && string.Equals(exec.CompleteIdempotencyKey, body.IdempotencyKey.Trim(), StringComparison.Ordinal)
+            && !string.IsNullOrWhiteSpace(exec.CompletePayloadHash)
+            && !string.Equals(exec.CompletePayloadHash, completeHash, StringComparison.OrdinalIgnoreCase))
+            return ProductionExecutionConcurrency.IdempotencyConflict<ProductionExecutionPassportDto>();
         if (exec.Status == ProductionExecutionStatuses.Completed)
             return await LoadAsync(exec.Id, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(body.IdempotencyKey))
+            exec.RememberCompleteIdempotency(body.IdempotencyKey, completeHash);
 
         var openDt = await HasOpenDowntimeAsync(exec.Id, cancellationToken).ConfigureAwait(false);
         var can = ProductionExecutionPolicy.CanComplete(exec.Status, openDt);
@@ -559,7 +583,6 @@ public sealed class ProductionExecutionGateway
                 WorkCenterCode = wc?.Code ?? "",
                 PlantId = exec.PlantId,
                 Lines = body.Lines,
-                SkipSourceIssue = true,
                 ProductionOperationExecutionId = exec.Id,
                 Sources = consumptions.Select(c => new ProductionOutputSourceRequestDto
                 {
@@ -571,7 +594,7 @@ public sealed class ProductionExecutionGateway
                     SourcePackageId = c.SourcePackageId
                 }).ToArray()
             };
-            var output = await _outputGate.PostAsync(postBody, allowed, actor, cancellationToken).ConfigureAwait(false);
+            var output = await _outputGate.PostAsync(postBody, allowed, actor, cancellationToken, skipSourceIssue: true).ConfigureAwait(false);
             if (output.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(output.Error!);
             posted = output.Value;
             exec.SetOutput(posted.OutputQuantity, null, loc.Id, posted.OutputId);
@@ -585,6 +608,212 @@ public sealed class ProductionExecutionGateway
             exec.Id, ProductionExecutionEventTypes.Complete, now, actor, exec.PlantId), cancellationToken).ConfigureAwait(false);
         _ = posted;
         return await LoadAsync(exec.Id, allowed, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<ProductionExecutionPassportDto>> CancelAsync(
+        Guid id, CancelProductionExecutionRequestDto body, IReadOnlyList<string>? allowed, string actor, CancellationToken cancellationToken)
+    {
+        var loaded = await RequireActiveAsync(id, allowed, cancellationToken).ConfigureAwait(false);
+        if (loaded.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(loaded.Error!);
+        var exec = loaded.Value;
+        var reasonOk = ProductionExecutionPolicy.NormalizeCancelReason(body.CancelReason);
+        if (reasonOk.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(reasonOk.Error!);
+        var reason = body.CancelReason.Trim().ToUpperInvariant();
+        var note = body.Note ?? "";
+        var cancelHash = ProductionExecutionConcurrency.CancelHash(reason, note, body.IdempotencyKey);
+
+        if (!string.IsNullOrWhiteSpace(body.IdempotencyKey)
+            && string.Equals(exec.CancelIdempotencyKey, body.IdempotencyKey.Trim(), StringComparison.Ordinal)
+            && !string.IsNullOrWhiteSpace(exec.CancelPayloadHash)
+            && !string.Equals(exec.CancelPayloadHash, cancelHash, StringComparison.OrdinalIgnoreCase))
+            return ProductionExecutionConcurrency.IdempotencyConflict<ProductionExecutionPassportDto>();
+
+        if (exec.Status == ProductionExecutionStatuses.Cancelled)
+            return await LoadAsync(exec.Id, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(body.IdempotencyKey))
+            exec.RememberCancelIdempotency(body.IdempotencyKey, cancelHash);
+
+        var output = exec.ProductionOutputId is Guid oid
+            ? await _outputs.GetByIdAsync(oid, cancellationToken).ConfigureAwait(false)
+            : null;
+        output ??= await _outputs.GetByExecutionIdAsync(exec.Id, cancellationToken).ConfigureAwait(false);
+
+        var blocked = await DownstreamBlocksCancelAsync(exec, output, cancellationToken).ConfigureAwait(false);
+        if (blocked.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(blocked.Error!);
+
+        var now = DateTimeOffset.UtcNow;
+        if (output is { Status: ProductionOutputStatuses.Posted })
+        {
+            var reversed = await _outputGate.ReverseAsync(output.Id, reason, allowed, actor, cancellationToken).ConfigureAwait(false);
+            if (reversed.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(reversed.Error!);
+            await RestoreConsumptionContentsAsync(exec, cancellationToken).ConfigureAwait(false);
+        }
+        else if (output is null || output.Status != ProductionOutputStatuses.Cancelled)
+        {
+            var restored = await ReverseConsumptionsAsync(exec, cancellationToken).ConfigureAwait(false);
+            if (restored.IsFailure) return Result.Failure<ProductionExecutionPassportDto>(restored.Error!);
+        }
+
+        exec.Cancel(actor, reason, note, now);
+        var plan = await _store.GetOperationAsync(exec.ProductionOperationId, cancellationToken).ConfigureAwait(false);
+        plan?.MarkReady();
+        await _store.AddEventAsync(ProductionExecutionEvent.Create(
+            exec.Id, ProductionExecutionEventTypes.Cancel, now, actor, exec.PlantId, reason, note), cancellationToken).ConfigureAwait(false);
+        var consumptions = await _store.ListConsumptionsAsync(exec.Id, cancellationToken).ConfigureAwait(false);
+        if (consumptions.Count > 0 || output is not null)
+        {
+            await _store.AddEventAsync(ProductionExecutionEvent.Create(
+                exec.Id, ProductionExecutionEventTypes.Reversal, now, actor, exec.PlantId, reason, note), cancellationToken).ConfigureAwait(false);
+        }
+        return await LoadAsync(exec.Id, allowed, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<ProductionExecutionPassportDto>?> TryRecoverStartAsync(
+        Guid operationId, IReadOnlyList<string>? allowed, Exception ex, CancellationToken cancellationToken)
+    {
+        if (!ProductionExecutionConcurrency.IsUniqueViolation(ex, "open_operation"))
+            return null;
+        _store.ClearTracker();
+        var open = await _store.GetCommittedOpenByOperationAsync(operationId, cancellationToken).ConfigureAwait(false);
+        if (open is null) return Fail("PRD-EXEC-001", "Operasyon başlatılamıyor.");
+        return await LoadAsync(open.Id, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+    }
+
+    public async Task<Result<ProductionExecutionPassportDto>?> TryRecoverConsumeAsync(
+        Guid executionId, ConsumeProductionExecutionRequestDto body, IReadOnlyList<string>? allowed, Exception ex, CancellationToken cancellationToken)
+    {
+        if (ProductionExecutionConcurrency.IsOptimisticConflict(ex))
+            return ProductionExecutionConcurrency.PackageConflict<ProductionExecutionPassportDto>();
+        if (!ProductionExecutionConcurrency.IsUniqueViolation(ex, "consume_idem"))
+            return null;
+        _store.ClearTracker();
+        var replay = await _store.GetByIdempotencyAsync(executionId, body.IdempotencyKey, cancellationToken).ConfigureAwait(false);
+        if (replay is null)
+            return ProductionExecutionConcurrency.PackageConflict<ProductionExecutionPassportDto>();
+        var hash = ProductionExecutionConcurrency.ConsumeHash(body.PackageId, body.Barcode, body.Quantity, body.PackageContentId, body.PieceCount);
+        if (!string.Equals(replay.PayloadHash, hash, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(replay.PayloadHash))
+            return ProductionExecutionConcurrency.IdempotencyConflict<ProductionExecutionPassportDto>();
+        return await LoadAsync(executionId, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+    }
+
+    public async Task<Result<ProductionExecutionPassportDto>?> TryRecoverCompleteAsync(
+        Guid executionId, IReadOnlyList<string>? allowed, Exception ex, CancellationToken cancellationToken)
+    {
+        if (!ProductionExecutionConcurrency.IsOptimisticConflict(ex)
+            && !ProductionExecutionConcurrency.IsUniqueViolation(ex, "prd_out_execution")
+            && !ProductionExecutionConcurrency.IsUniqueViolation(ex, "23505"))
+            return null;
+        _store.ClearTracker();
+        var committed = await _store.GetCommittedExecutionAsync(executionId, cancellationToken).ConfigureAwait(false);
+        if (committed?.Status == ProductionExecutionStatuses.Completed)
+            return await LoadAsync(executionId, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+        var existingOut = await _outputs.GetByExecutionIdAsync(executionId, cancellationToken).ConfigureAwait(false);
+        if (existingOut is { Status: ProductionOutputStatuses.Posted })
+            return await LoadAsync(executionId, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+        if (ProductionExecutionConcurrency.IsOptimisticConflict(ex))
+            return ProductionExecutionConcurrency.PackageConflict<ProductionExecutionPassportDto>();
+        return null;
+    }
+
+    public async Task<Result<ProductionExecutionPassportDto>?> TryRecoverCancelAsync(
+        Guid executionId, IReadOnlyList<string>? allowed, Exception ex, CancellationToken cancellationToken)
+    {
+        if (!ProductionExecutionConcurrency.IsOptimisticConflict(ex) && !ProductionExecutionConcurrency.IsUniqueViolation(ex))
+            return null;
+        _store.ClearTracker();
+        var committed = await _store.GetCommittedExecutionAsync(executionId, cancellationToken).ConfigureAwait(false);
+        if (committed?.Status == ProductionExecutionStatuses.Cancelled)
+            return await LoadAsync(executionId, allowed, cancellationToken, idempotent: true).ConfigureAwait(false);
+        if (ProductionExecutionConcurrency.IsOptimisticConflict(ex))
+            return ProductionExecutionConcurrency.PackageConflict<ProductionExecutionPassportDto>();
+        return null;
+    }
+
+    private async Task<Result> DownstreamBlocksCancelAsync(
+        ProductionOperationExecution exec, ProductionOutput? output, CancellationToken cancellationToken)
+    {
+        var outputIds = new List<Guid>();
+        if (output?.OutputBatchId is Guid lotId)
+        {
+            var pkgs = await _packages.ListByBatchIdAsync(lotId, cancellationToken).ConfigureAwait(false);
+            outputIds.AddRange(pkgs.Select(p => p.Id));
+        }
+        if (outputIds.Count == 0) return Result.Success();
+
+        var laterConsume = await _store.ListConsumptionsBySourcePackageIdsAsync(outputIds, cancellationToken).ConfigureAwait(false);
+        if (laterConsume.Any(c => c.ExecutionId != exec.Id))
+            return Result.Failure(Error.Validation("PKG-LIFE-006", "Paket başka üretimde kullanıldığı için işlem geri alınamaz."));
+
+        var laterSource = await _lotSources.ListBySourcePackageIdsAsync(outputIds, cancellationToken).ConfigureAwait(false);
+        if (laterSource.Any(s => output is null || s.ProductionOutputId != output.Id))
+            return Result.Failure(Error.Validation("PKG-LIFE-006", "Paket başka üretimde kullanıldığı için işlem geri alınamaz."));
+        return Result.Success();
+    }
+
+    private async Task<Result> ReverseConsumptionsAsync(ProductionOperationExecution exec, CancellationToken cancellationToken)
+    {
+        var rows = await _store.ListConsumptionsAsync(exec.Id, cancellationToken).ConfigureAwait(false);
+        foreach (var row in rows)
+        {
+            var pkg = await _packages.GetByIdAsync(row.SourcePackageId, cancellationToken).ConfigureAwait(false);
+            if (pkg is null)
+                return Result.Failure(Error.Validation("PKG-LIFE-006", "Tüketilen paket restore edilemedi."));
+            var sameNo = pkg.PackageNumber;
+            var sameBarcode = pkg.Barcode;
+            try { pkg.Restore(row.ConsumedQuantity); }
+            catch (InvalidOperationException)
+            {
+                return Result.Failure(Error.Validation("PKG-LIFE-006", "Paket başka üretimde kullanıldığı için işlem geri alınamaz."));
+            }
+            if (!string.Equals(pkg.PackageNumber, sameNo, StringComparison.Ordinal)
+                || !string.Equals(pkg.Barcode, sameBarcode, StringComparison.Ordinal))
+                return Result.Failure(Error.Validation("PRD-OUT-026", "Kaynak paket kimliği reversal'da değişemez."));
+
+            if (row.PackageContentId is Guid cid)
+            {
+                var contents = await _packages.ListContentsForUpdateAsync(pkg.Id, cancellationToken).ConfigureAwait(false);
+                var content = contents.FirstOrDefault(c => c.Id == cid);
+                if (content is null)
+                    return Result.Failure(Error.Validation("PKG-LIFE-006", "Paket içeriği restore edilemedi."));
+                content.Restore(row.ConsumedQuantity, row.ConsumedPieceCount);
+            }
+
+            var lot = await _batches.GetByIdAsync(row.SourceLotId, cancellationToken).ConfigureAwait(false);
+            if (lot is null)
+                return Result.Failure(Error.Validation("PRD-EXEC-INPUT-001", "Paket lotu bulunamadı."));
+            var balance = await _balances.FindByKeyAsync(
+                pkg.MaterialCode, row.SourceWarehouseCode, row.SourceLocationCode, lot.BatchNumber, exec.PlantId, cancellationToken).ConfigureAwait(false);
+            if (balance is null)
+            {
+                balance = InventoryBalance.Create(
+                    pkg.MaterialCode, row.SourceWarehouseCode, row.SourceLocationCode, lot.BatchNumber, 0, 0, "Active", plantId: exec.PlantId);
+                await _balances.AddAsync(balance, cancellationToken).ConfigureAwait(false);
+            }
+            balance.ApplyReceipt(row.ConsumedQuantity);
+
+            await _movements.AddAsync(InventoryMovement.Post(
+                ProductionLotCodes.ConsumptionReversalMovement, "In", exec.Number,
+                pkg.MaterialCode, "", pkg.PackageNumber,
+                row.SourceWarehouseCode, row.SourceLocationCode, lot.BatchNumber, row.ConsumedQuantity,
+                row.Unit,
+                ProductionLotCodes.ConsumptionNotes(exec.Number, "", lot.BatchNumber, lot.Id, pkg.PackageNumber) + " reverse=1",
+                plantId: exec.PlantId,
+                packageId: pkg.Id), cancellationToken).ConfigureAwait(false);
+        }
+        return Result.Success();
+    }
+
+    private async Task RestoreConsumptionContentsAsync(ProductionOperationExecution exec, CancellationToken cancellationToken)
+    {
+        var rows = await _store.ListConsumptionsAsync(exec.Id, cancellationToken).ConfigureAwait(false);
+        foreach (var row in rows)
+        {
+            if (row.PackageContentId is not Guid cid) continue;
+            var contents = await _packages.ListContentsForUpdateAsync(row.SourcePackageId, cancellationToken).ConfigureAwait(false);
+            var content = contents.FirstOrDefault(c => c.Id == cid);
+            content?.Restore(row.ConsumedQuantity, row.ConsumedPieceCount);
+        }
     }
 
     public async Task<Result<ProductionExecutionPassportDto>> LoadAsync(

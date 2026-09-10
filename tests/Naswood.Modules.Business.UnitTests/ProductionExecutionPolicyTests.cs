@@ -21,7 +21,8 @@ public class ProductionExecutionPolicyTests
         Assert.True(ProductionExecutionPolicy.CanPause(ProductionExecutionStatuses.Running).IsSuccess);
         Assert.Equal("PRD-EXEC-DT-001", ProductionExecutionPolicy.CanComplete(ProductionExecutionStatuses.Running, true).Error!.Code);
         Assert.True(ProductionExecutionPolicy.CanComplete(ProductionExecutionStatuses.Paused, false).IsSuccess);
-        Assert.Equal("PRD-EXEC-005", ProductionExecutionPolicy.CanCancel(ProductionExecutionStatuses.Running, true).Error!.Code);
+        Assert.Equal("PRD-EXEC-005", ProductionExecutionPolicy.NormalizeCancelReason("NOPE").Error!.Code);
+        Assert.True(ProductionExecutionPolicy.NormalizeCancelReason("WRONG_ORDER").IsSuccess);
         Assert.Equal("PRD-EXEC-SCRAP-001", ProductionExecutionPolicy.GuardScrapQty(0, 2, 0).Error!.Code);
         Assert.Equal("PRD-EXEC-SCRAP-001", ProductionExecutionPolicy.GuardScrapQty(3, 2, 0).Error!.Code);
         Assert.True(ProductionExecutionPolicy.GuardScrapQty(1, 2, 0).IsSuccess);

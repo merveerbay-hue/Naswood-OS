@@ -135,6 +135,8 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.LocationCode).HasMaxLength(200);
             entity.Property(x => x.BatchNumber).HasMaxLength(200);
             entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.QuantityOnHand).HasColumnType("numeric(18,4)").IsConcurrencyToken();
+            entity.Property(x => x.QuantityReserved).HasColumnType("numeric(18,4)").IsConcurrencyToken();
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.Batch>(entity =>
@@ -233,6 +235,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PlantId).HasMaxLength(20);
             entity.Ignore(x => x.DomainEvents);
             entity.Property(x => x.UnitOfMeasure).HasMaxLength(50);
+            entity.Property(x => x.Quantity).HasColumnType("numeric(18,4)").IsConcurrencyToken();
             entity.HasIndex(x => x.PackageId);
         });
 
@@ -907,7 +910,10 @@ public sealed class BusinessDbContext : DbContext
             entity.HasIndex(x => x.Number);
             entity.HasIndex(x => x.ProductionOrderId);
             entity.HasIndex(x => x.OutputBatchId);
-            entity.HasIndex(x => x.ProductionOperationExecutionId);
+            entity.HasIndex(x => x.ProductionOperationExecutionId)
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"ProductionOperationExecutionId\" IS NOT NULL")
+                .HasDatabaseName("UX_prd_out_execution");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionLotSource>(entity =>
@@ -946,12 +952,22 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PlantId).HasMaxLength(20);
             entity.Ignore(x => x.DomainEvents);
             entity.Property(x => x.Number).HasMaxLength(80);
-            entity.Property(x => x.Status).HasMaxLength(40);
+            entity.Property(x => x.Status).HasMaxLength(40).IsConcurrencyToken();
             entity.Property(x => x.StartedByUserId).HasMaxLength(200);
             entity.Property(x => x.CompletedByUserId).HasMaxLength(200);
+            entity.Property(x => x.CancelledByUserId).HasMaxLength(200);
+            entity.Property(x => x.CancelReason).HasMaxLength(40);
+            entity.Property(x => x.CancelNote).HasMaxLength(500);
             entity.Property(x => x.Unit).HasMaxLength(40);
+            entity.Property(x => x.CompleteIdempotencyKey).HasMaxLength(80);
+            entity.Property(x => x.CompletePayloadHash).HasMaxLength(64);
+            entity.Property(x => x.CancelIdempotencyKey).HasMaxLength(80);
+            entity.Property(x => x.CancelPayloadHash).HasMaxLength(64);
             entity.HasIndex(x => new { x.PlantId, x.Number });
-            entity.HasIndex(x => x.ProductionOperationId);
+            entity.HasIndex(x => x.ProductionOperationId)
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"Status\" IN ('RUNNING','PAUSED','NOT_STARTED')")
+                .HasDatabaseName("UX_prd_exec_open_operation");
             entity.HasIndex(x => x.WorkCenterId);
         });
 
@@ -984,8 +1000,13 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PhysicalMeasure).HasMaxLength(80);
             entity.Property(x => x.Unit).HasMaxLength(40);
             entity.Property(x => x.IdempotencyKey).HasMaxLength(80);
+            entity.Property(x => x.PayloadHash).HasMaxLength(64);
             entity.HasIndex(x => x.ExecutionId);
             entity.HasIndex(x => x.SourcePackageId);
+            entity.HasIndex(x => new { x.ExecutionId, x.IdempotencyKey })
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"IdempotencyKey\" <> ''")
+                .HasDatabaseName("UX_prd_exec_consume_idem");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionExecutionScrap>(entity =>

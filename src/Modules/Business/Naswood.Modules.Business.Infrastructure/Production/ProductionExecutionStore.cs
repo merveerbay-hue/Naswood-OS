@@ -58,6 +58,19 @@ public sealed class ProductionExecutionStore : IProductionExecutionStore
             cancellationToken).ConfigureAwait(false);
     }
 
+    public Task<ProductionOperationExecution?> GetCommittedOpenByOperationAsync(Guid operationId, CancellationToken cancellationToken = default)
+        => _db.Set<ProductionOperationExecution>().AsNoTracking().FirstOrDefaultAsync(
+            x => !x.IsDeleted && x.ProductionOperationId == operationId
+                 && (x.Status == ProductionExecutionStatuses.Running || x.Status == ProductionExecutionStatuses.Paused
+                     || x.Status == ProductionExecutionStatuses.NotStarted),
+            cancellationToken);
+
+    public Task<ProductionOperationExecution?> GetCommittedExecutionAsync(Guid id, CancellationToken cancellationToken = default)
+        => _db.Set<ProductionOperationExecution>().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+    public void ClearTracker() => _db.ChangeTracker.Clear();
+
     public async Task<IReadOnlyList<ProductionOperationExecution>> ListExecutionsByOrderAsync(Guid orderId, CancellationToken cancellationToken = default)
         => await _db.Set<ProductionOperationExecution>().Where(x => !x.IsDeleted && x.ProductionOrderId == orderId)
             .OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -107,6 +120,15 @@ public sealed class ProductionExecutionStore : IProductionExecutionStore
             .Where(x => !x.IsDeleted && x.ExecutionId == executionId)
             .OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
         return stored.Concat(local.Where(l => stored.All(s => s.Id != l.Id))).OrderBy(x => x.CreatedAt).ToArray();
+    }
+
+    public async Task<IReadOnlyList<ProductionExecutionConsumption>> ListConsumptionsBySourcePackageIdsAsync(
+        IReadOnlyList<Guid> packageIds, CancellationToken cancellationToken = default)
+    {
+        if (packageIds.Count == 0) return [];
+        return await _db.Set<ProductionExecutionConsumption>()
+            .Where(x => !x.IsDeleted && packageIds.Contains(x.SourcePackageId))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public Task AddScrapAsync(ProductionExecutionScrap entity, CancellationToken cancellationToken = default)

@@ -297,6 +297,24 @@ using (var scope = app.Services.CreateScope())
             "IdempotencyKey" character varying(80) NOT NULL DEFAULT ''
         );
         CREATE INDEX IF NOT EXISTS "IX_prd_exec_cons" ON business.business_production_execution_consumption ("ExecutionId");
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelReason" character varying(40) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelNote" character varying(500) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelledByUserId" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CompleteIdempotencyKey" character varying(80) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CompletePayloadHash" character varying(64) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelIdempotencyKey" character varying(80) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelPayloadHash" character varying(64) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_execution_consumption ADD COLUMN IF NOT EXISTS "PayloadHash" character varying(64) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_execution_consumption ADD COLUMN IF NOT EXISTS "ConsumedPieceCount" numeric(18,4) NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_exec_open_operation"
+            ON business.business_production_operation_execution ("ProductionOperationId")
+            WHERE "IsDeleted" = false AND "Status" IN ('RUNNING','PAUSED','NOT_STARTED');
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_out_execution"
+            ON business.business_production_output ("ProductionOperationExecutionId")
+            WHERE "IsDeleted" = false AND "ProductionOperationExecutionId" IS NOT NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_exec_consume_idem"
+            ON business.business_production_execution_consumption ("ExecutionId", "IdempotencyKey")
+            WHERE "IsDeleted" = false AND "IdempotencyKey" <> '';
         CREATE TABLE IF NOT EXISTS business.business_production_execution_scrap (
             "Id" uuid NOT NULL PRIMARY KEY,
             "CompanyId" character varying(20) NOT NULL,

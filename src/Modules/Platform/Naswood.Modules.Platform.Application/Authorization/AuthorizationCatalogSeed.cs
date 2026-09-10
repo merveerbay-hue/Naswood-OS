@@ -278,6 +278,7 @@ public static class AuthorizationCatalogSeed
             ("Production.Execution.Consume", "Production", "Execution", "Consume", null, "Consume Production Execution Input"),
             ("Production.Execution.Scrap", "Production", "Execution", "Scrap", null, "Record Production Execution Scrap"),
             ("Production.Execution.Complete", "Production", "Execution", "Complete", null, "Complete Production Execution"),
+            ("Production.Execution.Cancel", "Production", "Execution", "Cancel", null, "Cancel Production Execution"),
             ("ProductionOrder.Approve", "Production", "ProductionOrder", "Approve", null, "Approve Production Order"),
             ("Quality.View", "Quality", null, "View", null, "View Quality"),
             ("QualityInspection.Execute", "Quality", "QualityInspection", "Execute", null, "Execute Quality Inspection"),
@@ -338,6 +339,8 @@ public static class AuthorizationCatalogSeed
                 "Sales.View",
                 "Production.View",
                 "StructuralProductionLot.View",
+                "Production.Execution.View",
+                "Production.Execution.Cancel",
                 "Quality.View",
                 "Finance.Report.View"
             ]);

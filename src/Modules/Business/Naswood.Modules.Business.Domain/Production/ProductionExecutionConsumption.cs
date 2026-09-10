@@ -26,6 +26,8 @@ public sealed class ProductionExecutionConsumption : BusinessEntity
         string unit,
         decimal remainingPackageQuantity,
         string idempotencyKey,
+        string payloadHash,
+        decimal? consumedPieceCount,
         string companyId,
         string? plantId)
         : base(id)
@@ -46,6 +48,8 @@ public sealed class ProductionExecutionConsumption : BusinessEntity
         Unit = unit;
         RemainingPackageQuantity = remainingPackageQuantity;
         IdempotencyKey = idempotencyKey;
+        PayloadHash = payloadHash;
+        ConsumedPieceCount = consumedPieceCount;
         CompanyId = companyId;
         PlantId = plantId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
@@ -67,6 +71,8 @@ public sealed class ProductionExecutionConsumption : BusinessEntity
     public string Unit { get; private set; } = string.Empty;
     public decimal RemainingPackageQuantity { get; private set; }
     public string IdempotencyKey { get; private set; } = string.Empty;
+    public string PayloadHash { get; private set; } = string.Empty;
+    public decimal? ConsumedPieceCount { get; private set; }
 
     public static ProductionExecutionConsumption Create(
         Guid executionId,
@@ -86,7 +92,9 @@ public sealed class ProductionExecutionConsumption : BusinessEntity
         decimal remainingPackageQuantity,
         string idempotencyKey,
         string? plantId,
-        string companyId = "COMP-001")
+        string companyId = "COMP-001",
+        string payloadHash = "",
+        decimal? consumedPieceCount = null)
         => new(
             UuidV7.NewGuid(),
             executionId,
@@ -105,6 +113,8 @@ public sealed class ProductionExecutionConsumption : BusinessEntity
             unit ?? string.Empty,
             remainingPackageQuantity,
             idempotencyKey ?? string.Empty,
+            payloadHash ?? string.Empty,
+            consumedPieceCount,
             companyId,
             plantId);
 }

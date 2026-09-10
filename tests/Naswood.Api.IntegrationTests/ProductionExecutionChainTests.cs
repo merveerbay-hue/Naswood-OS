@@ -10,6 +10,7 @@ using Naswood.Modules.Business.Domain.Inventory;
 using Naswood.Modules.Business.Domain.Production;
 using Naswood.Modules.Business.Infrastructure.Persistence;
 using Naswood.Modules.Platform.Application.Authentication;
+using Naswood.Modules.Platform.Application.Authorization;
 using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Domain.Authentication;
 
@@ -166,6 +167,48 @@ public class ProductionExecutionChainTests
     }
 
     [Fact]
+    public async Task Cancel_after_output_uses_existing_reversal_when_wip_unused()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync();
+        var client = await LoginAsync();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
+        {
+            new { sequence = 10, operationId = world.OpFjId, workCenterId = world.WcFjId, expectedMaterialId = world.RawId, outputType = "WIP" }
+        })).EnsureSuccessStatusCode();
+        var exec = (await Data(await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { })))
+            .GetProperty("id").GetGuid();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, packageContentId = world.ContentAId, pieceCount = 12m, idempotencyKey = "out-a" }))
+            .EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/complete", new
+        {
+            outputMaterialId = world.WipMatId,
+            warehouseCode = "WH-SFG",
+            locationCode = "WIP-FJ-OUT",
+            lines = new[] { new { physicalGroupLabel = "FJ", thicknessMm = 40m, widthMm = 100m, lengthMm = 4000m, pieceCount = 2m } }
+        })).EnsureSuccessStatusCode();
+        var before = await Data(await client.GetAsync($"/api/v1/production-execution/executions/{exec}"));
+        var wipNo = before.GetProperty("packages")[0].GetProperty("packageNo").GetString();
+        var wipBc = before.GetProperty("packages")[0].GetProperty("barcode").GetString();
+
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/cancel",
+            new { cancelReason = "MACHINE_FAILURE", note = "pres" })).EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        Assert.Equal("CANCELLED", db.ProductionOperationExecutions.Single(e => e.Id == exec).Status);
+        Assert.Equal(2m, db.InventoryPackages.Single(p => p.Id == world.PackageAId).Quantity);
+        Assert.Equal(world.BarcodeA, db.InventoryPackages.Single(p => p.Id == world.PackageAId).Barcode);
+        Assert.Equal(2m, db.Set<InventoryPackageContent>().Single(c => c.Id == world.ContentAId).Quantity);
+        var wip = db.InventoryPackages.Single(p => p.Barcode == wipBc);
+        Assert.Equal(InventoryPackageStatuses.Cancelled, wip.Status);
+        Assert.Equal(wipNo, wip.PackageNumber);
+        Assert.Equal(1, db.ProductionOutputs.Count(o => o.ProductionOperationExecutionId == exec && o.Status == "CANCELLED"));
+        Assert.Contains(db.InventoryMovements, m => m.MovementType == ProductionLotCodes.OutputReversalMovement);
+    }
+
+    [Fact]
     public async Task Parallel_consume_cannot_overspend_package()
     {
         await _factory.ResetDatabaseAsync();
@@ -191,6 +234,232 @@ public class ProductionExecutionChainTests
         Assert.True(pkg.Quantity <= 2m);
         var bal = db.InventoryBalances.Single(x => x.BatchNumber == world.LotANo);
         Assert.True(bal.QuantityOnHand >= 0);
+    }
+
+    [Fact]
+    public async Task Parallel_http_consume_same_package_cannot_double_spend()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync();
+        var client = await LoginAsync();
+        var c2 = await LoginAsync();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
+        {
+            new { sequence = 10, operationId = world.OpFjId, workCenterId = world.WcFjId, expectedMaterialId = (Guid?)null, outputType = "NONE" }
+        })).EnsureSuccessStatusCode();
+        var start = await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
+        var exec = (await Data(start)).GetProperty("id").GetGuid();
+
+        var t1 = client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, idempotencyKey = "pa" });
+        var t2 = c2.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, idempotencyKey = "pb" });
+        await Task.WhenAll(t1, t2);
+        var ok = new[] { t1.Result, t2.Result }.Count(r => r.IsSuccessStatusCode);
+        var fail = new[] { t1.Result, t2.Result }.Where(r => !r.IsSuccessStatusCode).ToList();
+        Assert.Equal(1, ok);
+        Assert.Single(fail);
+        var code = await Code(fail[0]);
+        Assert.True(code is "PRD-EXEC-CONC-001" or "PRD-EXEC-INPUT-002", code);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        var pkg = db.InventoryPackages.Single(p => p.Id == world.PackageAId);
+        Assert.Equal(0.8m, pkg.Quantity);
+        Assert.Equal(1, db.Set<ProductionExecutionConsumption>().Count(x => x.ExecutionId == exec && !x.IsDeleted));
+        Assert.Equal(0.8m, db.InventoryBalances.Single(b => b.BatchNumber == world.LotANo).QuantityOnHand);
+    }
+
+    [Fact]
+    public async Task Parallel_start_same_operation_yields_one_open_execution()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync();
+        var a = await LoginAsync();
+        var b = await LoginAsync();
+        (await a.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
+        {
+            new { sequence = 10, operationId = world.OpFjId, workCenterId = world.WcFjId, outputType = "NONE" }
+        })).EnsureSuccessStatusCode();
+        var opId = world.GetOpId(a, 10);
+        var t1 = a.PostAsJsonAsync($"/api/v1/production-execution/operations/{opId}/start", new { });
+        var t2 = b.PostAsJsonAsync($"/api/v1/production-execution/operations/{opId}/start", new { });
+        await Task.WhenAll(t1, t2);
+        Assert.True(t1.Result.IsSuccessStatusCode);
+        Assert.True(t2.Result.IsSuccessStatusCode);
+        Assert.Equal((await Data(t1.Result)).GetProperty("id").GetGuid(), (await Data(t2.Result)).GetProperty("id").GetGuid());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        Assert.Equal(1, db.ProductionOperationExecutions.Count(e => e.ProductionOperationId == opId && !e.IsDeleted));
+    }
+
+    [Fact]
+    public async Task Parallel_complete_same_execution_posts_one_output()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync();
+        var a = await LoginAsync();
+        var b = await LoginAsync();
+        (await a.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
+        {
+            new { sequence = 10, operationId = world.OpFjId, workCenterId = world.WcFjId, expectedMaterialId = world.RawId, outputType = "WIP" }
+        })).EnsureSuccessStatusCode();
+        var exec = (await Data(await a.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(a, 10)}/start", new { })))
+            .GetProperty("id").GetGuid();
+        (await a.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, idempotencyKey = "c" })).EnsureSuccessStatusCode();
+        var body = new
+        {
+            outputMaterialId = world.WipMatId,
+            warehouseCode = "WH-SFG",
+            locationCode = "WIP-FJ-OUT",
+            lines = new[] { new { physicalGroupLabel = "FJ", thicknessMm = 40m, widthMm = 100m, lengthMm = 4000m, pieceCount = 2m } }
+        };
+        var t1 = a.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/complete", body);
+        var t2 = b.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/complete", body);
+        await Task.WhenAll(t1, t2);
+        Assert.True(t1.Result.IsSuccessStatusCode, await t1.Result.Content.ReadAsStringAsync());
+        Assert.True(t2.Result.IsSuccessStatusCode, await t2.Result.Content.ReadAsStringAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        Assert.Equal(1, db.ProductionOutputs.Count(o => o.ProductionOperationExecutionId == exec && !o.IsDeleted));
+        Assert.Equal(1, db.Batchs.Count(x => x.SourceType == "PRODUCTION" && !x.IsDeleted));
+        var lotId = db.ProductionOutputs.Single(o => o.ProductionOperationExecutionId == exec).OutputBatchId;
+        Assert.Equal(1, db.InventoryPackages.Count(p => p.BatchId == lotId && !p.IsDeleted));
+        Assert.Equal(1, db.InventoryMovements.Count(m => !m.IsDeleted && m.MovementType == ProductionLotCodes.OutputMovement));
+    }
+
+    [Fact]
+    public async Task Cancel_and_idempotency_and_wip_dependency_matrix()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync();
+        var client = await LoginAsync();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
+        {
+            new { sequence = 10, operationId = world.OpFjId, workCenterId = world.WcFjId, expectedMaterialId = world.RawId, outputType = "WIP" },
+            new { sequence = 20, operationId = world.OpGluId, workCenterId = world.WcGluId, expectedMaterialId = world.WipMatId, outputType = "FINAL_OUTPUT" }
+        })).EnsureSuccessStatusCode();
+
+        var start0 = await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
+        var idle = (await Data(start0)).GetProperty("id").GetGuid();
+        var cancelIdle = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{idle}/cancel",
+            new { cancelReason = "WRONG_ORDER", note = "yanlış emir", idempotencyKey = "cx0" });
+        cancelIdle.EnsureSuccessStatusCode();
+        Assert.Equal("CANCELLED", (await Data(cancelIdle)).GetProperty("status").GetString());
+        var cancelIdle2 = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{idle}/cancel",
+            new { cancelReason = "WRONG_ORDER", note = "yanlış emir", idempotencyKey = "cx0" });
+        cancelIdle2.EnsureSuccessStatusCode();
+        Assert.True((await Data(cancelIdle2)).GetProperty("idempotentReplay").GetBoolean());
+
+        var start1 = await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
+        start1.EnsureSuccessStatusCode();
+        var exec1 = (await Data(start1)).GetProperty("id").GetGuid();
+
+        var sameKey = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, packageContentId = world.ContentAId, pieceCount = 12m, idempotencyKey = "idem-a" });
+        sameKey.EnsureSuccessStatusCode();
+        var sameReplay = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, packageContentId = world.ContentAId, pieceCount = 12m, idempotencyKey = "idem-a" });
+        sameReplay.EnsureSuccessStatusCode();
+        Assert.True((await Data(sameReplay)).GetProperty("idempotentReplay").GetBoolean());
+        var diffPayload = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1}/consume",
+            new { barcode = world.BarcodeB, quantity = 0.5m, idempotencyKey = "idem-a" });
+        Assert.Equal(HttpStatusCode.Conflict, diffPayload.StatusCode);
+        Assert.Equal("PRD-EXEC-IDEM-001", await Code(diffPayload));
+
+        var cancelOne = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1}/cancel",
+            new { cancelReason = "OPERATOR_ERROR", note = "tek paket" });
+        cancelOne.EnsureSuccessStatusCode();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            var pkg = db.InventoryPackages.Single(p => p.Id == world.PackageAId);
+            Assert.Equal(2m, pkg.Quantity);
+            Assert.Equal(world.BarcodeA, pkg.Barcode);
+            Assert.Equal(InventoryPackageStatuses.Available, pkg.Status);
+            Assert.Equal(2m, db.Set<InventoryPackageContent>().Single(c => c.Id == world.ContentAId).Quantity);
+            Assert.Equal(2m, db.InventoryBalances.Single(b => b.BatchNumber == world.LotANo).QuantityOnHand);
+            Assert.Contains(db.InventoryMovements, m => m.MovementType == ProductionLotCodes.ConsumptionReversalMovement);
+            Assert.Contains(db.ProductionExecutionEvents, e => e.ExecutionId == exec1 && e.EventType == "CANCEL");
+            Assert.Contains(db.ProductionExecutionEvents, e => e.ExecutionId == exec1 && e.EventType == "REVERSAL");
+        }
+
+        var start1b = await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
+        var exec1b = (await Data(start1b)).GetProperty("id").GetGuid();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1b}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.0m, packageContentId = world.ContentAId, pieceCount = 10m, idempotencyKey = "a2" })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1b}/consume",
+            new { barcode = world.BarcodeB, quantity = 0.8m, idempotencyKey = "b2" })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1b}/cancel",
+            new { cancelReason = "WRONG_MATERIAL", note = "iki paket" })).EnsureSuccessStatusCode();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            Assert.Equal(2m, db.InventoryPackages.Single(p => p.Barcode == world.BarcodeA).Quantity);
+            Assert.Equal(2m, db.InventoryPackages.Single(p => p.Barcode == world.BarcodeB).Quantity);
+            Assert.Equal(2m, db.Set<InventoryPackageContent>().Single(c => c.Id == world.ContentAId).Quantity);
+        }
+
+        var start1c = await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
+        var exec1c = (await Data(start1c)).GetProperty("id").GetGuid();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/consume",
+            new { barcode = world.BarcodeA, quantity = 1.2m, packageContentId = world.ContentAId, pieceCount = 12m, idempotencyKey = "a3" })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/consume",
+            new { barcode = world.BarcodeB, quantity = 0.8m, idempotencyKey = "b3" })).EnsureSuccessStatusCode();
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            var pkgB = db.InventoryPackages.Single(p => p.Barcode == world.BarcodeB);
+            pkgB.GetType().GetMethod("MarkCancelled")!.Invoke(pkgB, null);
+            await db.SaveChangesAsync();
+        }
+
+        var partial = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/cancel",
+            new { cancelReason = "OTHER", note = "B kapalı" });
+        Assert.Equal(HttpStatusCode.BadRequest, partial.StatusCode);
+        Assert.Equal("PKG-LIFE-006", await Code(partial));
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            Assert.Equal("RUNNING", db.ProductionOperationExecutions.Single(e => e.Id == exec1c).Status);
+            Assert.Equal(0.8m, db.InventoryPackages.Single(p => p.Barcode == world.BarcodeA).Quantity);
+            Assert.DoesNotContain(db.InventoryMovements, m =>
+                m.DocumentNumber == db.ProductionOperationExecutions.Single(e => e.Id == exec1c).Number
+                && m.MovementType == ProductionLotCodes.ConsumptionReversalMovement);
+        }
+
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/complete", new
+        {
+            outputMaterialId = world.WipMatId,
+            warehouseCode = "WH-SFG",
+            locationCode = "WIP-FJ-OUT",
+            lines = new[] { new { physicalGroupLabel = "FJ", thicknessMm = 40m, widthMm = 100m, lengthMm = 4000m, pieceCount = 2m } }
+        })).EnsureSuccessStatusCode();
+
+        var editDone = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/consume",
+            new { barcode = world.BarcodeA, quantity = 0.1m });
+        Assert.Equal(HttpStatusCode.BadRequest, editDone.StatusCode);
+        Assert.Equal("PRD-EXEC-003", await Code(editDone));
+
+        var loaded = await Data(await client.GetAsync($"/api/v1/production-execution/executions/{exec1c}"));
+        var wipBarcode = loaded.GetProperty("packages")[0].GetProperty("barcode").GetString()!;
+
+        var start2 = await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 20)}/start", new { });
+        var exec2 = (await Data(start2)).GetProperty("id").GetGuid();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec2}/consume",
+            new { barcode = wipBarcode, quantity = loaded.GetProperty("packages")[0].GetProperty("quantity").GetDecimal(), idempotencyKey = "wip" }))
+            .EnsureSuccessStatusCode();
+
+        var blocked = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/cancel",
+            new { cancelReason = "QUALITY", note = "wip kullanıldı" });
+        Assert.Equal(HttpStatusCode.BadRequest, blocked.StatusCode);
+        Assert.Equal("PKG-LIFE-006", await Code(blocked));
+
+        var op = await SeedOperatorAsync();
+        var forbidden = await op.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec2}/cancel",
+            new { cancelReason = "OTHER", note = "op" });
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
     }
 
     [Fact]
@@ -255,6 +524,20 @@ public class ProductionExecutionChainTests
         db.StructuralProductionLots.Add(plot);
         await db.SaveChangesAsync();
         return new World(order.Id, raw.Id, wip.Id, clt.Id, wcFj.Id, wcGlu.Id, opFj.Id, opGlu.Id, pkgA.Id, content.Id, mintA.BarcodeValue, mintB.BarcodeValue, mintQ.BarcodeValue, mint2.BarcodeValue, lotA.BatchNumber, plot.Id, plot.ProductionLotNumber);
+    }
+
+    private async Task<HttpClient> SeedOperatorAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        var users = scope.ServiceProvider.GetRequiredService<IAuthUserRepository>();
+        var roles = scope.ServiceProvider.GetRequiredService<IRoleCatalogRepository>();
+        var uow = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
+        if (await roles.GetByCodeAsync("WarehouseOperator") is null)
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateWarehouseOperatorRole());
+        await users.AddAsync(AuthUser.Create("floorop", "Operator", "op@naswood.local", hasher.Hash("Naswood!Op1"), ["COMP-001"], ["PLANT-001"], ["WarehouseOperator"]));
+        await uow.SaveChangesAsync();
+        return await LoginAsync("floorop", "Naswood!Op1");
     }
 
     private async Task<HttpClient> SeedViewerAsync()
