@@ -48,6 +48,8 @@ public static class InventoryCountSessionComposer
                     BatchNumber = l.BatchNumber,
                     LotUnknown = l.LotUnknown,
                     PackageNumber = l.PackageNumber,
+                    PhysicalGroupLabel = l.PhysicalGroupLabel,
+                    Barcode = l.Barcode,
                     ThicknessMm = l.ThicknessMm,
                     WidthMm = l.WidthMm,
                     LengthMm = l.LengthMm,
@@ -209,7 +211,6 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
             _repo.RemoveLine(line);
 
         var lineNo = existing.Where(l => l.Role == "SNAPSHOT").Select(l => l.LineNo).DefaultIfEmpty(0).Max();
-        var fieldPackages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in command.Lines ?? [])
         {
             Material? material = null;
@@ -255,9 +256,13 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
             if (!calc.Ok)
                 return Result.Failure<InventoryCountDto>(Error.Validation("INV-CNT-008", calc.Error ?? "Geçersiz ölçü."));
 
-            var lotUnknown = dto.LotUnknown || string.IsNullOrWhiteSpace(dto.BatchNumber);
-            var batchNumber = lotUnknown ? InventoryCountLots.Unknown : dto.BatchNumber.Trim();
-            if (lotUnknown)
+            var opening = InventoryCountKinds.IsOpening(e.CountType);
+            // Opening: no fake supplier lot. Identity is minted on post (LOT-OPEN-…).
+            var lotUnknown = !opening && (dto.LotUnknown || string.IsNullOrWhiteSpace(dto.BatchNumber));
+            var batchNumber = opening
+                ? string.Empty
+                : lotUnknown ? InventoryCountLots.Unknown : dto.BatchNumber.Trim();
+            if (!opening && lotUnknown)
             {
                 var snaps = existing.Where(l =>
                     l.Role == "SNAPSHOT"
@@ -282,26 +287,14 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
             }
             var packageNumber = string.Empty;
             var barcode = string.Empty;
-            if (!string.IsNullOrWhiteSpace(dto.PackageNumber) && dto.PackageNumber.Trim().StartsWith("PKG-", StringComparison.OrdinalIgnoreCase))
+            // Periodic/Blind: keep an existing system package if already on the line. Never mint.
+            // Opening: operator writes only the physical group; lot/package/barcode mint on post.
+            if (!opening
+                && !string.IsNullOrWhiteSpace(dto.PackageNumber)
+                && dto.PackageNumber.Trim().StartsWith("PKG-", StringComparison.OrdinalIgnoreCase))
             {
                 packageNumber = dto.PackageNumber.Trim();
                 barcode = string.IsNullOrWhiteSpace(dto.Barcode) ? packageNumber : dto.Barcode.Trim();
-            }
-            else if (!string.IsNullOrWhiteSpace(group))
-            {
-                var key = $"{material.Code}\u001f{group}";
-                if (!fieldPackages.TryGetValue(key, out var minted))
-                {
-                    minted = SystemIdentifier.Ensure(null, "PKG");
-                    fieldPackages[key] = minted;
-                }
-                packageNumber = minted;
-                barcode = minted;
-            }
-            if (!string.IsNullOrWhiteSpace(barcode))
-            {
-                var bc = $"Barkod: {barcode}";
-                notes = string.IsNullOrWhiteSpace(notes) ? bc : $"{notes} | {bc}";
             }
             var line = InventoryCountLine.CreatePhysical(
                 e.Id,
@@ -314,6 +307,8 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                 batchNumber,
                 lotUnknown,
                 packageNumber,
+                group,
+                barcode,
                 dto.ThicknessMm,
                 dto.WidthMm,
                 dto.LengthMm,
@@ -408,6 +403,9 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
     private readonly IInventoryMovementRepository _movements;
     private readonly ILocationRepository _locations;
     private readonly IWarehouseRepository _warehouses;
+    private readonly IBatchRepository _batches;
+    private readonly IInventoryPackageRepository _packages;
+    private readonly IMaterialIdentityRepository _identities;
     private readonly IBusinessUnitOfWork _uow;
 
     public PostInventoryCountCommandHandler(
@@ -416,6 +414,9 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         IInventoryMovementRepository movements,
         ILocationRepository locations,
         IWarehouseRepository warehouses,
+        IBatchRepository batches,
+        IInventoryPackageRepository packages,
+        IMaterialIdentityRepository identities,
         IBusinessUnitOfWork uow)
     {
         _repo = repo;
@@ -423,6 +424,9 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         _movements = movements;
         _locations = locations;
         _warehouses = warehouses;
+        _batches = batches;
+        _packages = packages;
+        _identities = identities;
         _uow = uow;
     }
 
@@ -447,7 +451,6 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
             return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-CNT-016", "Pasif veya yabancı depo için sayım post edilemez."));
 
         var raw = await _repo.ListLinesAsync(e.Id, cancellationToken).ConfigureAwait(false);
-        var groups = InventoryCountSessionComposer.Group(raw);
         var adjustments = new List<InventoryCountAdjustmentDto>();
 
         try { e.Approve(command.Actor); }
@@ -456,6 +459,19 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
             return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-CNT-048", ex.Message));
         }
 
+        if (InventoryCountKinds.IsOpening(e.CountType))
+        {
+            var opened = await OpeningInventoryPost.ExecuteAsync(
+                e, raw, plantId, command.Actor, command.Reason,
+                _balances, _movements, _locations, _batches, _packages, _identities,
+                cancellationToken).ConfigureAwait(false);
+            if (opened.IsFailure) return opened;
+            e.MarkPosted();
+            await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return Result.Success(opened.Value);
+        }
+
+        var groups = InventoryCountSessionComposer.Group(raw);
         foreach (var g in groups.Values)
         {
             if (!g.HasPhysical && g.SystemQty == 0) continue;

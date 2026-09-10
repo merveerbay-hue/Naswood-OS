@@ -4,6 +4,7 @@ import {
   canSaveCountLines,
   canViewAllCountPages,
   isAdministrator,
+  isOpeningCount,
   lineVariance,
   showSystemQuantity,
   type CycleCountOpenDraft,
@@ -20,7 +21,7 @@ const base: CycleCountOpenDraft = {
   plantId: 'F01',
   warehouseCode: 'WH-RM',
   locationCode: '',
-  countType: 'Normal',
+  countType: 'Opening',
   notes: '',
 };
 
@@ -83,6 +84,7 @@ assert(lineVariance({ key: '1', materialCode: 'M', locationCode: 'L', lotNumber:
 
 const body = buildCountSessionCreateBody(base);
 assert(body.number === '', 'client does not mint SC');
-assert(body.countType === 'Normal', 'normal type');
+assert(body.countType === 'Opening', 'opening type');
+assert(isOpeningCount('Opening') && !isOpeningCount('Periodic'), 'opening vs periodic');
 
 console.info('cycleCountSession.selftest: all passed');

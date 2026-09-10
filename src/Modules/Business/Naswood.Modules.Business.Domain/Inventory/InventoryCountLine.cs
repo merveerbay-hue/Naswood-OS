@@ -20,6 +20,8 @@ public sealed class InventoryCountLine : BusinessEntity
         string batchNumber,
         bool lotUnknown,
         string packageNumber,
+        string physicalGroupLabel,
+        string barcode,
         decimal? thicknessMm,
         decimal? widthMm,
         decimal? lengthMm,
@@ -48,6 +50,8 @@ public sealed class InventoryCountLine : BusinessEntity
         BatchNumber = batchNumber;
         LotUnknown = lotUnknown;
         PackageNumber = packageNumber;
+        PhysicalGroupLabel = physicalGroupLabel;
+        Barcode = barcode;
         ThicknessMm = thicknessMm;
         WidthMm = widthMm;
         LengthMm = lengthMm;
@@ -77,6 +81,8 @@ public sealed class InventoryCountLine : BusinessEntity
     public string BatchNumber { get; private set; } = string.Empty;
     public bool LotUnknown { get; private set; }
     public string PackageNumber { get; private set; } = string.Empty;
+    public string PhysicalGroupLabel { get; private set; } = string.Empty;
+    public string Barcode { get; private set; } = string.Empty;
     public decimal? ThicknessMm { get; private set; }
     public decimal? WidthMm { get; private set; }
     public decimal? LengthMm { get; private set; }
@@ -117,6 +123,8 @@ public sealed class InventoryCountLine : BusinessEntity
             batchNumber,
             lotUnknown: string.IsNullOrWhiteSpace(batchNumber),
             packageNumber: string.Empty,
+            physicalGroupLabel: string.Empty,
+            barcode: string.Empty,
             thicknessMm: null,
             widthMm: null,
             lengthMm: null,
@@ -145,6 +153,8 @@ public sealed class InventoryCountLine : BusinessEntity
         string batchNumber,
         bool lotUnknown,
         string packageNumber,
+        string physicalGroupLabel,
+        string barcode,
         decimal? thicknessMm,
         decimal? widthMm,
         decimal? lengthMm,
@@ -170,6 +180,8 @@ public sealed class InventoryCountLine : BusinessEntity
             lotUnknown ? InventoryCountLots.Unknown : batchNumber,
             lotUnknown,
             packageNumber ?? string.Empty,
+            physicalGroupLabel ?? string.Empty,
+            barcode ?? string.Empty,
             thicknessMm,
             widthMm,
             lengthMm,
@@ -201,6 +213,15 @@ public sealed class InventoryCountLine : BusinessEntity
     public void SetKeepSeparate(bool value)
     {
         KeepSeparate = value;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void AssignOpeningIdentity(string lotNumber, string packageNumber, string barcode)
+    {
+        BatchNumber = lotNumber ?? string.Empty;
+        LotUnknown = false;
+        PackageNumber = packageNumber ?? string.Empty;
+        Barcode = barcode ?? string.Empty;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

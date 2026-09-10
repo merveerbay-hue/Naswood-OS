@@ -117,6 +117,9 @@ using (var scope = app.Services.CreateScope())
         );
         CREATE INDEX IF NOT EXISTS "IX_business_inventory_inventorycountline_CountId"
             ON business.business_inventory_inventorycountline ("CountId");
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycountline ADD COLUMN IF NOT EXISTS "PhysicalGroupLabel" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycountline ADD COLUMN IF NOT EXISTS "Barcode" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceType" character varying(40) NOT NULL DEFAULT '';
         """).ConfigureAwait(false);
 }
 

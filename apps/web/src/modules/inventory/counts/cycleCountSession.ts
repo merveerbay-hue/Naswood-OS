@@ -1,5 +1,14 @@
-export const COUNT_TYPES = ['Normal', 'Blind'] as const;
+export const COUNT_TYPES = ['Opening', 'Periodic', 'Blind'] as const;
 export type CountType = (typeof COUNT_TYPES)[number];
+
+export function isOpeningCount(type: string | null | undefined): boolean {
+  const t = String(type ?? '').trim().toLowerCase();
+  return t === 'opening' || t === 'açılış' || t === 'acilis' || t === 'initialization';
+}
+
+export function isPeriodicCount(type: string | null | undefined): boolean {
+  return !isOpeningCount(type);
+}
 
 export type CycleCountOpenDraft = {
   plantId: string;
@@ -41,7 +50,8 @@ export function showSystemQuantity(
   const st = String(status ?? '').toUpperCase();
   if (st === 'REVIEW' || st === 'APPROVED' || st === 'POSTED') return true;
   if (isAdministrator(roles)) return true;
-  return !blindCount;
+  if (blindCount) return false;
+  return true;
 }
 
 export type CountLineDto = {
@@ -56,6 +66,8 @@ export type CountLineDto = {
   batchNumber: string;
   lotUnknown: boolean;
   packageNumber?: string | null;
+  physicalGroupLabel?: string | null;
+  barcode?: string | null;
   thicknessMm?: number | null;
   widthMm?: number | null;
   lengthMm?: number | null;

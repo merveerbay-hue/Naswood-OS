@@ -131,6 +131,13 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
         query = query.Where(x => normalized.Contains(x.Status.ToLower()));
         return await query.CountAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    public async Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default)
+        => await _db.Set<InventoryPackage>().AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => x.PackageNumber)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }
 
 public sealed class InventoryMovementRepository : IInventoryMovementRepository

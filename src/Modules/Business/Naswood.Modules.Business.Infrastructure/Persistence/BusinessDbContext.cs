@@ -137,6 +137,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.BatchNumber).HasMaxLength(200);
             entity.Property(x => x.MaterialCode).HasMaxLength(200);
             entity.Property(x => x.Status).HasMaxLength(200);
+            entity.Property(x => x.SourceType).HasMaxLength(40);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.GoodsReceipt>(entity =>
@@ -277,6 +278,8 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.LocationCode).HasMaxLength(200);
             entity.Property(x => x.BatchNumber).HasMaxLength(200);
             entity.Property(x => x.PackageNumber).HasMaxLength(200);
+            entity.Property(x => x.PhysicalGroupLabel).HasMaxLength(200);
+            entity.Property(x => x.Barcode).HasMaxLength(200);
             entity.Property(x => x.StockUnit).HasMaxLength(40);
             entity.Property(x => x.CountUnit).HasMaxLength(40);
             entity.Property(x => x.Notes).HasColumnType("text");

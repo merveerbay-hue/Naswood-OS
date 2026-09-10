@@ -39,6 +39,8 @@ public sealed class InventoryCountLineDto
     public required string BatchNumber { get; init; }
     public required bool LotUnknown { get; init; }
     public string? PackageNumber { get; init; }
+    public string? PhysicalGroupLabel { get; init; }
+    public string? Barcode { get; init; }
     public decimal? ThicknessMm { get; init; }
     public decimal? WidthMm { get; init; }
     public decimal? LengthMm { get; init; }
@@ -78,7 +80,7 @@ public sealed class UpsertInventoryCountRequestDto
     public string Status { get; init; } = string.Empty;
     public string Notes { get; init; } = string.Empty;
     public string LocationCode { get; init; } = string.Empty;
-    public string CountType { get; init; } = "Normal";
+    public string CountType { get; init; } = "Opening";
 }
 
 public sealed class UpsertInventoryCountLineRequestDto

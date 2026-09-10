@@ -60,4 +60,20 @@ public sealed class BatchRepository : IBatchRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
     }
+
+    public async Task<IReadOnlyList<string>> ListOpeningLotNumbersAsync(
+        string prefix,
+        string? plantId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var pfx = (prefix ?? string.Empty).Trim();
+        if (pfx.Length == 0) return Array.Empty<string>();
+        var query = _db.Set<Batch>().AsNoTracking().Where(x => !x.IsDeleted && EF.Functions.ILike(x.BatchNumber, pfx + "%"));
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return await query.Select(x => x.BatchNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

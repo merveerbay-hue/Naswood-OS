@@ -36,7 +36,7 @@ public sealed class InventoryCount : BusinessEntity
     public string Number { get; private set; } = string.Empty;
     public string WarehouseCode { get; private set; } = string.Empty;
     public string LocationCode { get; private set; } = string.Empty;
-    public string CountType { get; private set; } = "Normal";
+    public string CountType { get; private set; } = "Opening";
     public string Status { get; private set; } = string.Empty;
     public string Notes { get; private set; } = string.Empty;
     public DateTimeOffset? SnapshotAt { get; private set; }
@@ -56,7 +56,7 @@ public sealed class InventoryCount : BusinessEntity
         string companyId = "COMP-001",
         string? plantId = "PLANT-001",
         string locationCode = "",
-        string countType = "Normal",
+        string countType = "Opening",
         string startedBy = "")
     {
         return new InventoryCount(

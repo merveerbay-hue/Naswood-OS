@@ -37,6 +37,7 @@ public interface IInventoryPackageRepository
         string? plantId,
         IReadOnlyList<string> statuses,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IInventoryMovementRepository

@@ -38,8 +38,10 @@ import {
   canOpenCountDocument,
   canOpenCountSession,
   canSaveCountLines,
+  isOpeningCount,
   showSystemQuantity,
   type CountLineDto,
+  type CountType,
   type CycleCountOpenDraft,
   type InventoryCountSession,
 } from './cycleCountSession';
@@ -82,6 +84,8 @@ function statusLabel(st: string): string {
       return 'EKSİK STOK';
     case 'DUPLICATE':
       return 'ÇİFT SATIR';
+    case 'OPENING':
+      return 'AÇILIŞ';
     default:
       return st;
   }
@@ -100,7 +104,7 @@ export function CycleCountSessionPage() {
   const [workPlant, setWorkPlant] = useState(sessionPlantId || homePlantId);
   const [warehouseCode, setWarehouseCode] = useState('');
   const [locationCode, setLocationCode] = useState('');
-  const [countType, setCountType] = useState<'Normal' | 'Blind'>('Normal');
+  const [countType, setCountType] = useState<CountType>('Opening');
   const [notes, setNotes] = useState('');
   const [opened, setOpened] = useState<InventoryCountSession | null>(null);
   const [draftLines, setDraftLines] = useState<DraftLine[]>([]);
@@ -171,7 +175,9 @@ export function CycleCountSessionPage() {
     notes,
   };
   const gate = canOpenCountSession(draft);
-  const blind = (opened?.countType ?? countType) === 'Blind';
+  const effectiveType = opened?.countType ?? countType;
+  const blind = effectiveType === 'Blind';
+  const opening = isOpeningCount(effectiveType);
   const showSys = showSystemQuantity(roles, blind, opened?.status);
 
   const startMut = useMutation({
@@ -247,12 +253,19 @@ export function CycleCountSessionPage() {
     mutationFn: async () => {
       const id = sessionId(opened);
       if (!isCountId(id)) throw new Error('Sayım yok');
-      return postCount(id);
+      return postCount(id, opening ? 'Açılış stok sayımı' : 'Stok sayım düzeltmesi');
     },
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       setPostResult(
-        `${res.countNumber}: ${res.adjustmentCount} INVENTORY_COUNT_ADJUSTMENT hareketi. Bakiye overwrite edilmedi.`,
+        isOpeningCount(opened?.countType)
+          ? `${res.countNumber}: ${res.adjustmentCount} OPENING_INVENTORY hareketi. Lot + Package + Barkod üretildi; sahte tedarik lotu yazılmadı.`
+          : `${res.countNumber}: ${res.adjustmentCount} INVENTORY_COUNT_ADJUSTMENT hareketi. Yeni Lot/Package/Barkod üretilmedi.`,
       );
+      const id = sessionId(opened);
+      if (isCountId(id)) {
+        const doc = await getResource<InventoryCountSession>('inventory-counts', id);
+        setOpened(doc);
+      }
       void queryClient.invalidateQueries({ queryKey: ['business', 'inventory-counts', opened?.id] });
       void queryClient.invalidateQueries({ queryKey: ['business', 'inventory'] });
     },
@@ -285,6 +298,10 @@ export function CycleCountSessionPage() {
       material: string;
       code: string;
       phys: string;
+      istif: string;
+      lot: string;
+      pkg: string;
+      barcode: string;
       system: number;
       counted: number;
       diff: number;
@@ -300,6 +317,10 @@ export function CycleCountSessionPage() {
           material: s.materialName,
           code: s.materialCode,
           phys: '—',
+          istif: '',
+          lot: s.batchNumber,
+          pkg: s.packageNumber ?? '',
+          barcode: s.barcode ?? '',
           system: s.systemQuantityAtStart,
           counted: 0,
           diff: -s.systemQuantityAtStart,
@@ -314,6 +335,10 @@ export function CycleCountSessionPage() {
           material: p.materialName,
           code: p.materialCode,
           phys: formatMm(p.thicknessMm, p.widthMm, p.lengthMm),
+          istif: p.physicalGroupLabel ?? '',
+          lot: p.batchNumber,
+          pkg: p.packageNumber ?? '',
+          barcode: p.barcode ?? '',
           system: g.phys.length === 1 ? (g.snap?.systemQuantityAtStart ?? 0) : g.snap?.systemQuantityAtStart ?? 0,
           counted: p.countedQuantity,
           diff: p.difference,
@@ -459,7 +484,9 @@ export function CycleCountSessionPage() {
         <p className="text-xs text-[var(--text-muted)]">INV-CNT · stok ledger</p>
         <h1 className="text-2xl font-semibold">Stok Sayımı</h1>
         <p className="text-sm text-[var(--text-muted)]">
-          Mevcut stok listesi gelir. Düzeltme yalnızca INVENTORY_COUNT_ADJUSTMENT hareketidir.
+          {opening
+            ? 'Açılış stok sayımı: fiili stok sıfırdan sisteme alınır. Onayda Lot (LOT-OPEN-…) + Package + Barkod üretilir. Hareket: OPENING_INVENTORY. Sahte tedarik lotu yazılmaz.'
+            : 'Periyodik sayım: mevcut Lot/Package/Barkod doğrulanır. Yeni kimlik üretilmez. Fark: INVENTORY_COUNT_ADJUSTMENT.'}
         </p>
       </div>
 
@@ -536,10 +563,11 @@ export function CycleCountSessionPage() {
               <select
                 className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
                 value={countType}
-                onChange={(e) => setCountType(e.target.value as 'Normal' | 'Blind')}
+                onChange={(e) => setCountType(e.target.value as CountType)}
                 disabled={Boolean(opened)}
               >
-                <option value="Normal">Normal Sayım</option>
+                <option value="Opening">Açılış Stok Sayımı</option>
+                <option value="Periodic">Periyodik Stok Sayımı</option>
                 <option value="Blind">Kör Sayım</option>
               </select>
             </label>
@@ -573,6 +601,12 @@ export function CycleCountSessionPage() {
               {opened.snapshotAt ? ` · snapshot ${new Date(opened.snapshotAt).toLocaleString('tr-TR')}` : ''}
             </p>
           )}
+          {opening && !opened ? (
+            <p className="text-xs text-[var(--text-secondary)]">
+              Sahada yalnızca malzeme, fiili ölçü, adet/m³/m² ve istif etiketi (İstif A/B/C) yazılır. Material değişince lot
+              ayrılır; aynı malzemenin istifleri aynı açılış lotu altında paketlenir.
+            </p>
+          ) : null}
           {!gate.ok && !opened ? <p className="text-sm text-red-600">{gate.reason}</p> : null}
         </CardContent>
       </Card>
@@ -582,8 +616,10 @@ export function CycleCountSessionPage() {
           <CardHeader>
             <CardTitle>Giriş yöntemleri</CardTitle>
             <CardDescription>
-              Şablon {opened.number ? `${opened.number}-sayim.xlsx` : 'sayım kodu' } adıyla iner; aynı dosyayı kaydedip yükleyin.
-              Paket sütununa 1, 2, 3 yazın — sistem paket no ve barkod üretir.
+              Şablon {opened.number ? `${opened.number}-sayim.xlsx` : 'sayım kodu'} adıyla iner; aynı dosyayı kaydedip yükleyin.
+              {opening
+                ? ' İstif sütununa yalnızca saha etiketi yazın (İstif A / 1 / 2). Onayda sistem PKG + barkod üretir.'
+                : ' İstif sütunu mevcut fiziksel grubu işaretler. Periyodik sayım yeni Lot/Package/Barkod üretmez.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -741,7 +777,7 @@ export function CycleCountSessionPage() {
                     <th>NASWOOD Malzemesi</th>
                     <th>Gerçek ölçü</th>
                     <th>Adet</th>
-                    <th>Paket/İstif</th>
+                    <th>Fiziksel grup / İstif</th>
                     <th>Durum</th>
                   </tr>
                 </thead>
@@ -866,11 +902,11 @@ export function CycleCountSessionPage() {
         </p>
       ) : null}
 
-      {opened && counting ? (
+      {opened && counting && !opening ? (
         <Card>
           <CardHeader>
             <CardTitle>Sistem stok listesi</CardTitle>
-            <CardDescription>Sayım başındaki snapshot. Kör sayımda miktar gizlidir.</CardDescription>
+            <CardDescription>Periyodik sayım snapshot’ı. Kör sayımda miktar gizlidir.</CardDescription>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -905,6 +941,11 @@ export function CycleCountSessionPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sayılanlar</CardTitle>
+            <CardDescription>
+              {opening
+                ? 'Fiziksel grup / istif etiketini yazın (İstif A). Onay sonrası sistem PKG ve barkoda çevirir.'
+                : 'Mevcut stok kimliklerini doğrulayın; yeni paket numarası yazmayın.'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {draftLines.map((l, idx) => {
@@ -982,6 +1023,13 @@ export function CycleCountSessionPage() {
                     <span className="md:col-span-3 text-xs text-[var(--text-muted)]">Ölçü zorunlu değil</span>
                   )}
                   <Input placeholder="Adet" value={l.pieceCount} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, pieceCount: e.target.value } : x)))} />
+                  <Input
+                    placeholder={opening ? 'İstif A' : 'İstif / paket'}
+                    value={l.physicalGroupLabel ?? ''}
+                    onChange={(e) =>
+                      setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, physicalGroupLabel: e.target.value } : x)))
+                    }
+                  />
                   <div className="text-sm self-center">{calc.ok ? `${calc.qty.toFixed(4)} ${policy.stockUnit}` : calc.error}</div>
                   <Button variant="secondary" onClick={() => setDraftLines((p) => p.filter((_, i) => i !== idx))}>
                     Sil
@@ -1007,16 +1055,16 @@ export function CycleCountSessionPage() {
       {opened && (review || posted || physicalLines.length > 0) ? (
         <Card>
           <CardHeader>
-            <CardTitle>Stok sayım sonucu</CardTitle>
+            <CardTitle>{opening ? 'Açılış stok sonucu' : 'Stok sayım sonucu'}</CardTitle>
             <CardDescription>
-              Toplam {opened.summary?.totalLines ?? resultRows.length} · Uyumlu {opened.summary?.matched ?? 0} · Farklı{' '}
-              {opened.summary?.variance ?? 0} · Eşleşmeyen {(opened.summary?.unexpected ?? 0) + (opened.summary?.missing ?? 0)} ·
-              Sayım sırasında hareket {opened.midCountMovement ? 'VAR' : 'yok'}
+              {opening
+                ? `Fiziksel satır ${physicalLines.length}. Onayda malzeme başına LOT-OPEN, istif başına PKG + NW-PKG barkod.`
+                : `Toplam ${opened.summary?.totalLines ?? resultRows.length} · Uyumlu ${opened.summary?.matched ?? 0} · Farklı ${opened.summary?.variance ?? 0} · Eşleşmeyen ${(opened.summary?.unexpected ?? 0) + (opened.summary?.missing ?? 0)} · Sayım sırasında hareket ${opened.midCountMovement ? 'VAR' : 'yok'}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-2 text-sm">
-              {(['all', 'variance', 'matched', 'unmatched'] as const).map((f) => (
+              {(opening ? (['all'] as const) : (['all', 'variance', 'matched', 'unmatched'] as const)).map((f) => (
                 <button
                   key={f}
                   type="button"
@@ -1033,9 +1081,21 @@ export function CycleCountSessionPage() {
                   <tr className="text-left text-[var(--text-muted)]">
                     <th>Malzeme</th>
                     <th>Fiziksel ölçü</th>
-                    <th>Sistem</th>
-                    <th>Sayım</th>
-                    <th>Fark</th>
+                    {opening ? (
+                      <>
+                        <th>İstif</th>
+                        <th>Miktar</th>
+                        <th>Lot</th>
+                        <th>Paket</th>
+                        <th>Barkod</th>
+                      </>
+                    ) : (
+                      <>
+                        <th>Sistem</th>
+                        <th>Sayım</th>
+                        <th>Fark</th>
+                      </>
+                    )}
                     <th>Birim</th>
                     <th>Durum</th>
                   </tr>
@@ -1048,11 +1108,23 @@ export function CycleCountSessionPage() {
                         <div className="text-xs text-[var(--text-muted)]">{r.material}</div>
                       </td>
                       <td>{r.phys}</td>
-                      <td>{showSys || review || posted ? r.system : 'GİZLİ'}</td>
-                      <td>{r.counted}</td>
-                      <td>{showSys || review || posted ? r.diff : '—'}</td>
+                      {opening ? (
+                        <>
+                          <td>{r.istif || '—'}</td>
+                          <td>{r.counted}</td>
+                          <td>{r.lot || (posted ? '—' : 'onayda LOT-OPEN')}</td>
+                          <td>{r.pkg || (posted ? '—' : 'onayda PKG')}</td>
+                          <td>{r.barcode || (posted ? '—' : 'onayda NW-PKG')}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{showSys || review || posted ? r.system : 'GİZLİ'}</td>
+                          <td>{r.counted}</td>
+                          <td>{showSys || review || posted ? r.diff : '—'}</td>
+                        </>
+                      )}
                       <td>{r.unit}</td>
-                      <td>{statusLabel(r.status)}</td>
+                      <td>{opening ? (posted ? 'AÇILIŞ İŞLENDİ' : 'AÇILIŞ') : statusLabel(r.status)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1060,7 +1132,7 @@ export function CycleCountSessionPage() {
             </div>
             {review && !posted ? (
               <Button disabled={!canSave || postMut.isPending} onClick={() => postMut.mutate()}>
-                Farkları onayla ve stoğa işle
+                {opening ? 'Açılış stoğunu onayla ve sisteme al' : 'Farkları onayla ve stoğa işle'}
               </Button>
             ) : null}
             {postResult ? <p className="text-sm">{postResult}</p> : null}
