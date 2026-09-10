@@ -20,6 +20,8 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Inventory.MaterialIdentity> MaterialIdentities => Set<Naswood.Modules.Business.Domain.Inventory.MaterialIdentity>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.InventoryPackage> InventoryPackages => Set<Naswood.Modules.Business.Domain.Inventory.InventoryPackage>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.InventoryMovement> InventoryMovements => Set<Naswood.Modules.Business.Domain.Inventory.InventoryMovement>();
+    public DbSet<Naswood.Modules.Business.Domain.Inventory.PackageOperation> PackageOperations => Set<Naswood.Modules.Business.Domain.Inventory.PackageOperation>();
+    public DbSet<Naswood.Modules.Business.Domain.Inventory.PackageRelation> PackageRelations => Set<Naswood.Modules.Business.Domain.Inventory.PackageRelation>();
     public DbSet<Naswood.Modules.Business.Domain.Purchasing.Supplier> Suppliers => Set<Naswood.Modules.Business.Domain.Purchasing.Supplier>();
     public DbSet<Naswood.Modules.Business.Domain.Purchasing.PurchaseRequest> PurchaseRequests => Set<Naswood.Modules.Business.Domain.Purchasing.PurchaseRequest>();
     public DbSet<Naswood.Modules.Business.Domain.Purchasing.Rfq> Rfqs => Set<Naswood.Modules.Business.Domain.Purchasing.Rfq>();
@@ -202,9 +204,10 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.LotNumber).HasMaxLength(200);
             entity.Property(x => x.WarehouseCode).HasMaxLength(200);
             entity.Property(x => x.LocationCode).HasMaxLength(200);
+            entity.Property(x => x.Quantity).HasColumnType("numeric(18,4)").IsConcurrencyToken();
             entity.Property(x => x.UnitOfMeasure).HasMaxLength(50);
             entity.Property(x => x.Barcode).HasMaxLength(200);
-            entity.Property(x => x.Status).HasMaxLength(50);
+            entity.Property(x => x.Status).HasMaxLength(50).IsConcurrencyToken();
             entity.Property(x => x.PublicId).HasMaxLength(40);
             entity.Property(x => x.PhysicalGroupLabel).HasMaxLength(200);
             entity.Property(x => x.SourcePlantId).HasMaxLength(20);
@@ -911,6 +914,38 @@ public sealed class BusinessDbContext : DbContext
             entity.HasIndex(x => x.ProductionLotId);
             entity.HasIndex(x => x.SourceLotId);
             entity.HasIndex(x => x.ProductionOutputId);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.PackageOperation>(entity =>
+        {
+            entity.ToTable("business_inventory_packageoperation");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Number).HasMaxLength(80);
+            entity.Property(x => x.OperationType).HasMaxLength(40);
+            entity.Property(x => x.Status).HasMaxLength(40);
+            entity.Property(x => x.WarehouseCode).HasMaxLength(200);
+            entity.Property(x => x.LocationCode).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasMaxLength(500);
+            entity.Property(x => x.PostedBy).HasMaxLength(200);
+            entity.HasIndex(x => new { x.PlantId, x.Number });
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.PackageRelation>(entity =>
+        {
+            entity.ToTable("business_inventory_packagerelation");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.RelationType).HasMaxLength(40);
+            entity.Property(x => x.Unit).HasMaxLength(40);
+            entity.HasIndex(x => x.OperationId);
+            entity.HasIndex(x => x.SourcePackageId);
+            entity.HasIndex(x => x.TargetPackageId);
+            entity.HasIndex(x => new { x.OperationId, x.SourcePackageId, x.TargetPackageId, x.RelationType }).IsUnique();
         });
     }
 }

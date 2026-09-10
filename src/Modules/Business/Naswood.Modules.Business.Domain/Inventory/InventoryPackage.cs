@@ -13,6 +13,8 @@ public static class InventoryPackageStatuses
     public const string Cancelled = "Cancelled";
     public const string Closed = "Closed";
     public const string Rejected = "Rejected";
+    public const string Merged = "Merged";
+    public const string Repacked = "Repacked";
 
     public static bool IsConsumable(string? status)
         => string.Equals(status, Available, StringComparison.OrdinalIgnoreCase);
@@ -26,7 +28,13 @@ public static class InventoryPackageStatuses
     public static bool IsClosed(string? status)
         => string.Equals(status, Cancelled, StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, Closed, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, Rejected, StringComparison.OrdinalIgnoreCase);
+            || string.Equals(status, Rejected, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Merged, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Repacked, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsPhysicalActive(string? status)
+        => string.Equals(status, Available, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Quarantine, StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed class InventoryPackage : BusinessEntity
@@ -202,6 +210,28 @@ public sealed class InventoryPackage : BusinessEntity
     public void MarkCancelled()
     {
         Status = InventoryPackageStatuses.Cancelled;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void ReducePhysical(decimal quantity)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Quantity must be positive.");
+        if (!InventoryPackageStatuses.IsPhysicalActive(Status))
+            throw new InvalidOperationException("Package is not physically active.");
+        if (Quantity < quantity) throw new InvalidOperationException("Insufficient package quantity.");
+        Quantity -= quantity;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkMerged()
+    {
+        Status = InventoryPackageStatuses.Merged;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkRepacked()
+    {
+        Status = InventoryPackageStatuses.Repacked;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

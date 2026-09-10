@@ -51,4 +51,14 @@ public sealed class ProductionLotSourceRepository : IProductionLotSourceReposito
             .OrderBy(x => x.CreatedAt)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<ProductionLotSource>> ListBySourcePackageIdsAsync(IReadOnlyList<Guid> packageIds, CancellationToken cancellationToken = default)
+    {
+        var ids = packageIds.Distinct().ToArray();
+        if (ids.Length == 0) return Array.Empty<ProductionLotSource>();
+        return await _db.Set<ProductionLotSource>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.SourcePackageId != null && ids.Contains(x.SourcePackageId.Value))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

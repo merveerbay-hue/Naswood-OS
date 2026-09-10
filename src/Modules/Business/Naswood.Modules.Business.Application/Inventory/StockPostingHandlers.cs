@@ -43,6 +43,7 @@ public interface IInventoryPackageRepository
     Task<IReadOnlyList<InventoryPackage>> ListByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
     Task AddContentsAsync(IReadOnlyList<InventoryPackageContent> rows, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryPackageContent>> ListContentsAsync(Guid packageId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryPackageContent>> ListContentsForUpdateAsync(Guid packageId, CancellationToken cancellationToken = default);
 }
 
 public interface IInventoryMovementRepository

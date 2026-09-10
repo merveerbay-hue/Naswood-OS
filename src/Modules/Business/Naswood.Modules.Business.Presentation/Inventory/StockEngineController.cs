@@ -142,7 +142,7 @@ public sealed class StockEngineController : ControllerBase
     }
 
     [HttpPost("api/v1/packages/{id:guid}/relocate")]
-    [RequirePermission("Inventory.View")]
+    [RequirePermission("Inventory.Package.Move")]
     public async Task<IActionResult> RelocatePackage(Guid id, [FromBody] RelocatePackageRequestDto body, CancellationToken cancellationToken)
     {
         var result = await _dispatcher.SendAsync(
@@ -154,6 +154,46 @@ public sealed class StockEngineController : ControllerBase
                 User.Identity?.Name ?? string.Empty),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Paket lokasyonu güncellendi.");
+    }
+
+    [HttpPost("api/v1/packages/{id:guid}/split")]
+    [RequirePermission("Inventory.Package.Split")]
+    public async Task<IActionResult> SplitPackage(Guid id, [FromBody] SplitPackageRequestDto body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new SplitPackageCommand(id, body, PlantClaims.AllowedPlantIds(User), User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: result.IsSuccess ? result.Value.Message : null);
+    }
+
+    [HttpPost("api/v1/packages/merge")]
+    [RequirePermission("Inventory.Package.Merge")]
+    public async Task<IActionResult> MergePackages([FromBody] MergePackagesRequestDto body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new MergePackagesCommand(body, PlantClaims.AllowedPlantIds(User), User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: result.IsSuccess ? result.Value.Message : null);
+    }
+
+    [HttpPost("api/v1/packages/{id:guid}/repack")]
+    [RequirePermission("Inventory.Package.Repack")]
+    public async Task<IActionResult> RepackPackage(Guid id, [FromBody] RepackPackageRequestDto body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new RepackPackageCommand(id, body, PlantClaims.AllowedPlantIds(User), User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: result.IsSuccess ? result.Value.Message : null);
+    }
+
+    [HttpPost("api/v1/packages/{id:guid}/partial-move")]
+    [RequirePermission("Inventory.Package.Move")]
+    public async Task<IActionResult> PartialMovePackage(Guid id, [FromBody] PartialMovePackageRequestDto body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new PartialMovePackageCommand(id, body, PlantClaims.AllowedPlantIds(User), User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: result.IsSuccess ? result.Value.Message : null);
     }
 
     [HttpGet("api/v1/material-identities")]

@@ -246,6 +246,28 @@ public class ProductionOutputChainTests
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{Uri.EscapeDataString(barcode)}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Output_reverse_blocked_after_package_split()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 10);
+        var client = await LoginAsync();
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.DefaultPost(3, 2));
+        posted.EnsureSuccessStatusCode();
+        using var postedDoc = JsonDocument.Parse(await posted.Content.ReadAsStringAsync());
+        var data = postedDoc.RootElement.GetProperty("data");
+        var outputId = data.GetProperty("outputId").GetGuid();
+        var pkgId = data.GetProperty("packages")[0].GetProperty("packageId").GetGuid();
+
+        var split = await client.PostAsJsonAsync($"/api/v1/packages/{pkgId}/split", new { lines = new[] { new { quantity = 1m } } });
+        split.EnsureSuccessStatusCode();
+
+        var reverse = await client.PostAsJsonAsync($"/api/v1/production-outputs/{outputId}/reverse", new { reason = "geri" });
+        Assert.Equal(HttpStatusCode.BadRequest, reverse.StatusCode);
+        using var err = JsonDocument.Parse(await reverse.Content.ReadAsStringAsync());
+        Assert.Equal("PKG-LIFE-006", err.RootElement.GetProperty("errors")[0].GetProperty("code").GetString());
+    }
+
     private decimal BalanceOf(string lot)
     {
         using var scope = _factory.Services.CreateScope();

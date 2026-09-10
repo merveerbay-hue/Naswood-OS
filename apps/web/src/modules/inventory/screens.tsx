@@ -284,6 +284,7 @@ export function PackageListPage() {
         <Link className="underline" to="/inventory/stock/scan">
           Barkod tara
         </Link>
+        <span className="text-[var(--text-muted)]">Paketleri birleştirmek için pasaporttaki Birleştir eylemini kullanın.</span>
       </div>
       <EntityListScreen
         screenId="INV-PKG"
