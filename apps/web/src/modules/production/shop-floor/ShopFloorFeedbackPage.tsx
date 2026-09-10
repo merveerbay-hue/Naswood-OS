@@ -23,6 +23,8 @@ export function ShopFloorFeedbackPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">{LABELS[row.topic] ?? row.topic}</CardTitle>
             <p className="text-sm text-muted-foreground">
+              {row.impact === 'BLOCKING' ? 'İşi durduruyor' : 'Devam edebiliyorum'}
+              {' · '}
               {new Date(row.occurredAt).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })} · {row.userId}
             </p>
           </CardHeader>
@@ -30,6 +32,7 @@ export function ShopFloorFeedbackPage() {
             {row.note ? <p>{row.note}</p> : null}
             <p>{row.screen}</p>
             <p>{row.workCenterCode || '—'} · {row.executionNumber || '—'} · {row.productionOrderNumber || '—'}</p>
+            <p className="font-mono text-xs">{row.appVersion || '—'} {row.gitSha ? `· ${row.gitSha.slice(0, 12)}` : ''}</p>
           </CardContent>
         </Card>
       ))}

@@ -1079,10 +1079,11 @@ public sealed class ProductionExecutionGateway
                 plant = exec.PlantId ?? plant;
             }
         }
+        var stamp = ShopFloorReleaseStamp.Current();
         var row = ShopFloorFieldFeedback.Create(
             topic, body.Note, body.Screen, actor,
             body.WorkCenterId, body.WorkCenterCode, body.ExecutionId, body.ExecutionNumber,
-            body.ProductionOrderNumber, plant);
+            body.ProductionOrderNumber, body.Impact, stamp.Version, stamp.GitSha, plant);
         await _store.AddFeedbackAsync(row, cancellationToken).ConfigureAwait(false);
         return Result.Success(MapFeedback(row));
     }
@@ -1092,7 +1093,11 @@ public sealed class ProductionExecutionGateway
     {
         var plant = allowed is { Count: > 0 } ? allowed[0] : null;
         var rows = await _store.ListFeedbackAsync(plant, 100, cancellationToken).ConfigureAwait(false);
-        return Result.Success<IReadOnlyList<ShopFloorFeedbackDto>>(rows.Select(MapFeedback).ToArray());
+        return Result.Success<IReadOnlyList<ShopFloorFeedbackDto>>(rows
+            .OrderByDescending(r => r.Impact == ShopFloorFeedbackImpact.Blocking)
+            .ThenByDescending(r => r.CreatedAt)
+            .Select(MapFeedback)
+            .ToArray());
     }
 
     private static ShopFloorFeedbackDto MapFeedback(ShopFloorFieldFeedback row)
@@ -1109,6 +1114,9 @@ public sealed class ProductionExecutionGateway
             ExecutionNumber = row.ExecutionNumber,
             ProductionOrderNumber = row.ProductionOrderNumber,
             PlantId = row.PlantId ?? "",
+            Impact = row.Impact,
+            AppVersion = row.AppVersion,
+            GitSha = row.GitSha,
             OccurredAt = row.CreatedAt
         };
 

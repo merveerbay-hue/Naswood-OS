@@ -484,7 +484,8 @@ public class ProductionExecutionChainTests
             workCenterCode = "WC-FJ",
             executionId = exec,
             executionNumber = "PEX-TEST",
-            productionOrderNumber = "PO-260901"
+            productionOrderNumber = "PO-260901",
+            impact = "BLOCKING"
         });
         posted.EnsureSuccessStatusCode();
         var list = await client.GetAsync("/api/v1/production-execution/feedback");
@@ -492,6 +493,8 @@ public class ProductionExecutionChainTests
         var rows = (await Data(list)).EnumerateArray().ToArray();
         Assert.Single(rows);
         Assert.Equal("BARCODE_FAIL", rows[0].GetProperty("topic").GetString());
+        Assert.Equal("BLOCKING", rows[0].GetProperty("impact").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(rows[0].GetProperty("appVersion").GetString()));
         Assert.False(string.IsNullOrWhiteSpace(rows[0].GetProperty("userId").GetString()));
         Assert.Equal(exec, rows[0].GetProperty("executionId").GetGuid());
         Assert.Contains("shop-floor", rows[0].GetProperty("screen").GetString());

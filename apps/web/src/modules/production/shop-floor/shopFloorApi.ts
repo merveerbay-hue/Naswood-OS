@@ -62,6 +62,9 @@ export type ShopFloorFeedback = {
   executionNumber: string;
   productionOrderNumber: string;
   plantId: string;
+  impact: string;
+  appVersion: string;
+  gitSha: string;
   occurredAt: string;
 };
 
@@ -201,6 +204,7 @@ export function submitShopFloorFeedback(body: {
   executionId?: string;
   executionNumber?: string;
   productionOrderNumber?: string;
+  impact: string;
 }) {
   return apiRequest<ShopFloorFeedback>('/api/v1/production-execution/feedback', {
     method: 'POST',

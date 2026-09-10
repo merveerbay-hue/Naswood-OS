@@ -1038,6 +1038,9 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.WorkCenterCode).HasMaxLength(80);
             entity.Property(x => x.ExecutionNumber).HasMaxLength(80);
             entity.Property(x => x.ProductionOrderNumber).HasMaxLength(80);
+            entity.Property(x => x.Impact).HasMaxLength(20);
+            entity.Property(x => x.AppVersion).HasMaxLength(120);
+            entity.Property(x => x.GitSha).HasMaxLength(40);
             entity.HasIndex(x => x.CreatedAt);
             entity.HasIndex(x => x.WorkCenterId);
         });

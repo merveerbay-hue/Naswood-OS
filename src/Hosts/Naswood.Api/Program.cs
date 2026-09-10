@@ -346,8 +346,14 @@ using (var scope = app.Services.CreateScope())
             "WorkCenterCode" character varying(80) NOT NULL DEFAULT '',
             "ExecutionId" uuid NULL,
             "ExecutionNumber" character varying(80) NOT NULL DEFAULT '',
-            "ProductionOrderNumber" character varying(80) NOT NULL DEFAULT ''
+            "ProductionOrderNumber" character varying(80) NOT NULL DEFAULT '',
+            "Impact" character varying(20) NOT NULL DEFAULT 'CAN_CONTINUE',
+            "AppVersion" character varying(120) NOT NULL DEFAULT '',
+            "GitSha" character varying(40) NOT NULL DEFAULT ''
         );
+        ALTER TABLE IF EXISTS business.business_production_shopfloor_feedback ADD COLUMN IF NOT EXISTS "Impact" character varying(20) NOT NULL DEFAULT 'CAN_CONTINUE';
+        ALTER TABLE IF EXISTS business.business_production_shopfloor_feedback ADD COLUMN IF NOT EXISTS "AppVersion" character varying(120) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_shopfloor_feedback ADD COLUMN IF NOT EXISTS "GitSha" character varying(40) NOT NULL DEFAULT '';
         CREATE INDEX IF NOT EXISTS "IX_prd_sf_feedback_created" ON business.business_production_shopfloor_feedback ("CreatedAt");
         UPDATE business.business_inventory_package
         SET "PublicId" = replace("Id"::text, '-', '')

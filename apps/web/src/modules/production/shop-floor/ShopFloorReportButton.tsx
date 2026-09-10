@@ -22,6 +22,7 @@ type Props = {
 export function ShopFloorReportButton(props: Props) {
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState<string>('BARCODE_FAIL');
+  const [impact, setImpact] = useState<'CAN_CONTINUE' | 'BLOCKING'>('CAN_CONTINUE');
   const [note, setNote] = useState('');
   const [done, setDone] = useState('');
 
@@ -35,6 +36,7 @@ export function ShopFloorReportButton(props: Props) {
       executionId: props.executionId,
       executionNumber: props.executionNumber ?? '',
       productionOrderNumber: props.productionOrderNumber ?? '',
+      impact,
     }),
     onSuccess: () => {
       setDone('Kaydedildi. Teşekkürler.');
@@ -57,6 +59,15 @@ export function ShopFloorReportButton(props: Props) {
                 {t.label}
               </Button>
             ))}
+            <p className="pt-1 text-sm font-medium">İş durdu mu?</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button type="button" variant={impact === 'BLOCKING' ? 'default' : 'secondary'} className="h-12" onClick={() => setImpact('BLOCKING')}>
+                İşi durduruyor
+              </Button>
+              <Button type="button" variant={impact === 'CAN_CONTINUE' ? 'default' : 'secondary'} className="h-12" onClick={() => setImpact('CAN_CONTINUE')}>
+                Devam edebiliyorum
+              </Button>
+            </div>
             <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Kısa not (isteğe bağlı)" className="h-11" />
             {done ? <p className="text-sm text-green-700">{done}</p> : null}
             {send.isError ? <p className="text-sm text-red-700">{send.error.message}</p> : null}

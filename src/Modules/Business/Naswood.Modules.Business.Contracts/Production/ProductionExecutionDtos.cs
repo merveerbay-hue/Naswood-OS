@@ -241,6 +241,8 @@ public sealed class ShopFloorFeedbackRequestDto
     public Guid? ExecutionId { get; init; }
     public string ExecutionNumber { get; init; } = string.Empty;
     public string ProductionOrderNumber { get; init; } = string.Empty;
+    /// <summary>Operator choice: BLOCKING or CAN_CONTINUE. Not a technical severity.</summary>
+    public string Impact { get; init; } = "CAN_CONTINUE";
 }
 
 public sealed class ShopFloorFeedbackDto
@@ -256,5 +258,8 @@ public sealed class ShopFloorFeedbackDto
     public string ExecutionNumber { get; init; } = string.Empty;
     public string ProductionOrderNumber { get; init; } = string.Empty;
     public string PlantId { get; init; } = string.Empty;
+    public string Impact { get; init; } = string.Empty;
+    public string AppVersion { get; init; } = string.Empty;
+    public string GitSha { get; init; } = string.Empty;
     public DateTimeOffset OccurredAt { get; init; }
 }
