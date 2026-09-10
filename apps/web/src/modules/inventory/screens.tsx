@@ -278,12 +278,12 @@ export function LotListPage() {
   return (
     <EntityListScreen
       screenId="INV-010"
-      title="Lot / Parti"
-      description="Lot = sevkiyat / parti. Aynı Lot altında farklı ölçü grupları, depolar ve kalite durumları olabilir. MI operatör ekranında gösterilmez."
+      title={t('inventory.lotsTitle')}
+      description={t('inventory.lotsDesc')}
       route="batches"
       fields={useInvFields().batch}
-      createLabel={t('inventory.newLot')}
       plantId={plantId}
+      readOnly
     />
   );
 }

@@ -15,6 +15,7 @@ import { collectNavPaths } from './navigation/nav-config';
 import { FilesPage } from './pages/FilesPage';
 import { PlantFactoryAdminPage } from './modules/admin/PlantFactoryAdminPage';
 import { InventoryWorkspaceLayout } from './modules/inventory/InventoryWorkspaceLayout';
+import { ProductionPointsPage } from './modules/inventory/production-points/ProductionPointsPage';
 import { InventoryDashboardPage } from './modules/inventory/overview/InventoryDashboardPage';
 import {
   AdjustmentListPage,
@@ -214,6 +215,11 @@ const invLocationsRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'master-data/locations',
   component: LocationListPage,
+});
+const invProductionPointsRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'master-data/production-points',
+  component: ProductionPointsPage,
 });
 const invDefineMaterialRoute = createRoute({
   getParentRoute: () => inventoryRoute,
@@ -486,6 +492,7 @@ const implemented = new Set([
   '/inventory/master-data/materials',
   '/inventory/master-data/warehouses',
   '/inventory/master-data/locations',
+  '/inventory/master-data/production-points',
   '/inventory/stock/balances',
   '/inventory/stock/lots',
   '/inventory/stock/packages',
@@ -628,6 +635,7 @@ export const routeTree = rootRoute.addChildren([
       invWarehousesRoute,
       invWarehouseDetailRoute,
       invLocationsRoute,
+      invProductionPointsRoute,
       invDefineMaterialRoute,
       invDefineWarehouseRoute,
       invBalancesRoute,

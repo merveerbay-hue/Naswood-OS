@@ -21,10 +21,9 @@ export const inventoryWorkspaces: WorkspaceDefinition[] = [
     id: 'stock',
     label: 'Stok',
     items: [
-      { id: 'inv-014', label: 'Stok Bakiyesi', path: '/inventory/stock/balances', screenId: 'INV-014' },
-      { id: 'inv-010', label: 'Lot / Parti', path: '/inventory/stock/lots', screenId: 'INV-010' },
-      { id: 'inv-pkg', label: 'Paketler', path: '/inventory/stock/packages', screenId: 'INV-PKG' },
+      { id: 'inv-014', label: 'Stok Görünümü', path: '/inventory/stock/balances', screenId: 'INV-014' },
       { id: 'inv-mv', label: 'Stok Hareketleri', path: '/inventory/stock/movements', screenId: 'INV-MV' },
+      { id: 'inv-pkg', label: 'Paketler', path: '/inventory/stock/packages', screenId: 'INV-PKG' },
     ],
   },
   {
@@ -47,12 +46,21 @@ export const inventoryWorkspaces: WorkspaceDefinition[] = [
         screenId: 'INV-MAT-001',
       },
       { id: 'inv-006', label: 'Depolar', path: '/inventory/master-data/warehouses', screenId: 'INV-006' },
-      { id: 'inv-008', label: 'Lokasyonlar', path: '/inventory/master-data/locations', screenId: 'INV-008' },
+      { id: 'inv-008', label: 'Stok Lokasyonları', path: '/inventory/master-data/locations', screenId: 'INV-008' },
+      {
+        id: 'inv-pp',
+        label: 'Üretim Noktaları',
+        path: '/inventory/master-data/production-points',
+        screenId: 'INV-PP',
+      },
     ],
   },
   {
     id: 'reports',
     label: 'Raporlar',
-    items: [{ id: 'inv-025', label: 'Raporlar', path: '/inventory/reports', screenId: 'INV-025' }],
+    items: [
+      { id: 'inv-025', label: 'Raporlar', path: '/inventory/reports', screenId: 'INV-025' },
+      { id: 'inv-010', label: 'Lot sorgula', path: '/inventory/stock/lots', screenId: 'INV-010' },
+    ],
   },
 ];
