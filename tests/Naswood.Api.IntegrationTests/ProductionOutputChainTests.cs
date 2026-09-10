@@ -34,7 +34,6 @@ public class ProductionOutputChainTests
             stockStatus = "Available",
             plantId = Plant,
             skipSourceIssue = true,
-            SkipSourceIssue = true,
             lines = new[] { new { physicalGroupLabel = "İstif A", pieceCount = 4m } },
             sources = new[]
             {

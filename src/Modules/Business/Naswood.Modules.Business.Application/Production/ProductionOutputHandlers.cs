@@ -581,6 +581,12 @@ public sealed class ProductionOutputGateway
                 && m.Quantity == src.ConsumedQuantity);
             var wh = consumeMove?.WarehouseCode ?? "";
             var loc = consumeMove?.LocationCode ?? "";
+            if ((wh.Length == 0 || loc.Length == 0) && src.SourcePackageId is Guid linkedPkgId)
+            {
+                var linked = await _packages.GetByIdAsync(linkedPkgId, cancellationToken).ConfigureAwait(false);
+                wh = string.IsNullOrWhiteSpace(wh) ? linked?.WarehouseCode ?? "" : wh;
+                loc = string.IsNullOrWhiteSpace(loc) ? linked?.LocationCode ?? "" : loc;
+            }
             if (wh.Length == 0 || loc.Length == 0)
                 return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-025", $"Kaynak hareketi bulunamadı: {sourceLot.BatchNumber}"));
             var srcBalance = await _balances.FindByKeyAsync(sourceLot.MaterialCode, wh, loc, sourceLot.BatchNumber, doc.PlantId, cancellationToken).ConfigureAwait(false);

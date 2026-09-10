@@ -78,7 +78,7 @@ public class ProductionExecutionChainTests
         { barcode = world.BarcodeA, quantity = 1.2m, packageContentId = world.ContentAId, pieceCount = 12m, idempotencyKey = "a1" });
         c1.EnsureSuccessStatusCode();
         var c1b = await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1}/consume", new
-        { barcode = world.BarcodeA, quantity = 1.2m, idempotencyKey = "a1" });
+        { barcode = world.BarcodeA, quantity = 1.2m, packageContentId = world.ContentAId, pieceCount = 12m, idempotencyKey = "a1" });
         c1b.EnsureSuccessStatusCode();
         Assert.True((await Data(c1b)).GetProperty("idempotentReplay").GetBoolean());
 
@@ -422,11 +422,12 @@ public class ProductionExecutionChainTests
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            var execNo = db.ProductionOperationExecutions.Single(e => e.Id == exec1c).Number;
+            var moves = db.InventoryMovements.Where(m => !m.IsDeleted).ToList();
             Assert.Equal("RUNNING", db.ProductionOperationExecutions.Single(e => e.Id == exec1c).Status);
             Assert.Equal(0.8m, db.InventoryPackages.Single(p => p.Barcode == world.BarcodeA).Quantity);
-            Assert.DoesNotContain(db.InventoryMovements, m =>
-                m.DocumentNumber == db.ProductionOperationExecutions.Single(e => e.Id == exec1c).Number
-                && m.MovementType == ProductionLotCodes.ConsumptionReversalMovement);
+            Assert.DoesNotContain(moves, m =>
+                m.DocumentNumber == execNo && m.MovementType == ProductionLotCodes.ConsumptionReversalMovement);
         }
 
         (await client.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec1c}/complete", new
