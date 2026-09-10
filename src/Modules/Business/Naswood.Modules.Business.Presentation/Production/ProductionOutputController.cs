@@ -68,4 +68,20 @@ public sealed class ProductionOutputController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Üretim çıkışı tersine çevrildi.");
     }
+
+    [HttpPost("api/v1/production-outputs/{id:guid}/qc")]
+    [RequirePermission("QualityInspection.Execute")]
+    public async Task<IActionResult> DecideQc(Guid id, [FromBody] ProductionOutputQcRequestDto? body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new DecideProductionOutputQcCommand(
+                id,
+                body?.Decision ?? string.Empty,
+                body?.InspectionReference ?? string.Empty,
+                body?.Notes ?? string.Empty,
+                PlantClaims.AllowedPlantIds(User),
+                User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "QC kararı kaydedildi.");
+    }
 }

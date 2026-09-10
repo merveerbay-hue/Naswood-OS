@@ -890,6 +890,10 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PostedBy).HasMaxLength(200);
             entity.Property(x => x.CancelledBy).HasMaxLength(200);
             entity.Property(x => x.CancelReason).HasMaxLength(500);
+            entity.Property(x => x.QcDecision).HasMaxLength(40);
+            entity.Property(x => x.QcDecidedBy).HasMaxLength(200);
+            entity.Property(x => x.QcInspectionReference).HasMaxLength(120);
+            entity.Property(x => x.QcNotes).HasMaxLength(500);
             entity.HasIndex(x => x.Number);
             entity.HasIndex(x => x.ProductionOrderId);
             entity.HasIndex(x => x.OutputBatchId);

@@ -11,6 +11,7 @@ import {
   previewProductionOutput,
   reverseProductionOutput,
   scanProductionConsumption,
+  decideProductionOutputQc,
   type ProductionOutputPreview,
   type ProductionOutputResult,
 } from './productionOutputApi';
@@ -78,6 +79,8 @@ export function ProductionOutputPage() {
   const [preview, setPreview] = useState<ProductionOutputPreview | null>(null);
   const [result, setResult] = useState<ProductionOutputResult | null>(null);
   const [reverseReason, setReverseReason] = useState('');
+  const [qcRef, setQcRef] = useState('');
+  const [qcNotes, setQcNotes] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -189,6 +192,19 @@ export function ProductionOutputPage() {
       ]);
       setScanCode('');
       setPreview(null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onQc(decision: 'Released' | 'Rejected') {
+    if (!result) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      setResult(await decideProductionOutputQc(result.outputId, decision, qcRef, qcNotes));
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -439,7 +455,8 @@ export function ProductionOutputPage() {
           <CardContent className="space-y-2 text-sm">
             <div>Belge: {result.number} · {result.status}</div>
             <div>Üretim lotu: {result.productionLotNumber}</div>
-            <div>Stok durumu: {result.stockStatus}</div>
+            <div>Stok durumu: {result.stockStatus}{result.qcDecision ? ` · QC ${result.qcDecision}` : ''}</div>
+            {result.qcInspectionReference ? <div>QC ref: {result.qcInspectionReference}</div> : null}
             <div>
               Paket: {result.packageCount} · Çıktı: {result.outputQuantity} {result.unit}
             </div>
@@ -458,6 +475,18 @@ export function ProductionOutputPage() {
                 Stok görünümü
               </Link>
             </div>
+            {!result.reversed && result.status === 'POSTED' && result.stockStatus === 'Quarantine' && !result.qcDecision ? (
+              <div className="grid gap-2 pt-2 md:grid-cols-2">
+                <Input placeholder="Muayene / test referansı" value={qcRef} onChange={(e) => setQcRef(e.target.value)} />
+                <Input placeholder="QC notu" value={qcNotes} onChange={(e) => setQcNotes(e.target.value)} />
+                <Button disabled={busy || !qcRef.trim()} onClick={() => void onQc('Released')}>
+                  QC Release → Available
+                </Button>
+                <Button variant="secondary" disabled={busy || !qcRef.trim()} onClick={() => void onQc('Rejected')}>
+                  QC Reject → Blocked
+                </Button>
+              </div>
+            ) : null}
             {!result.reversed && result.status === 'POSTED' ? (
               <div className="flex flex-wrap gap-2 pt-2">
                 <Input

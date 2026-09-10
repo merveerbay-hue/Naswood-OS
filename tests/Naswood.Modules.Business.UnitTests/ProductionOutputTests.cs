@@ -191,4 +191,60 @@ public sealed class ProductionOutputTests
         Assert.False(doc.IsDeleted);
         Assert.Throws<InvalidOperationException>(() => doc.MarkPosted(Guid.NewGuid(), "X", 1, 1, 0, "PCS", "admin"));
     }
+
+    [Fact]
+    public void Package_integrity_sums_rows_against_physical_qty()
+    {
+        var id = Guid.NewGuid();
+        var pkgs = new Dictionary<Guid, PackagePhysicalSnapshot>
+        {
+            [id] = new(id, "NW-PKG-1", InventoryPackageStatuses.Available, 2.00m, 2.00m)
+        };
+        var ok = PackageConsumptionIntegrity.Validate(new[] { (id, 1.20m), (id, 0.80m) }, pkgs);
+        Assert.True(ok.IsSuccess);
+        var over = PackageConsumptionIntegrity.Validate(new[] { (id, 1.20m), (id, 1.20m) }, pkgs);
+        Assert.True(over.IsFailure);
+        Assert.Equal("PRD-OUT-017", over.Error!.Code);
+    }
+
+    [Fact]
+    public void Consumed_package_restores_same_identity_output_cancel_keeps_qty()
+    {
+        var material = FjLamel();
+        var lot = Batch.Create("LOT-GR-A", material.Code, 2, null, "Active", plantId: "F01");
+        var pkg = InventoryPackage.Create(
+            "NW-PKG-F01-26-000010", "MI-1", material.Code, lot.BatchNumber, "WH", "A", 2, "M3",
+            "NWPKG-F01-26-000010", plantId: "F01", materialId: material.Id, batchId: lot.Id);
+        pkg.Consume(2);
+        Assert.Equal(InventoryPackageStatuses.Consumed, pkg.Status);
+        Assert.Equal(0m, pkg.Quantity);
+        pkg.Restore(2);
+        Assert.Equal(InventoryPackageStatuses.Available, pkg.Status);
+        Assert.Equal(2m, pkg.Quantity);
+        Assert.Equal("NW-PKG-F01-26-000010", pkg.PackageNumber);
+        Assert.Equal("NWPKG-F01-26-000010", pkg.Barcode);
+
+        var outPkg = InventoryPackage.Create(
+            "NW-PKG-F01-26-000011", "MI-2", material.Code, "LOT-PR-1", "WH", "A", 4, "PCS",
+            "NWPKG-F01-26-000011", "Quarantine", plantId: "F01", materialId: material.Id, batchId: Guid.NewGuid());
+        outPkg.MarkCancelled();
+        Assert.Equal(4m, outPkg.Quantity);
+        Assert.Equal(InventoryPackageStatuses.Cancelled, outPkg.Status);
+        Assert.False(InventoryPackageStatuses.IsConsumable(outPkg.Status));
+        Assert.Throws<InvalidOperationException>(() => outPkg.Consume(1));
+        Assert.Throws<InvalidOperationException>(() => outPkg.Restore(1));
+    }
+
+    [Fact]
+    public void Qc_release_and_reject_change_status_not_qty()
+    {
+        var doc = ProductionOutput.Create("POUT-2", Guid.NewGuid(), Guid.NewGuid(), "CLT-001", "WH", "A", null, null, "WC-CLT", "Quarantine", "PLANT-001");
+        doc.MarkPosted(Guid.NewGuid(), "LOT-PR-1", 2, 4, 0, "PCS", "admin");
+        doc.RecordQc("Released", "qa", "INS-1", "ok");
+        Assert.Equal(ProductionQcDecisions.Released, doc.QcDecision);
+        Assert.Equal("Available", doc.StockStatus);
+        Assert.Equal(4m, doc.OutputQuantity);
+        Assert.Equal("INS-1", doc.QcInspectionReference);
+        Assert.Throws<InvalidOperationException>(() => doc.RecordQc("Rejected", "qa", "INS-2", "no"));
+    }
 }

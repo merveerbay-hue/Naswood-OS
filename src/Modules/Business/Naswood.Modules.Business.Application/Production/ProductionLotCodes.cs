@@ -13,7 +13,12 @@ public static class ProductionLotCodes
     public const string ConsumptionMovement = "PRODUCTION_CONSUMPTION";
     public const string OutputReversalMovement = "PRODUCTION_OUTPUT_REVERSAL";
     public const string ConsumptionReversalMovement = "PRODUCTION_CONSUMPTION_REVERSAL";
+    public const string QcReleaseMovement = "QC_RELEASE";
+    public const string QcRejectMovement = "QC_REJECT";
     public const string LotPrefix = "LOT-PR-";
+
+    public static string QcNotes(string decision, string inspectionReference, string actor)
+        => $"qc={decision} ref={inspectionReference} actor={actor} qtyUnchanged=1";
 
     public static string ConsumptionNotes(
         string orderCode,

@@ -58,6 +58,11 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelledBy" character varying(200) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelReason" character varying(500) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelledAt" timestamp with time zone NULL""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "QcDecision" character varying(40) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "QcDecidedBy" character varying(200) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "QcDecidedAt" timestamp with time zone NULL""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "QcInspectionReference" character varying(120) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "QcNotes" character varying(500) NOT NULL DEFAULT ''""",
     })
     {
         try { await businessDb.Database.ExecuteSqlRawAsync(stmt).ConfigureAwait(false); }

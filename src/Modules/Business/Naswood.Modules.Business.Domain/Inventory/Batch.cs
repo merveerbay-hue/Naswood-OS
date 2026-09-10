@@ -55,6 +55,14 @@ public sealed class Batch : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void SetStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            throw new InvalidOperationException("Lot status is required.");
+        Status = status.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void ApplyIssue(decimal quantity)
     {
         if (quantity <= 0) throw new InvalidOperationException("Issue quantity must be positive.");

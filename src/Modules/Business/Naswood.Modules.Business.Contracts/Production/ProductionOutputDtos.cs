@@ -102,6 +102,18 @@ public sealed record ProductionOutputResultDto
     public string StockStatus { get; init; } = "Available";
     public bool Reversed { get; init; }
     public string CancelReason { get; init; } = string.Empty;
+    public string QcDecision { get; init; } = string.Empty;
+    public string QcDecidedBy { get; init; } = string.Empty;
+    public DateTimeOffset? QcDecidedAt { get; init; }
+    public string QcInspectionReference { get; init; } = string.Empty;
+    public string QcNotes { get; init; } = string.Empty;
+}
+
+public sealed class ProductionOutputQcRequestDto
+{
+    public string Decision { get; init; } = string.Empty;
+    public string InspectionReference { get; init; } = string.Empty;
+    public string Notes { get; init; } = string.Empty;
 }
 
 public sealed class ReverseProductionOutputRequestDto
