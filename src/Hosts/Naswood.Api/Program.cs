@@ -42,6 +42,19 @@ using (var scope = app.Services.CreateScope())
     // CreateTables also fails once any business table exists, so apply the model script
     // statement-by-statement and ignore "already exists" for incremental entity adds.
     var businessCreator = businessDb.Database.GetService<IRelationalDatabaseCreator>();
+    foreach (var stmt in new[]
+    {
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "PublicId" character varying(40) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "PhysicalGroupLabel" character varying(200) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "SourcePlantId" character varying(20) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintedAt" timestamp with time zone NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintCount" integer NOT NULL DEFAULT 0""",
+        """ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceReferenceNo" character varying(80) NOT NULL DEFAULT ''""",
+    })
+    {
+        try { await businessDb.Database.ExecuteSqlRawAsync(stmt).ConfigureAwait(false); }
+        catch { /* table may not exist yet */ }
+    }
     try
     {
         await businessCreator.CreateTablesAsync();
@@ -57,9 +70,10 @@ using (var scope = app.Services.CreateScope())
             }
             catch (Exception statementEx) when (
                 statementEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase)
-                || statementEx.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+                || statementEx.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase)
+                || statementEx.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
             {
-                // Table/index/schema already provisioned.
+                // Table/index/schema already provisioned or column patch still pending.
             }
         }
     }
