@@ -81,8 +81,14 @@ public sealed class PackagePassportLoader
 
         var contents = await _packages.ListContentsAsync(pkg.Id, cancellationToken).ConfigureAwait(false);
         var moves = await _movements.ListByPackageNumberAsync(pkg.PackageNumber, pkg.PlantId, cancellationToken).ConfigureAwait(false);
-        var material = await _materials.GetByCodeAsync(pkg.MaterialCode, cancellationToken).ConfigureAwait(false);
-        var batch = await _batches.GetByNumberAndMaterialAsync(pkg.LotNumber, pkg.MaterialCode, pkg.PlantId, cancellationToken).ConfigureAwait(false);
+        var material = pkg.MaterialId is Guid materialId
+            ? await _materials.GetByIdAsync(materialId, cancellationToken).ConfigureAwait(false)
+            : null;
+        material ??= await _materials.GetByCodeAsync(pkg.MaterialCode, cancellationToken).ConfigureAwait(false);
+        var batch = pkg.BatchId is Guid batchId
+            ? await _batches.GetByIdAsync(batchId, cancellationToken).ConfigureAwait(false)
+            : null;
+        batch ??= await _batches.GetByNumberAndMaterialAsync(pkg.LotNumber, pkg.MaterialCode, pkg.PlantId, cancellationToken).ConfigureAwait(false);
         var balance = await _balances.FindByKeyAsync(
             pkg.MaterialCode, pkg.WarehouseCode, pkg.LocationCode, pkg.LotNumber, pkg.PlantId, cancellationToken).ConfigureAwait(false);
 
@@ -97,7 +103,7 @@ public sealed class PackagePassportLoader
             PackageNo = pkg.PackageNumber,
             Barcode = pkg.Barcode,
             PublicId = pkg.PublicId,
-            QrPath = OpeningInventoryCodes.QrPath(pkg.Id, pkg.PublicId),
+            QrPath = PackageIdentityService.QrPath(pkg.PublicId),
             MaterialCode = pkg.MaterialCode,
             MaterialName = material?.Name ?? pkg.MaterialCode,
             MaterialGroup = Read(def, "mainCategory") ?? material?.Category ?? string.Empty,
@@ -258,6 +264,7 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
     private readonly IInventoryBalanceRepository _balances;
     private readonly IInventoryMovementRepository _movements;
     private readonly ILocationRepository _locations;
+    private readonly IWarehouseRepository _warehouses;
     private readonly IMaterialIdentityRepository _identities;
     private readonly PackagePassportLoader _loader;
     private readonly IBusinessUnitOfWork _uow;
@@ -267,6 +274,7 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
         IInventoryBalanceRepository balances,
         IInventoryMovementRepository movements,
         ILocationRepository locations,
+        IWarehouseRepository warehouses,
         IMaterialIdentityRepository identities,
         PackagePassportLoader loader,
         IBusinessUnitOfWork uow)
@@ -275,6 +283,7 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
         _balances = balances;
         _movements = movements;
         _locations = locations;
+        _warehouses = warehouses;
         _identities = identities;
         _loader = loader;
         _uow = uow;
@@ -322,7 +331,8 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
         }
         dest.ApplyReceipt(qty);
 
-        pkg.Relocate(toWh, toLoc);
+        var destWh = await _warehouses.GetByCodeAndPlantAsync(toWh, plantId, cancellationToken).ConfigureAwait(false);
+        pkg.Relocate(toWh, toLoc, destWh?.Id, loc.Id);
         if (!string.IsNullOrWhiteSpace(pkg.MaterialIdentityNumber))
         {
             var mi = await _identities.GetByNumberAsync(pkg.MaterialIdentityNumber, plantId, cancellationToken).ConfigureAwait(false);

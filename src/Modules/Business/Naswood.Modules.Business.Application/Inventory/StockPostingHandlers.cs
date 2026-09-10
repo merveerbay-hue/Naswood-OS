@@ -228,6 +228,10 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         await _receipts.AddAsync(receipt, cancellationToken).ConfigureAwait(false);
 
         var results = new List<StockPostLineResultDto>();
+        var now = DateTimeOffset.UtcNow;
+        var existingPkgs = await _packages.ListPackageNumbersAsync(cancellationToken).ConfigureAwait(false);
+        var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
+            existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, plantId, now)));
         var lineNo = 0;
         foreach (var line in command.Lines)
         {
@@ -322,9 +326,6 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             var miNumber = string.IsNullOrWhiteSpace(line.MaterialIdentityNumber)
                 ? SystemIdentifier.Ensure(null, "MI")
                 : line.MaterialIdentityNumber.Trim();
-            var packageNumber = string.IsNullOrWhiteSpace(line.PackageNumber)
-                ? SystemIdentifier.Ensure(null, "PKG")
-                : line.PackageNumber.Trim();
 
             var isQuarantine = string.Equals(line.StockStatus?.Trim(), "Quarantine", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(line.StockStatus?.Trim(), "Hold", StringComparison.OrdinalIgnoreCase);
@@ -338,28 +339,64 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 plantId: plantId);
             await _identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
 
-            var package = InventoryPackage.Create(
-                packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom, line.Barcode, packageStatus,
-                plantId: plantId);
-            await _packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
-
             var batch = await _batches.GetByNumberAndMaterialAsync(lotNumber, materialCode, plantId, cancellationToken).ConfigureAwait(false);
             if (batch is null)
             {
-                batch = Batch.Create(lotNumber, materialCode, line.Quantity, null, batchStatus, plantId: plantId);
-                await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+                batch = Batch.Create(
+                    lotNumber, materialCode, 0, null, batchStatus,
+                    plantId: plantId,
+                    sourceType: "GOODS_RECEIPT",
+                    sourceReferenceNo: receipt.Number);
+                    await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+            }
+            else if (!string.IsNullOrWhiteSpace(batch.PlantId)
+                && !string.Equals(batch.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
+                    "INV-POST-403",
+                    $"Line lot '{lotNumber}' belongs to another plant."));
+            }
+            batch.ApplyReceipt(line.Quantity, batchStatus == "Hold" ? "Hold" : null);
+
+            string packageNumber;
+            string barcode;
+            string publicId;
+            if (string.IsNullOrWhiteSpace(line.PackageNumber))
+            {
+                var mint = PackageIdentityService.Mint(plantId, now, pkgOrdinal++);
+                packageNumber = mint.PackageNumber;
+                barcode = string.IsNullOrWhiteSpace(line.Barcode) ? mint.BarcodeValue : line.Barcode.Trim();
+                publicId = mint.PublicId;
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(batch.PlantId)
-                    && !string.Equals(batch.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
-                        "INV-POST-403",
-                        $"Line lot '{lotNumber}' belongs to another plant."));
-                }
-                batch.ApplyReceipt(line.Quantity, batchStatus == "Hold" ? "Hold" : null);
+                packageNumber = line.PackageNumber.Trim();
+                barcode = string.IsNullOrWhiteSpace(line.Barcode)
+                    ? OpeningInventoryCodes.Barcode(packageNumber)
+                    : line.Barcode.Trim();
+                publicId = Guid.NewGuid().ToString("N");
             }
+
+            if (!string.IsNullOrWhiteSpace(barcode))
+            {
+                var dup = await _packages.ListByBarcodeExactAsync(barcode, cancellationToken).ConfigureAwait(false);
+                if (dup.Count > 0)
+                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                        "INV-PKG-061",
+                        $"Barkod çakışması: {barcode}"));
+            }
+
+            var package = InventoryPackage.Create(
+                packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom,
+                barcode, packageStatus,
+                plantId: plantId,
+                publicId: publicId,
+                sourcePlantId: plantId,
+                materialId: material.Id,
+                batchId: batch.Id,
+                warehouseId: warehouse.Id,
+                locationId: location.Id);
+            await _packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
 
             var balance = await _balances.FindByKeyAsync(materialCode, warehouseCode, locationCode, lotNumber, plantId, cancellationToken).ConfigureAwait(false);
             if (balance is null)
@@ -681,6 +718,10 @@ public static class InventoryPackageMapper
         Status = e.Status,
         PublicId = e.PublicId,
         PhysicalGroupLabel = e.PhysicalGroupLabel,
+        MaterialId = e.MaterialId,
+        BatchId = e.BatchId,
+        WarehouseId = e.WarehouseId,
+        LocationId = e.LocationId,
         PlantId = e.PlantId,
         LabelPrintedAt = e.LabelPrintedAt,
         LabelPrintCount = e.LabelPrintCount,

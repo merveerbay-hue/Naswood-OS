@@ -5,7 +5,7 @@ using Naswood.Modules.Business.Domain.Inventory;
 
 namespace Naswood.Modules.Business.Application.Inventory;
 
-internal static class OpeningInventoryPost
+public static class OpeningInventoryPost
 {
     public static async Task<Result<InventoryCountPostResultDto>> ExecuteAsync(
         InventoryCount count,
@@ -13,12 +13,14 @@ internal static class OpeningInventoryPost
         string plantId,
         string actor,
         string reason,
+        Warehouse warehouse,
         IInventoryBalanceRepository balances,
         IInventoryMovementRepository movements,
         ILocationRepository locations,
         IBatchRepository batches,
         IInventoryPackageRepository packages,
         IMaterialIdentityRepository identities,
+        IMaterialRepository materials,
         CancellationToken cancellationToken)
     {
         var physical = lines.Where(l => !l.IsDeleted && l.Role == "PHYSICAL" && l.CalculatedStockQty > 0).ToArray();
@@ -27,84 +29,109 @@ internal static class OpeningInventoryPost
                 "INV-CNT-060",
                 "Açılış sayımında post edilecek fiziksel satır yok."));
 
+        var resolved = new List<(InventoryCountLine Line, Material Material, Location Location)>(physical.Length);
+        foreach (var line in physical)
+        {
+            Material? material = null;
+            if (line.MaterialId is Guid mid)
+                material = await materials.GetByIdAsync(mid, cancellationToken).ConfigureAwait(false);
+            material ??= await materials.GetByCodeAsync(line.MaterialCode.Trim(), cancellationToken).ConfigureAwait(false);
+            if (material is null || material.IsDeleted)
+                return Result.Failure<InventoryCountPostResultDto>(Error.Validation(
+                    "INV-CNT-061",
+                    $"Malzeme kartı bulunamadı: {line.MaterialCode}"));
+            if (line.MaterialId is Guid given && given != material.Id)
+                return Result.Failure<InventoryCountPostResultDto>(Error.Validation(
+                    "INV-CNT-062",
+                    $"Satır malzeme kimliği ile kod uyuşmuyor: {line.MaterialCode}"));
+
+            var loc = await locations.FindByWarehouseAndCodeAsync(count.WarehouseCode, line.LocationCode, plantId, cancellationToken).ConfigureAwait(false);
+            if (loc is null)
+                return Result.Failure<InventoryCountPostResultDto>(Error.Forbidden("INV-CNT-403", $"Lokasyon '{line.LocationCode}' bu tesise ait değil."));
+            if (!InventoryCountMath.IsActiveStatus(loc.Status))
+                return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-CNT-017", $"Pasif lokasyon '{loc.Code}' için açılış post edilemez."));
+
+            resolved.Add((line, material, loc));
+        }
+
         var now = DateTimeOffset.UtcNow;
         var lotPrefix = OpeningInventoryCodes.LotPrefixForDay(plantId, now);
         var existingLots = await batches.ListOpeningLotNumbersAsync(lotPrefix, plantId, cancellationToken).ConfigureAwait(false);
         var lotOrdinal = OpeningInventoryCodes.NextOrdinal(existingLots.Select(x => OpeningInventoryCodes.ParseLotOrdinal(x, plantId, now)));
-        var pkgPrefix = OpeningInventoryCodes.PackagePrefixForYear(plantId, now);
         var existingPkgs = await packages.ListPackageNumbersAsync(cancellationToken).ConfigureAwait(false);
         var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
             existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, plantId, now)));
 
-        var lotByMaterial = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var lotByMaterial = new Dictionary<Guid, Batch>();
         var createdLots = new List<string>();
         var createdPackages = new List<OpeningPackageCreatedDto>();
         var adjustments = new List<InventoryCountAdjustmentDto>();
 
-        foreach (var g in physical.GroupBy(l => l.MaterialCode.Trim(), StringComparer.OrdinalIgnoreCase))
+        foreach (var g in resolved.GroupBy(x => x.Material.Id))
         {
-            var materialCode = g.Key;
-            if (!lotByMaterial.TryGetValue(materialCode, out var lot))
+            var material = g.First().Material;
+            if (!lotByMaterial.TryGetValue(material.Id, out var batch))
             {
-                lot = OpeningInventoryCodes.OpeningLot(plantId, now, lotOrdinal++);
-                lotByMaterial[materialCode] = lot;
-                var batch = await batches.GetByNumberAndMaterialAsync(lot, materialCode, plantId, cancellationToken).ConfigureAwait(false);
+                var lot = OpeningInventoryCodes.OpeningLot(plantId, now, lotOrdinal++);
+                batch = await batches.GetByNumberAndMaterialAsync(lot, material.Code, plantId, cancellationToken).ConfigureAwait(false);
                 if (batch is null)
                 {
                     batch = Batch.Create(
-                        lot, materialCode, 0, null, "Active",
+                        lot, material.Code, 0, null, "Active",
                         plantId: plantId,
                         sourceType: OpeningInventoryCodes.SourceType,
                         sourceReferenceNo: count.Number);
                     await batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
                     createdLots.Add(lot);
                 }
+                lotByMaterial[material.Id] = batch;
             }
 
-            foreach (var stack in g.GroupBy(l => StackKey(l), StringComparer.OrdinalIgnoreCase))
+            foreach (var stack in g.GroupBy(x => PackageIdentityService.StackKey(
+                         count.Id, material.Id, batch.Id, x.Location.Id, x.Line.PhysicalGroupLabel, x.Line.Id)))
             {
-                var stackLines = stack.ToArray();
-                var qty = stackLines.Sum(l => l.CalculatedStockQty);
+                var stackRows = stack.ToArray();
+                var qty = stackRows.Sum(x => x.Line.CalculatedStockQty);
                 if (qty <= 0) continue;
-                var locCode = stackLines[0].LocationCode;
-                var loc = await locations.FindByWarehouseAndCodeAsync(count.WarehouseCode, locCode, plantId, cancellationToken).ConfigureAwait(false);
-                if (loc is null)
-                    return Result.Failure<InventoryCountPostResultDto>(Error.Forbidden("INV-CNT-403", $"Lokasyon '{locCode}' bu tesise ait değil."));
-                if (!InventoryCountMath.IsActiveStatus(loc.Status))
-                    return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-CNT-017", $"Pasif lokasyon '{loc.Code}' için açılış post edilemez."));
+                var loc = stackRows[0].Location;
+                var first = stackRows[0].Line;
 
-                var packageNo = OpeningInventoryCodes.PackageNo(plantId, now, pkgOrdinal++);
-                var barcode = OpeningInventoryCodes.Barcode(packageNo);
-                var dup = await packages.ListByBarcodeExactAsync(barcode, cancellationToken).ConfigureAwait(false);
+                var mint = PackageIdentityService.Mint(plantId, now, pkgOrdinal++);
+                var dup = await packages.ListByBarcodeExactAsync(mint.BarcodeValue, cancellationToken).ConfigureAwait(false);
                 if (dup.Count > 0)
-                    return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-PKG-061", $"Barkod çakışması: {barcode}"));
+                    return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-PKG-061", $"Barkod çakışması: {mint.BarcodeValue}"));
 
                 var mi = SystemIdentifier.Ensure(null, "MI");
                 var identity = MaterialIdentity.CreateRoot(
-                    mi, materialCode, lot, count.WarehouseCode, loc.Code, qty,
-                    stackLines[0].StockUnit, count.Number, plantId: plantId);
+                    mi, material.Code, batch.BatchNumber, count.WarehouseCode, loc.Code, qty,
+                    first.StockUnit, count.Number, plantId: plantId);
                 await identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
 
                 var package = InventoryPackage.Create(
-                    packageNo, mi, materialCode, lot, count.WarehouseCode, loc.Code,
-                    qty, stackLines[0].StockUnit, barcode: barcode, status: "Available",
+                    mint.PackageNumber, mi, material.Code, batch.BatchNumber, count.WarehouseCode, loc.Code,
+                    qty, first.StockUnit, barcode: mint.BarcodeValue, status: "Available",
                     plantId: plantId,
-                    physicalGroupLabel: stackLines[0].PhysicalGroupLabel ?? string.Empty,
-                    sourcePlantId: plantId);
+                    publicId: mint.PublicId,
+                    physicalGroupLabel: first.PhysicalGroupLabel ?? string.Empty,
+                    sourcePlantId: plantId,
+                    materialId: material.Id,
+                    batchId: batch.Id,
+                    warehouseId: warehouse.Id,
+                    locationId: loc.Id);
                 await packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
 
-                var contents = stackLines.Select((line, i) => InventoryPackageContent.Create(
-                    package.Id, i + 1, line.ThicknessMm, line.WidthMm, line.LengthMm,
-                    line.PieceCount, line.CalculatedStockQty, line.StockUnit, plantId)).ToArray();
+                var contents = stackRows.Select((row, i) => InventoryPackageContent.Create(
+                    package.Id, i + 1, row.Line.ThicknessMm, row.Line.WidthMm, row.Line.LengthMm,
+                    row.Line.PieceCount, row.Line.CalculatedStockQty, row.Line.StockUnit, plantId)).ToArray();
                 await packages.AddContentsAsync(contents, cancellationToken).ConfigureAwait(false);
 
-                foreach (var line in stackLines)
-                    line.AssignOpeningIdentity(lot, packageNo, barcode);
+                foreach (var row in stackRows)
+                    row.Line.AssignOpeningIdentity(batch.BatchNumber, mint.PackageNumber, mint.BarcodeValue);
 
-                var balance = await balances.FindByKeyAsync(materialCode, count.WarehouseCode, loc.Code, lot, plantId, cancellationToken).ConfigureAwait(false);
+                var balance = await balances.FindByKeyAsync(material.Code, count.WarehouseCode, loc.Code, batch.BatchNumber, plantId, cancellationToken).ConfigureAwait(false);
                 if (balance is null)
                 {
-                    balance = InventoryBalance.Create(materialCode, count.WarehouseCode, loc.Code, lot, 0, 0, "Active", plantId: plantId);
+                    balance = InventoryBalance.Create(material.Code, count.WarehouseCode, loc.Code, batch.BatchNumber, 0, 0, "Active", plantId: plantId);
                     await balances.AddAsync(balance, cancellationToken).ConfigureAwait(false);
                 }
                 try { balance.ApplyReceipt(qty); }
@@ -113,16 +140,15 @@ internal static class OpeningInventoryPost
                     return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-CNT-030", ex.Message));
                 }
 
-                var first = stackLines[0];
                 var note = string.Join(" | ", new[]
                 {
                     $"count={count.Number}",
                     $"source={OpeningInventoryCodes.SourceType}",
-                    $"lot={lot}",
-                    $"pkg={packageNo}",
-                    $"barcode={barcode}",
+                    $"lot={batch.BatchNumber}",
+                    $"pkg={mint.PackageNumber}",
+                    $"barcode={mint.BarcodeValue}",
                     string.IsNullOrWhiteSpace(first.PhysicalGroupLabel) ? null : $"istif={first.PhysicalGroupLabel}",
-                    $"rows={stackLines.Length}",
+                    $"rows={stackRows.Length}",
                     $"qty={qty}",
                     $"unit={first.StockUnit}",
                     $"reason={reason}",
@@ -133,12 +159,12 @@ internal static class OpeningInventoryPost
                     OpeningInventoryCodes.MovementType,
                     "In",
                     count.Number,
-                    materialCode,
+                    material.Code,
                     mi,
-                    packageNo,
+                    mint.PackageNumber,
                     count.WarehouseCode,
                     loc.Code,
-                    lot,
+                    batch.BatchNumber,
                     qty,
                     first.StockUnit,
                     note.Length > 2000 ? note[..2000] : note,
@@ -146,9 +172,9 @@ internal static class OpeningInventoryPost
                 await movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
                 adjustments.Add(new InventoryCountAdjustmentDto
                 {
-                    MaterialCode = materialCode,
+                    MaterialCode = material.Code,
                     LocationCode = loc.Code,
-                    LotNumber = lot,
+                    LotNumber = batch.BatchNumber,
                     OldQuantity = 0,
                     CountedQuantity = qty,
                     Difference = qty,
@@ -159,11 +185,11 @@ internal static class OpeningInventoryPost
                 createdPackages.Add(new OpeningPackageCreatedDto
                 {
                     PackageId = package.Id,
-                    PackageNo = packageNo,
-                    Barcode = barcode,
+                    PackageNo = mint.PackageNumber,
+                    Barcode = mint.BarcodeValue,
                     PublicId = package.PublicId,
-                    MaterialCode = materialCode,
-                    LotNumber = lot,
+                    MaterialCode = material.Code,
+                    LotNumber = batch.BatchNumber,
                     PhysicalGroupLabel = first.PhysicalGroupLabel ?? string.Empty,
                     Quantity = qty,
                     Unit = first.StockUnit
@@ -183,12 +209,5 @@ internal static class OpeningInventoryPost
             Lots = createdLots,
             Packages = createdPackages
         });
-    }
-
-    internal static string StackKey(InventoryCountLine line)
-    {
-        var group = (line.PhysicalGroupLabel ?? string.Empty).Trim();
-        if (!string.IsNullOrWhiteSpace(group)) return $"{line.LocationCode}|{group}";
-        return $"LINE-{line.Id:N}";
     }
 }

@@ -57,6 +57,7 @@ public sealed class MasterStockPackageRowDto
     public required string Status { get; init; }
     public string Barcode { get; init; } = string.Empty;
     public string MaterialIdentityNumber { get; init; } = string.Empty;
+    public IReadOnlyList<PackageContentDto> Contents { get; init; } = Array.Empty<PackageContentDto>();
 }
 
 public sealed class MasterStockUnitTotalDto

@@ -406,6 +406,7 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
     private readonly IBatchRepository _batches;
     private readonly IInventoryPackageRepository _packages;
     private readonly IMaterialIdentityRepository _identities;
+    private readonly IMaterialRepository _materials;
     private readonly IBusinessUnitOfWork _uow;
 
     public PostInventoryCountCommandHandler(
@@ -417,6 +418,7 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         IBatchRepository batches,
         IInventoryPackageRepository packages,
         IMaterialIdentityRepository identities,
+        IMaterialRepository materials,
         IBusinessUnitOfWork uow)
     {
         _repo = repo;
@@ -427,6 +429,7 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         _batches = batches;
         _packages = packages;
         _identities = identities;
+        _materials = materials;
         _uow = uow;
     }
 
@@ -462,8 +465,8 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         if (InventoryCountKinds.IsOpening(e.CountType))
         {
             var opened = await OpeningInventoryPost.ExecuteAsync(
-                e, raw, plantId, command.Actor, command.Reason,
-                _balances, _movements, _locations, _batches, _packages, _identities,
+                e, raw, plantId, command.Actor, command.Reason, wh,
+                _balances, _movements, _locations, _batches, _packages, _identities, _materials,
                 cancellationToken).ConfigureAwait(false);
             if (opened.IsFailure) return opened;
             e.MarkPosted();

@@ -206,9 +206,12 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PublicId).HasMaxLength(40);
             entity.Property(x => x.PhysicalGroupLabel).HasMaxLength(200);
             entity.Property(x => x.SourcePlantId).HasMaxLength(20);
+            entity.Property(x => x.CurrentPlantId).HasMaxLength(20);
             entity.HasIndex(x => x.PackageNumber);
             entity.HasIndex(x => x.Barcode);
             entity.HasIndex(x => x.PublicId);
+            entity.HasIndex(x => x.MaterialId);
+            entity.HasIndex(x => x.BatchId);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryPackageContent>(entity =>

@@ -63,6 +63,10 @@ export async function getPackageByBarcode(barcode: string) {
   return apiRequest<PackagePassport>(`/api/v1/packages/by-barcode/${encodeURIComponent(barcode)}`, { auth: true });
 }
 
+export async function getPackageByPublicId(publicId: string) {
+  return apiRequest<PackagePassport>(`/api/v1/packages/by-public/${encodeURIComponent(publicId)}`, { auth: true });
+}
+
 export async function recordLabelPrint(id: string) {
   return apiRequest<PackagePassport>(`/api/v1/packages/${id}/label-print`, { method: 'POST', auth: true, body: {} });
 }

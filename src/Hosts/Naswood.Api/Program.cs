@@ -49,6 +49,11 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "SourcePlantId" character varying(20) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintedAt" timestamp with time zone NULL""",
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintCount" integer NOT NULL DEFAULT 0""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "MaterialId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "BatchId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "WarehouseId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceReferenceNo" character varying(80) NOT NULL DEFAULT ''""",
     })
     {
@@ -140,6 +145,11 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "SourcePlantId" character varying(20) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintedAt" timestamp with time zone NULL;
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintCount" integer NOT NULL DEFAULT 0;
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "MaterialId" uuid NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "BatchId" uuid NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "WarehouseId" uuid NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT '';
         UPDATE business.business_inventory_package
         SET "PublicId" = replace("Id"::text, '-', '')
         WHERE "PublicId" = '';
@@ -169,6 +179,11 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "SourcePlantId" character varying(20) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintedAt" timestamp with time zone NULL""",
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintCount" integer NOT NULL DEFAULT 0""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "MaterialId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "BatchId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "WarehouseId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL""",
+        """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceReferenceNo" character varying(80) NOT NULL DEFAULT ''""",
         """UPDATE business.business_inventory_package SET "PublicId" = replace("Id"::text, '-', '') WHERE "PublicId" = ''""",
     })
@@ -177,19 +192,7 @@ using (var scope = app.Services.CreateScope())
         catch { /* already applied or legacy table missing */ }
     }
 
-    try
-    {
-        await businessDb.Database.ExecuteSqlRawAsync(
-            """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_barcode_alive" ON business.business_inventory_package ("Barcode") WHERE "IsDeleted" = false AND "Barcode" <> ''""").ConfigureAwait(false);
-        await businessDb.Database.ExecuteSqlRawAsync(
-            """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_number_alive" ON business.business_inventory_package ("PackageNumber") WHERE "IsDeleted" = false AND "PackageNumber" <> ''""").ConfigureAwait(false);
-        await businessDb.Database.ExecuteSqlRawAsync(
-            """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_publicid_alive" ON business.business_inventory_package ("PublicId") WHERE "IsDeleted" = false AND "PublicId" <> ''""").ConfigureAwait(false);
-    }
-    catch
-    {
-        // Legacy duplicates — lookup still fails closed on >1 barcode hit.
-    }
+    await EnsurePackageIdentityIntegrityAsync(businessDb).ConfigureAwait(false);
 }
 
 app.UseRateLimiter();
@@ -237,6 +240,96 @@ static IEnumerable<string> SplitPostgresStatements(string script)
     }
 
     return statements;
+}
+
+static async Task EnsurePackageIdentityIntegrityAsync(BusinessDbContext businessDb)
+{
+    try
+    {
+        await businessDb.Database.ExecuteSqlRawAsync(
+            """
+            UPDATE business.business_inventory_package p
+            SET "MaterialId" = m."Id"
+            FROM business.business_inventory_material m
+            WHERE p."MaterialId" IS NULL
+              AND p."IsDeleted" = false
+              AND m."IsDeleted" = false
+              AND lower(p."MaterialCode") = lower(m."Code");
+
+            UPDATE business.business_inventory_package p
+            SET "BatchId" = b."Id"
+            FROM business.business_inventory_batch b
+            WHERE p."BatchId" IS NULL
+              AND p."IsDeleted" = false
+              AND b."IsDeleted" = false
+              AND lower(p."LotNumber") = lower(b."BatchNumber")
+              AND lower(p."MaterialCode") = lower(b."MaterialCode")
+              AND (p."PlantId" IS NULL OR b."PlantId" IS NULL OR p."PlantId" = b."PlantId");
+
+            UPDATE business.business_inventory_package p
+            SET "WarehouseId" = w."Id"
+            FROM business.business_inventory_warehouse w
+            WHERE p."WarehouseId" IS NULL
+              AND p."IsDeleted" = false
+              AND w."IsDeleted" = false
+              AND lower(p."WarehouseCode") = lower(w."Code")
+              AND (p."PlantId" IS NULL OR w."PlantId" IS NULL OR p."PlantId" = w."PlantId");
+
+            UPDATE business.business_inventory_package p
+            SET "LocationId" = l."Id"
+            FROM business.business_inventory_location l
+            WHERE p."LocationId" IS NULL
+              AND p."IsDeleted" = false
+              AND l."IsDeleted" = false
+              AND lower(p."LocationCode") = lower(l."Code")
+              AND lower(p."WarehouseCode") = lower(l."WarehouseCode")
+              AND (p."PlantId" IS NULL OR l."PlantId" IS NULL OR p."PlantId" = l."PlantId");
+
+            UPDATE business.business_inventory_package
+            SET "CurrentPlantId" = COALESCE(NULLIF("CurrentPlantId", ''), "PlantId", '')
+            WHERE "CurrentPlantId" = '';
+
+            UPDATE business.business_inventory_package
+            SET "PublicId" = replace("Id"::text, '-', '')
+            WHERE "PublicId" = '';
+            """).ConfigureAwait(false);
+    }
+    catch (Exception ex) when (ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    var collisions = new List<string>();
+    collisions.AddRange(await QueryDuplicatePackageKeysAsync(
+        businessDb,
+        """SELECT "Barcode" AS k, COUNT(*)::int AS n FROM business.business_inventory_package WHERE "IsDeleted" = false AND "Barcode" <> '' GROUP BY "Barcode" HAVING COUNT(*) > 1""").ConfigureAwait(false));
+    collisions.AddRange(await QueryDuplicatePackageKeysAsync(
+        businessDb,
+        """SELECT "PublicId" AS k, COUNT(*)::int AS n FROM business.business_inventory_package WHERE "IsDeleted" = false AND "PublicId" <> '' GROUP BY "PublicId" HAVING COUNT(*) > 1""").ConfigureAwait(false));
+    if (collisions.Count > 0)
+        throw new InvalidOperationException(
+            "Paket barkod/PublicId unique constraint kurulamadı. Çakışmalar: " + string.Join("; ", collisions));
+
+    await businessDb.Database.ExecuteSqlRawAsync(
+        """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_barcode_alive" ON business.business_inventory_package ("Barcode") WHERE "IsDeleted" = false AND "Barcode" <> ''""").ConfigureAwait(false);
+    await businessDb.Database.ExecuteSqlRawAsync(
+        """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_number_alive" ON business.business_inventory_package ("PackageNumber") WHERE "IsDeleted" = false AND "PackageNumber" <> ''""").ConfigureAwait(false);
+    await businessDb.Database.ExecuteSqlRawAsync(
+        """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_publicid_alive" ON business.business_inventory_package ("PublicId") WHERE "IsDeleted" = false AND "PublicId" <> ''""").ConfigureAwait(false);
+}
+
+static async Task<List<string>> QueryDuplicatePackageKeysAsync(BusinessDbContext db, string sql)
+{
+    var rows = new List<string>();
+    var conn = db.Database.GetDbConnection();
+    if (conn.State != System.Data.ConnectionState.Open)
+        await conn.OpenAsync().ConfigureAwait(false);
+    await using var cmd = conn.CreateCommand();
+    cmd.CommandText = sql;
+    await using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+    while (await reader.ReadAsync().ConfigureAwait(false))
+        rows.Add($"{reader.GetString(0)} ×{reader.GetInt32(1)}");
+    return rows;
 }
 
 public partial class Program;

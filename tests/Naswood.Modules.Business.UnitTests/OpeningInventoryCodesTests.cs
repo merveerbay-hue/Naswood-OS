@@ -56,9 +56,9 @@ public sealed class OpeningInventoryCodesTests
     }
 
     [Fact]
-    public void Qr_path_uses_package_id()
+    public void Qr_path_uses_public_id_only()
     {
-        var id = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        Assert.Equal("/inventory/stock/packages/11111111-1111-1111-1111-111111111111?pk=abc", OpeningInventoryCodes.QrPath(id, "abc"));
+        Assert.Equal("/inventory/packages/p/abc", OpeningInventoryCodes.QrPath("abc"));
+        Assert.Equal("/inventory/packages/p/abc", PackageIdentityService.QrPath("abc"));
     }
 }

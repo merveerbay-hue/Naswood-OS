@@ -87,4 +87,8 @@ public interface IMasterStockReadRepository
         CancellationToken cancellationToken = default);
 
     Task<int> CountPackagesAsync(MasterStockQueryFilter filter, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<InventoryPackageContent>> ListContentsForPackagesAsync(
+        IReadOnlyList<Guid> packageIds,
+        CancellationToken cancellationToken = default);
 }

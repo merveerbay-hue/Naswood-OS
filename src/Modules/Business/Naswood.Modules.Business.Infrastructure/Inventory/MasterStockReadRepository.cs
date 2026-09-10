@@ -188,6 +188,20 @@ public sealed class MasterStockReadRepository : IMasterStockReadRepository
     public async Task<int> CountPackagesAsync(MasterStockQueryFilter filter, CancellationToken cancellationToken = default)
         => await ApplyPackageFilter(_db.Set<InventoryPackage>().AsNoTracking(), filter).CountAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<InventoryPackageContent>> ListContentsForPackagesAsync(
+        IReadOnlyList<Guid> packageIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (packageIds.Count == 0) return Array.Empty<InventoryPackageContent>();
+        var ids = packageIds.Distinct().ToArray();
+        return await _db.Set<InventoryPackageContent>().AsNoTracking()
+            .Where(x => !x.IsDeleted && ids.Contains(x.PackageId))
+            .OrderBy(x => x.PackageId)
+            .ThenBy(x => x.LineNo)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     private static IQueryable<InventoryBalance> ApplyBalanceFilter(IQueryable<InventoryBalance> query, MasterStockQueryFilter filter)
     {
         var plant = filter.PlantId.Trim();

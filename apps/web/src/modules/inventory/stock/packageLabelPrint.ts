@@ -1,3 +1,4 @@
+import { code128Svg } from './code128Svg';
 import type { PackagePassport } from './packagePassportApi';
 
 function esc(s: string) {
@@ -27,8 +28,11 @@ export function buildPackageLabelHtml(docs: PackagePassport[], printedAt = new D
         <div class="total">TOPLAM ${p.totalPieceCount != null ? `${p.totalPieceCount} PCS · ` : ''}${p.quantity} ${esc(p.stockUnit || p.unitOfMeasure)}</div>
         <div class="ids">LOT ${esc(p.lotNumber)}<br/>PAKET ${esc(p.packageNo)}</div>
         <div class="loc">${esc(p.factory)} · ${esc(p.warehouseCode)} / ${esc(p.locationCode)} · ${esc(p.status)}</div>
-        <div class="bc">${esc(p.barcode)}</div>
-        <img alt="QR" src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${qr}" />
+        <div class="codes">
+          <div class="bc">${code128Svg(p.barcode)}</div>
+          <img alt="QR" src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${qr}" />
+        </div>
+        <div class="bc-text">${esc(p.barcode)}</div>
         <footer>Etiket: ${esc(when)}</footer>
       </article>`;
     })
@@ -44,8 +48,10 @@ h1 { font-size: 16px; margin: 2px 0; text-transform: uppercase; }
 .meta, .loc, .muted, footer { font-size: 10px; }
 table { width: 100%; font-size: 11px; margin: 3px 0; }
 .total, .ids { font-size: 11px; font-weight: 700; }
-.bc { font-family: monospace; font-size: 13px; letter-spacing: .08em; margin: 4px 0; }
-img { width: 22mm; height: 22mm; }
+.codes { display: flex; align-items: flex-end; justify-content: space-between; gap: 4mm; margin-top: 2mm; }
+.bc svg { height: 12mm; width: auto; max-width: 62mm; }
+.bc-text { font-family: monospace; font-size: 11px; letter-spacing: .08em; }
+img { width: 18mm; height: 18mm; }
 </style></head><body>${cards}<script>window.onload=()=>window.print()</script></body></html>`;
 }
 

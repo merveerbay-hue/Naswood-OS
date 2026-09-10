@@ -13,10 +13,10 @@ public sealed class MasterStockProjectionTests
             """{"woodSpecies":"PIN","stockUom":"PCS"}""", plantId: "F01");
         var pkgs = new[]
         {
-            InventoryPackage.Create("PKG-1", "MI-1", "HM-KR-PIN-001", "LOT-001", "WH-RM", "A-01", 30, "PCS", plantId: "F01"),
-            InventoryPackage.Create("PKG-2", "MI-1", "HM-KR-PIN-001", "LOT-001", "WH-RM", "A-01", 30, "PCS", plantId: "F01"),
-            InventoryPackage.Create("PKG-3", "MI-1", "HM-KR-PIN-001", "LOT-001", "WH-RM", "A-01", 29, "PCS", plantId: "F01"),
-            InventoryPackage.Create("PKG-4", "MI-1", "HM-KR-PIN-001", "LOT-001", "WH-RM", "A-01", 29, "PCS", plantId: "F01"),
+            Pkg("PKG-1", 30),
+            Pkg("PKG-2", 30),
+            Pkg("PKG-3", 29),
+            Pkg("PKG-4", 29),
         };
         var row = MasterStockProjection.ToRow(balance, material, "Hammadde Deposu", "A-01", pkgs.Length, pkgs.Sum(p => p.Quantity), "45×90×4000", 45, 90, 4000);
         Assert.Equal(1, MasterStockProjection.Totals(new[] { row }, 4).MaterialRowCount);
@@ -116,6 +116,13 @@ public sealed class MasterStockProjectionTests
         Assert.Equal(4000m, l);
         Assert.Equal("45×90×4000", label);
     }
+
+    private static InventoryPackage Pkg(string no, decimal qty) =>
+        InventoryPackage.Create(
+            no, "MI-1", "HM-KR-PIN-001", "LOT-001", "WH-RM", "A-01", qty, "PCS",
+            plantId: "F01",
+            materialId: Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            batchId: Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
 
     [Fact]
     public void Warehouse_filter_label()

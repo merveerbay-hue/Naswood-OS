@@ -86,6 +86,10 @@ public sealed class InventoryPackageDto
     public required string Status { get; init; }
     public string PublicId { get; init; } = string.Empty;
     public string PhysicalGroupLabel { get; init; } = string.Empty;
+    public Guid? MaterialId { get; init; }
+    public Guid? BatchId { get; init; }
+    public Guid? WarehouseId { get; init; }
+    public Guid? LocationId { get; init; }
     public string? PlantId { get; init; }
     public DateTimeOffset? LabelPrintedAt { get; init; }
     public int LabelPrintCount { get; init; }

@@ -456,6 +456,12 @@ internal static class MasterStockAssembler
             if (!physByKey.ContainsKey(key)) physByKey[key] = n;
         }
 
+        var contents = await read.ListContentsForPackagesAsync(packages.Select(p => p.Id).ToArray(), cancellationToken)
+            .ConfigureAwait(false);
+        var contentsByPkg = contents
+            .GroupBy(c => c.PackageId)
+            .ToDictionary(g => g.Key, g => g.Select(PackagePassportComposer.ToContent).ToArray());
+
         var rows = new List<MasterStockPackageRowDto>(packages.Count);
         foreach (var p in packages)
         {
@@ -469,6 +475,7 @@ internal static class MasterStockAssembler
                 physByKey.TryGetValue(key, out note);
             }
             var (t, w, l, label) = MasterStockProjection.ParseActualDims(note?.Notes);
+            contentsByPkg.TryGetValue(p.Id, out var pkgContents);
             rows.Add(MasterStockProjection.ToPackageRow(
                 p,
                 balanceId,
@@ -479,7 +486,8 @@ internal static class MasterStockAssembler
                 t,
                 w,
                 l,
-                physicalGroupLabel: string.Empty));
+                physicalGroupLabel: p.PhysicalGroupLabel,
+                contents: pkgContents));
         }
         return rows;
     }

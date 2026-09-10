@@ -253,6 +253,11 @@ const invPackageDetailRoute = createRoute({
   path: 'stock/packages/$id',
   component: PackagePassportPage,
 });
+const invPackagePublicRoute = createRoute({
+  getParentRoute: () => inventoryRoute,
+  path: 'packages/p/$publicId',
+  component: PackagePassportPage,
+});
 const invPackageScanRoute = createRoute({
   getParentRoute: () => inventoryRoute,
   path: 'stock/scan',
@@ -655,6 +660,7 @@ export const routeTree = rootRoute.addChildren([
       invLotsRoute,
       invPackagesRoute,
       invPackageDetailRoute,
+      invPackagePublicRoute,
       invPackageScanRoute,
       invIdentitiesRoute,
       invMovementsRoute,

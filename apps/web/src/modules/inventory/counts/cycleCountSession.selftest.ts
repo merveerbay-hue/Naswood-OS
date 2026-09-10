@@ -10,6 +10,7 @@ import {
   type CycleCountOpenDraft,
 } from './cycleCountSession';
 import { previewOpeningGroups } from '../stock/openingPackagePreview';
+import { encodeCode128B } from '../stock/code128Svg';
 import { calculateStockQty, cubicMeters, difference, resolvePolicy, squareMeters } from './inventoryCountCalc';
 import { parseCountListText } from './cycleCountAi';
 import { parseCountTable, buildFieldCountCsv } from './cycleCountExcel';
@@ -101,5 +102,13 @@ const preview = previewOpeningGroups([
 assert(preview.length === 2, 'two materials two lots');
 assert(preview.find((x) => x.materialCode === 'YM-PR-AYO-001')?.packages.length === 2, 'two stacks two packages');
 assert(preview.find((x) => x.materialCode === 'YM-PR-AYO-001')?.packages[0]?.rows.length === 2, 'same stack multi measure');
+const mixedLabel = previewOpeningGroups([
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 1', qty: 1, unit: 'M3', key: 'x' },
+  { materialCode: 'HM-LT-PIN-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 1', qty: 1, unit: 'M3', key: 'y' },
+]);
+assert(mixedLabel.length === 2, 'same istif label does not merge two materials');
+const encoded = encodeCode128B('NWPKG-F01-26-000001');
+assert(encoded[0] === 104, 'code128 start B');
+assert(encoded[encoded.length - 1] === encoded.slice(0, -1).reduce((s, v, i) => s + (i === 0 ? v : v * i), 0) % 103, 'code128 checksum');
 
 console.info('cycleCountSession.selftest: all passed');

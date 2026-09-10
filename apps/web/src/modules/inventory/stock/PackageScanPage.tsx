@@ -16,7 +16,7 @@ export function PackageScanPage() {
     setErr(null);
     try {
       const doc = await getPackageByBarcode(barcode);
-      navigate({ to: '/inventory/stock/packages/$id', params: { id: doc.id } });
+      navigate({ to: '/inventory/packages/p/$publicId', params: { publicId: doc.publicId } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Barkod sistemde bulunamadı.');
     } finally {

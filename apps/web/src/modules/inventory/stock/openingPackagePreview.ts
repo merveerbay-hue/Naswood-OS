@@ -19,7 +19,9 @@ export function previewOpeningGroups(
     if (!lots.has(mat)) lots.set(mat, { materialCode: line.materialCode, materialName: line.materialName ?? '', stacks: new Map() });
     const lot = lots.get(mat)!;
     const label = (line.physicalGroupLabel ?? '').trim();
-    const stackKey = label ? `${line.locationCode}|${label}` : `LINE-${line.key ?? Math.random()}`;
+    const stackKey = label
+      ? `${mat}|${line.locationCode.trim().toUpperCase()}|${label.toUpperCase()}`
+      : `LINE-${line.key ?? Math.random()}`;
     if (!lot.stacks.has(stackKey)) lot.stacks.set(stackKey, []);
     lot.stacks.get(stackKey)!.push(line);
   }

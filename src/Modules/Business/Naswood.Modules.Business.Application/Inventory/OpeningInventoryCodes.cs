@@ -74,6 +74,5 @@ public static class OpeningInventoryCodes
     public static int NextOrdinal(IEnumerable<int> existing) =>
         existing.DefaultIfEmpty(0).Max() + 1;
 
-    public static string QrPath(Guid packageId, string publicId)
-        => $"/inventory/stock/packages/{packageId:D}?pk={publicId}";
+    public static string QrPath(string publicId) => PackageIdentityService.QrPath(publicId);
 }

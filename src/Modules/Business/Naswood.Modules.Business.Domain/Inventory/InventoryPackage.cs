@@ -22,6 +22,10 @@ public sealed class InventoryPackage : BusinessEntity
         string publicId,
         string physicalGroupLabel,
         string sourcePlantId,
+        Guid? materialId,
+        Guid? batchId,
+        Guid? warehouseId,
+        Guid? locationId,
         string companyId,
         string? plantId)
         : base(id)
@@ -39,6 +43,11 @@ public sealed class InventoryPackage : BusinessEntity
         PublicId = publicId;
         PhysicalGroupLabel = physicalGroupLabel;
         SourcePlantId = sourcePlantId;
+        CurrentPlantId = plantId ?? string.Empty;
+        MaterialId = materialId;
+        BatchId = batchId;
+        WarehouseId = warehouseId;
+        LocationId = locationId;
         CompanyId = companyId;
         PlantId = plantId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
@@ -57,6 +66,11 @@ public sealed class InventoryPackage : BusinessEntity
     public string PublicId { get; private set; } = string.Empty;
     public string PhysicalGroupLabel { get; private set; } = string.Empty;
     public string SourcePlantId { get; private set; } = string.Empty;
+    public string CurrentPlantId { get; private set; } = string.Empty;
+    public Guid? MaterialId { get; private set; }
+    public Guid? BatchId { get; private set; }
+    public Guid? WarehouseId { get; private set; }
+    public Guid? LocationId { get; private set; }
     public DateTimeOffset? LabelPrintedAt { get; private set; }
     public int LabelPrintCount { get; private set; }
 
@@ -75,8 +89,16 @@ public sealed class InventoryPackage : BusinessEntity
         string? plantId = "PLANT-001",
         string? publicId = null,
         string physicalGroupLabel = "",
-        string? sourcePlantId = null)
+        string? sourcePlantId = null,
+        Guid? materialId = null,
+        Guid? batchId = null,
+        Guid? warehouseId = null,
+        Guid? locationId = null)
     {
+        if (materialId is null)
+            throw new InvalidOperationException("Package.MaterialId is required.");
+        if (batchId is null)
+            throw new InvalidOperationException("Package.BatchId is required.");
         var code = string.IsNullOrWhiteSpace(barcode) ? packageNumber : barcode.Trim();
         var normalized = string.IsNullOrWhiteSpace(status) ? "Available" : status.Trim();
         return new InventoryPackage(
@@ -94,6 +116,10 @@ public sealed class InventoryPackage : BusinessEntity
             string.IsNullOrWhiteSpace(publicId) ? Guid.NewGuid().ToString("N") : publicId.Trim(),
             physicalGroupLabel ?? string.Empty,
             string.IsNullOrWhiteSpace(sourcePlantId) ? plantId ?? string.Empty : sourcePlantId.Trim(),
+            materialId,
+            batchId,
+            warehouseId,
+            locationId,
             companyId,
             plantId);
     }
@@ -117,12 +143,14 @@ public sealed class InventoryPackage : BusinessEntity
     }
 
     /// <summary>Intra-factory relocate — does not change material, lot, qty, or status.</summary>
-    public void Relocate(string warehouseCode, string locationCode)
+    public void Relocate(string warehouseCode, string locationCode, Guid? warehouseId = null, Guid? locationId = null)
     {
         if (string.IsNullOrWhiteSpace(warehouseCode)) throw new InvalidOperationException("Warehouse is required.");
         if (string.IsNullOrWhiteSpace(locationCode)) throw new InvalidOperationException("Location is required.");
         WarehouseCode = warehouseCode.Trim();
         LocationCode = locationCode.Trim();
+        if (warehouseId is not null) WarehouseId = warehouseId;
+        if (locationId is not null) LocationId = locationId;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

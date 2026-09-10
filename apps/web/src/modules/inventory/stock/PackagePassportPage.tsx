@@ -3,22 +3,24 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
-import { getPackagePassport, recordLabelPrint, relocatePackage } from './packagePassportApi';
+import { getPackageByPublicId, getPackagePassport, recordLabelPrint, relocatePackage } from './packagePassportApi';
 import { printPackageLabels } from './packageLabelPrint';
 
 export function PackagePassportPage() {
-  const { id: packageId } = useParams({ strict: false }) as { id: string };
+  const params = useParams({ strict: false }) as { id?: string; publicId?: string };
   const search = useSearch({ strict: false }) as { pk?: string };
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [wh, setWh] = useState('');
   const [loc, setLoc] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const lookupKey = params.publicId || params.id || '';
 
   const q = useQuery({
-    queryKey: ['package-passport', packageId, search?.pk],
-    queryFn: () => getPackagePassport(packageId),
-    enabled: Boolean(packageId),
+    queryKey: ['package-passport', lookupKey, search?.pk],
+    queryFn: () =>
+      params.publicId ? getPackageByPublicId(params.publicId) : getPackagePassport(params.id!),
+    enabled: Boolean(lookupKey),
   });
   const p = q.data;
 
@@ -29,15 +31,15 @@ export function PackagePassportPage() {
       return recordLabelPrint(p.id);
     },
     onSuccess: (doc) => {
-      void qc.setQueryData(['package-passport', packageId, search?.pk], doc);
+      void qc.setQueryData(['package-passport', lookupKey, search?.pk], doc);
     },
     onError: (e: Error) => setErr(e.message),
   });
 
   const moveMut = useMutation({
-    mutationFn: () => relocatePackage(packageId, wh, loc),
+    mutationFn: () => relocatePackage(p?.id ?? params.id ?? '', wh, loc),
     onSuccess: (doc) => {
-      void qc.setQueryData(['package-passport', packageId, search?.pk], doc);
+      void qc.setQueryData(['package-passport', lookupKey, search?.pk], doc);
       setErr(null);
     },
     onError: (e: Error) => setErr(e.message),
