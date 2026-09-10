@@ -91,6 +91,7 @@ public sealed class UpsertInventoryCountLineRequestDto
     public bool LotUnknown { get; init; }
     public string PackageNumber { get; init; } = string.Empty;
     public string PhysicalGroupLabel { get; init; } = string.Empty;
+    public string Barcode { get; init; } = string.Empty;
     public decimal? ThicknessMm { get; init; }
     public decimal? WidthMm { get; init; }
     public decimal? LengthMm { get; init; }

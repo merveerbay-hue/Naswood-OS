@@ -10,6 +10,8 @@ import {
   uniqueReviewLabels,
   type CountExcelMaterial,
 } from './cycleCountExcel';
+import { buildCountXlsxBytes, countExcelFileName } from './countExcelXlsx';
+import { parseXlsxAllSheets } from '../materials/materialCardBulk';
 import {
   buildCountMaterialCreateBody,
   canCreateCountMaterial,
@@ -167,5 +169,34 @@ t250.push(['Bilinmeyen B', '45', '90', '4000', '1']);
 t250.push(['Bilinmeyen C', '45', '90', '4000', '1']);
 const many = parseCountTable(t250, [pine]);
 assert(many.total === 250 && many.matched === 247 && many.newCandidates === 3, 'partial file kept');
+
+assert(countExcelFileName('CNT-2026-00481') === 'CNT-2026-00481-sayim.xlsx', 'file named by count number');
+assert(countExcelFileName('CNT-2026-00481-sayim.xlsx') === 'CNT-2026-00481-sayim.xlsx', 'same name on re-download');
+
+const pkgRows = parseCountTable(
+  [
+    ['Malzeme Tanımı', 'Kalınlık mm', 'Genişlik mm', 'Uzunluk mm', 'Adet', 'Paket / İstif Etiketi'],
+    ['Çam Kereste', '45', '90', '4000', '40', '1'],
+    ['Çam Kereste', '45', '90', '3000', '40', '2'],
+    ['Çam Kereste', '45', '90', '2500', '40', '3'],
+  ],
+  [pine],
+);
+assert(pkgRows.rows.map((r) => r.physicalGroupLabel).join(',') === '1,2,3', 'field package 1 2 3');
+assert(pkgRows.invalid === 0, '1 2 3 is not an import error');
+
+const xlsx = buildCountXlsxBytes({
+  labels: ['Çam Kereste'],
+  mapRows: [['Çam Kereste', pine.id, pine.code, 'KR', 'PIN', '50', '100', 'M3', 'PCS']],
+  bodyRows: [['Çam Kereste', '45', '90', '4000', '120', '', '1', '']],
+});
+const xlsxSheets = await parseXlsxAllSheets(xlsx.buffer.slice(xlsx.byteOffset, xlsx.byteOffset + xlsx.byteLength));
+const sayim = xlsxSheets.find((s) => s.name === 'Sayım');
+const mats = xlsxSheets.find((s) => s.name === '_MATERIALS');
+assert(sayim?.rows[0]?.[0] === 'Malzeme Tanımı', 'xlsx Sayım header');
+assert(mats?.rows[1]?.[0] === 'Çam Kereste', 'xlsx hidden map');
+const parsedXlsx = parseCountTable(sayim!.rows, [pine], new Map([['çam kereste', { id: pine.id, code: pine.code }]]));
+assert(parsedXlsx.rows[0]?.physicalGroupLabel === '1', 'xlsx package label roundtrip');
+assert(parsedXlsx.rows[0]?.status === 'MATCHED', 'xlsx name still matches');
 
 console.info('cycleCountExcel.selftest: all passed');

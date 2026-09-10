@@ -1,10 +1,13 @@
 import {
   parseDelimitedTable,
   parseSpreadsheetMl,
-  parseXlsxWorkbook,
+  parseXlsxAllSheets,
 } from '../materials/materialCardBulk';
 import { formatNominalDims, readNominalDims } from '../materials/materialNominalDims';
 import type { MaterialCandidate } from '../receiving/materialMatch';
+import { buildCountXlsxBytes, countExcelFileName } from './countExcelXlsx';
+
+export { countExcelFileName };
 
 export type CountExcelMaterial = MaterialCandidate & {
   isActive?: boolean;
@@ -34,6 +37,8 @@ export type CountExcelPreviewRow = {
   uom: string;
   measuredVolumeM3?: number | null;
   physicalGroupLabel?: string;
+  packageNumber?: string;
+  barcode?: string;
   note: string;
   status: ExcelPreviewStatus;
   error?: string;
@@ -108,10 +113,6 @@ function num(s: string): number | undefined {
   if (!t) return undefined;
   const n = Number(t);
   return Number.isFinite(n) ? n : undefined;
-}
-
-function xmlEscape(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function normalizeLabel(s: string): string {
@@ -481,7 +482,7 @@ export async function parseCountWorkbook(file: File, cards: CountExcelMaterial[]
   const name = file.name.toLowerCase();
   let sheets: { name: string; rows: string[][] }[] = [];
   if (name.endsWith('.xlsx')) {
-    sheets = [{ name: 'Sayım', rows: await parseXlsxWorkbook(await file.arrayBuffer()) }];
+    sheets = await parseXlsxAllSheets(await file.arrayBuffer());
   } else {
     const text = await file.text();
     const trimmed = text.trimStart();
@@ -509,7 +510,7 @@ export function buildFieldCountCsv(cards: CountExcelMaterial[], snapshot: CountT
           const o = byCode.get(s.materialCode.toLowerCase());
           return `${o?.label || s.materialName};;;;;;;`;
         })
-      : ['Çam Kereste;45;90;4000;120;;İstif A;'];
+      : ['Çam Kereste;45;90;4000;120;;1;'];
   return '\uFEFF' + [header, ...lines].join('\n');
 }
 
@@ -523,107 +524,47 @@ function defField(json: string | null | undefined, key: string): string {
   }
 }
 
-export function downloadFieldCountTemplate(cards: CountExcelMaterial[], snapshot: CountTemplateSnapshotRow[]) {
+export function downloadFieldCountTemplate(
+  cards: CountExcelMaterial[],
+  snapshot: CountTemplateSnapshotRow[],
+  countNumber?: string | null,
+) {
   const opts = buildMaterialOptions(cards);
   const labels = opts.map((o) => o.label);
   const byCode = new Map(opts.map((o) => [o.code.toLowerCase(), o]));
-  const mapRows = opts
-    .map((o) => {
-      const card = cards.find((c) => c.id === o.id);
-      const dims = readNominalDims({ definitionJson: card?.definitionJson });
-      const type = defField(card?.definitionJson, 'materialTypeToken') || o.type;
-      const wood = defField(card?.definitionJson, 'woodToken') || defField(card?.definitionJson, 'species');
-      const stock = card?.unitOfMeasure || defField(card?.definitionJson, 'stockUom');
-      const countU = defField(card?.definitionJson, 'countUom');
-      return `<Row>
-<Cell><Data ss:Type="String">${xmlEscape(o.label)}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(o.id)}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(o.code)}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(type)}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(wood)}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(dims?.thicknessMm != null ? String(dims.thicknessMm) : '')}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(dims?.widthMm != null ? String(dims.widthMm) : '')}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(stock)}</Data></Cell>
-<Cell><Data ss:Type="String">${xmlEscape(countU)}</Data></Cell>
-</Row>`;
-    })
-    .join('');
-
-  const body =
+  const mapRows = opts.map((o) => {
+    const card = cards.find((c) => c.id === o.id);
+    const dims = readNominalDims({ definitionJson: card?.definitionJson });
+    const type = defField(card?.definitionJson, 'materialTypeToken') || o.type;
+    const wood = defField(card?.definitionJson, 'woodToken') || defField(card?.definitionJson, 'species');
+    const stock = card?.unitOfMeasure || defField(card?.definitionJson, 'stockUom');
+    const countU = defField(card?.definitionJson, 'countUom');
+    return [
+      o.label,
+      o.id,
+      o.code,
+      type,
+      wood,
+      dims?.thicknessMm != null ? String(dims.thicknessMm) : '',
+      dims?.widthMm != null ? String(dims.widthMm) : '',
+      stock,
+      countU,
+    ];
+  });
+  const bodyRows =
     snapshot.length > 0
-      ? snapshot
-          .map((s) => {
-            const o = byCode.get(s.materialCode.toLowerCase());
-            const label = o?.label || s.materialName || s.materialCode;
-            return `<Row>
-<Cell><Data ss:Type="String">${xmlEscape(label)}</Data></Cell>
-<Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell>
-</Row>`;
-          })
-          .join('')
-      : `<Row>
-<Cell><Data ss:Type="String">${xmlEscape(labels[0] || 'Çam Kereste')}</Data></Cell>
-<Cell><Data ss:Type="Number">45</Data></Cell>
-<Cell><Data ss:Type="Number">90</Data></Cell>
-<Cell><Data ss:Type="Number">4000</Data></Cell>
-<Cell><Data ss:Type="Number">120</Data></Cell>
-<Cell></Cell>
-<Cell><Data ss:Type="String">İstif A</Data></Cell>
-<Cell></Cell>
-</Row>`;
-
-  const lastList = Math.max(1, labels.length);
-  const xml = `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:x="urn:schemas-microsoft-com:office:excel">
-<Names>
-<NamedRange ss:Name="MaterialList" ss:RefersTo="=_MATERIALS!R2C1:R${lastList + 1}C1"/>
-</Names>
-<Worksheet ss:Name="Sayım">
-<Table>
-<Row>
-<Cell><Data ss:Type="String">Malzeme Tanımı</Data></Cell>
-<Cell><Data ss:Type="String">Kalınlık mm</Data></Cell>
-<Cell><Data ss:Type="String">Genişlik mm</Data></Cell>
-<Cell><Data ss:Type="String">Uzunluk mm</Data></Cell>
-<Cell><Data ss:Type="String">Adet</Data></Cell>
-<Cell><Data ss:Type="String">Ölçülen Miktar</Data></Cell>
-<Cell><Data ss:Type="String">Paket / İstif Etiketi</Data></Cell>
-<Cell><Data ss:Type="String">Not</Data></Cell>
-</Row>
-${body}
-</Table>
-<DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-<Range>R2C1:R2001C1</Range>
-<Type>List</Type>
-<Value>MaterialList</Value>
-<ShowError>0</ShowError>
-</DataValidation>
-</Worksheet>
-<Worksheet ss:Name="_MATERIALS" ss:Visible="ss:Hidden">
-<Table>
-<Row>
-<Cell><Data ss:Type="String">DisplayName</Data></Cell>
-<Cell><Data ss:Type="String">MaterialId</Data></Cell>
-<Cell><Data ss:Type="String">MaterialCode</Data></Cell>
-<Cell><Data ss:Type="String">MaterialType</Data></Cell>
-<Cell><Data ss:Type="String">WoodSpecies</Data></Cell>
-<Cell><Data ss:Type="String">NominalThickness</Data></Cell>
-<Cell><Data ss:Type="String">NominalWidth</Data></Cell>
-<Cell><Data ss:Type="String">StockUnit</Data></Cell>
-<Cell><Data ss:Type="String">CountUnit</Data></Cell>
-</Row>
-${mapRows}
-</Table>
-</Worksheet>
-</Workbook>`;
-
-  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+      ? snapshot.map((s) => {
+          const o = byCode.get(s.materialCode.toLowerCase());
+          return [o?.label || s.materialName || s.materialCode, '', '', '', '', '', '', ''];
+        })
+      : [[labels[0] || 'Çam Kereste', '45', '90', '4000', '120', '', '1', '']];
+  const bytes = buildCountXlsxBytes({ labels, mapRows, bodyRows });
+  const blob = new Blob([bytes], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'stok-sayim-saha.xls';
+  a.download = countExcelFileName(countNumber);
   a.click();
   URL.revokeObjectURL(a.href);
 }

@@ -209,6 +209,7 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
             _repo.RemoveLine(line);
 
         var lineNo = existing.Where(l => l.Role == "SNAPSHOT").Select(l => l.LineNo).DefaultIfEmpty(0).Max();
+        var fieldPackages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in command.Lines ?? [])
         {
             Material? material = null;
@@ -279,6 +280,29 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                 var tag = $"İstif: {group}";
                 notes = string.IsNullOrWhiteSpace(notes) ? tag : $"{tag} | {notes}";
             }
+            var packageNumber = string.Empty;
+            var barcode = string.Empty;
+            if (!string.IsNullOrWhiteSpace(dto.PackageNumber) && dto.PackageNumber.Trim().StartsWith("PKG-", StringComparison.OrdinalIgnoreCase))
+            {
+                packageNumber = dto.PackageNumber.Trim();
+                barcode = string.IsNullOrWhiteSpace(dto.Barcode) ? packageNumber : dto.Barcode.Trim();
+            }
+            else if (!string.IsNullOrWhiteSpace(group))
+            {
+                var key = $"{material.Code}\u001f{group}";
+                if (!fieldPackages.TryGetValue(key, out var minted))
+                {
+                    minted = SystemIdentifier.Ensure(null, "PKG");
+                    fieldPackages[key] = minted;
+                }
+                packageNumber = minted;
+                barcode = minted;
+            }
+            if (!string.IsNullOrWhiteSpace(barcode))
+            {
+                var bc = $"Barkod: {barcode}";
+                notes = string.IsNullOrWhiteSpace(notes) ? bc : $"{notes} | {bc}";
+            }
             var line = InventoryCountLine.CreatePhysical(
                 e.Id,
                 lineNo,
@@ -289,7 +313,7 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                 loc.Code,
                 batchNumber,
                 lotUnknown,
-                packageNumber: string.Empty,
+                packageNumber,
                 dto.ThicknessMm,
                 dto.WidthMm,
                 dto.LengthMm,

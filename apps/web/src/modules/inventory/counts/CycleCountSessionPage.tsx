@@ -560,6 +560,7 @@ export function CycleCountSessionPage() {
                   downloadFieldCountTemplate(
                     materials,
                     [],
+                    warehouseCode,
                   )
                 }
               >
@@ -580,7 +581,10 @@ export function CycleCountSessionPage() {
         <Card>
           <CardHeader>
             <CardTitle>Giriş yöntemleri</CardTitle>
-            <CardDescription>Yüzlerce satırı tek tek yazmayın. AI sonucu stoğa yazılmaz.</CardDescription>
+            <CardDescription>
+              Şablon {opened.number ? `${opened.number}-sayim.xlsx` : 'sayım kodu' } adıyla iner; aynı dosyayı kaydedip yükleyin.
+              Paket sütununa 1, 2, 3 yazın — sistem paket no ve barkod üretir.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             <Button
@@ -593,6 +597,7 @@ export function CycleCountSessionPage() {
                     materialCode: l.materialCode,
                     materialName: l.materialName,
                   })),
+                  opened.number,
                 )
               }
             >
@@ -601,7 +606,7 @@ export function CycleCountSessionPage() {
             <label className="inline-flex">
               <input
                 type="file"
-                accept=".csv,.xls,.xlsx,.xml,text/csv"
+                accept=".csv,.xls,.xlsx,.xml,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className="hidden"
                 disabled={!counting || !canSave}
                 onChange={(e) => {
