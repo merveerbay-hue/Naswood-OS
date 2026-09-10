@@ -110,6 +110,7 @@ public sealed class ProductionOutput : BusinessEntity
     public DateTimeOffset? QcDecidedAt { get; private set; }
     public string QcInspectionReference { get; private set; } = string.Empty;
     public string QcNotes { get; private set; } = string.Empty;
+    public Guid? ProductionOperationExecutionId { get; private set; }
 
     public static ProductionOutput Create(
         string number,
@@ -144,6 +145,12 @@ public sealed class ProductionOutput : BusinessEntity
             string.Empty,
             companyId,
             plantId);
+
+    public void AttachExecution(Guid executionId)
+    {
+        ProductionOperationExecutionId = executionId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 
     public void MarkPosted(
         Guid outputBatchId,

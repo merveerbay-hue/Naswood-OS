@@ -128,6 +128,7 @@ public sealed class PackagePassportDto
     public string SourceType { get; init; } = string.Empty;
     public string SourceReferenceNo { get; init; } = string.Empty;
     public string ProductionOrderNumber { get; init; } = string.Empty;
+    public string ProductionExecutionNumber { get; init; } = string.Empty;
     public int SourceLotCount { get; init; }
     public IReadOnlyList<string> SourceLotNumbers { get; init; } = [];
     public required string Factory { get; init; }

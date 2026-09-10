@@ -13,6 +13,7 @@ public interface IProductionOutputRepository
     Task AddAsync(ProductionOutput entity, CancellationToken cancellationToken = default);
     Task<ProductionOutput?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ProductionOutput?> GetByNumberAsync(string number, string? plantId, CancellationToken cancellationToken = default);
+    Task<ProductionOutput?> GetByExecutionIdAsync(Guid executionId, CancellationToken cancellationToken = default);
 }
 
 public interface IProductionLotSourceRepository
@@ -262,9 +263,11 @@ public sealed class ProductionOutputGateway
             number, c.Order.Id, c.Material.Id, c.Material.Code,
             c.Warehouse.Code, c.Location.Code, c.Warehouse.Id, c.Location.Id,
             body.WorkCenterCode ?? "", stockStatus, c.PlantId);
+        if (body.ProductionOperationExecutionId is Guid execId)
+            doc.AttachExecution(execId);
         await _outputs.AddAsync(doc, cancellationToken).ConfigureAwait(false);
 
-        var prepared = await PrepareSourcesAsync(body.Sources, c, cancellationToken).ConfigureAwait(false);
+        var prepared = await PrepareSourcesAsync(body.Sources, c, body.SkipSourceIssue, cancellationToken).ConfigureAwait(false);
         if (prepared.IsFailure) return Result.Failure<ProductionOutputResultDto>(prepared.Error!);
 
         var inputQty = 0m;
@@ -272,38 +275,43 @@ public sealed class ProductionOutputGateway
         var sourceRows = new List<ProductionLotSource>();
         foreach (var row in prepared.Value)
         {
-            try { row.Balance.ApplyIssue(row.Request.ConsumedQuantity); }
-            catch (InvalidOperationException ex)
+            var pkgNo = row.Package?.PackageNumber ?? "";
+            if (!body.SkipSourceIssue)
             {
-                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-014", ex.Message));
-            }
-
-            var pkgNo = "";
-            if (row.Package is not null)
-            {
-                try { row.Package.Consume(row.Request.ConsumedQuantity); }
+                try { row.Balance.ApplyIssue(row.Request.ConsumedQuantity); }
                 catch (InvalidOperationException ex)
                 {
-                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-015", ex.Message));
+                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-014", ex.Message));
                 }
-                pkgNo = row.Package.PackageNumber;
+
+                if (row.Package is not null)
+                {
+                    try { row.Package.Consume(row.Request.ConsumedQuantity); }
+                    catch (InvalidOperationException ex)
+                    {
+                        return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-015", ex.Message));
+                    }
+                    pkgNo = row.Package.PackageNumber;
+                }
+
+                var consume = InventoryMovement.Post(
+                    ProductionLotCodes.ConsumptionMovement, "Out", number,
+                    row.Lot.MaterialCode, "", pkgNo,
+                    row.WarehouseCode, row.LocationCode, row.Lot.BatchNumber, row.Request.ConsumedQuantity,
+                    row.Unit,
+                    ProductionLotCodes.ConsumptionNotes(c.Order.Code, lotNo, row.Lot.BatchNumber, row.Lot.Id, pkgNo),
+                    plantId: c.PlantId,
+                    packageId: row.Package?.Id);
+                await _movements.AddAsync(consume, cancellationToken).ConfigureAwait(false);
             }
 
-            var consume = InventoryMovement.Post(
-                ProductionLotCodes.ConsumptionMovement, "Out", number,
-                row.Lot.MaterialCode, "", pkgNo,
-                row.WarehouseCode, row.LocationCode, row.Lot.BatchNumber, row.Request.ConsumedQuantity,
-                row.Unit,
-                ProductionLotCodes.ConsumptionNotes(c.Order.Code, lotNo, row.Lot.BatchNumber, row.Lot.Id, pkgNo),
-                plantId: c.PlantId,
-                packageId: row.Package?.Id);
-            await _movements.AddAsync(consume, cancellationToken).ConfigureAwait(false);
             inputQty += row.Request.ConsumedQuantity;
             sourceLots.Add(row.Lot.BatchNumber);
             sourceRows.Add(ProductionLotSource.Create(
                 lot.Id, row.Lot.Id, row.Material.Id, row.Lot.MaterialCode,
                 row.Request.ConsumedQuantity, row.Unit,
-                c.Order.Id, doc.Id, row.Request.SourcePackageId, c.PlantId));
+                c.Order.Id, doc.Id, row.Request.SourcePackageId, c.PlantId,
+                productionOperationExecutionId: body.ProductionOperationExecutionId));
         }
 
         if (sourceRows.Count > 0)
@@ -458,7 +466,8 @@ public sealed class ProductionOutputGateway
                 Quantity = p.Quantity,
                 Unit = p.UnitOfMeasure
             }).ToArray(),
-            SourceLots = sourceDtos
+            SourceLots = sourceDtos,
+            ProductionOperationExecutionId = firstSource?.ProductionOperationExecutionId
         });
     }
 
@@ -762,6 +771,7 @@ public sealed class ProductionOutputGateway
     private async Task<Result<IReadOnlyList<PreparedSource>>> PrepareSourcesAsync(
         IReadOnlyList<ProductionOutputSourceRequestDto>? sources,
         Resolved c,
+        bool skipAvailability,
         CancellationToken cancellationToken)
     {
         var rows = new List<PreparedSource>();
@@ -802,6 +812,8 @@ public sealed class ProductionOutputGateway
             rows.Add(new PreparedSource(src, sourceLot, srcMat, srcBalance, srcPkg, srcWh, srcLoc, unit));
         }
 
+        if (!skipAvailability)
+        {
         foreach (var group in rows.GroupBy(r => (r.Lot.MaterialCode, r.WarehouseCode, r.LocationCode, r.Lot.BatchNumber, r.Balance.Id)))
         {
             var requested = group.Sum(x => x.Request.ConsumedQuantity);
@@ -811,9 +823,10 @@ public sealed class ProductionOutputGateway
                     "PRD-OUT-014",
                     $"Yetersiz bakiye {group.Key.BatchNumber}: {available} / {requested}."));
         }
+        }
 
         var packaged = rows.Where(r => r.Package is not null).ToArray();
-        if (packaged.Length > 0)
+        if (!skipAvailability && packaged.Length > 0)
         {
             var snaps = new Dictionary<Guid, PackagePhysicalSnapshot>();
             foreach (var row in packaged)

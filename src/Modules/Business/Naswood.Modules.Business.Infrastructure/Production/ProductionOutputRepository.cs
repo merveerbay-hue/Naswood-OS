@@ -14,7 +14,12 @@ public sealed class ProductionOutputRepository : IProductionOutputRepository
         => _db.Set<ProductionOutput>().AddAsync(entity, cancellationToken).AsTask();
 
     public Task<ProductionOutput?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => _db.Set<ProductionOutput>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    {
+        var local = _db.Set<ProductionOutput>().Local.FirstOrDefault(x => x.Id == id);
+        return local is not null
+            ? Task.FromResult<ProductionOutput?>(local)
+            : _db.Set<ProductionOutput>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
     public Task<ProductionOutput?> GetByNumberAsync(string number, string? plantId, CancellationToken cancellationToken = default)
     {
@@ -27,6 +32,15 @@ public sealed class ProductionOutputRepository : IProductionOutputRepository
             query = query.Where(x => x.PlantId == plant);
         }
         return query.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public Task<ProductionOutput?> GetByExecutionIdAsync(Guid executionId, CancellationToken cancellationToken = default)
+    {
+        var local = _db.Set<ProductionOutput>().Local.FirstOrDefault(x => !x.IsDeleted && x.ProductionOperationExecutionId == executionId);
+        return local is not null
+            ? Task.FromResult<ProductionOutput?>(local)
+            : _db.Set<ProductionOutput>().FirstOrDefaultAsync(
+                x => !x.IsDeleted && x.ProductionOperationExecutionId == executionId, cancellationToken);
     }
 }
 

@@ -19,6 +19,7 @@ public sealed class ProductionLotSource : BusinessEntity
         Guid productionOrderId,
         Guid productionOutputId,
         Guid? sourcePackageId,
+        Guid? productionOperationExecutionId,
         string companyId,
         string? plantId)
         : base(id)
@@ -32,6 +33,7 @@ public sealed class ProductionLotSource : BusinessEntity
         ProductionOrderId = productionOrderId;
         ProductionOutputId = productionOutputId;
         SourcePackageId = sourcePackageId;
+        ProductionOperationExecutionId = productionOperationExecutionId;
         CompanyId = companyId;
         PlantId = plantId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
@@ -46,6 +48,7 @@ public sealed class ProductionLotSource : BusinessEntity
     public Guid ProductionOrderId { get; private set; }
     public Guid ProductionOutputId { get; private set; }
     public Guid? SourcePackageId { get; private set; }
+    public Guid? ProductionOperationExecutionId { get; private set; }
 
     public static ProductionLotSource Create(
         Guid productionLotId,
@@ -58,7 +61,8 @@ public sealed class ProductionLotSource : BusinessEntity
         Guid productionOutputId,
         Guid? sourcePackageId,
         string? plantId,
-        string companyId = "COMP-001")
+        string companyId = "COMP-001",
+        Guid? productionOperationExecutionId = null)
         => new(
             UuidV7.NewGuid(),
             productionLotId,
@@ -70,6 +74,7 @@ public sealed class ProductionLotSource : BusinessEntity
             productionOrderId,
             productionOutputId,
             sourcePackageId,
+            productionOperationExecutionId,
             companyId,
             plantId);
 }

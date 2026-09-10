@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddScoped<PackagePassportLoader>();
         services.AddScoped<PackageLifecycleGateway>();
         services.AddScoped<Naswood.Modules.Business.Application.Production.ProductionOutputGateway>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.ProductionExecutionGateway>();
         return services;
     }
 }
