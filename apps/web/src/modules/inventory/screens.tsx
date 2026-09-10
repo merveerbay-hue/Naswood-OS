@@ -16,6 +16,7 @@ import {
 } from '@/modules/inventory/materials/materialNominalDims';
 import masterSeed from '@/modules/inventory/materials/masterMaterialSeed.json';
 import { LocationListPage as LocationListPageImpl } from '@/modules/inventory/locations/LocationListPage';
+import { MasterStockPage } from '@/modules/inventory/stock/MasterStockPage';
 
 function materialDimsSource(row: Record<string, unknown>) {
   return {
@@ -256,20 +257,7 @@ export function LocationListPage() {
 }
 
 export function StockBalancePage() {
-  const { t } = useI18n();
-  const { plantId } = usePlantContext();
-  return (
-    <EntityListScreen
-      screenId="INV-014"
-      title={t('inventory.balanceTitle')}
-      description={t('inventory.balanceDesc')}
-      route="inventory"
-      fields={useInvFields().balance}
-      createLabel={t('inventory.addBalance')}
-      plantId={plantId}
-      readOnly
-    />
-  );
+  return <MasterStockPage />;
 }
 
 export function LotListPage() {

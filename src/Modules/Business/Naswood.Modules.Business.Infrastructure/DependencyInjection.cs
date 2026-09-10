@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IWarehouseRepository, Naswood.Modules.Business.Infrastructure.Inventory.WarehouseRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.ILocationRepository, Naswood.Modules.Business.Infrastructure.Inventory.LocationRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryBalanceRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryBalanceRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IMasterStockReadRepository, Naswood.Modules.Business.Infrastructure.Inventory.MasterStockReadRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IBatchRepository, Naswood.Modules.Business.Infrastructure.Inventory.BatchRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IGoodsReceiptRepository, Naswood.Modules.Business.Infrastructure.Inventory.GoodsReceiptRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IGoodsIssueRepository, Naswood.Modules.Business.Infrastructure.Inventory.GoodsIssueRepository>();
