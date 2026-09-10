@@ -16,7 +16,9 @@ export type CountTemplateSnapshotRow = {
   materialName: string;
 };
 
-export type ExcelPreviewStatus = 'MATCHED' | 'REVIEW_REQUIRED' | 'INVALID';
+export type ExcelPreviewStatus = 'MATCHED' | 'SUGGESTED' | 'NEW_CANDIDATE' | 'INVALID';
+/** @deprecated use SUGGESTED */
+export type ExcelPreviewStatusLegacy = ExcelPreviewStatus | 'REVIEW_REQUIRED';
 
 export type CountExcelPreviewRow = {
   excelRow: number;
@@ -36,15 +38,35 @@ export type CountExcelPreviewRow = {
   status: ExcelPreviewStatus;
   error?: string;
   matchHint?: string;
+  skipped?: boolean;
+  suggestedId?: string;
+  suggestedName?: string;
+};
+
+export type UniqueMaterialResolution = {
+  key: string;
+  excelLabel: string;
+  rowCount: number;
+  status: ExcelPreviewStatus;
+  materialId?: string;
+  materialCode?: string;
+  materialName?: string;
+  suggestedId?: string;
+  suggestedName?: string;
+  skipped?: boolean;
 };
 
 export type CountExcelPreview = {
   total: number;
   matched: number;
   reviewRequired: number;
+  suggested: number;
+  newCandidates: number;
   invalid: number;
   ready: number;
+  uniqueCount: number;
   rows: CountExcelPreviewRow[];
+  uniques: UniqueMaterialResolution[];
 };
 
 type MaterialOption = {
@@ -93,7 +115,16 @@ function xmlEscape(s: string): string {
 }
 
 function normalizeLabel(s: string): string {
-  return fold(s).replace(/\s+/g, ' ');
+  return normalizeMatchKey(s);
+}
+
+/** Whitespace + Turkish locale case fold. Does not strip ğüşıöç. */
+export function normalizeMatchKey(s: string): string {
+  return String(s ?? '')
+    .normalize('NFC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase('tr-TR');
 }
 
 export function friendlyMaterialLabel(m: CountExcelMaterial, opts: MaterialOption[]): string {
@@ -139,18 +170,41 @@ function parseAllSpreadsheetMl(xml: string): { name: string; rows: string[][] }[
 
 function parseHiddenMap(sheets: { name: string; rows: string[][] }[]): Map<string, { id: string; code: string }> {
   const map = new Map<string, { id: string; code: string }>();
-  const sheet = sheets.find((s) => /naswoodmap|_map/i.test(s.name));
+  const sheet = sheets.find((s) => /_materials|naswoodmap|_map/i.test(s.name));
   if (!sheet || sheet.rows.length < 2) return map;
   const h = sheet.rows[0].map((x) => String(x).toLowerCase());
-  const iLabel = idx(h, 'label', 'malzeme');
+  const iLabel = idx(h, 'displayname', 'label', 'malzeme', 'malzeme tanimi', 'malzeme tanımı');
   const iId = idx(h, 'materialid');
   const iCode = idx(h, 'materialcode');
   for (const row of sheet.rows.slice(1)) {
     const label = cell(row, iLabel);
-    if (!label) continue;
-    map.set(normalizeLabel(label), { id: cell(row, iId), code: cell(row, iCode) });
+    const id = cell(row, iId);
+    const code = cell(row, iCode);
+    if (label) map.set(normalizeMatchKey(label), { id, code });
+    if (id) map.set(`id:${id.toLowerCase()}`, { id, code });
   }
   return map;
+}
+
+function stripMeasureTail(label: string): string {
+  return normalizeMatchKey(label)
+    .replace(/[—–-]\s*\d.*/, '')
+    .replace(/\d+(?:\s*[x×]\s*\d+){0,2}/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function similarSuggestion(label: string, opts: MaterialOption[]): MaterialOption | undefined {
+  const n = normalizeMatchKey(label);
+  const stripped = stripMeasureTail(label);
+  const byStrip = opts.filter((o) => normalizeMatchKey(o.name) === stripped || normalizeMatchKey(o.label) === stripped);
+  if (byStrip.length === 1) return byStrip[0];
+  const prefixes = opts.filter((o) => {
+    const name = normalizeMatchKey(o.name);
+    return name.length >= 4 && (n.startsWith(`${name} `) || n.startsWith(`${name}—`) || n.startsWith(`${name}-`));
+  });
+  if (prefixes.length === 1) return prefixes[0];
+  return undefined;
 }
 
 function lumberNeedsDims(opt?: MaterialOption): boolean {
@@ -171,7 +225,7 @@ function matchMaterial(
   explicitId: string,
   opts: MaterialOption[],
   actual: { t?: number; w?: number },
-): { status: ExcelPreviewStatus; opt?: MaterialOption; hint?: string } {
+): { status: ExcelPreviewStatus; opt?: MaterialOption; hint?: string; suggested?: MaterialOption } {
   if (explicitId) {
     const hit = opts.find((o) => o.id.toLowerCase() === explicitId.toLowerCase());
     if (hit) return { status: 'MATCHED', opt: hit, hint: 'MaterialId' };
@@ -185,23 +239,21 @@ function matchMaterial(
     const hit = opts.find((o) => o.code.toLowerCase() === code.toLowerCase());
     if (hit) return { status: 'MATCHED', opt: hit, hint: 'MaterialCode' };
   }
-  const n = normalizeLabel(label);
+  const n = normalizeMatchKey(label);
   if (!n) return { status: 'INVALID', hint: 'Malzeme boş' };
 
-  const byName = opts.filter((o) => normalizeLabel(o.name) === n || normalizeLabel(o.label) === n);
+  const byName = opts.filter((o) => normalizeMatchKey(o.name) === n || normalizeMatchKey(o.label) === n);
   if (byName.length === 1) return { status: 'MATCHED', opt: byName[0], hint: 'MaterialName' };
   if (byName.length > 1) {
-    const types = new Set(byName.map((o) => o.type.trim().toLowerCase()));
-    if (types.size === 1 && byName.length === 1) {
-      return { status: 'MATCHED', opt: byName[0], hint: 'name+type' };
-    }
     if (actual.t != null && actual.w != null) {
       const dimHits = byName.filter((o) => o.thicknessMm === actual.t && o.widthMm === actual.w);
       if (dimHits.length === 1) return { status: 'MATCHED', opt: dimHits[0], hint: 'name+nominal' };
     }
-    return { status: 'REVIEW_REQUIRED', hint: 'Aynı isimde birden fazla kart' };
+    return { status: 'SUGGESTED', suggested: byName[0], hint: 'Aynı isimde birden fazla kart' };
   }
-  return { status: 'REVIEW_REQUIRED', hint: 'Kart seçilmeli' };
+  const similar = similarSuggestion(label, opts);
+  if (similar) return { status: 'SUGGESTED', suggested: similar, hint: 'benzer tanım' };
+  return { status: 'NEW_CANDIDATE', hint: 'Material Master’da yok' };
 }
 
 function finishRow(r: CountExcelPreviewRow, opt?: MaterialOption): CountExcelPreviewRow {
@@ -219,11 +271,31 @@ export function parseCountTable(
   const opts = buildMaterialOptions(cards);
   const hidden = hiddenMap ?? new Map<string, { id: string; code: string }>();
   if (!table || table.length < 2) {
-    return { total: 0, matched: 0, reviewRequired: 0, invalid: 0, ready: 0, rows: [] };
+    return {
+      total: 0,
+      matched: 0,
+      reviewRequired: 0,
+      suggested: 0,
+      newCandidates: 0,
+      invalid: 0,
+      ready: 0,
+      uniqueCount: 0,
+      rows: [],
+      uniques: [],
+    };
   }
 
   const h = table[0];
-  const iLabel = idx(h, 'malzeme', 'material', 'materialname', 'malzeme adı', 'malzeme adi');
+  const iLabel = idx(
+    h,
+    'malzeme tanimi',
+    'malzeme tanımı',
+    'malzeme',
+    'material',
+    'materialname',
+    'malzeme adı',
+    'malzeme adi',
+  );
   const iCode = idx(h, 'materialcode', 'malzemekodu');
   const iId = idx(h, 'materialid');
   const iT = idx(h, 'kalınlık mm', 'kalinlik mm', 'thicknessmm', 'thickness', 'kalınlık', 'kalinlik');
@@ -232,7 +304,7 @@ export function parseCountTable(
   const iPcs = idx(h, 'adet', 'piececount', 'pcs', 'parça', 'parca');
   const iQty = idx(h, 'miktar', 'quantity', 'qty');
   const iUom = idx(h, 'birim', 'uom');
-  const iVol = idx(h, 'ölçülen hacim', 'olculen hacim', 'measuredvolumem3', 'hacim');
+  const iVol = idx(h, 'ölçülen miktar', 'olculen miktar', 'ölçülen hacim', 'olculen hacim', 'measuredvolumem3', 'hacim', 'measuredqty');
   const iGroup = idx(
     h,
     'paket / istif etiketi',
@@ -261,7 +333,7 @@ export function parseCountTable(
     const uom = cell(row, iUom) || (pcs != null ? 'PCS' : 'M3');
     if (!label && !code && t == null && w == null && pcs == null && qtyRaw == null && vol == null) return;
 
-    const mapHit = hidden.get(normalizeLabel(label));
+    const mapHit = hidden.get(normalizeMatchKey(label));
     const m = matchMaterial(label, mapHit, code, id, opts, { t, w });
     let status = m.status;
     let error: string | undefined;
@@ -271,6 +343,7 @@ export function parseCountTable(
       status = 'INVALID';
       error = 'Adet veya miktar gerekli';
     }
+    const bound = m.opt ?? (status === 'MATCHED' ? m.opt : undefined);
 
     rows.push(
       finishRow(
@@ -292,8 +365,10 @@ export function parseCountTable(
           status,
           error,
           matchHint: m.hint,
+          suggestedId: m.suggested?.id,
+          suggestedName: m.suggested?.name,
         },
-        m.opt,
+        bound,
       ),
     );
   });
@@ -302,25 +377,74 @@ export function parseCountTable(
 }
 
 function summarize(rows: CountExcelPreviewRow[]): CountExcelPreview {
-  const matched = rows.filter((r) => r.status === 'MATCHED').length;
-  const reviewRequired = rows.filter((r) => r.status === 'REVIEW_REQUIRED').length;
+  const matched = rows.filter((r) => r.status === 'MATCHED' && !r.skipped).length;
+  const suggested = rows.filter((r) => r.status === 'SUGGESTED' && !r.skipped).length;
+  const newCandidates = rows.filter((r) => r.status === 'NEW_CANDIDATE' && !r.skipped).length;
   const invalid = rows.filter((r) => r.status === 'INVALID').length;
-  return { total: rows.length, matched, reviewRequired, invalid, ready: matched, rows };
+  const uniques = buildUniques(rows);
+  return {
+    total: rows.length,
+    matched,
+    reviewRequired: suggested,
+    suggested,
+    newCandidates,
+    invalid,
+    ready: matched,
+    uniqueCount: uniques.length,
+    rows,
+    uniques,
+  };
 }
 
-/** Apply one Excel label → Material Master mapping to all matching REVIEW rows (or a single row). */
+export function buildUniques(rows: CountExcelPreviewRow[]): UniqueMaterialResolution[] {
+  const map = new Map<string, UniqueMaterialResolution>();
+  for (const r of rows) {
+    if (r.status === 'INVALID' && !r.materialLabel) continue;
+    const key = normalizeMatchKey(r.materialLabel);
+    if (!key) continue;
+    const cur = map.get(key);
+    if (!cur) {
+      map.set(key, {
+        key,
+        excelLabel: r.materialLabel,
+        rowCount: 1,
+        status: r.status === 'INVALID' ? 'INVALID' : r.status,
+        materialId: r.materialId,
+        materialCode: r.materialCode,
+        materialName: r.materialName,
+        suggestedId: r.suggestedId,
+        suggestedName: r.suggestedName,
+        skipped: r.skipped,
+      });
+      continue;
+    }
+    cur.rowCount += 1;
+    if (r.status === 'MATCHED') {
+      cur.status = 'MATCHED';
+      cur.materialId = r.materialId;
+      cur.materialCode = r.materialCode;
+      cur.materialName = r.materialName;
+    } else if (cur.status === 'INVALID' && r.status !== 'INVALID') {
+      cur.status = r.status;
+    }
+    if (r.skipped) cur.skipped = true;
+  }
+  return [...map.values()];
+}
+
+/** Apply one Excel label → Material Master mapping to all matching unresolved rows (or a single row). */
 export function applyLabelMapping(
   preview: CountExcelPreview,
   excelLabel: string,
   card: CountExcelMaterial,
   onlyExcelRow?: number,
 ): CountExcelPreview {
-  const n = normalizeLabel(excelLabel);
+  const n = normalizeMatchKey(excelLabel);
   const opt = buildMaterialOptions([card])[0];
   const rows = preview.rows.map((r) => {
     if (r.status === 'INVALID') return r;
     if (onlyExcelRow != null && r.excelRow !== onlyExcelRow) return r;
-    if (normalizeLabel(r.materialLabel) !== n) return r;
+    if (normalizeMatchKey(r.materialLabel) !== n) return r;
     if (onlyExcelRow == null && r.status === 'MATCHED') return r;
     return finishRow(
       {
@@ -330,6 +454,7 @@ export function applyLabelMapping(
         materialName: card.name,
         status: 'MATCHED',
         error: undefined,
+        skipped: false,
         matchHint: onlyExcelRow != null ? 'satır seçimi' : 'toplu eşleştirme',
       },
       opt,
@@ -338,17 +463,18 @@ export function applyLabelMapping(
   return summarize(rows);
 }
 
+export function skipUniqueLabel(preview: CountExcelPreview, excelLabel: string): CountExcelPreview {
+  const n = normalizeMatchKey(excelLabel);
+  const rows = preview.rows.map((r) => {
+    if (normalizeMatchKey(r.materialLabel) !== n) return r;
+    if (r.status === 'INVALID' || r.status === 'MATCHED') return r;
+    return { ...r, skipped: true, matchHint: 'satır atlandı' };
+  });
+  return summarize(rows);
+}
+
 export function uniqueReviewLabels(preview: CountExcelPreview): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const r of preview.rows) {
-    if (r.status !== 'REVIEW_REQUIRED') continue;
-    const k = normalizeLabel(r.materialLabel);
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(r.materialLabel);
-  }
-  return out;
+  return preview.uniques.filter((u) => u.status === 'SUGGESTED' || u.status === 'NEW_CANDIDATE').map((u) => u.excelLabel);
 }
 
 export async function parseCountWorkbook(file: File, cards: CountExcelMaterial[]): Promise<CountExcelPreview> {
@@ -376,29 +502,53 @@ export async function parseCountWorkbook(file: File, cards: CountExcelMaterial[]
 export function buildFieldCountCsv(cards: CountExcelMaterial[], snapshot: CountTemplateSnapshotRow[]): string {
   const opts = buildMaterialOptions(cards);
   const byCode = new Map(opts.map((o) => [o.code.toLowerCase(), o]));
-  const header = 'Malzeme;Kalınlık mm;Genişlik mm;Uzunluk mm;Adet;Paket / İstif Etiketi;Ölçülen Hacim;Not';
+  const header = 'Malzeme Tanımı;Kalınlık mm;Genişlik mm;Uzunluk mm;Adet;Ölçülen Miktar;Paket / İstif Etiketi;Not';
   const lines =
     snapshot.length > 0
       ? snapshot.map((s) => {
           const o = byCode.get(s.materialCode.toLowerCase());
           return `${o?.label || s.materialName};;;;;;;`;
         })
-      : ['Çam Kereste;45;90;4000;120;İstif A;;'];
+      : ['Çam Kereste;45;90;4000;120;;İstif A;'];
   return '\uFEFF' + [header, ...lines].join('\n');
+}
+
+function defField(json: string | null | undefined, key: string): string {
+  if (!json) return '';
+  try {
+    const d = JSON.parse(json) as Record<string, unknown>;
+    return String(d[key] ?? '');
+  } catch {
+    return '';
+  }
 }
 
 export function downloadFieldCountTemplate(cards: CountExcelMaterial[], snapshot: CountTemplateSnapshotRow[]) {
   const opts = buildMaterialOptions(cards);
   const labels = opts.map((o) => o.label);
-  const listRows = labels.map((l) => `<Row><Cell><Data ss:Type="String">${xmlEscape(l)}</Data></Cell></Row>`).join('');
+  const byCode = new Map(opts.map((o) => [o.code.toLowerCase(), o]));
   const mapRows = opts
-    .map(
-      (o) =>
-        `<Row><Cell><Data ss:Type="String">${xmlEscape(o.label)}</Data></Cell><Cell><Data ss:Type="String">${xmlEscape(o.id)}</Data></Cell><Cell><Data ss:Type="String">${xmlEscape(o.code)}</Data></Cell></Row>`,
-    )
+    .map((o) => {
+      const card = cards.find((c) => c.id === o.id);
+      const dims = readNominalDims({ definitionJson: card?.definitionJson });
+      const type = defField(card?.definitionJson, 'materialTypeToken') || o.type;
+      const wood = defField(card?.definitionJson, 'woodToken') || defField(card?.definitionJson, 'species');
+      const stock = card?.unitOfMeasure || defField(card?.definitionJson, 'stockUom');
+      const countU = defField(card?.definitionJson, 'countUom');
+      return `<Row>
+<Cell><Data ss:Type="String">${xmlEscape(o.label)}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(o.id)}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(o.code)}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(type)}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(wood)}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(dims?.thicknessMm != null ? String(dims.thicknessMm) : '')}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(dims?.widthMm != null ? String(dims.widthMm) : '')}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(stock)}</Data></Cell>
+<Cell><Data ss:Type="String">${xmlEscape(countU)}</Data></Cell>
+</Row>`;
+    })
     .join('');
 
-  const byCode = new Map(opts.map((o) => [o.code.toLowerCase(), o]));
   const body =
     snapshot.length > 0
       ? snapshot
@@ -407,13 +557,7 @@ export function downloadFieldCountTemplate(cards: CountExcelMaterial[], snapshot
             const label = o?.label || s.materialName || s.materialCode;
             return `<Row>
 <Cell><Data ss:Type="String">${xmlEscape(label)}</Data></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
+<Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell><Cell></Cell>
 </Row>`;
           })
           .join('')
@@ -423,8 +567,8 @@ export function downloadFieldCountTemplate(cards: CountExcelMaterial[], snapshot
 <Cell><Data ss:Type="Number">90</Data></Cell>
 <Cell><Data ss:Type="Number">4000</Data></Cell>
 <Cell><Data ss:Type="Number">120</Data></Cell>
-<Cell><Data ss:Type="String">İstif A</Data></Cell>
 <Cell></Cell>
+<Cell><Data ss:Type="String">İstif A</Data></Cell>
 <Cell></Cell>
 </Row>`;
 
@@ -435,37 +579,41 @@ export function downloadFieldCountTemplate(cards: CountExcelMaterial[], snapshot
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:x="urn:schemas-microsoft-com:office:excel">
 <Names>
-<NamedRange ss:Name="MaterialList" ss:RefersTo="=_NaswoodList!R1C1:R${lastList}C1"/>
+<NamedRange ss:Name="MaterialList" ss:RefersTo="=_MATERIALS!R2C1:R${lastList + 1}C1"/>
 </Names>
 <Worksheet ss:Name="Sayım">
 <Table>
 <Row>
-<Cell><Data ss:Type="String">Malzeme</Data></Cell>
+<Cell><Data ss:Type="String">Malzeme Tanımı</Data></Cell>
 <Cell><Data ss:Type="String">Kalınlık mm</Data></Cell>
 <Cell><Data ss:Type="String">Genişlik mm</Data></Cell>
 <Cell><Data ss:Type="String">Uzunluk mm</Data></Cell>
 <Cell><Data ss:Type="String">Adet</Data></Cell>
+<Cell><Data ss:Type="String">Ölçülen Miktar</Data></Cell>
 <Cell><Data ss:Type="String">Paket / İstif Etiketi</Data></Cell>
-<Cell><Data ss:Type="String">Ölçülen Hacim</Data></Cell>
 <Cell><Data ss:Type="String">Not</Data></Cell>
 </Row>
 ${body}
 </Table>
 <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-<Range>R2C1:R501C1</Range>
+<Range>R2C1:R2001C1</Range>
 <Type>List</Type>
 <Value>MaterialList</Value>
+<ShowError>0</ShowError>
 </DataValidation>
 </Worksheet>
-<Worksheet ss:Name="_NaswoodList" ss:Visible="ss:Hidden">
-<Table>${listRows || '<Row><Cell><Data ss:Type="String"></Data></Cell></Row>'}</Table>
-</Worksheet>
-<Worksheet ss:Name="_NaswoodMap" ss:Visible="ss:Hidden">
+<Worksheet ss:Name="_MATERIALS" ss:Visible="ss:Hidden">
 <Table>
 <Row>
-<Cell><Data ss:Type="String">Label</Data></Cell>
+<Cell><Data ss:Type="String">DisplayName</Data></Cell>
 <Cell><Data ss:Type="String">MaterialId</Data></Cell>
 <Cell><Data ss:Type="String">MaterialCode</Data></Cell>
+<Cell><Data ss:Type="String">MaterialType</Data></Cell>
+<Cell><Data ss:Type="String">WoodSpecies</Data></Cell>
+<Cell><Data ss:Type="String">NominalThickness</Data></Cell>
+<Cell><Data ss:Type="String">NominalWidth</Data></Cell>
+<Cell><Data ss:Type="String">StockUnit</Data></Cell>
+<Cell><Data ss:Type="String">CountUnit</Data></Cell>
 </Row>
 ${mapRows}
 </Table>

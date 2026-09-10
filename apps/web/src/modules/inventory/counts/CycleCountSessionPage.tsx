@@ -13,9 +13,20 @@ import {
   applyLabelMapping,
   downloadFieldCountTemplate,
   parseCountWorkbook,
-  uniqueReviewLabels,
+  skipUniqueLabel,
+  type CountExcelMaterial,
   type CountExcelPreview,
 } from './cycleCountExcel';
+import {
+  buildCountMaterialCreateBody,
+  canCreateCountMaterial,
+  emptyCountMaterialDraft,
+  findCountMaterialDuplicate,
+  previewCountMaterialCode,
+  HM_TYPE_OPTIONS,
+  WOOD_OPTIONS_HM,
+  type CountMaterialCreateDraft,
+} from './countMaterialCreate';
 import {
   calculateStockQty,
   formatMm,
@@ -81,6 +92,7 @@ export function CycleCountSessionPage() {
   const roles = user?.roles ?? [];
   const canSave = canSaveCountLines(roles);
   const canOpenDoc = canOpenCountDocument(roles);
+  const canMintMaterial = canCreateCountMaterial(roles);
   const queryClient = useQueryClient();
   const { homePlantId, plantId: sessionPlantId, visiblePlantIds, canSwitchPlant, switchPlant, isHomeContext } =
     usePlantContext();
@@ -101,6 +113,9 @@ export function CycleCountSessionPage() {
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const [postResult, setPostResult] = useState<string | null>(null);
   const [excelPreview, setExcelPreview] = useState<CountExcelPreview | null>(null);
+  const [createFor, setCreateFor] = useState<string | null>(null);
+  const [createDraft, setCreateDraft] = useState<CountMaterialCreateDraft>(emptyCountMaterialDraft(''));
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     setWorkPlant(sessionPlantId || homePlantId);
@@ -358,13 +373,13 @@ export function CycleCountSessionPage() {
       return;
     }
     setSavedNote(
-      `Excel önizleme: ${preview.total} satır · ${preview.matched} eşleşti · ${preview.reviewRequired} eşleşme gerekli · ${preview.invalid} hatalı. Stoğa henüz yazılmadı.`,
+      `Sayım dosyası kontrolü: ${preview.total} satır · ${preview.uniqueCount} unique tanım · ${preview.matched} eşleşti · ${preview.suggested} kontrol · ${preview.newCandidates} yeni aday · ${preview.invalid} hatalı.`,
     );
   }
 
   function confirmExcelPreview() {
     if (!excelPreview) return;
-    const matched = excelPreview.rows.filter((r) => r.status === 'MATCHED' && r.materialCode);
+    const matched = excelPreview.rows.filter((r) => r.status === 'MATCHED' && r.materialCode && !r.skipped);
     const loc = locationCode || opened?.locationCode || '';
     setDraftLines((prev) => [
       ...prev,
@@ -386,13 +401,41 @@ export function CycleCountSessionPage() {
       })),
     ]);
     setExcelPreview(null);
-    setSavedNote(`${matched.length} satır sayıma eklendi. ${excelPreview.reviewRequired + excelPreview.invalid} satır bekletildi.`);
+    setSavedNote(
+      `${matched.length} satır sayıma eklendi. ${excelPreview.suggested + excelPreview.newCandidates + excelPreview.invalid} satır bekletildi.`,
+    );
   }
 
   function previewStatusTr(st: string): string {
     if (st === 'MATCHED') return 'EŞLEŞTİ';
-    if (st === 'REVIEW_REQUIRED') return 'EŞLEŞME GEREKLİ';
+    if (st === 'SUGGESTED') return 'KONTROL GEREKİYOR';
+    if (st === 'NEW_CANDIDATE') return 'YENİ MATERIAL ADAYI';
+    if (st === 'REVIEW_REQUIRED') return 'KONTROL GEREKİYOR';
     return 'HATALI SATIR';
+  }
+
+  async function createCandidateMaterial() {
+    setCreateError(null);
+    const dup = findCountMaterialDuplicate(createDraft, materials);
+    if (dup) {
+      setCreateError(`Aynı kart zaten var: ${dup.name} (${dup.code}). Yeni kart oluşturulmadı.`);
+      if (createFor && excelPreview) {
+        setExcelPreview(applyLabelMapping(excelPreview, createFor, dup as CountExcelMaterial));
+        setCreateFor(null);
+      }
+      return;
+    }
+    try {
+      const body = buildCountMaterialCreateBody(createDraft, materials.map((m) => m.code));
+      const created = await createResource<CountExcelMaterial>('materials', body);
+      void queryClient.invalidateQueries({ queryKey: ['business', 'materials'] });
+      if (createFor) {
+        setExcelPreview((p) => (p ? applyLabelMapping(p, createFor, { ...created, name: created.name || createDraft.name }) : p));
+      }
+      setCreateFor(null);
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   function applyAiRow(s: ParsedCountSuggestion, mat: MaterialOpt) {
@@ -582,35 +625,109 @@ export function CycleCountSessionPage() {
       {excelPreview ? (
         <Card>
           <CardHeader>
-            <CardTitle>Excel sayım önizlemesi</CardTitle>
+            <CardTitle>Sayım dosyası kontrolü</CardTitle>
             <CardDescription>
-              Toplam {excelPreview.total} · Eşleşen {excelPreview.matched} · Eşleşme gereken {excelPreview.reviewRequired} ·
-              Hatalı {excelPreview.invalid} · Hazır {excelPreview.ready}. Dosya stoğa işlenmez.
+              Toplam {excelPreview.total} · Unique tanım {excelPreview.uniqueCount} · Eşleşen {excelPreview.matched} ·
+              Eşleştirme gereken {excelPreview.suggested} · Yeni aday {excelPreview.newCandidates} · Hatalı{' '}
+              {excelPreview.invalid}. Stoğa yazılmaz.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {uniqueReviewLabels(excelPreview).map((label) => (
-              <label key={label} className="block text-sm">
-                {label} → NASWOOD malzemesi
-                <select
-                  className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
-                  defaultValue=""
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    const card = materials.find((m) => m.id === id || m.code === id);
-                    if (!card) return;
-                    setExcelPreview((p) => (p ? applyLabelMapping(p, label, card) : p));
-                  }}
-                >
-                  <option value="">Seçin (tüm aynı satırlara uygulanır)</option>
-                  {materials.map((m) => (
-                    <option key={m.id || m.code} value={m.id || m.code}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
+          <CardContent className="space-y-4">
+            {excelPreview.uniques
+              .filter((u) => u.status === 'SUGGESTED' || u.status === 'NEW_CANDIDATE')
+              .map((u) => (
+                <div key={u.key} className="rounded-md border border-[var(--border)] p-3 space-y-2">
+                  <p className="text-sm font-medium">
+                    Excel tanımı: {u.excelLabel}{' '}
+                    <span className="text-[var(--text-muted)] font-normal">({u.rowCount} satır)</span>
+                  </p>
+                  {u.status === 'SUGGESTED' ? (
+                    <>
+                      <p className="text-sm">Önerilen material: {u.suggestedName || '—'}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          disabled={!u.suggestedId}
+                          onClick={() => {
+                            const card = materials.find((m) => m.id === u.suggestedId);
+                            if (card) setExcelPreview((p) => (p ? applyLabelMapping(p, u.excelLabel, card) : p));
+                          }}
+                        >
+                          Eşleştir
+                        </Button>
+                        <select
+                          className="rounded-md border border-[var(--border)] bg-transparent px-2 py-1 text-sm"
+                          defaultValue=""
+                          onChange={(e) => {
+                            const card = materials.find((m) => m.id === e.target.value);
+                            if (!card) return;
+                            setExcelPreview((p) => (p ? applyLabelMapping(p, u.excelLabel, card) : p));
+                          }}
+                        >
+                          <option value="">Başka malzeme seç</option>
+                          {materials.map((m) => (
+                            <option key={m.id || m.code} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setCreateDraft(emptyCountMaterialDraft(u.excelLabel));
+                            setCreateError(null);
+                            setCreateFor(u.excelLabel);
+                          }}
+                        >
+                          Yeni malzeme oluştur
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm">Bu tanım Material Master’da bulunamadı.</p>
+                      <div className="flex flex-wrap gap-2">
+                        <select
+                          className="rounded-md border border-[var(--border)] bg-transparent px-2 py-1 text-sm"
+                          defaultValue=""
+                          onChange={(e) => {
+                            const card = materials.find((m) => m.id === e.target.value);
+                            if (!card) return;
+                            setExcelPreview((p) => (p ? applyLabelMapping(p, u.excelLabel, card) : p));
+                          }}
+                        >
+                          <option value="">Mevcut malzemeyle eşleştir</option>
+                          {materials.map((m) => (
+                            <option key={m.id || m.code} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          disabled={!canMintMaterial}
+                          onClick={() => {
+                            setCreateDraft(emptyCountMaterialDraft(u.excelLabel));
+                            setCreateError(null);
+                            setCreateFor(u.excelLabel);
+                          }}
+                        >
+                          Yeni malzeme kartı oluştur
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setExcelPreview((p) => (p ? skipUniqueLabel(p, u.excelLabel) : p))}
+                        >
+                          Bu satırları atla
+                        </Button>
+                      </div>
+                      {!canMintMaterial ? (
+                        <p className="text-xs text-[var(--text-muted)]">
+                          Yeni kart yalnızca Material.Create yetkisi (Administrator) ile oluşturulur. Aday kaydı duruyor.
+                        </p>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              ))}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -627,35 +744,12 @@ export function CycleCountSessionPage() {
                   {excelPreview.rows.map((r) => (
                     <tr key={r.excelRow} className="border-t border-[var(--border)]">
                       <td>{r.materialLabel}</td>
-                      <td>
-                        {r.status === 'REVIEW_REQUIRED' ? (
-                          <select
-                            className="w-full rounded-md border border-[var(--border)] bg-transparent px-2 py-1"
-                            value={r.materialId ?? ''}
-                            onChange={(e) => {
-                              const card = materials.find((m) => m.id === e.target.value);
-                              if (!card) return;
-                              setExcelPreview((p) => (p ? applyLabelMapping(p, r.materialLabel, card, r.excelRow) : p));
-                            }}
-                          >
-                            <option value="">Seçin</option>
-                            {materials.map((m) => (
-                              <option key={m.id || m.code} value={m.id}>
-                                {m.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          r.materialName || '—'
-                        )}
-                      </td>
-                      <td>
-                        {[r.thicknessMm, r.widthMm, r.lengthMm].filter((x) => x != null).join('×') || '—'}
-                      </td>
+                      <td>{r.materialName || r.suggestedName || '—'}</td>
+                      <td>{[r.thicknessMm, r.widthMm, r.lengthMm].filter((x) => x != null).join('×') || '—'}</td>
                       <td>{r.pieceCount ?? r.quantity ?? '—'}</td>
                       <td>{r.physicalGroupLabel || '—'}</td>
                       <td>
-                        {previewStatusTr(r.status)}
+                        {r.skipped ? 'ATLANDI' : previewStatusTr(r.status)}
                         {r.error ? <div className="text-xs text-red-600">{r.error}</div> : null}
                       </td>
                     </tr>
@@ -669,6 +763,92 @@ export function CycleCountSessionPage() {
               </Button>
               <Button variant="secondary" onClick={() => setExcelPreview(null)}>
                 Önizlemeyi kapat
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {createFor ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Yeni malzeme kartı</CardTitle>
+            <CardDescription>
+              Excel tanımı: {createFor}. Kod otomatik. Fiziksel sayım ölçüsü nominal olmaz.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <label className="text-sm md:col-span-2">
+              Ad
+              <Input value={createDraft.name} onChange={(e) => setCreateDraft((d) => ({ ...d, name: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Ana grup
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={createDraft.mainCategory}
+                onChange={(e) =>
+                  setCreateDraft((d) => ({ ...d, mainCategory: e.target.value as CountMaterialCreateDraft['mainCategory'] }))
+                }
+              >
+                <option value="HM">Hammadde</option>
+                <option value="YM">Yarı Mamul</option>
+                <option value="MP">Masif Panel</option>
+                <option value="TW">Thermowood</option>
+              </select>
+            </label>
+            <label className="text-sm">
+              Malzeme cinsi
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={createDraft.materialTypeToken}
+                onChange={(e) => setCreateDraft((d) => ({ ...d, materialTypeToken: e.target.value }))}
+              >
+                {HM_TYPE_OPTIONS.map((o) => (
+                  <option key={o.token} value={o.token}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Ağaç türü
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={createDraft.woodToken}
+                onChange={(e) => setCreateDraft((d) => ({ ...d, woodToken: e.target.value }))}
+              >
+                {WOOD_OPTIONS_HM.map((o) => (
+                  <option key={o.token} value={o.token}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Nominal kalınlık (opsiyonel)
+              <Input value={createDraft.thicknessMm} onChange={(e) => setCreateDraft((d) => ({ ...d, thicknessMm: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Nominal genişlik (opsiyonel)
+              <Input value={createDraft.widthMm} onChange={(e) => setCreateDraft((d) => ({ ...d, widthMm: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Stok birimi
+              <Input value={createDraft.stockUom} onChange={(e) => setCreateDraft((d) => ({ ...d, stockUom: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Sayım birimi
+              <Input value={createDraft.countUom} onChange={(e) => setCreateDraft((d) => ({ ...d, countUom: e.target.value }))} />
+            </label>
+            <p className="text-sm md:col-span-2">
+              Sistem kodu: {previewCountMaterialCode(createDraft, materials.map((m) => m.code)) || '—'}
+            </p>
+            {createError ? <p className="text-sm text-red-600 md:col-span-2">{createError}</p> : null}
+            <div className="flex gap-2 md:col-span-2">
+              <Button onClick={() => void createCandidateMaterial()}>Oluştur ve eşleştir</Button>
+              <Button variant="secondary" onClick={() => setCreateFor(null)}>
+                Vazgeç
               </Button>
             </div>
           </CardContent>
