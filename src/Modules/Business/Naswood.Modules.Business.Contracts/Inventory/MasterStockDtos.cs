@@ -17,12 +17,16 @@ public sealed class MasterStockRowDto
     public decimal? ActualLengthMm { get; init; }
     public required string Lot { get; init; }
     public required string Factory { get; init; }
+    public required string WarehouseCode { get; init; }
     public required string Warehouse { get; init; }
+    public required string LocationCode { get; init; }
     public required string Location { get; init; }
     public decimal? PieceCount { get; init; }
     public int PackageCount { get; init; }
     public required string StockUnit { get; init; }
     public required decimal StockQuantity { get; init; }
+    public decimal QuantityReserved { get; init; }
+    public decimal QuantityAvailable { get; init; }
     public required string StockStatus { get; init; }
     /// <summary>True when packages exist and their qty sum differs from the balance. Balance is not rewritten.</summary>
     public bool PackageBalanceMismatch { get; init; }
@@ -43,12 +47,16 @@ public sealed class MasterStockPackageRowDto
     public decimal? ActualLengthMm { get; init; }
     public required string Lot { get; init; }
     public required string Factory { get; init; }
+    public required string WarehouseCode { get; init; }
     public required string Warehouse { get; init; }
+    public required string LocationCode { get; init; }
     public required string Location { get; init; }
     public decimal? PieceCount { get; init; }
     public required string StockUnit { get; init; }
     public required decimal StockQuantity { get; init; }
     public required string Status { get; init; }
+    public string Barcode { get; init; } = string.Empty;
+    public string MaterialIdentityNumber { get; init; } = string.Empty;
 }
 
 public sealed class MasterStockUnitTotalDto

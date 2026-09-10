@@ -129,17 +129,22 @@ export type MasterStockExportRow = {
   actualLengthMm?: number | null;
   lot?: string;
   factory?: string;
+  warehouseCode?: string;
   warehouse?: string;
+  locationCode?: string;
   location?: string;
   pieceCount?: number | null;
   packageCount?: number;
   stockUnit?: string;
   stockQuantity?: number;
+  quantityReserved?: number;
+  quantityAvailable?: number;
   stockStatus?: string;
 };
 
 export type MasterStockExportPackage = {
   packageNo?: string;
+  barcode?: string;
   physicalGroupLabel?: string;
   materialCode?: string;
   materialName?: string;
@@ -148,7 +153,9 @@ export type MasterStockExportPackage = {
   actualLengthMm?: number | null;
   lot?: string;
   factory?: string;
+  warehouseCode?: string;
   warehouse?: string;
+  locationCode?: string;
   location?: string;
   pieceCount?: number | null;
   stockUnit?: string;
@@ -208,16 +215,21 @@ export function buildMasterStockXlsxBytes(opts: {
     'ActualLengthMm',
     'Lot',
     'Factory',
+    'WarehouseCode',
     'Warehouse',
+    'LocationCode',
     'Location',
     'PieceCount',
     'PackageCount',
     'StockUnit',
     'StockQuantity',
+    'QuantityReserved',
+    'QuantityAvailable',
     'StockStatus',
   ];
   const pkgHeaders = [
     'PackageNo',
+    'Barcode',
     'PhysicalGroupLabel',
     'MaterialCode',
     'MaterialName',
@@ -226,7 +238,9 @@ export function buildMasterStockXlsxBytes(opts: {
     'ActualLengthMm',
     'Lot',
     'Factory',
+    'WarehouseCode',
     'Warehouse',
+    'LocationCode',
     'Location',
     'PieceCount',
     'StockUnit',
@@ -245,12 +259,16 @@ export function buildMasterStockXlsxBytes(opts: {
       cell(r.actualLengthMm),
       cell(r.lot),
       cell(r.factory),
+      cell(r.warehouseCode),
       cell(r.warehouse),
+      cell(r.locationCode),
       cell(r.location),
       cell(r.pieceCount),
       cell(r.packageCount),
       cell(r.stockUnit),
       cell(r.stockQuantity),
+      cell(r.quantityReserved),
+      cell(r.quantityAvailable),
       cell(r.stockStatus),
     ]),
   ];
@@ -258,6 +276,7 @@ export function buildMasterStockXlsxBytes(opts: {
     pkgHeaders,
     ...opts.packageRows.map((r) => [
       cell(r.packageNo),
+      cell(r.barcode),
       cell(r.physicalGroupLabel),
       cell(r.materialCode),
       cell(r.materialName),
@@ -266,7 +285,9 @@ export function buildMasterStockXlsxBytes(opts: {
       cell(r.actualLengthMm),
       cell(r.lot),
       cell(r.factory),
+      cell(r.warehouseCode),
       cell(r.warehouse),
+      cell(r.locationCode),
       cell(r.location),
       cell(r.pieceCount),
       cell(r.stockUnit),

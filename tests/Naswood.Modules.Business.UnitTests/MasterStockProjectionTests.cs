@@ -23,7 +23,22 @@ public sealed class MasterStockProjectionTests
         Assert.Equal(4, row.PackageCount);
         Assert.Equal(118m, row.StockQuantity);
         Assert.Equal("PIN", row.WoodSpecies);
+        Assert.Equal("WH-RM", row.WarehouseCode);
+        Assert.Equal("A-01", row.LocationCode);
+        Assert.Equal(0m, row.QuantityReserved);
+        Assert.Equal(118m, row.QuantityAvailable);
         Assert.False(row.PackageBalanceMismatch);
+    }
+
+    [Fact]
+    public void Reserved_does_not_change_on_hand()
+    {
+        var balance = InventoryBalance.Create("HM-KR-PIN-001", "WH-RM", "A-01", "LOT-001", 118, 10, "Active", plantId: "F01");
+        var row = MasterStockProjection.ToRow(balance, null, "WH-RM", "A-01", 0, 0, "45×90×4000", 45, 90, 4000);
+        Assert.Equal(118m, row.StockQuantity);
+        Assert.Equal(10m, row.QuantityReserved);
+        Assert.Equal(108m, row.QuantityAvailable);
+        Assert.Equal(118m, balance.QuantityOnHand);
     }
 
     [Fact]

@@ -203,9 +203,9 @@ export const tr = {
     newProductionPoint: 'Üretim noktası tanımla',
     productionPointsHint: 'Aynı kayıt üretim master’ında İş Merkezleri olarak durur.',
     productionPointsProdLink: 'Üretim · İş Merkezleri',
-    balanceTitle: 'Master Stok',
+    balanceTitle: 'Stok Görünümü',
     balanceDesc:
-      'Güncel fiziksel stok bakiyesi (InventoryBalance). Paketler satırı çoğaltmaz. Excel okuma raporudur; sayım şablonu değildir.',
+      'Master stok: güncel fiziksel bakiye (InventoryBalance). Paketler satırı çoğaltmaz. Excel okuma raporudur; sayım şablonu değildir.',
     lotsTitle: 'Lot izleme',
     lotsDesc:
       'Sorgu: mal kabul veya üretimde oluşan lotlar. Kullanıcı lot master’ı oluşturmaz. Lot, lokasyonun altında değildir.',

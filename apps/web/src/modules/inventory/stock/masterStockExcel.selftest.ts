@@ -75,6 +75,10 @@ function utf8(bytes: Uint8Array): string {
   for (const sheet of MASTER_STOCK_SHEETS) {
     assert(text.includes(`name="${sheet}"`), `missing sheet ${sheet}`);
   }
+  assert(text.includes('WarehouseCode'), 'stock sheet has warehouse code');
+  assert(text.includes('QuantityReserved'), 'stock sheet has reserved');
+  assert(text.includes('QuantityAvailable'), 'stock sheet has available');
+  assert(text.includes('Barcode'), 'package sheet has barcode');
   assert(!text.includes('name="Sayım"'), 'must not reuse count template sheet');
   console.log('TEST5 OK — GUNCEL_STOK / PAKET_LISTESI / RAPOR_BILGISI');
 }

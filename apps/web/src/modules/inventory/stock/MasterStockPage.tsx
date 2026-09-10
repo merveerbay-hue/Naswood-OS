@@ -23,6 +23,76 @@ function num(v: number | null | undefined): string {
   return String(v);
 }
 
+function dim(v: number | null | undefined): string {
+  if (v == null || !(Number(v) > 0)) return '—';
+  return String(v);
+}
+
+function generatedLabel(iso?: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+}
+
+function PackageDetailTable({ rows }: { rows: MasterStockPackageRow[] }) {
+  return (
+    <table className="min-w-full text-xs">
+      <thead>
+        <tr className="text-left text-[var(--text-muted)]">
+          <th className="py-1 pr-2">Paket No</th>
+          <th className="pr-2">Barkod</th>
+          <th className="pr-2">Fiziksel grup</th>
+          <th className="pr-2">Malzeme</th>
+          <th className="pr-2">Kalınlık</th>
+          <th className="pr-2">Genişlik</th>
+          <th className="pr-2">Uzunluk</th>
+          <th className="pr-2">Ölçü</th>
+          <th className="pr-2">Lot</th>
+          <th className="pr-2">Fabrika</th>
+          <th className="pr-2">Depo</th>
+          <th className="pr-2">Lokasyon</th>
+          <th className="pr-2">Adet</th>
+          <th className="pr-2">Miktar</th>
+          <th className="pr-2">Birim</th>
+          <th className="pr-2">Durum</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((p) => (
+          <tr key={p.id} className="border-t border-[var(--border-default)]">
+            <td className="py-1 pr-2 font-mono">{p.packageNo}</td>
+            <td className="pr-2 font-mono">{p.barcode || '—'}</td>
+            <td className="pr-2">{p.physicalGroupLabel || '—'}</td>
+            <td className="pr-2">
+              <div className="font-mono">{p.materialCode}</div>
+              <div>{p.materialName || '—'}</div>
+            </td>
+            <td className="pr-2 tabular-nums">{dim(p.actualThicknessMm)}</td>
+            <td className="pr-2 tabular-nums">{dim(p.actualWidthMm)}</td>
+            <td className="pr-2 tabular-nums">{dim(p.actualLengthMm)}</td>
+            <td className="pr-2">{p.actualMeasurement || '—'}</td>
+            <td className="pr-2">{p.lot || '—'}</td>
+            <td className="pr-2">{plantDisplayName(p.factory)}</td>
+            <td className="pr-2">
+              <div className="font-mono">{p.warehouseCode || p.warehouse}</div>
+              {p.warehouse && p.warehouse !== p.warehouseCode ? <div>{p.warehouse}</div> : null}
+            </td>
+            <td className="pr-2">
+              <div className="font-mono">{p.locationCode || p.location}</div>
+              {p.location && p.location !== p.locationCode ? <div>{p.location}</div> : null}
+            </td>
+            <td className="pr-2 tabular-nums">{num(p.pieceCount)}</td>
+            <td className="pr-2 tabular-nums">{p.stockQuantity}</td>
+            <td className="pr-2">{p.stockUnit}</td>
+            <td className="pr-2">{p.status}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function MasterStockPage() {
   const { user } = useAuth();
   const { homePlantId, plantId: workingPlantId, visiblePlantIds, canSwitchPlant } = usePlantContext();
@@ -38,6 +108,7 @@ export function MasterStockPage() {
   const [materialCode, setMaterialCode] = useState('');
   const [lotNumber, setLotNumber] = useState('');
   const [stockStatus, setStockStatus] = useState('');
+  const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState('materialCode');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -63,8 +134,9 @@ export function MasterStockPage() {
     materialCode: materialCode.trim() || undefined,
     lotNumber: lotNumber.trim() || undefined,
     stockStatus: stockStatus || undefined,
+    q: q.trim() || undefined,
     page,
-    pageSize: 20,
+    pageSize: 50,
     sortBy,
   };
 
@@ -100,7 +172,7 @@ export function MasterStockPage() {
     setPage(1);
     setExpanded(null);
     setChildRows(null);
-  }, [effectiveView, warehouseCode, locationCode, materialCode, lotNumber, stockStatus, tab]);
+  }, [effectiveView, warehouseCode, locationCode, materialCode, lotNumber, stockStatus, q, tab]);
 
   async function toggleExpand(row: MasterStockRow) {
     if (expanded === row.balanceId) {
@@ -129,6 +201,7 @@ export function MasterStockPage() {
         materialCode: materialCode.trim() || undefined,
         lotNumber: lotNumber.trim() || undefined,
         stockStatus: stockStatus || undefined,
+        q: q.trim() || undefined,
       });
       const bytes = buildMasterStockXlsxBytes({
         stockRows: data.stockRows,
@@ -147,17 +220,23 @@ export function MasterStockPage() {
   const locations = (locationsQuery.data?.items ?? []).filter(
     (l) => String(l.status ?? 'Active').toLowerCase() === 'active',
   );
+  const stockColSpan = 18;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-[var(--text-muted)]">INV-014 · MASTER STOK</p>
+          <p className="text-xs font-medium text-[var(--text-muted)]">INV-014 · STOK GÖRÜNÜMÜ</p>
           <h2 className="text-xl font-semibold tracking-tight">Master Stok</h2>
-          <p className="mt-1 max-w-3xl text-sm text-[var(--text-secondary)]">
-            Güncel fiziksel bakiye InventoryBalance üzerinden okunur. Paketler satırı çoğaltmaz. Excel okuma
-            raporudur; sayım şablonu değildir.
+          <p className="mt-1 max-w-4xl text-sm text-[var(--text-secondary)]">
+            Güncel fiziksel stok bakiyesi (InventoryBalance). Paketler ana satırı çoğaltmaz. Miktar paketten
+            türetilmez. Excel okuma raporudur; sayım şablonu değildir.
           </p>
+          {stockQuery.data?.exportGeneratedAt ? (
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Güncel stok zamanı: {generatedLabel(stockQuery.data.exportGeneratedAt)} (Europe/Istanbul)
+            </p>
+          ) : null}
         </div>
         <Button disabled={exporting} onClick={() => void onExcel()}>
           {exporting ? 'Hazırlanıyor…' : 'Excel indir'}
@@ -191,10 +270,11 @@ export function MasterStockPage() {
       )}
 
       <Card>
-        <CardContent className="grid gap-3 pt-4 md:grid-cols-3 lg:grid-cols-6">
+        <CardContent className="grid gap-3 pt-4 md:grid-cols-3 lg:grid-cols-7">
           <label className="text-xs">
             Ana Üs
             <div className="mt-1 text-sm font-medium">{plantDisplayName(effectiveView)}</div>
+            <div className="font-mono text-[11px] text-[var(--text-muted)]">{effectiveView}</div>
           </label>
           <label className="text-xs">
             Depo
@@ -211,7 +291,8 @@ export function MasterStockPage() {
                 const code = w.code ?? w.Code ?? '';
                 return (
                   <option key={code} value={code}>
-                    {w.name || w.Name || code}
+                    {code}
+                    {w.name || w.Name ? ` · ${w.name || w.Name}` : ''}
                   </option>
                 );
               })}
@@ -230,7 +311,8 @@ export function MasterStockPage() {
                 const code = l.code ?? l.Code ?? '';
                 return (
                   <option key={code} value={code}>
-                    {l.name || l.Name || code}
+                    {code}
+                    {l.name || l.Name ? ` · ${l.name || l.Name}` : ''}
                   </option>
                 );
               })}
@@ -256,6 +338,10 @@ export function MasterStockPage() {
               <option value="Quarantine">Quarantine</option>
               <option value="Hold">Hold</option>
             </select>
+          </label>
+          <label className="text-xs">
+            Ara
+            <Input className="mt-1" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Kod / lot / paket" />
           </label>
         </CardContent>
       </Card>
@@ -290,24 +376,32 @@ export function MasterStockPage() {
 
       {tab === 'stock' ? (
         <div className="overflow-x-auto rounded-md border">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[var(--surface-muted)] text-xs">
+          <table className="min-w-[1600px] text-left text-sm">
+            <thead className="sticky top-0 bg-[var(--surface-muted)] text-xs">
               <tr>
-                {[
-                  ['materialCode', 'MaterialCode'],
-                  ['materialName', 'MaterialName'],
-                  [null, 'WoodSpecies'],
-                  [null, 'ActualMeasurement'],
-                  ['lot', 'Lot'],
-                  ['warehouse', 'Warehouse'],
-                  ['location', 'Location'],
-                  [null, 'PieceCount'],
-                  [null, 'PackageCount'],
-                  [null, 'StockUnit'],
-                  ['qty', 'StockQuantity'],
-                  ['status', 'StockStatus'],
-                ].map(([key, label]) => (
-                  <th key={label} className="px-2 py-2">
+                {(
+                  [
+                    ['materialCode', 'Malzeme kodu'],
+                    [null, 'Malzeme adı'],
+                    [null, 'Ağaç türü'],
+                    [null, 'Kalınlık mm'],
+                    [null, 'Genişlik mm'],
+                    [null, 'Uzunluk mm'],
+                    [null, 'Fiili ölçü'],
+                    ['lot', 'Lot'],
+                    [null, 'Fabrika'],
+                    ['warehouse', 'Depo'],
+                    ['location', 'Lokasyon'],
+                    [null, 'Adet'],
+                    [null, 'Paket'],
+                    [null, 'Birim'],
+                    ['qty', 'Stok miktarı'],
+                    [null, 'Rezerve'],
+                    [null, 'Kullanılabilir'],
+                    ['status', 'Stok durumu'],
+                  ] as [string | null, string][]
+                ).map(([key, label]) => (
+                  <th key={label} className="whitespace-nowrap px-2 py-2">
                     {key ? (
                       <button type="button" onClick={() => setSortBy(key)}>
                         {label}
@@ -322,13 +416,13 @@ export function MasterStockPage() {
             <tbody>
               {stockQuery.isLoading ? (
                 <tr>
-                  <td className="px-2 py-4" colSpan={12}>
+                  <td className="px-2 py-4" colSpan={stockColSpan}>
                     Yükleniyor…
                   </td>
                 </tr>
               ) : (stockQuery.data?.items ?? []).length === 0 ? (
                 <tr>
-                  <td className="px-2 py-4" colSpan={12}>
+                  <td className="px-2 py-4" colSpan={stockColSpan}>
                     Kayıt yok.
                   </td>
                 </tr>
@@ -342,55 +436,52 @@ export function MasterStockPage() {
                       <td className="px-2 py-2 font-mono text-xs">{row.materialCode}</td>
                       <td className="px-2 py-2">{row.materialName || '—'}</td>
                       <td className="px-2 py-2">{row.woodSpecies || '—'}</td>
+                      <td className="px-2 py-2 tabular-nums">{dim(row.actualThicknessMm)}</td>
+                      <td className="px-2 py-2 tabular-nums">{dim(row.actualWidthMm)}</td>
+                      <td className="px-2 py-2 tabular-nums">{dim(row.actualLengthMm)}</td>
                       <td className="px-2 py-2">{row.actualMeasurement || '—'}</td>
-                      <td className="px-2 py-2">{row.lot || '—'}</td>
-                      <td className="px-2 py-2">{row.warehouse}</td>
-                      <td className="px-2 py-2">{row.location}</td>
+                      <td className="px-2 py-2 font-mono text-xs">{row.lot || '—'}</td>
+                      <td className="px-2 py-2">
+                        <div>{plantDisplayName(row.factory)}</div>
+                        <div className="font-mono text-[11px] text-[var(--text-muted)]">{row.factory}</div>
+                      </td>
+                      <td className="px-2 py-2">
+                        <div className="font-mono text-xs">{row.warehouseCode || row.warehouse}</div>
+                        {row.warehouse && row.warehouse !== row.warehouseCode ? (
+                          <div className="text-[11px]">{row.warehouse}</div>
+                        ) : null}
+                      </td>
+                      <td className="px-2 py-2">
+                        <div className="font-mono text-xs">{row.locationCode || row.location}</div>
+                        {row.location && row.location !== row.locationCode ? (
+                          <div className="text-[11px]">{row.location}</div>
+                        ) : null}
+                      </td>
                       <td className="px-2 py-2 tabular-nums">{num(row.pieceCount)}</td>
                       <td className="px-2 py-2 tabular-nums">{row.packageCount}</td>
                       <td className="px-2 py-2">{row.stockUnit}</td>
-                      <td className="px-2 py-2 tabular-nums">{row.stockQuantity}</td>
+                      <td className="px-2 py-2 tabular-nums font-medium">{row.stockQuantity}</td>
+                      <td className="px-2 py-2 tabular-nums">{num(row.quantityReserved)}</td>
+                      <td className="px-2 py-2 tabular-nums">{num(row.quantityAvailable)}</td>
                       <td className="px-2 py-2">
                         {row.stockStatus}
                         {row.packageBalanceMismatch ? (
-                          <div className="text-[11px] text-amber-700">PACKAGE/BALANCE UYUMSUZLUĞU</div>
+                          <div className="text-[11px] text-amber-700">
+                            PACKAGE/BALANCE UYUMSUZLUĞU · bakiye {row.stockQuantity} / paket{' '}
+                            {row.packageQuantitySum}
+                          </div>
                         ) : null}
                       </td>
                     </tr>
                     {expanded === row.balanceId ? (
                       <tr className="bg-[var(--surface-muted)]/40">
-                        <td colSpan={12} className="px-4 py-3">
+                        <td colSpan={stockColSpan} className="px-4 py-3">
                           {childRows == null ? (
                             <p className="text-xs">Paketler yükleniyor…</p>
                           ) : childRows.length === 0 ? (
                             <p className="text-xs">Paket kaydı yok (stok satırı korunur).</p>
                           ) : (
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr>
-                                  <th className="py-1 text-left">PackageNo</th>
-                                  <th className="text-left">PhysicalGroupLabel</th>
-                                  <th className="text-left">ActualMeasurement</th>
-                                  <th className="text-left">PieceCount</th>
-                                  <th className="text-left">StockQuantity</th>
-                                  <th className="text-left">Status</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {childRows.map((p) => (
-                                  <tr key={p.id}>
-                                    <td className="py-1 font-mono">{p.packageNo}</td>
-                                    <td>{p.physicalGroupLabel || '—'}</td>
-                                    <td>{p.actualMeasurement || '—'}</td>
-                                    <td>{num(p.pieceCount)}</td>
-                                    <td>
-                                      {p.stockQuantity} {p.stockUnit}
-                                    </td>
-                                    <td>{p.status}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                            <PackageDetailTable rows={childRows} />
                           )}
                         </td>
                       </tr>
@@ -403,72 +494,28 @@ export function MasterStockPage() {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-md border">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[var(--surface-muted)] text-xs">
-              <tr>
-                <th className="px-2 py-2">PackageNo</th>
-                <th className="px-2 py-2">PhysicalGroupLabel</th>
-                <th className="px-2 py-2">Material</th>
-                <th className="px-2 py-2">ActualMeasurement</th>
-                <th className="px-2 py-2">Lot</th>
-                <th className="px-2 py-2">Warehouse</th>
-                <th className="px-2 py-2">Location</th>
-                <th className="px-2 py-2">PieceCount</th>
-                <th className="px-2 py-2">StockQuantity</th>
-                <th className="px-2 py-2">StockUnit</th>
-                <th className="px-2 py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pkgQuery.isLoading ? (
-                <tr>
-                  <td className="px-2 py-4" colSpan={11}>
-                    Yükleniyor…
-                  </td>
-                </tr>
-              ) : (pkgQuery.data?.items ?? []).length === 0 ? (
-                <tr>
-                  <td className="px-2 py-4" colSpan={11}>
-                    Paket yok.
-                  </td>
-                </tr>
-              ) : (
-                (pkgQuery.data?.items ?? []).map((p) => (
-                  <tr key={p.id} className="border-t">
-                    <td className="px-2 py-2 font-mono text-xs">{p.packageNo}</td>
-                    <td className="px-2 py-2">{p.physicalGroupLabel || '—'}</td>
-                    <td className="px-2 py-2">
-                      {p.materialCode}
-                      {p.materialName ? ` · ${p.materialName}` : ''}
-                    </td>
-                    <td className="px-2 py-2">{p.actualMeasurement || '—'}</td>
-                    <td className="px-2 py-2">{p.lot}</td>
-                    <td className="px-2 py-2">{p.warehouse}</td>
-                    <td className="px-2 py-2">{p.location}</td>
-                    <td className="px-2 py-2">{num(p.pieceCount)}</td>
-                    <td className="px-2 py-2">{p.stockQuantity}</td>
-                    <td className="px-2 py-2">{p.stockUnit}</td>
-                    <td className="px-2 py-2">{p.status}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          {pkgQuery.isLoading ? (
+            <p className="px-3 py-4 text-sm">Yükleniyor…</p>
+          ) : (pkgQuery.data?.items ?? []).length === 0 ? (
+            <p className="px-3 py-4 text-sm">Paket yok.</p>
+          ) : (
+            <PackageDetailTable rows={pkgQuery.data?.items ?? []} />
+          )}
         </div>
       )}
 
-      <div className="flex items-center gap-2 text-sm">
-        <Button
-          variant="secondary"
-          disabled={page <= 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
           Önceki
         </Button>
         <span>
           Sayfa {page}
           {tab === 'stock' && stockQuery.data?.totalPages ? ` / ${stockQuery.data.totalPages}` : ''}
           {tab === 'packages' && pkgQuery.data?.totalPages ? ` / ${pkgQuery.data.totalPages}` : ''}
+          {tab === 'stock' && stockQuery.data
+            ? ` · ${stockQuery.data.totalCount} stok satırı`
+            : ''}
+          {tab === 'packages' && pkgQuery.data ? ` · ${pkgQuery.data.totalCount} paket` : ''}
         </span>
         <Button
           variant="secondary"

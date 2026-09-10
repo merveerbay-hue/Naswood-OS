@@ -26,12 +26,16 @@ export type MasterStockRow = {
   actualLengthMm?: number | null;
   lot: string;
   factory: string;
+  warehouseCode: string;
   warehouse: string;
+  locationCode: string;
   location: string;
   pieceCount?: number | null;
   packageCount: number;
   stockUnit: string;
   stockQuantity: number;
+  quantityReserved: number;
+  quantityAvailable: number;
   stockStatus: string;
   packageBalanceMismatch: boolean;
   packageQuantitySum?: number | null;
@@ -42,6 +46,7 @@ export type MasterStockPackageRow = {
   balanceId?: string | null;
   packageNo: string;
   physicalGroupLabel: string;
+  barcode?: string;
   materialCode: string;
   materialName: string;
   actualMeasurement: string;
@@ -50,7 +55,9 @@ export type MasterStockPackageRow = {
   actualLengthMm?: number | null;
   lot: string;
   factory: string;
+  warehouseCode: string;
   warehouse: string;
+  locationCode: string;
   location: string;
   pieceCount?: number | null;
   stockUnit: string;

@@ -37,7 +37,7 @@ export const navigationTree: NavItem[] = [
         id: 'inventory-stock',
         label: 'Stok',
         children: [
-          { id: 'inventory-balances', label: 'Master Stok', path: '/inventory/stock/balances' },
+          { id: 'inventory-balances', label: 'Stok Görünümü', path: '/inventory/stock/balances' },
           { id: 'inventory-movements', label: 'Stok Hareketleri', path: '/inventory/stock/movements' },
           { id: 'inventory-packages', label: 'Paketler', path: '/inventory/stock/packages' },
         ],

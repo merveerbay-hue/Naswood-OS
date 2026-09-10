@@ -172,12 +172,16 @@ public static class MasterStockProjection
             ActualLengthMm = l,
             Lot = balance.BatchNumber ?? string.Empty,
             Factory = balance.PlantId ?? string.Empty,
+            WarehouseCode = balance.WarehouseCode,
             Warehouse = string.IsNullOrWhiteSpace(warehouseName) ? balance.WarehouseCode : warehouseName,
+            LocationCode = balance.LocationCode,
             Location = string.IsNullOrWhiteSpace(locationName) ? balance.LocationCode : locationName,
             PieceCount = PieceCountFor(unit, qty),
             PackageCount = packageCount,
             StockUnit = unit,
             StockQuantity = qty,
+            QuantityReserved = balance.QuantityReserved,
+            QuantityAvailable = Math.Max(0, qty - balance.QuantityReserved),
             StockStatus = status,
             PackageBalanceMismatch = HasPackageBalanceMismatch(packageCount, packageQtySum, qty),
             PackageQuantitySum = packageCount > 0 ? packageQtySum : null
@@ -213,12 +217,16 @@ public static class MasterStockProjection
             ActualLengthMm = l,
             Lot = pkg.LotNumber,
             Factory = pkg.PlantId ?? string.Empty,
+            WarehouseCode = pkg.WarehouseCode,
             Warehouse = string.IsNullOrWhiteSpace(warehouseName) ? pkg.WarehouseCode : warehouseName,
+            LocationCode = pkg.LocationCode,
             Location = string.IsNullOrWhiteSpace(locationName) ? pkg.LocationCode : locationName,
             PieceCount = PieceCountFor(unit, pkg.Quantity),
             StockUnit = unit,
             StockQuantity = pkg.Quantity,
-            Status = pkg.Status
+            Status = pkg.Status,
+            Barcode = pkg.Barcode,
+            MaterialIdentityNumber = pkg.MaterialIdentityNumber
         };
     }
 
