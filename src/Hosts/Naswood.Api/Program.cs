@@ -120,6 +120,15 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_inventorycountline ADD COLUMN IF NOT EXISTS "PhysicalGroupLabel" character varying(200) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_inventorycountline ADD COLUMN IF NOT EXISTS "Barcode" character varying(200) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceType" character varying(40) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceReferenceNo" character varying(80) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "PublicId" character varying(40) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "PhysicalGroupLabel" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "SourcePlantId" character varying(20) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintedAt" timestamp with time zone NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LabelPrintCount" integer NOT NULL DEFAULT 0;
+        UPDATE business.business_inventory_package
+        SET "PublicId" = replace("Id"::text, '-', '')
+        WHERE "PublicId" = '';
         UPDATE business.business_inventory_material
         SET
             "UnitOfMeasure" = 'M3',
@@ -138,6 +147,25 @@ using (var scope = app.Services.CreateScope())
                 OR "DefinitionJson" ILIKE '%"mainCategory": "MP"%'
           );
         """).ConfigureAwait(false);
+    try
+    {
+        await businessDb.Database.ExecuteSqlRawAsync(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_barcode_alive"
+                ON business.business_inventory_package ("Barcode")
+                WHERE "IsDeleted" = false AND "Barcode" <> '';
+            CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_number_alive"
+                ON business.business_inventory_package ("PackageNumber")
+                WHERE "IsDeleted" = false AND "PackageNumber" <> '';
+            CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_publicid_alive"
+                ON business.business_inventory_package ("PublicId")
+                WHERE "IsDeleted" = false AND "PublicId" <> '';
+            """).ConfigureAwait(false);
+    }
+    catch
+    {
+        // Legacy duplicates — lookup still fails closed on >1 barcode hit.
+    }
 }
 
 app.UseRateLimiter();

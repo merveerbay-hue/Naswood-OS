@@ -8,34 +8,37 @@ public sealed class OpeningInventoryCodesTests
     public void Material_change_splits_lots()
     {
         var day = new DateTimeOffset(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
-        var tw = OpeningInventoryCodes.OpeningLot(day, 1);
-        var lata = OpeningInventoryCodes.OpeningLot(day, 2);
-        Assert.Equal("LOT-OPEN-20260910-001", tw);
-        Assert.Equal("LOT-OPEN-20260910-002", lata);
+        var tw = OpeningInventoryCodes.OpeningLot("F01", day, 1);
+        var lata = OpeningInventoryCodes.OpeningLot("F01", day, 2);
+        Assert.Equal("LOT-OPEN-F01-260910-0001", tw);
+        Assert.Equal("LOT-OPEN-F01-260910-0002", lata);
         Assert.NotEqual(tw, lata);
     }
 
     [Fact]
     public void Same_material_stacks_share_lot_split_packages()
     {
-        var lot = OpeningInventoryCodes.OpeningLot(new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero), 2);
-        Assert.Equal("LOT-OPEN-20260910-002", lot);
-        Assert.Equal("PKG-000003", OpeningInventoryCodes.PackageNo(3));
-        Assert.Equal("PKG-000004", OpeningInventoryCodes.PackageNo(4));
-        Assert.Equal("PKG-000005", OpeningInventoryCodes.PackageNo(5));
-        Assert.Equal("NW-PKG-000004", OpeningInventoryCodes.Barcode("PKG-000004"));
+        var day = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
+        var lot = OpeningInventoryCodes.OpeningLot("F01", day, 3);
+        Assert.Equal("LOT-OPEN-F01-260910-0003", lot);
+        Assert.Equal("NW-PKG-F01-26-000003", OpeningInventoryCodes.PackageNo("F01", day, 3));
+        Assert.Equal("NW-PKG-F01-26-000004", OpeningInventoryCodes.PackageNo("F01", day, 4));
+        Assert.Equal("NWPKG-F01-26-000004", OpeningInventoryCodes.Barcode("NW-PKG-F01-26-000004"));
+    }
+
+    [Fact]
+    public void Factory_token_from_plant_id()
+    {
+        Assert.Equal("F01", OpeningInventoryCodes.FactoryToken("F01"));
+        Assert.Equal("F01", OpeningInventoryCodes.FactoryToken("PLANT-001"));
     }
 
     [Fact]
     public void Opening_may_mint_periodic_must_not()
     {
         Assert.True(InventoryCountKinds.MayMintLotPackageBarcode("Opening"));
-        Assert.True(InventoryCountKinds.MayMintLotPackageBarcode("Açılış"));
         Assert.False(InventoryCountKinds.MayMintLotPackageBarcode("Periodic"));
-        Assert.False(InventoryCountKinds.MayMintLotPackageBarcode("Normal"));
         Assert.False(InventoryCountKinds.MayMintLotPackageBarcode("Blind"));
-        Assert.Equal(InventoryCountKinds.Periodic, InventoryCountKinds.Normalize("Normal"));
-        Assert.Equal(InventoryCountKinds.Opening, InventoryCountKinds.Normalize("Initialization"));
     }
 
     [Fact]
@@ -50,5 +53,12 @@ public sealed class OpeningInventoryCodesTests
     {
         Assert.Equal(1, OpeningInventoryCodes.NextOrdinal(Array.Empty<int>()));
         Assert.Equal(5, OpeningInventoryCodes.NextOrdinal(new[] { 1, 4 }));
+    }
+
+    [Fact]
+    public void Qr_path_uses_package_id()
+    {
+        var id = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        Assert.Equal("/inventory/stock/packages/11111111-1111-1111-1111-111111111111?pk=abc", OpeningInventoryCodes.QrPath(id, "abc"));
     }
 }

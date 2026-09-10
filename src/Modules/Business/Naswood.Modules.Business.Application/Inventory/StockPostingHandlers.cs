@@ -38,6 +38,10 @@ public interface IInventoryPackageRepository
         IReadOnlyList<string> statuses,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryPackage>> ListByBarcodeExactAsync(string barcode, CancellationToken cancellationToken = default);
+    Task<InventoryPackage?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default);
+    Task AddContentsAsync(IReadOnlyList<InventoryPackageContent> rows, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryPackageContent>> ListContentsAsync(Guid packageId, CancellationToken cancellationToken = default);
 }
 
 public interface IInventoryMovementRepository
@@ -57,6 +61,8 @@ public interface IInventoryMovementRepository
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(
         string documentNumber, string? plantId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryMovement>> ListByPackageNumberAsync(
+        string packageNumber, string? plantId = null, CancellationToken cancellationToken = default);
     Task<int> CountPostedAfterAsync(
         string plantId,
         string warehouseCode,
@@ -673,6 +679,11 @@ public static class InventoryPackageMapper
         UnitOfMeasure = e.UnitOfMeasure,
         Barcode = e.Barcode,
         Status = e.Status,
+        PublicId = e.PublicId,
+        PhysicalGroupLabel = e.PhysicalGroupLabel,
+        PlantId = e.PlantId,
+        LabelPrintedAt = e.LabelPrintedAt,
+        LabelPrintCount = e.LabelPrintCount,
         CreatedAt = e.CreatedAt
     };
 }

@@ -7,7 +7,7 @@ public sealed class Batch : BusinessEntity
 {
     private Batch() { }
 
-    private Batch(Guid id, string batchNumber, string materialCode, decimal quantity, DateOnly? expiryDate, string status, string sourceType, string companyId, string? plantId)
+    private Batch(Guid id, string batchNumber, string materialCode, decimal quantity, DateOnly? expiryDate, string status, string sourceType, string sourceReferenceNo, string companyId, string? plantId)
         : base(id)
     {
         BatchNumber = batchNumber;
@@ -16,6 +16,7 @@ public sealed class Batch : BusinessEntity
         ExpiryDate = expiryDate;
         Status = status;
         SourceType = sourceType;
+        SourceReferenceNo = sourceReferenceNo;
         CompanyId = companyId;
         PlantId = plantId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
@@ -28,10 +29,11 @@ public sealed class Batch : BusinessEntity
     public string Status { get; private set; } = string.Empty;
     /// <summary>OPENING_INVENTORY | GOODS_RECEIPT | PRODUCTION | empty (legacy).</summary>
     public string SourceType { get; private set; } = string.Empty;
+    public string SourceReferenceNo { get; private set; } = string.Empty;
 
-    public static Batch Create(string batchNumber, string materialCode, decimal quantity, DateOnly? expiryDate, string status, string companyId = "COMP-001", string? plantId = "PLANT-001", string sourceType = "")
+    public static Batch Create(string batchNumber, string materialCode, decimal quantity, DateOnly? expiryDate, string status, string companyId = "COMP-001", string? plantId = "PLANT-001", string sourceType = "", string sourceReferenceNo = "")
     {
-        return new Batch(UuidV7.NewGuid(), batchNumber, materialCode, quantity, expiryDate, status, sourceType ?? string.Empty, companyId, plantId);
+        return new Batch(UuidV7.NewGuid(), batchNumber, materialCode, quantity, expiryDate, status, sourceType ?? string.Empty, sourceReferenceNo ?? string.Empty, companyId, plantId);
     }
 
     public void Update(string batchNumber, string materialCode, decimal quantity, DateOnly? expiryDate, string status)

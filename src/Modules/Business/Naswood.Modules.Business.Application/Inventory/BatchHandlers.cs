@@ -69,6 +69,7 @@ public static class BatchMapper
         ExpiryDate = e.ExpiryDate,
         Status = e.Status,
         SourceType = e.SourceType,
+        SourceReferenceNo = e.SourceReferenceNo,
         CompanyId = e.CompanyId,
         PlantId = e.PlantId,
         CreatedAt = e.CreatedAt

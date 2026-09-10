@@ -66,6 +66,10 @@ export async function postCount(id: string, reason?: string) {
         countedQuantity: number;
         unit: string;
       }>;
+      lotCount?: number;
+      packageCount?: number;
+      lots?: string[];
+      packages?: Array<{ packageId: string; packageNo: string; barcode: string }>;
     }>(path, {
       method: 'POST',
       auth: true,

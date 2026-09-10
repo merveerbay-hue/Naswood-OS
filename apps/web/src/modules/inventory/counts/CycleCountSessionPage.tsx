@@ -45,6 +45,9 @@ import {
   type CycleCountOpenDraft,
   type InventoryCountSession,
 } from './cycleCountSession';
+import { getPackagePassport } from '@/modules/inventory/stock/packagePassportApi';
+import { previewOpeningGroups } from '@/modules/inventory/stock/openingPackagePreview';
+import { printPackageLabels } from '@/modules/inventory/stock/packageLabelPrint';
 
 type WarehouseOpt = { code?: string; name?: string; status?: string };
 type LocationOpt = { code?: string; name?: string; warehouseCode?: string; status?: string; locationType?: string };
@@ -116,6 +119,7 @@ export function CycleCountSessionPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const [postResult, setPostResult] = useState<string | null>(null);
+  const [postedPackages, setPostedPackages] = useState<Array<{ packageId: string; packageNo: string; barcode: string }>>([]);
   const [excelPreview, setExcelPreview] = useState<CountExcelPreview | null>(null);
   const [createFor, setCreateFor] = useState<string | null>(null);
   const [createDraft, setCreateDraft] = useState<CountMaterialCreateDraft>(emptyCountMaterialDraft(''));
@@ -256,9 +260,10 @@ export function CycleCountSessionPage() {
       return postCount(id, opening ? 'Açılış stok sayımı' : 'Stok sayım düzeltmesi');
     },
     onSuccess: async (res) => {
+      setPostedPackages(res.packages ?? []);
       setPostResult(
         isOpeningCount(opened?.countType)
-          ? `${res.countNumber}: ${res.adjustmentCount} OPENING_INVENTORY hareketi. Lot + Package + Barkod üretildi; sahte tedarik lotu yazılmadı.`
+          ? `${res.countNumber}: ${res.adjustmentCount} OPENING_INVENTORY · ${res.lotCount ?? 0} lot · ${res.packageCount ?? 0} paket/barkod.`
           : `${res.countNumber}: ${res.adjustmentCount} INVENTORY_COUNT_ADJUSTMENT hareketi. Yeni Lot/Package/Barkod üretilmedi.`,
       );
       const id = sessionId(opened);
@@ -1135,12 +1140,38 @@ export function CycleCountSessionPage() {
                 </tbody>
               </table>
             </div>
+            {review && !posted && opening ? (
+              <OpeningLotPreview
+                lines={physicalLines}
+                drafts={draftLines}
+                materials={materials}
+              />
+            ) : null}
             {review && !posted ? (
               <Button disabled={!canSave || postMut.isPending} onClick={() => postMut.mutate()}>
                 {opening ? 'Açılış stoğunu onayla ve sisteme al' : 'Farkları onayla ve stoğa işle'}
               </Button>
             ) : null}
             {postResult ? <p className="text-sm">{postResult}</p> : null}
+            {posted && opening ? (
+              <div className="flex flex-wrap gap-2">
+                <Link className="rounded-md border px-3 py-2 text-sm" to="/inventory/stock/packages">
+                  Paketleri gör
+                </Link>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    void Promise.all(postedPackages.map((x) => getPackagePassport(x.packageId))).then(printPackageLabels)
+                  }
+                  disabled={postedPackages.length === 0}
+                >
+                  Tüm etiketleri yazdır
+                </Button>
+                <Link className="rounded-md border px-3 py-2 text-sm" to="/inventory/stock/balances">
+                  Stok görünümüne git
+                </Link>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -1290,6 +1321,77 @@ export function CycleCountSessionPage() {
       {sessionQuery.isError ? (
         <p className="text-sm text-red-600">{(sessionQuery.error as Error).message}</p>
       ) : null}
+    </div>
+  );
+}
+
+function OpeningLotPreview({
+  lines,
+  drafts,
+  materials,
+}: {
+  lines: CountLineDto[];
+  drafts: DraftLine[];
+  materials: MaterialOpt[];
+}) {
+  const source =
+    lines.length > 0
+      ? lines.map((l) => ({
+          materialCode: l.materialCode,
+          materialName: l.materialName,
+          locationCode: l.locationCode,
+          physicalGroupLabel: l.physicalGroupLabel ?? '',
+          thicknessMm: l.thicknessMm,
+          widthMm: l.widthMm,
+          lengthMm: l.lengthMm,
+          pieceCount: l.pieceCount,
+          qty: l.calculatedStockQty || l.countedQuantity,
+          unit: l.stockUnit,
+          key: l.id,
+        }))
+      : drafts.map((l) => {
+          const mat = materials.find((m) => m.code === l.materialCode);
+          const policy = resolvePolicy(mat ?? {});
+          const calc = calculateStockQty(policy, {
+            thicknessMm: n(l.thicknessMm),
+            widthMm: n(l.widthMm),
+            lengthMm: n(l.lengthMm),
+            pieceCount: n(l.pieceCount),
+            measuredVolumeM3: n(l.measuredVolumeM3),
+          });
+          return {
+            materialCode: l.materialCode,
+            materialName: l.materialName,
+            locationCode: l.locationCode,
+            physicalGroupLabel: l.physicalGroupLabel ?? '',
+            thicknessMm: n(l.thicknessMm),
+            widthMm: n(l.widthMm),
+            lengthMm: n(l.lengthMm),
+            pieceCount: n(l.pieceCount),
+            qty: calc.ok ? calc.qty : 0,
+            unit: policy.stockUnit,
+            key: l.key,
+          };
+        });
+  const groups = previewOpeningGroups(source);
+  if (groups.length === 0) return null;
+  return (
+    <div className="rounded-md border border-[var(--border)] p-3 text-sm space-y-2">
+      <p className="font-medium">Lot & paket önizleme (numara henüz üretilmez)</p>
+      {groups.map((g) => (
+        <div key={g.materialCode}>
+          <div>
+            {g.materialName || g.materialCode} · 1 açılış lotu · {g.packages.length} paket
+          </div>
+          <ul className="ml-4 list-disc text-[var(--text-muted)]">
+            {g.packages.map((pkg, i) => (
+              <li key={`${g.materialCode}-${i}`}>
+                {pkg.label}: {pkg.rows.length} ölçü · {pkg.qty.toFixed(4)} {pkg.unit}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

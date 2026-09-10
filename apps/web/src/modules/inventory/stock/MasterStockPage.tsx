@@ -230,6 +230,7 @@ export function MasterStockPage() {
           <h2 className="text-xl font-semibold tracking-tight">Master Stok</h2>
           <p className="mt-1 max-w-4xl text-sm text-[var(--text-secondary)]">
             Güncel fiziksel stok bakiyesi (InventoryBalance). Paketler ana satırı çoğaltmaz. Miktar paketten
+            türetilmez. Package ve barcode fiziksel stok kimliğidir.
             türetilmez. Excel okuma raporudur; sayım şablonu değildir.
           </p>
           {stockQuery.data?.exportGeneratedAt ? (

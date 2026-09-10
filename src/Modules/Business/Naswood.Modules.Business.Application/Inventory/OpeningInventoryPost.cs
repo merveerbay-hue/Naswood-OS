@@ -28,14 +28,17 @@ internal static class OpeningInventoryPost
                 "Açılış sayımında post edilecek fiziksel satır yok."));
 
         var now = DateTimeOffset.UtcNow;
-        var day = OpeningInventoryCodes.LotDateStamp(now);
-        var existingLots = await batches.ListOpeningLotNumbersAsync(OpeningInventoryCodes.LotPrefix + day + "-", plantId, cancellationToken).ConfigureAwait(false);
-        var lotOrdinal = OpeningInventoryCodes.NextOrdinal(existingLots.Select(x => OpeningInventoryCodes.ParseLotOrdinal(x, day)));
+        var lotPrefix = OpeningInventoryCodes.LotPrefixForDay(plantId, now);
+        var existingLots = await batches.ListOpeningLotNumbersAsync(lotPrefix, plantId, cancellationToken).ConfigureAwait(false);
+        var lotOrdinal = OpeningInventoryCodes.NextOrdinal(existingLots.Select(x => OpeningInventoryCodes.ParseLotOrdinal(x, plantId, now)));
+        var pkgPrefix = OpeningInventoryCodes.PackagePrefixForYear(plantId, now);
         var existingPkgs = await packages.ListPackageNumbersAsync(cancellationToken).ConfigureAwait(false);
-        var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(existingPkgs.Select(OpeningInventoryCodes.ParsePackageOrdinal));
+        var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
+            existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, plantId, now)));
 
         var lotByMaterial = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var pkgByStack = new Dictionary<string, (string Pkg, string Barcode)>(StringComparer.OrdinalIgnoreCase);
+        var createdLots = new List<string>();
+        var createdPackages = new List<OpeningPackageCreatedDto>();
         var adjustments = new List<InventoryCountAdjustmentDto>();
 
         foreach (var g in physical.GroupBy(l => l.MaterialCode.Trim(), StringComparer.OrdinalIgnoreCase))
@@ -43,13 +46,18 @@ internal static class OpeningInventoryPost
             var materialCode = g.Key;
             if (!lotByMaterial.TryGetValue(materialCode, out var lot))
             {
-                lot = OpeningInventoryCodes.OpeningLot(now, lotOrdinal++);
+                lot = OpeningInventoryCodes.OpeningLot(plantId, now, lotOrdinal++);
                 lotByMaterial[materialCode] = lot;
                 var batch = await batches.GetByNumberAndMaterialAsync(lot, materialCode, plantId, cancellationToken).ConfigureAwait(false);
                 if (batch is null)
                 {
-                    batch = Batch.Create(lot, materialCode, 0, null, "Active", plantId: plantId, sourceType: OpeningInventoryCodes.SourceType);
+                    batch = Batch.Create(
+                        lot, materialCode, 0, null, "Active",
+                        plantId: plantId,
+                        sourceType: OpeningInventoryCodes.SourceType,
+                        sourceReferenceNo: count.Number);
                     await batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+                    createdLots.Add(lot);
                 }
             }
 
@@ -65,27 +73,33 @@ internal static class OpeningInventoryPost
                 if (!InventoryCountMath.IsActiveStatus(loc.Status))
                     return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-CNT-017", $"Pasif lokasyon '{loc.Code}' için açılış post edilemez."));
 
-                if (!pkgByStack.TryGetValue($"{materialCode}\u001f{stack.Key}", out var pkg))
-                {
-                    var packageNo = OpeningInventoryCodes.PackageNo(pkgOrdinal++);
-                    var barcode = OpeningInventoryCodes.Barcode(packageNo);
-                    pkg = (packageNo, barcode);
-                    pkgByStack[$"{materialCode}\u001f{stack.Key}"] = pkg;
+                var packageNo = OpeningInventoryCodes.PackageNo(plantId, now, pkgOrdinal++);
+                var barcode = OpeningInventoryCodes.Barcode(packageNo);
+                var dup = await packages.ListByBarcodeExactAsync(barcode, cancellationToken).ConfigureAwait(false);
+                if (dup.Count > 0)
+                    return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-PKG-061", $"Barkod çakışması: {barcode}"));
 
-                    var mi = SystemIdentifier.Ensure(null, "MI");
-                    var identity = MaterialIdentity.CreateRoot(
-                        mi, materialCode, lot, count.WarehouseCode, loc.Code, qty,
-                        stackLines[0].StockUnit, count.Number, plantId: plantId);
-                    await identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
+                var mi = SystemIdentifier.Ensure(null, "MI");
+                var identity = MaterialIdentity.CreateRoot(
+                    mi, materialCode, lot, count.WarehouseCode, loc.Code, qty,
+                    stackLines[0].StockUnit, count.Number, plantId: plantId);
+                await identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
 
-                    var package = InventoryPackage.Create(
-                        packageNo, mi, materialCode, lot, count.WarehouseCode, loc.Code,
-                        qty, stackLines[0].StockUnit, barcode: barcode, status: "Available", plantId: plantId);
-                    await packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
-                }
+                var package = InventoryPackage.Create(
+                    packageNo, mi, materialCode, lot, count.WarehouseCode, loc.Code,
+                    qty, stackLines[0].StockUnit, barcode: barcode, status: "Available",
+                    plantId: plantId,
+                    physicalGroupLabel: stackLines[0].PhysicalGroupLabel ?? string.Empty,
+                    sourcePlantId: plantId);
+                await packages.AddAsync(package, cancellationToken).ConfigureAwait(false);
+
+                var contents = stackLines.Select((line, i) => InventoryPackageContent.Create(
+                    package.Id, i + 1, line.ThicknessMm, line.WidthMm, line.LengthMm,
+                    line.PieceCount, line.CalculatedStockQty, line.StockUnit, plantId)).ToArray();
+                await packages.AddContentsAsync(contents, cancellationToken).ConfigureAwait(false);
 
                 foreach (var line in stackLines)
-                    line.AssignOpeningIdentity(lot, pkg.Pkg, pkg.Barcode);
+                    line.AssignOpeningIdentity(lot, packageNo, barcode);
 
                 var balance = await balances.FindByKeyAsync(materialCode, count.WarehouseCode, loc.Code, lot, plantId, cancellationToken).ConfigureAwait(false);
                 if (balance is null)
@@ -100,18 +114,15 @@ internal static class OpeningInventoryPost
                 }
 
                 var first = stackLines[0];
-                var phys = first.ThicknessMm is > 0 && first.WidthMm is > 0 && first.LengthMm is > 0
-                    ? $"phys={first.ThicknessMm:0.####}×{first.WidthMm:0.####}×{first.LengthMm:0.####}"
-                    : null;
                 var note = string.Join(" | ", new[]
                 {
                     $"count={count.Number}",
                     $"source={OpeningInventoryCodes.SourceType}",
                     $"lot={lot}",
-                    $"pkg={pkg.Pkg}",
-                    $"barcode={pkg.Barcode}",
+                    $"pkg={packageNo}",
+                    $"barcode={barcode}",
                     string.IsNullOrWhiteSpace(first.PhysicalGroupLabel) ? null : $"istif={first.PhysicalGroupLabel}",
-                    phys,
+                    $"rows={stackLines.Length}",
                     $"qty={qty}",
                     $"unit={first.StockUnit}",
                     $"reason={reason}",
@@ -123,8 +134,8 @@ internal static class OpeningInventoryPost
                     "In",
                     count.Number,
                     materialCode,
-                    string.Empty,
-                    pkg.Pkg,
+                    mi,
+                    packageNo,
                     count.WarehouseCode,
                     loc.Code,
                     lot,
@@ -145,6 +156,18 @@ internal static class OpeningInventoryPost
                     Direction = "In",
                     MovementNumber = movement.MovementNumber
                 });
+                createdPackages.Add(new OpeningPackageCreatedDto
+                {
+                    PackageId = package.Id,
+                    PackageNo = packageNo,
+                    Barcode = barcode,
+                    PublicId = package.PublicId,
+                    MaterialCode = materialCode,
+                    LotNumber = lot,
+                    PhysicalGroupLabel = first.PhysicalGroupLabel ?? string.Empty,
+                    Quantity = qty,
+                    Unit = first.StockUnit
+                });
             }
         }
 
@@ -154,11 +177,15 @@ internal static class OpeningInventoryPost
             CountNumber = count.Number,
             Status = InventoryCountStatuses.Posted,
             AdjustmentCount = adjustments.Count,
-            Adjustments = adjustments
+            Adjustments = adjustments,
+            LotCount = createdLots.Count,
+            PackageCount = createdPackages.Count,
+            Lots = createdLots,
+            Packages = createdPackages
         });
     }
 
-    private static string StackKey(InventoryCountLine line)
+    internal static string StackKey(InventoryCountLine line)
     {
         var group = (line.PhysicalGroupLabel ?? string.Empty).Trim();
         if (!string.IsNullOrWhiteSpace(group)) return $"{line.LocationCode}|{group}";

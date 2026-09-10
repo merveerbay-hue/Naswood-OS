@@ -19,6 +19,9 @@ public sealed class InventoryPackage : BusinessEntity
         string unitOfMeasure,
         string barcode,
         string status,
+        string publicId,
+        string physicalGroupLabel,
+        string sourcePlantId,
         string companyId,
         string? plantId)
         : base(id)
@@ -33,6 +36,9 @@ public sealed class InventoryPackage : BusinessEntity
         UnitOfMeasure = unitOfMeasure;
         Barcode = barcode;
         Status = status;
+        PublicId = publicId;
+        PhysicalGroupLabel = physicalGroupLabel;
+        SourcePlantId = sourcePlantId;
         CompanyId = companyId;
         PlantId = plantId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
@@ -48,6 +54,11 @@ public sealed class InventoryPackage : BusinessEntity
     public string UnitOfMeasure { get; private set; } = string.Empty;
     public string Barcode { get; private set; } = string.Empty;
     public string Status { get; private set; } = string.Empty;
+    public string PublicId { get; private set; } = string.Empty;
+    public string PhysicalGroupLabel { get; private set; } = string.Empty;
+    public string SourcePlantId { get; private set; } = string.Empty;
+    public DateTimeOffset? LabelPrintedAt { get; private set; }
+    public int LabelPrintCount { get; private set; }
 
     public static InventoryPackage Create(
         string packageNumber,
@@ -61,7 +72,10 @@ public sealed class InventoryPackage : BusinessEntity
         string? barcode = null,
         string status = "Available",
         string companyId = "COMP-001",
-        string? plantId = "PLANT-001")
+        string? plantId = "PLANT-001",
+        string? publicId = null,
+        string physicalGroupLabel = "",
+        string? sourcePlantId = null)
     {
         var code = string.IsNullOrWhiteSpace(barcode) ? packageNumber : barcode.Trim();
         var normalized = string.IsNullOrWhiteSpace(status) ? "Available" : status.Trim();
@@ -77,8 +91,18 @@ public sealed class InventoryPackage : BusinessEntity
             unitOfMeasure,
             code,
             normalized,
+            string.IsNullOrWhiteSpace(publicId) ? Guid.NewGuid().ToString("N") : publicId.Trim(),
+            physicalGroupLabel ?? string.Empty,
+            string.IsNullOrWhiteSpace(sourcePlantId) ? plantId ?? string.Empty : sourcePlantId.Trim(),
             companyId,
             plantId);
+    }
+
+    public void RecordLabelPrint()
+    {
+        LabelPrintCount += 1;
+        LabelPrintedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Issue(decimal quantity)

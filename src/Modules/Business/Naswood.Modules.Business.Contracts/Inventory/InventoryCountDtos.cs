@@ -123,6 +123,23 @@ public sealed class InventoryCountPostResultDto
     public required string Status { get; init; }
     public required int AdjustmentCount { get; init; }
     public required IReadOnlyList<InventoryCountAdjustmentDto> Adjustments { get; init; }
+    public int LotCount { get; init; }
+    public int PackageCount { get; init; }
+    public IReadOnlyList<string> Lots { get; init; } = [];
+    public IReadOnlyList<OpeningPackageCreatedDto> Packages { get; init; } = [];
+}
+
+public sealed class OpeningPackageCreatedDto
+{
+    public Guid PackageId { get; init; }
+    public string PackageNo { get; init; } = string.Empty;
+    public string Barcode { get; init; } = string.Empty;
+    public string PublicId { get; init; } = string.Empty;
+    public string MaterialCode { get; init; } = string.Empty;
+    public string LotNumber { get; init; } = string.Empty;
+    public string PhysicalGroupLabel { get; init; } = string.Empty;
+    public decimal Quantity { get; init; }
+    public string Unit { get; init; } = string.Empty;
 }
 
 public sealed class InventoryCountAdjustmentDto

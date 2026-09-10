@@ -279,23 +279,32 @@ export function LotListPage() {
 export function PackageListPage() {
   const { plantId } = usePlantContext();
   return (
-    <EntityListScreen
-      screenId="INV-PKG"
-      title="Paketler"
-      description="Fiziksel paket / barkod — plant-scoped."
-      route="packages"
-      fields={[
-        { key: 'PackageNumber', label: 'Paket' },
-        { key: 'MaterialCode', label: 'Malzeme' },
-        { key: 'LotNumber', label: 'Lot' },
-        { key: 'WarehouseCode', label: 'Depo' },
-        { key: 'LocationCode', label: 'Lokasyon' },
-        { key: 'Quantity', label: 'Miktar', type: 'number' },
-        { key: 'Status', label: 'Durum', status: true },
-      ]}
-      plantId={plantId}
-      readOnly
-    />
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link className="underline" to="/inventory/stock/scan">
+          Barkod tara
+        </Link>
+      </div>
+      <EntityListScreen
+        screenId="INV-PKG"
+        title="Paketler"
+        description="Package ve barcode fiziksel stok kimliğidir. Miktar InventoryBalance’dan gelir; paket ana satırı çoğaltmaz."
+        route="packages"
+        fields={[
+          { key: 'Barcode', label: 'Barkod' },
+          { key: 'PackageNumber', label: 'Paket' },
+          { key: 'MaterialCode', label: 'Malzeme' },
+          { key: 'LotNumber', label: 'Lot' },
+          { key: 'WarehouseCode', label: 'Depo' },
+          { key: 'LocationCode', label: 'Lokasyon' },
+          { key: 'Quantity', label: 'Miktar', type: 'number' },
+          { key: 'Status', label: 'Durum', status: true },
+        ]}
+        detailPath={(id) => `/inventory/stock/packages/${id}`}
+        plantId={plantId}
+        readOnly
+      />
+    </div>
   );
 }
 

@@ -9,6 +9,7 @@ import {
   showSystemQuantity,
   type CycleCountOpenDraft,
 } from './cycleCountSession';
+import { previewOpeningGroups } from '../stock/openingPackagePreview';
 import { calculateStockQty, cubicMeters, difference, resolvePolicy, squareMeters } from './inventoryCountCalc';
 import { parseCountListText } from './cycleCountAi';
 import { parseCountTable, buildFieldCountCsv } from './cycleCountExcel';
@@ -90,5 +91,15 @@ const body = buildCountSessionCreateBody(base);
 assert(body.number === '', 'client does not mint SC');
 assert(body.countType === 'Opening', 'opening type');
 assert(isOpeningCount('Opening') && !isOpeningCount('Periodic'), 'opening vs periodic');
+
+const preview = previewOpeningGroups([
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 3', qty: 0.765, unit: 'M3', thicknessMm: 25, widthMm: 90, lengthMm: 3400, key: 'a' },
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 3', qty: 0.495, unit: 'M3', thicknessMm: 25, widthMm: 90, lengthMm: 2200, key: 'b' },
+  { materialCode: 'YM-PR-AYO-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 4', qty: 0.2, unit: 'M3', key: 'c' },
+  { materialCode: 'HM-LT-PIN-001', locationCode: 'A-03', physicalGroupLabel: 'İstif 1', qty: 1.8, unit: 'M3', key: 'd' },
+]);
+assert(preview.length === 2, 'two materials two lots');
+assert(preview.find((x) => x.materialCode === 'YM-PR-AYO-001')?.packages.length === 2, 'two stacks two packages');
+assert(preview.find((x) => x.materialCode === 'YM-PR-AYO-001')?.packages[0]?.rows.length === 2, 'same stack multi measure');
 
 console.info('cycleCountSession.selftest: all passed');
