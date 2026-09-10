@@ -3,6 +3,32 @@ using Naswood.Modules.Business.Domain.Common;
 
 namespace Naswood.Modules.Business.Domain.Inventory;
 
+public static class InventoryPackageStatuses
+{
+    public const string Available = "Available";
+    public const string Quarantine = "Quarantine";
+    public const string Consumed = "Consumed";
+    public const string Empty = "Empty";
+    public const string Issued = "Issued";
+    public const string Cancelled = "Cancelled";
+    public const string Closed = "Closed";
+    public const string Rejected = "Rejected";
+
+    public static bool IsConsumable(string? status)
+        => string.Equals(status, Available, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsRestorable(string? status)
+        => string.Equals(status, Consumed, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Empty, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Issued, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Available, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsClosed(string? status)
+        => string.Equals(status, Cancelled, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Closed, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, Rejected, StringComparison.OrdinalIgnoreCase);
+}
+
 public sealed class InventoryPackage : BusinessEntity
 {
     private InventoryPackage() { }
@@ -134,26 +160,58 @@ public sealed class InventoryPackage : BusinessEntity
     public void Issue(decimal quantity)
     {
         if (quantity <= 0) throw new InvalidOperationException("Quantity must be positive.");
-        if (!string.Equals(Status, "Available", StringComparison.OrdinalIgnoreCase))
+        if (!InventoryPackageStatuses.IsConsumable(Status))
             throw new InvalidOperationException("Package is not available.");
         if (Quantity < quantity) throw new InvalidOperationException("Insufficient package quantity.");
         Quantity -= quantity;
-        Status = Quantity == 0 ? "Issued" : "Available";
+        Status = Quantity == 0 ? InventoryPackageStatuses.Issued : InventoryPackageStatuses.Available;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void Consume(decimal quantity)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Quantity must be positive.");
+        if (!InventoryPackageStatuses.IsConsumable(Status))
+            throw new InvalidOperationException("Package is not available.");
+        if (Quantity < quantity) throw new InvalidOperationException("Insufficient package quantity.");
+        Quantity -= quantity;
+        Status = Quantity == 0 ? InventoryPackageStatuses.Consumed : InventoryPackageStatuses.Available;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Restore(decimal quantity)
     {
         if (quantity <= 0) throw new InvalidOperationException("Quantity must be positive.");
+        if (InventoryPackageStatuses.IsClosed(Status))
+            throw new InvalidOperationException("Closed package cannot be restored.");
+        if (!InventoryPackageStatuses.IsRestorable(Status))
+            throw new InvalidOperationException("Package cannot return to stock.");
         Quantity += quantity;
-        if (Quantity > 0 && string.Equals(Status, "Issued", StringComparison.OrdinalIgnoreCase))
-            Status = "Available";
+        if (Quantity > 0)
+            Status = InventoryPackageStatuses.Available;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void MarkIssued()
     {
-        Status = "Issued";
+        Status = InventoryPackageStatuses.Issued;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Reversal of an output package: same identity, not consumable, history kept.</summary>
+    public void MarkCancelled()
+    {
+        Status = InventoryPackageStatuses.Cancelled;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void ApplyStockStatus(string status)
+    {
+        if (InventoryPackageStatuses.IsClosed(Status) && !string.Equals(status, Status, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Closed package status cannot change.");
+        if (string.IsNullOrWhiteSpace(status))
+            throw new InvalidOperationException("Package status is required.");
+        Status = status.Trim();
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

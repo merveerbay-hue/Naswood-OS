@@ -11,6 +11,26 @@ public static class ProductionOutputStatuses
     public const string Cancelled = "CANCELLED";
 }
 
+public static class ProductionQcDecisions
+{
+    public const string Released = "Released";
+    public const string Rejected = "Rejected";
+
+    public static string Normalize(string? decision)
+    {
+        var d = (decision ?? string.Empty).Trim();
+        if (d.Equals(Released, StringComparison.OrdinalIgnoreCase)
+            || d.Equals("Release", StringComparison.OrdinalIgnoreCase)
+            || d.Equals("AVAILABLE", StringComparison.OrdinalIgnoreCase))
+            return Released;
+        if (d.Equals(Rejected, StringComparison.OrdinalIgnoreCase)
+            || d.Equals("Reject", StringComparison.OrdinalIgnoreCase)
+            || d.Equals("Blocked", StringComparison.OrdinalIgnoreCase))
+            return Rejected;
+        return string.Empty;
+    }
+}
+
 /// <summary>Stockable production output document. Does not replace EN 14081 PLOT.</summary>
 public sealed class ProductionOutput : BusinessEntity
 {
@@ -85,6 +105,11 @@ public sealed class ProductionOutput : BusinessEntity
     public string CancelledBy { get; private set; } = string.Empty;
     public string CancelReason { get; private set; } = string.Empty;
     public DateTimeOffset? CancelledAt { get; private set; }
+    public string QcDecision { get; private set; } = string.Empty;
+    public string QcDecidedBy { get; private set; } = string.Empty;
+    public DateTimeOffset? QcDecidedAt { get; private set; }
+    public string QcInspectionReference { get; private set; } = string.Empty;
+    public string QcNotes { get; private set; } = string.Empty;
 
     public static ProductionOutput Create(
         string number,
@@ -142,6 +167,27 @@ public sealed class ProductionOutput : BusinessEntity
         PostedBy = postedBy ?? string.Empty;
         PostedAt = DateTimeOffset.UtcNow;
         Status = ProductionOutputStatuses.Posted;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RecordQc(string decision, string decidedBy, string inspectionReference, string notes)
+    {
+        if (Status == ProductionOutputStatuses.Cancelled)
+            throw new InvalidOperationException("Cancelled production output cannot be QC decided.");
+        if (Status != ProductionOutputStatuses.Posted)
+            throw new InvalidOperationException("Only posted production output can be QC decided.");
+        var next = ProductionQcDecisions.Normalize(decision);
+        if (next.Length == 0)
+            throw new InvalidOperationException("QC decision must be Released or Rejected.");
+        if (!string.IsNullOrWhiteSpace(QcDecision)
+            && !string.Equals(QcDecision, next, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("QC decision is already recorded.");
+        QcDecision = next;
+        QcDecidedBy = decidedBy ?? string.Empty;
+        QcDecidedAt = DateTimeOffset.UtcNow;
+        QcInspectionReference = (inspectionReference ?? string.Empty).Trim();
+        QcNotes = (notes ?? string.Empty).Trim();
+        StockStatus = next == ProductionQcDecisions.Rejected ? "Rejected" : "Available";
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

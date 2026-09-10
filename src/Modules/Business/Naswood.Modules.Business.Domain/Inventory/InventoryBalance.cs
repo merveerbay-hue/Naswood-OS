@@ -68,6 +68,14 @@ public sealed class InventoryBalance : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void SetStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            throw new InvalidOperationException("Balance status is required.");
+        Status = status.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

@@ -96,6 +96,11 @@ export type ProductionOutputResult = {
   stockStatus: string;
   reversed: boolean;
   cancelReason: string;
+  qcDecision: string;
+  qcDecidedBy: string;
+  qcDecidedAt?: string | null;
+  qcInspectionReference: string;
+  qcNotes: string;
 };
 
 export type ProductionConsumptionScan = {
@@ -134,6 +139,19 @@ export function reverseProductionOutput(id: string, reason: string) {
     method: 'POST',
     auth: true,
     body: { reason },
+  });
+}
+
+export function decideProductionOutputQc(
+  id: string,
+  decision: 'Released' | 'Rejected',
+  inspectionReference: string,
+  notes: string,
+) {
+  return apiRequest<ProductionOutputResult>(`/api/v1/production-outputs/${id}/qc`, {
+    method: 'POST',
+    auth: true,
+    body: { decision, inspectionReference, notes },
   });
 }
 

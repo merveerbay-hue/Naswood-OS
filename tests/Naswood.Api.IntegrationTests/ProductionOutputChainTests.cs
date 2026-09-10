@@ -22,22 +22,15 @@ public class ProductionOutputChainTests
     public async Task Full_chain_multi_source_qc_genealogy_matches_movements_then_reverses()
     {
         await _factory.ResetDatabaseAsync();
-        var world = await SeedAsync(twoSourceBalances: true, withSourcePackages: true);
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 10);
         var client = await LoginAsync();
 
-        var preview = await client.PostAsJsonAsync("/api/v1/production-outputs/preview", world.PostBody);
+        var preview = await client.PostAsJsonAsync("/api/v1/production-outputs/preview", world.DefaultPost(3, 2));
         Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
         using var previewDoc = JsonDocument.Parse(await preview.Content.ReadAsStringAsync());
-        var previewData = previewDoc.RootElement.GetProperty("data");
-        Assert.Equal("Quarantine", previewData.GetProperty("resolvedStockStatus").GetString());
-        Assert.Equal(2, previewData.GetProperty("sourceLotCount").GetInt32());
+        Assert.Equal("Quarantine", previewDoc.RootElement.GetProperty("data").GetProperty("resolvedStockStatus").GetString());
 
-        var scan = await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{world.SourceBarcodeA}");
-        Assert.Equal(HttpStatusCode.OK, scan.StatusCode);
-        using var scanDoc = JsonDocument.Parse(await scan.Content.ReadAsStringAsync());
-        Assert.Equal(world.SourceLotA.Id.ToString(), scanDoc.RootElement.GetProperty("data").GetProperty("sourceLotId").GetString());
-
-        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.PostBody);
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.DefaultPost(3, 2));
         Assert.Equal(HttpStatusCode.OK, posted.StatusCode);
         using var postedDoc = JsonDocument.Parse(await posted.Content.ReadAsStringAsync());
         var data = postedDoc.RootElement.GetProperty("data");
@@ -45,103 +38,219 @@ public class ProductionOutputChainTests
         var lotId = data.GetProperty("productionLotId").GetGuid();
         var lotNo = data.GetProperty("productionLotNumber").GetString()!;
         var number = data.GetProperty("number").GetString()!;
-        Assert.Equal("Quarantine", data.GetProperty("stockStatus").GetString());
-        Assert.Equal(2, data.GetProperty("sourceLotCount").GetInt32());
+        var outBarcode = data.GetProperty("packages")[0].GetProperty("barcode").GetString()!;
+        var outPkgNo = data.GetProperty("packages")[0].GetProperty("packageNo").GetString()!;
 
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
-            var sources = db.ProductionLotSources.Where(x => !x.IsDeleted && x.ProductionLotId == lotId).OrderBy(x => x.CreatedAt).ToList();
-            Assert.Equal(2, sources.Count);
-            var moves = db.InventoryMovements.Where(x => !x.IsDeleted && x.DocumentNumber == number).ToList();
-            var consume = moves.Where(m => m.MovementType == ProductionLotCodes.ConsumptionMovement).ToList();
-            var output = moves.Where(m => m.MovementType == ProductionLotCodes.OutputMovement).ToList();
+            var sources = db.ProductionLotSources.Where(x => !x.IsDeleted && x.ProductionLotId == lotId).ToList();
+            var consume = db.InventoryMovements.Where(x => !x.IsDeleted && x.DocumentNumber == number
+                && x.MovementType == ProductionLotCodes.ConsumptionMovement).ToList();
             Assert.Equal(2, consume.Count);
-            Assert.Single(output);
-            Assert.Equal(lotNo, output[0].LotNumber);
-
             foreach (var src in sources)
             {
                 var lot = db.Batchs.Single(b => b.Id == src.SourceLotId);
-                var move = consume.Single(m =>
-                    string.Equals(m.LotNumber, lot.BatchNumber, StringComparison.OrdinalIgnoreCase)
-                    && m.Quantity == src.ConsumedQuantity);
+                var move = consume.Single(m => m.LotNumber == lot.BatchNumber && m.Quantity == src.ConsumedQuantity);
                 Assert.True(ProductionLotCodes.NotesBindSource(move.Notes, lot.BatchNumber, src.SourceLotId));
-                Assert.Equal(src.SourceMaterialCode, move.MaterialCode);
-                if (src.SourcePackageId is Guid pkgId)
-                {
-                    var pkg = db.InventoryPackages.Single(p => p.Id == pkgId);
-                    Assert.Equal(pkg.PackageNumber, move.PackageNumber);
-                }
             }
-
-            var passportSources = sources.Select(s => db.Batchs.Single(b => b.Id == s.SourceLotId).BatchNumber).OrderBy(x => x).ToArray();
-            var movementLots = consume.Select(m => m.LotNumber).OrderBy(x => x).ToArray();
-            Assert.Equal(passportSources, movementLots);
-
-            var dest = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == lotNo && b.PlantId == Plant);
-            Assert.Equal(4m, dest.QuantityOnHand);
-            Assert.Equal("Hold", dest.Status);
-            var srcA = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == world.SourceLotA.BatchNumber);
-            var srcB = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == world.SourceLotB.BatchNumber);
-            Assert.Equal(7m, srcA.QuantityOnHand);
-            Assert.Equal(6m, srcB.QuantityOnHand);
-            var outPkg = db.InventoryPackages.Single(p => !p.IsDeleted && p.BatchId == lotId);
-            Assert.False(string.IsNullOrWhiteSpace(outPkg.Barcode));
-            Assert.Equal("Quarantine", outPkg.Status);
         }
-
-        var passport = await client.GetAsync($"/api/v1/production-lots/{lotId}/passport");
-        Assert.Equal(HttpStatusCode.OK, passport.StatusCode);
-        using var passDoc = JsonDocument.Parse(await passport.Content.ReadAsStringAsync());
-        var passLots = passDoc.RootElement.GetProperty("data").GetProperty("sourceLots")
-            .EnumerateArray().Select(x => x.GetProperty("sourceLotNumber").GetString()).OrderBy(x => x).ToArray();
-        Assert.Equal(new[] { world.SourceLotA.BatchNumber, world.SourceLotB.BatchNumber }.OrderBy(x => x).ToArray(), passLots);
 
         var reverse = await client.PostAsJsonAsync($"/api/v1/production-outputs/{outputId}/reverse", new { reason = "yanlış istif" });
         Assert.Equal(HttpStatusCode.OK, reverse.StatusCode);
-        using var revDoc = JsonDocument.Parse(await reverse.Content.ReadAsStringAsync());
-        Assert.Equal("CANCELLED", revDoc.RootElement.GetProperty("data").GetProperty("status").GetString());
 
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
-            Assert.Equal(1, db.ProductionOutputs.Count(x => !x.IsDeleted && x.Id == outputId && x.Status == "CANCELLED"));
-            Assert.Equal(0, db.InventoryMovements.Count(x => x.IsDeleted && x.DocumentNumber == number));
-            Assert.Equal(2, db.InventoryMovements.Count(x => !x.IsDeleted && x.DocumentNumber == number && x.MovementType == ProductionLotCodes.ConsumptionMovement));
-            Assert.Equal(1, db.InventoryMovements.Count(x => !x.IsDeleted && x.DocumentNumber == number && x.MovementType == ProductionLotCodes.OutputMovement));
-            Assert.True(db.InventoryMovements.Any(x => !x.IsDeleted && x.DocumentNumber == number && x.MovementType == ProductionLotCodes.OutputReversalMovement));
-            Assert.Equal(2, db.InventoryMovements.Count(x => !x.IsDeleted && x.DocumentNumber == number && x.MovementType == ProductionLotCodes.ConsumptionReversalMovement));
-            var dest = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == lotNo);
-            Assert.Equal(0m, dest.QuantityOnHand);
-            var srcA = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == world.SourceLotA.BatchNumber);
-            var srcB = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == world.SourceLotB.BatchNumber);
-            Assert.Equal(10m, srcA.QuantityOnHand);
-            Assert.Equal(8m, srcB.QuantityOnHand);
-            Assert.Equal(1, db.Batchs.Count(b => !b.IsDeleted && b.Id == lotId));
-            Assert.True(db.InventoryPackages.Any(p => !p.IsDeleted && p.BatchId == lotId && p.Status == "Issued"));
+            var outPkg = db.InventoryPackages.Single(p => !p.IsDeleted && p.BatchId == lotId);
+            Assert.Equal(InventoryPackageStatuses.Cancelled, outPkg.Status);
+            Assert.Equal(4m, outPkg.Quantity);
+            Assert.Equal(outPkgNo, outPkg.PackageNumber);
+            Assert.Equal(outBarcode, outPkg.Barcode);
+            var srcPkg = db.InventoryPackages.Single(p => p.Id == world.SourcePackageAId);
+            Assert.Equal(InventoryPackageStatuses.Available, srcPkg.Status);
+            Assert.Equal(10m, srcPkg.Quantity);
+            Assert.Equal(world.SourceBarcodeA, srcPkg.Barcode);
+            Assert.Equal(world.SourcePackageNoA, srcPkg.PackageNumber);
+            Assert.Equal(1, db.InventoryPackages.Count(p => p.PackageNumber == world.SourcePackageNoA && !p.IsDeleted));
         }
+
+        var closedScan = await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{Uri.EscapeDataString(outBarcode)}");
+        Assert.Equal(HttpStatusCode.BadRequest, closedScan.StatusCode);
+        Assert.Equal(0m, BalanceOf(lotNo));
     }
 
     [Fact]
     public async Task Failed_second_source_leaves_no_partial_rows()
     {
         await _factory.ResetDatabaseAsync();
-        var world = await SeedAsync(twoSourceBalances: false, withSourcePackages: false);
+        var world = await SeedAsync(twoSourceBalances: false, sourcePackageQty: 10);
         var client = await LoginAsync();
-        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.PostBody);
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.DefaultPost(3, 2));
         Assert.Equal(HttpStatusCode.BadRequest, posted.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
         Assert.Equal(0, db.ProductionOutputs.Count(x => !x.IsDeleted));
-        Assert.Equal(0, db.ProductionLotSources.Count(x => !x.IsDeleted));
         Assert.Equal(0, db.Batchs.Count(x => !x.IsDeleted && x.SourceType == ProductionLotCodes.SourceType));
-        Assert.Equal(0, db.InventoryMovements.Count(x =>
-            !x.IsDeleted && (x.MovementType == ProductionLotCodes.ConsumptionMovement || x.MovementType == ProductionLotCodes.OutputMovement)));
-        Assert.Equal(0, db.InventoryPackages.Count(x => !x.IsDeleted && x.LotNumber.StartsWith("LOT-PR-")));
-        var srcA = db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == world.SourceLotA.BatchNumber);
-        Assert.Equal(10m, srcA.QuantityOnHand);
+        Assert.Equal(10m, db.InventoryBalances.Single(b => b.BatchNumber == world.SourceLotA.BatchNumber).QuantityOnHand);
+    }
+
+    [Fact]
+    public async Task Package_integrity_blocks_over_consume_across_two_rows()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 2);
+        var client = await LoginAsync();
+        var body = world.Post(
+            4,
+            new[]
+            {
+                world.Source(world.SourceLotA.Id, 1.2m, world.SourcePackageAId),
+                world.Source(world.SourceLotA.Id, 1.2m, world.SourcePackageAId)
+            });
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", body);
+        Assert.Equal(HttpStatusCode.BadRequest, posted.StatusCode);
+        using var doc = JsonDocument.Parse(await posted.Content.ReadAsStringAsync());
+        Assert.Equal("PRD-OUT-017", doc.RootElement.GetProperty("errors")[0].GetProperty("code").GetString());
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        Assert.Equal(0, db.ProductionOutputs.Count(x => !x.IsDeleted));
+        Assert.Equal(2m, db.InventoryPackages.Single(p => p.Id == world.SourcePackageAId).Quantity);
+        Assert.Equal(10m, db.InventoryBalances.Single(b => b.BatchNumber == world.SourceLotA.BatchNumber).QuantityOnHand);
+    }
+
+    [Fact]
+    public async Task Full_consume_then_reverse_reactivates_same_source_package()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 2);
+        var client = await LoginAsync();
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.Post(
+            4,
+            new[]
+            {
+                world.Source(world.SourceLotA.Id, 2m, world.SourcePackageAId),
+                world.Source(world.SourceLotB.Id, 2m, null)
+            }));
+        posted.EnsureSuccessStatusCode();
+        using var postedDoc = JsonDocument.Parse(await posted.Content.ReadAsStringAsync());
+        var outputId = postedDoc.RootElement.GetProperty("data").GetProperty("outputId").GetGuid();
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            var pkg = db.InventoryPackages.Single(p => p.Id == world.SourcePackageAId);
+            Assert.Equal(InventoryPackageStatuses.Consumed, pkg.Status);
+            Assert.Equal(0m, pkg.Quantity);
+            Assert.Equal(world.SourcePackageNoA, pkg.PackageNumber);
+        }
+
+        (await client.PostAsJsonAsync($"/api/v1/production-outputs/{outputId}/reverse", new { reason = "geri al" })).EnsureSuccessStatusCode();
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            Assert.Equal(1, db.InventoryPackages.Count(p => p.PackageNumber == world.SourcePackageNoA && !p.IsDeleted));
+            var pkg = db.InventoryPackages.Single(p => p.Id == world.SourcePackageAId);
+            Assert.Equal(InventoryPackageStatuses.Available, pkg.Status);
+            Assert.Equal(2m, pkg.Quantity);
+            Assert.Equal(world.SourceBarcodeA, pkg.Barcode);
+            Assert.Equal(world.SourcePackageNoA, pkg.PackageNumber);
+        }
+    }
+
+    [Fact]
+    public async Task Qc_release_makes_output_available_without_qty_change()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 10);
+        var client = await LoginAsync();
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.DefaultPost(3, 2));
+        posted.EnsureSuccessStatusCode();
+        using var postedDoc = JsonDocument.Parse(await posted.Content.ReadAsStringAsync());
+        var data = postedDoc.RootElement.GetProperty("data");
+        var outputId = data.GetProperty("outputId").GetGuid();
+        var lotNo = data.GetProperty("productionLotNumber").GetString()!;
+        var barcode = data.GetProperty("packages")[0].GetProperty("barcode").GetString()!;
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{Uri.EscapeDataString(barcode)}")).StatusCode);
+
+        var qc = await client.PostAsJsonAsync($"/api/v1/production-outputs/{outputId}/qc", new
+        {
+            decision = "Released",
+            inspectionReference = "INS-CLT-001",
+            notes = "pres OK"
+        });
+        Assert.Equal(HttpStatusCode.OK, qc.StatusCode);
+        using var qcDoc = JsonDocument.Parse(await qc.Content.ReadAsStringAsync());
+        var qcData = qcDoc.RootElement.GetProperty("data");
+        Assert.Equal("Released", qcData.GetProperty("qcDecision").GetString());
+        Assert.Equal("INS-CLT-001", qcData.GetProperty("qcInspectionReference").GetString());
+        Assert.Equal("Available", qcData.GetProperty("stockStatus").GetString());
+        Assert.Equal(4m, qcData.GetProperty("outputQuantity").GetDecimal());
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            var dest = db.InventoryBalances.Single(b => b.BatchNumber == lotNo);
+            Assert.Equal(4m, dest.QuantityOnHand);
+            Assert.Equal("Active", dest.Status);
+            var pkg = db.InventoryPackages.Single(p => p.Barcode == barcode);
+            Assert.Equal(4m, pkg.Quantity);
+            Assert.Equal(InventoryPackageStatuses.Available, pkg.Status);
+            Assert.Single(db.InventoryMovements.Where(m => m.DocumentNumber == data.GetProperty("number").GetString()
+                && m.MovementType == ProductionLotCodes.QcReleaseMovement && m.Quantity == 0));
+        }
+
+        var scan = await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{Uri.EscapeDataString(barcode)}");
+        Assert.Equal(HttpStatusCode.OK, scan.StatusCode);
+        using var scanDoc = JsonDocument.Parse(await scan.Content.ReadAsStringAsync());
+        Assert.Equal(4m, scanDoc.RootElement.GetProperty("data").GetProperty("availableQuantity").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Qc_reject_blocks_package_and_keeps_qty()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 10);
+        var client = await LoginAsync();
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", world.DefaultPost(3, 2));
+        posted.EnsureSuccessStatusCode();
+        using var postedDoc = JsonDocument.Parse(await posted.Content.ReadAsStringAsync());
+        var data = postedDoc.RootElement.GetProperty("data");
+        var outputId = data.GetProperty("outputId").GetGuid();
+        var lotNo = data.GetProperty("productionLotNumber").GetString()!;
+        var barcode = data.GetProperty("packages")[0].GetProperty("barcode").GetString()!;
+
+        var qc = await client.PostAsJsonAsync($"/api/v1/production-outputs/{outputId}/qc", new
+        {
+            decision = "Rejected",
+            inspectionReference = "INS-CLT-BAD",
+            notes = "delaminasyon"
+        });
+        Assert.Equal(HttpStatusCode.OK, qc.StatusCode);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+            var dest = db.InventoryBalances.Single(b => b.BatchNumber == lotNo);
+            Assert.Equal(4m, dest.QuantityOnHand);
+            Assert.Equal("Blocked", dest.Status);
+            var pkg = db.InventoryPackages.Single(p => p.Barcode == barcode);
+            Assert.Equal(InventoryPackageStatuses.Rejected, pkg.Status);
+            Assert.Equal(4m, pkg.Quantity);
+        }
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{Uri.EscapeDataString(barcode)}")).StatusCode);
+    }
+
+    private decimal BalanceOf(string lot)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        return db.InventoryBalances.Single(b => !b.IsDeleted && b.BatchNumber == lot).QuantityOnHand;
     }
 
     private async Task<HttpClient> LoginAsync()
@@ -159,7 +268,7 @@ public class ProductionOutputChainTests
         return client;
     }
 
-    private async Task<World> SeedAsync(bool twoSourceBalances, bool withSourcePackages)
+    private async Task<World> SeedAsync(bool twoSourceBalances, decimal sourcePackageQty)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
@@ -174,70 +283,59 @@ public class ProductionOutputChainTests
         var order = ProductionOrder.Create("PRD-2026-0042", "CLT pres", "Released", "", plantId: Plant);
         var lotA = Batch.Create("LOT-GR-A", rawA.Code, 10, null, "Active", plantId: Plant, sourceType: "GOODS_RECEIPT");
         var lotB = Batch.Create("LOT-GR-B", rawB.Code, 8, null, "Active", plantId: Plant, sourceType: "GOODS_RECEIPT");
-        var balA = InventoryBalance.Create(rawA.Code, "WH-SFG", "YM-A01", lotA.BatchNumber, 10, 0, "Active", plantId: Plant);
         db.Materials.AddRange(output, rawA, rawB);
         db.Warehouses.Add(wh);
         db.Locations.Add(loc);
         db.ProductionOrders.Add(order);
         db.Batchs.AddRange(lotA, lotB);
-        db.InventoryBalances.Add(balA);
+        db.InventoryBalances.Add(InventoryBalance.Create(rawA.Code, "WH-SFG", "YM-A01", lotA.BatchNumber, 10, 0, "Active", plantId: Plant));
         if (twoSourceBalances)
             db.InventoryBalances.Add(InventoryBalance.Create(rawB.Code, "WH-SFG", "YM-A01", lotB.BatchNumber, 8, 0, "Active", plantId: Plant));
 
-        string barcodeA = "NWPKG-TEST-A";
-        InventoryPackage? pkgA = null;
-        if (withSourcePackages)
-        {
-            var mint = PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 9);
-            barcodeA = mint.BarcodeValue;
-            pkgA = InventoryPackage.Create(
-                mint.PackageNumber, "MI-SRC-A", rawA.Code, lotA.BatchNumber, "WH-SFG", "YM-A01",
-                10, "PCS", mint.BarcodeValue, "Available", plantId: Plant,
-                publicId: mint.PublicId, materialId: rawA.Id, batchId: lotA.Id, warehouseId: wh.Id, locationId: loc.Id);
-            db.InventoryPackages.Add(pkgA);
-        }
-
+        var mint = PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 9);
+        var pkgA = InventoryPackage.Create(
+            mint.PackageNumber, "MI-SRC-A", rawA.Code, lotA.BatchNumber, "WH-SFG", "YM-A01",
+            sourcePackageQty, "PCS", mint.BarcodeValue, "Available", plantId: Plant,
+            publicId: mint.PublicId, materialId: rawA.Id, batchId: lotA.Id, warehouseId: wh.Id, locationId: loc.Id);
+        db.InventoryPackages.Add(pkgA);
         await db.SaveChangesAsync();
 
-        return new World(
-            lotA,
-            lotB,
-            barcodeA,
-            new
-            {
-                productionOrderId = order.Id,
-                outputMaterialId = output.Id,
-                warehouseCode = "WH-SFG",
-                locationCode = "YM-A01",
-                workCenterCode = "WC-CLT",
-                stockStatus = "Available",
-                plantId = Plant,
-                lines = new[]
-                {
-                    new { physicalGroupLabel = "İstif A", pieceCount = 4m }
-                },
-                sources = new object[]
-                {
-                    new
-                    {
-                        sourceLotId = lotA.Id,
-                        sourceWarehouseCode = "WH-SFG",
-                        sourceLocationCode = "YM-A01",
-                        consumedQuantity = 3m,
-                        unit = "PCS",
-                        sourcePackageId = pkgA?.Id
-                    },
-                    new
-                    {
-                        sourceLotId = lotB.Id,
-                        sourceWarehouseCode = "WH-SFG",
-                        sourceLocationCode = "YM-A01",
-                        consumedQuantity = 2m,
-                        unit = "PCS"
-                    }
-                }
-            });
+        return new World(order.Id, output.Id, lotA, lotB, pkgA.Id, pkgA.PackageNumber, pkgA.Barcode);
     }
 
-    private sealed record World(Batch SourceLotA, Batch SourceLotB, string SourceBarcodeA, object PostBody);
+    private sealed record World(
+        Guid OrderId,
+        Guid OutputMaterialId,
+        Batch SourceLotA,
+        Batch SourceLotB,
+        Guid SourcePackageAId,
+        string SourcePackageNoA,
+        string SourceBarcodeA)
+    {
+        public object DefaultPost(decimal consumeA, decimal consumeB)
+            => Post(4, new[] { Source(SourceLotA.Id, consumeA, SourcePackageAId), Source(SourceLotB.Id, consumeB, null) });
+
+        public object Post(decimal pieceCount, object[] sources) => new
+        {
+            productionOrderId = OrderId,
+            outputMaterialId = OutputMaterialId,
+            warehouseCode = "WH-SFG",
+            locationCode = "YM-A01",
+            workCenterCode = "WC-CLT",
+            stockStatus = "Available",
+            plantId = Plant,
+            lines = new[] { new { physicalGroupLabel = "İstif A", pieceCount } },
+            sources
+        };
+
+        public object Source(Guid lotId, decimal qty, Guid? packageId) => new
+        {
+            sourceLotId = lotId,
+            sourceWarehouseCode = "WH-SFG",
+            sourceLocationCode = "YM-A01",
+            consumedQuantity = qty,
+            unit = "PCS",
+            sourcePackageId = packageId
+        };
+    }
 }

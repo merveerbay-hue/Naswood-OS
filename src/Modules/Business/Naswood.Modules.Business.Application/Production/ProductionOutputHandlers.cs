@@ -45,6 +45,14 @@ public sealed record ScanProductionConsumptionQuery(
     string Barcode,
     IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<ProductionConsumptionScanDto>>;
 
+public sealed record DecideProductionOutputQcCommand(
+    Guid OutputId,
+    string Decision,
+    string InspectionReference,
+    string Notes,
+    IReadOnlyList<string>? AllowedPlantIds,
+    string Actor) : ICommand<Result<ProductionOutputResultDto>>;
+
 public sealed class PreviewProductionOutputQueryHandler : IQueryHandler<PreviewProductionOutputQuery, Result<ProductionOutputPreviewDto>>
 {
     private readonly ProductionOutputGateway _gate;
@@ -112,6 +120,29 @@ public sealed class ScanProductionConsumptionQueryHandler : IQueryHandler<ScanPr
 
     public Task<Result<ProductionConsumptionScanDto>> HandleAsync(ScanProductionConsumptionQuery query, CancellationToken cancellationToken = default)
         => _gate.ScanConsumptionAsync(query.Barcode, query.AllowedPlantIds, cancellationToken);
+}
+
+public sealed class DecideProductionOutputQcCommandHandler : ICommandHandler<DecideProductionOutputQcCommand, Result<ProductionOutputResultDto>>
+{
+    private readonly ProductionOutputGateway _gate;
+    private readonly IBusinessUnitOfWork _uow;
+
+    public DecideProductionOutputQcCommandHandler(ProductionOutputGateway gate, IBusinessUnitOfWork uow)
+    {
+        _gate = gate;
+        _uow = uow;
+    }
+
+    public async Task<Result<ProductionOutputResultDto>> HandleAsync(DecideProductionOutputQcCommand command, CancellationToken cancellationToken = default)
+    {
+        var decided = await _gate.DecideQcAsync(
+            command.OutputId, command.Decision, command.InspectionReference, command.Notes,
+            command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
+        if (decided.IsFailure) return decided;
+        if (!decided.Value.IdempotentReplay)
+            await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return decided;
+    }
 }
 
 public sealed class ProductionOutputGateway
@@ -246,7 +277,7 @@ public sealed class ProductionOutputGateway
             var pkgNo = "";
             if (row.Package is not null)
             {
-                try { row.Package.Issue(row.Request.ConsumedQuantity); }
+                try { row.Package.Consume(row.Request.ConsumedQuantity); }
                 catch (InvalidOperationException ex)
                 {
                     return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-015", ex.Message));
@@ -482,22 +513,18 @@ public sealed class ProductionOutputGateway
         {
             var pkg = await _packages.GetByIdAsync(listedPkg.Id, cancellationToken).ConfigureAwait(false);
             if (pkg is null || pkg.IsDeleted) continue;
-            if (pkg.Quantity > 0
-                && string.Equals(pkg.Status, "Available", StringComparison.OrdinalIgnoreCase))
-            {
-                try { pkg.Issue(pkg.Quantity); }
-                catch (InvalidOperationException ex)
-                {
-                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-024", ex.Message));
-                }
-            }
-            else
-                pkg.MarkIssued();
+            var snapshotQty = pkg.Quantity;
+            var snapshotNo = pkg.PackageNumber;
+            var snapshotBarcode = pkg.Barcode;
+            pkg.MarkCancelled();
+            if (!string.Equals(pkg.PackageNumber, snapshotNo, StringComparison.Ordinal)
+                || !string.Equals(pkg.Barcode, snapshotBarcode, StringComparison.Ordinal))
+                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-024", "Output paket kimliği reversal'da değişemez."));
 
             await _movements.AddAsync(InventoryMovement.Post(
                 ProductionLotCodes.OutputReversalMovement, "Out", doc.Number,
                 doc.OutputMaterialCode, pkg.MaterialIdentityNumber, pkg.PackageNumber,
-                doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber, listedPkg.Quantity == 0 ? doc.OutputQuantity : listedPkg.Quantity,
+                doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber, snapshotQty == 0 ? doc.OutputQuantity : snapshotQty,
                 pkg.UnitOfMeasure,
                 ProductionLotCodes.OutputNotes(lot.SourceReferenceNo, doc.OutputLotNumber, pkg.PackageNumber) + " reverse=1",
                 plantId: doc.PlantId), cancellationToken).ConfigureAwait(false);
@@ -530,7 +557,12 @@ public sealed class ProductionOutputGateway
                 var srcPkg = await _packages.GetByIdAsync(pkgId, cancellationToken).ConfigureAwait(false);
                 if (srcPkg is not null)
                 {
+                    var sameNo = srcPkg.PackageNumber;
+                    var sameBarcode = srcPkg.Barcode;
                     srcPkg.Restore(src.ConsumedQuantity);
+                    if (!string.Equals(srcPkg.PackageNumber, sameNo, StringComparison.Ordinal)
+                        || !string.Equals(srcPkg.Barcode, sameBarcode, StringComparison.Ordinal))
+                        return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-026", "Kaynak paket kimliği reversal'da değişemez."));
                     pkgNo = srcPkg.PackageNumber;
                 }
             }
@@ -561,8 +593,8 @@ public sealed class ProductionOutputGateway
         var pkg = hits[0];
         if (allowed is { Count: > 0 } && !PlantAccess.CanAccess(allowed, pkg.PlantId))
             return Result.Failure<ProductionConsumptionScanDto>(Error.Forbidden("PRD-OUT-403", "Bu paketi kullanma yetkiniz yok."));
-        if (!string.Equals(pkg.Status, "Available", StringComparison.OrdinalIgnoreCase))
-            return Result.Failure<ProductionConsumptionScanDto>(Error.Validation("PRD-OUT-032", "Paket tüketilebilir değil."));
+        if (!InventoryPackageStatuses.IsConsumable(pkg.Status))
+            return Result.Failure<ProductionConsumptionScanDto>(Error.Validation("PRD-OUT-032", $"Paket tüketilebilir değil ({pkg.Status})."));
 
         Batch? lot = pkg.BatchId is Guid bid
             ? await _batches.GetByIdAsync(bid, cancellationToken).ConfigureAwait(false)
@@ -591,6 +623,108 @@ public sealed class ProductionOutputGateway
             Unit = pkg.UnitOfMeasure,
             PlantId = pkg.PlantId ?? "",
             Status = pkg.Status
+        });
+    }
+
+    public async Task<Result<ProductionOutputResultDto>> DecideQcAsync(
+        Guid outputId,
+        string decision,
+        string inspectionReference,
+        string notes,
+        IReadOnlyList<string>? allowed,
+        string actor,
+        CancellationToken cancellationToken)
+    {
+        var doc = await _outputs.GetByIdAsync(outputId, cancellationToken).ConfigureAwait(false);
+        if (doc is null || doc.IsDeleted)
+            return Result.Failure<ProductionOutputResultDto>(Error.NotFound("PRD-OUT-404", "Üretim çıkışı bulunamadı."));
+        if (allowed is { Count: > 0 } && !PlantAccess.CanAccess(allowed, doc.PlantId))
+            return Result.Failure<ProductionOutputResultDto>(Error.Forbidden("PRD-OUT-403", "Bu tesiste QC yetkiniz yok."));
+        if (doc.Status != ProductionOutputStatuses.Posted)
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-040", "QC kararı yalnızca işlenmiş çıkış için verilir."));
+
+        var next = ProductionQcDecisions.Normalize(decision);
+        var priorMoves = await _movements.ListByDocumentAsync(doc.Number, doc.PlantId, cancellationToken).ConfigureAwait(false);
+        var already = !string.IsNullOrWhiteSpace(doc.QcDecision)
+            && string.Equals(doc.QcDecision, next, StringComparison.OrdinalIgnoreCase);
+        if (already || priorMoves.Any(m =>
+                m.MovementType is ProductionLotCodes.QcReleaseMovement or ProductionLotCodes.QcRejectMovement
+                && string.Equals(doc.QcDecision, next, StringComparison.OrdinalIgnoreCase)))
+        {
+            var replay = await ReplayAsync(doc, cancellationToken).ConfigureAwait(false);
+            if (replay.IsFailure) return replay;
+            return Result.Success(replay.Value with { IdempotentReplay = true });
+        }
+
+        if (!ProductionOutputQcPolicy.IsHold(doc.StockStatus)
+            && !string.Equals(doc.StockStatus, "Quarantine", StringComparison.OrdinalIgnoreCase))
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-041", "QC release/reject yalnızca QUARANTINE çıktısı için."));
+
+        try { doc.RecordQc(decision, actor, inspectionReference, notes); }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-042", ex.Message));
+        }
+
+        var released = string.Equals(doc.QcDecision, ProductionQcDecisions.Released, StringComparison.OrdinalIgnoreCase);
+        var pkgStatus = released ? InventoryPackageStatuses.Available : InventoryPackageStatuses.Rejected;
+        var balanceStatus = released ? "Active" : "Blocked";
+        var qtyBefore = doc.OutputQuantity;
+
+        if (doc.OutputBatchId is Guid lotId)
+        {
+            var listed = await _packages.ListByBatchIdAsync(lotId, cancellationToken).ConfigureAwait(false);
+            foreach (var listedPkg in listed)
+            {
+                var pkg = await _packages.GetByIdAsync(listedPkg.Id, cancellationToken).ConfigureAwait(false);
+                if (pkg is null || pkg.IsDeleted) continue;
+                var qty = pkg.Quantity;
+                try { pkg.ApplyStockStatus(pkgStatus); }
+                catch (InvalidOperationException ex)
+                {
+                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-043", ex.Message));
+                }
+                if (pkg.Quantity != qty)
+                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-043", "QC miktarı değiştiremez."));
+            }
+
+            var lot = await _batches.GetByIdAsync(lotId, cancellationToken).ConfigureAwait(false);
+            lot?.SetStatus(balanceStatus);
+        }
+
+        var dest = await _balances.FindByKeyAsync(
+            doc.OutputMaterialCode, doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber, doc.PlantId, cancellationToken).ConfigureAwait(false);
+        if (dest is not null)
+        {
+            if (dest.QuantityOnHand != qtyBefore)
+                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-043", "QC bakiyeyi değiştiremez; önce miktarı kontrol edin."));
+            dest.SetStatus(balanceStatus);
+            if (dest.QuantityOnHand != qtyBefore)
+                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-043", "QC bakiyeyi değiştiremez."));
+        }
+
+        await _movements.AddAsync(InventoryMovement.Post(
+            released ? ProductionLotCodes.QcReleaseMovement : ProductionLotCodes.QcRejectMovement,
+            "Status",
+            doc.Number,
+            doc.OutputMaterialCode, "", "",
+            doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber,
+            0,
+            doc.UnitOfMeasure,
+            ProductionLotCodes.QcNotes(doc.QcDecision, doc.QcInspectionReference, actor),
+            plantId: doc.PlantId), cancellationToken).ConfigureAwait(false);
+
+        var result = await ReplayAsync(doc, cancellationToken).ConfigureAwait(false);
+        if (result.IsFailure) return result;
+        return Result.Success(result.Value with
+        {
+            IdempotentReplay = false,
+            StockStatus = doc.StockStatus,
+            QcDecision = doc.QcDecision,
+            QcDecidedBy = doc.QcDecidedBy,
+            QcDecidedAt = doc.QcDecidedAt,
+            QcInspectionReference = doc.QcInspectionReference,
+            QcNotes = doc.QcNotes
         });
     }
 
@@ -636,6 +770,36 @@ public sealed class ProductionOutputGateway
                 : src.Unit.Trim();
             rows.Add(new PreparedSource(src, sourceLot, srcMat, srcBalance, srcPkg, srcWh, srcLoc, unit));
         }
+
+        foreach (var group in rows.GroupBy(r => (r.Lot.MaterialCode, r.WarehouseCode, r.LocationCode, r.Lot.BatchNumber, r.Balance.Id)))
+        {
+            var requested = group.Sum(x => x.Request.ConsumedQuantity);
+            var available = group.First().Balance.QuantityOnHand - group.First().Balance.QuantityReserved;
+            if (requested > available)
+                return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation(
+                    "PRD-OUT-014",
+                    $"Yetersiz bakiye {group.Key.BatchNumber}: {available} / {requested}."));
+        }
+
+        var packaged = rows.Where(r => r.Package is not null).ToArray();
+        if (packaged.Length > 0)
+        {
+            var snaps = new Dictionary<Guid, PackagePhysicalSnapshot>();
+            foreach (var row in packaged)
+            {
+                var pkg = row.Package!;
+                if (snaps.ContainsKey(pkg.Id)) continue;
+                var contents = await _packages.ListContentsAsync(pkg.Id, cancellationToken).ConfigureAwait(false);
+                snaps[pkg.Id] = new PackagePhysicalSnapshot(
+                    pkg.Id, pkg.PackageNumber, pkg.Status, pkg.Quantity, contents.Sum(c => c.Quantity));
+            }
+            var check = PackageConsumptionIntegrity.Validate(
+                packaged.Select(r => (r.Package!.Id, r.Request.ConsumedQuantity)).ToArray(),
+                snaps);
+            if (check.IsFailure)
+                return Result.Failure<IReadOnlyList<PreparedSource>>(check.Error!);
+        }
+
         return Result.Success<IReadOnlyList<PreparedSource>>(rows);
     }
 
@@ -724,7 +888,12 @@ public sealed class ProductionOutputGateway
             SourceLotNumbers = sourceNos,
             StockStatus = existing.StockStatus,
             Reversed = existing.Status == ProductionOutputStatuses.Cancelled,
-            CancelReason = existing.CancelReason
+            CancelReason = existing.CancelReason,
+            QcDecision = existing.QcDecision,
+            QcDecidedBy = existing.QcDecidedBy,
+            QcDecidedAt = existing.QcDecidedAt,
+            QcInspectionReference = existing.QcInspectionReference,
+            QcNotes = existing.QcNotes
         });
     }
 
