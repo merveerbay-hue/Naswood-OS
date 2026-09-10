@@ -192,9 +192,14 @@ const xlsx = buildCountXlsxBytes({
 });
 const xlsxSheets = await parseXlsxAllSheets(xlsx.buffer.slice(xlsx.byteOffset, xlsx.byteOffset + xlsx.byteLength));
 const sayim = xlsxSheets.find((s) => s.name === 'Sayım');
+const list = xlsxSheets.find((s) => s.name === 'MalzemeListesi');
 const mats = xlsxSheets.find((s) => s.name === '_MATERIALS');
 assert(sayim?.rows[0]?.[0] === 'Malzeme Tanımı', 'xlsx Sayım header');
+assert(list?.rows[1]?.[0] === 'Çam Kereste', 'visible material list');
 assert(mats?.rows[1]?.[0] === 'Çam Kereste', 'xlsx hidden map');
+const xlsxText = new TextDecoder().decode(xlsx);
+assert(xlsxText.includes("dataValidation type=\"list\""), 'dropdown validation present');
+assert(xlsxText.includes('MalzemeListesi'), 'list sheet referenced');
 const parsedXlsx = parseCountTable(sayim!.rows, [pine], new Map([['çam kereste', { id: pine.id, code: pine.code }]]));
 assert(parsedXlsx.rows[0]?.physicalGroupLabel === '1', 'xlsx package label roundtrip');
 assert(parsedXlsx.rows[0]?.status === 'MATCHED', 'xlsx name still matches');

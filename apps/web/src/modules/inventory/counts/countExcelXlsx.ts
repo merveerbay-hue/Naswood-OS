@@ -96,7 +96,7 @@ function inlineCell(r: number, c: number, value: string, num?: boolean): string 
   return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(value)}</t></is></c>`;
 }
 
-function sheetXml(rows: string[][], extra = ''): string {
+function sheetXml(rows: string[][], extra = '', selected = false): string {
   const maxCols = Math.max(1, ...rows.map((r) => r.length));
   const last = `${colLetter(maxCols - 1)}${Math.max(1, rows.length)}`;
   const sheetData = rows
@@ -106,10 +106,14 @@ function sheetXml(rows: string[][], extra = ''): string {
       return `<row r="${r}">${cells}</row>`;
     })
     .join('');
+  const view = selected
+    ? `<sheetViews><sheetView tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
+    : `<sheetViews><sheetView workbookViewId="0"/></sheetViews>`;
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <dimension ref="A1:${last}"/>
+${view}
 <sheetData>${sheetData}</sheetData>
 ${extra}
 </worksheet>`;
@@ -149,10 +153,12 @@ export function buildCountXlsxBytes(opts: {
     'StockUnit',
     'CountUnit',
   ];
+  const labels = opts.labels.length ? opts.labels : opts.mapRows.map((r) => r[0] ?? '').filter(Boolean);
   const sayim = [headers, ...opts.bodyRows];
+  const listSheet = [['Malzeme Tanımı'], ...labels.map((l) => [l])];
   const materials = [mapHeaders, ...opts.mapRows];
-  const lastMat = Math.max(2, materials.length);
-  const validation = `<dataValidations count="1"><dataValidation type="list" allowBlank="1" showErrorMessage="0" sqref="A2:A2000"><formula1>MaterialList</formula1></dataValidation></dataValidations>`;
+  const lastList = Math.max(2, listSheet.length);
+  const validation = `<dataValidations count="1"><dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="A2:A2000"><formula1>'MalzemeListesi'!$A$2:$A$${lastList}</formula1><promptTitle>Malzeme Tanımı</promptTitle><prompt>Listeden seçin. Master'da yoksa yeni tanım yazabilirsiniz.</prompt></dataValidation></dataValidations>`;
 
   const utf8 = (s: string) => new TextEncoder().encode(s);
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -162,6 +168,7 @@ export function buildCountXlsxBytes(opts: {
 <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
 <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
 <Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
 <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
 </Types>`;
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -172,17 +179,19 @@ export function buildCountXlsxBytes(opts: {
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
 <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>
-<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/>
+<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
 </Relationships>`;
   const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <sheets>
 <sheet name="Sayım" sheetId="1" r:id="rId1"/>
-<sheet name="_MATERIALS" sheetId="2" r:id="rId2" state="hidden"/>
+<sheet name="MalzemeListesi" sheetId="2" r:id="rId2"/>
+<sheet name="_MATERIALS" sheetId="3" r:id="rId3" state="hidden"/>
 </sheets>
 <definedNames>
-<definedName name="MaterialList">'_MATERIALS'!$A$2:$A$${lastMat}</definedName>
+<definedName name="MaterialList">MalzemeListesi!$A$2:$A$${lastList}</definedName>
 </definedNames>
 </workbook>`;
   const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -200,7 +209,8 @@ export function buildCountXlsxBytes(opts: {
     { name: 'xl/workbook.xml', data: utf8(workbook) },
     { name: 'xl/_rels/workbook.xml.rels', data: utf8(wbRels) },
     { name: 'xl/styles.xml', data: utf8(styles) },
-    { name: 'xl/worksheets/sheet1.xml', data: utf8(sheetXml(sayim, validation)) },
-    { name: 'xl/worksheets/sheet2.xml', data: utf8(sheetXml(materials)) },
+    { name: 'xl/worksheets/sheet1.xml', data: utf8(sheetXml(sayim, validation, true)) },
+    { name: 'xl/worksheets/sheet2.xml', data: utf8(sheetXml(listSheet)) },
+    { name: 'xl/worksheets/sheet3.xml', data: utf8(sheetXml(materials)) },
   ]);
 }
