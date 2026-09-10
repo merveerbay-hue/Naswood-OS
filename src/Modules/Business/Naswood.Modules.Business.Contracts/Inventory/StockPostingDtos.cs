@@ -98,6 +98,7 @@ public sealed class InventoryPackageDto
 
 public sealed class PackageContentDto
 {
+    public Guid Id { get; init; }
     public int LineNo { get; init; }
     public decimal? ThicknessMm { get; init; }
     public decimal? WidthMm { get; init; }
@@ -142,6 +143,10 @@ public sealed class PackagePassportDto
     public DateTimeOffset? LabelPrintedAt { get; init; }
     public int LabelPrintCount { get; init; }
     public bool PackageBalanceMismatch { get; init; }
+    public IReadOnlyList<string> AllowedActions { get; init; } = [];
+    public string? InactiveReason { get; init; }
+    public string? LabelHint { get; init; }
+    public IReadOnlyList<PackageRelationRowDto> Relations { get; init; } = [];
     public IReadOnlyList<PackageContentDto> Contents { get; init; } = [];
     public IReadOnlyList<PackageMovementRowDto> Movements { get; init; } = [];
 }

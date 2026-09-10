@@ -173,6 +173,13 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
             .OrderBy(x => x.LineNo)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<InventoryPackageContent>> ListContentsForUpdateAsync(Guid packageId, CancellationToken cancellationToken = default)
+        => await _db.Set<InventoryPackageContent>()
+            .Where(x => !x.IsDeleted && x.PackageId == packageId)
+            .OrderBy(x => x.LineNo)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }
 
 public sealed class InventoryMovementRepository : IInventoryMovementRepository

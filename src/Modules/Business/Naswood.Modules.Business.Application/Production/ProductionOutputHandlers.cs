@@ -20,6 +20,7 @@ public interface IProductionLotSourceRepository
     Task AddRangeAsync(IReadOnlyList<ProductionLotSource> rows, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductionLotSource>> ListByProductionLotIdAsync(Guid productionLotId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductionLotSource>> ListByOutputIdAsync(Guid productionOutputId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProductionLotSource>> ListBySourcePackageIdsAsync(IReadOnlyList<Guid> packageIds, CancellationToken cancellationToken = default);
 }
 
 public sealed record PreviewProductionOutputQuery(
@@ -158,6 +159,7 @@ public sealed class ProductionOutputGateway
     private readonly IInventoryPackageRepository _packages;
     private readonly IInventoryMovementRepository _movements;
     private readonly IMaterialIdentityRepository _identities;
+    private readonly IPackageRelationRepository _relations;
 
     public ProductionOutputGateway(
         IProductionOrderRepository orders,
@@ -170,7 +172,8 @@ public sealed class ProductionOutputGateway
         IInventoryBalanceRepository balances,
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
-        IMaterialIdentityRepository identities)
+        IMaterialIdentityRepository identities,
+        IPackageRelationRepository relations)
     {
         _orders = orders;
         _outputs = outputs;
@@ -183,6 +186,7 @@ public sealed class ProductionOutputGateway
         _packages = packages;
         _movements = movements;
         _identities = identities;
+        _relations = relations;
     }
 
     public async Task<Result<ProductionOutputPreviewDto>> PreviewAsync(
@@ -489,6 +493,29 @@ public sealed class ProductionOutputGateway
 
         if (doc.OutputBatchId is not Guid lotId)
             return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-022", "Üretim lotu yok."));
+        var listedForGuard = await _packages.ListByBatchIdAsync(lotId, cancellationToken).ConfigureAwait(false);
+        var outputIds = listedForGuard.Select(p => p.Id).ToArray();
+        var outRels = await _relations.ListByPackageIdsAsync(outputIds, cancellationToken).ConfigureAwait(false);
+        if (outRels.Any(r => outputIds.Contains(r.SourcePackageId)))
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PKG-LIFE-006", "Çıktı paketi üzerinde sonraki fiziksel/stok işlemleri bulunduğu için doğrudan reversal yapılamaz."));
+        if (listedForGuard.Any(p =>
+                string.Equals(p.Status, InventoryPackageStatuses.Consumed, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(p.Status, InventoryPackageStatuses.Merged, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(p.Status, InventoryPackageStatuses.Repacked, StringComparison.OrdinalIgnoreCase)))
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PKG-LIFE-006", "Çıktı paketi üzerinde sonraki fiziksel/stok işlemleri bulunduğu için doğrudan reversal yapılamaz."));
+        var downstream = await _sources.ListBySourcePackageIdsAsync(outputIds, cancellationToken).ConfigureAwait(false);
+        if (downstream.Any(s => s.ProductionOutputId != doc.Id))
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PKG-LIFE-006", "Paket başka üretimde kullanıldığı için işlem geri alınamaz."));
+
+        var thisSources = await _sources.ListByOutputIdAsync(doc.Id, cancellationToken).ConfigureAwait(false);
+        var srcPkgIds = thisSources.Where(s => s.SourcePackageId is Guid).Select(s => s.SourcePackageId!.Value).Distinct().ToArray();
+        if (srcPkgIds.Length > 0)
+        {
+            var srcRels = await _relations.ListByPackageIdsAsync(srcPkgIds, cancellationToken).ConfigureAwait(false);
+            if (srcRels.Any(r => srcPkgIds.Contains(r.SourcePackageId)))
+                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PKG-LIFE-006", "Kaynak paket üzerinde sonraki fiziksel işlemler bulunduğu için doğrudan reversal yapılamaz."));
+        }
+
         var lot = await _batches.GetByIdAsync(lotId, cancellationToken).ConfigureAwait(false);
         if (lot is null)
             return Result.Failure<ProductionOutputResultDto>(Error.NotFound("PRD-OUT-404", "Üretim lotu bulunamadı."));

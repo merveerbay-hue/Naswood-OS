@@ -67,4 +67,25 @@ public sealed class InventoryPackageContent : BusinessEntity
             unitOfMeasure ?? string.Empty,
             companyId,
             plantId);
+
+    public void Reduce(decimal quantity, decimal? pieceCount)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Content quantity must be positive.");
+        if (Quantity < quantity) throw new InvalidOperationException("Insufficient package content.");
+        if (pieceCount is decimal pcs)
+        {
+            if (pcs < 0) throw new InvalidOperationException("Piece count cannot be negative.");
+            if (PieceCount is decimal have)
+            {
+                if (have < pcs)
+                    throw new InvalidOperationException("Insufficient package pieces.");
+                PieceCount = have - pcs;
+            }
+        }
+        Quantity -= quantity;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public bool SameMeasurement(decimal? t, decimal? w, decimal? l)
+        => ThicknessMm == t && WidthMm == w && LengthMm == l;
 }

@@ -158,6 +158,44 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "WarehouseId" uuid NULL;
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL;
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT '';
+        CREATE TABLE IF NOT EXISTS business.business_inventory_packageoperation (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "Number" character varying(80) NOT NULL,
+            "OperationType" character varying(40) NOT NULL,
+            "Status" character varying(40) NOT NULL,
+            "WarehouseCode" character varying(200) NOT NULL DEFAULT '',
+            "LocationCode" character varying(200) NOT NULL DEFAULT '',
+            "Notes" character varying(500) NOT NULL DEFAULT '',
+            "PostedBy" character varying(200) NOT NULL DEFAULT '',
+            "PostedAt" timestamp with time zone NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_packageoperation_number_alive"
+            ON business.business_inventory_packageoperation ("PlantId", "Number")
+            WHERE "IsDeleted" = false AND "Number" <> '';
+        CREATE TABLE IF NOT EXISTS business.business_inventory_packagerelation (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "OperationId" uuid NOT NULL,
+            "SourcePackageId" uuid NOT NULL,
+            "TargetPackageId" uuid NOT NULL,
+            "RelationType" character varying(40) NOT NULL,
+            "Quantity" numeric(18,4) NOT NULL,
+            "Unit" character varying(40) NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS "IX_packagerelation_source" ON business.business_inventory_packagerelation ("SourcePackageId");
+        CREATE INDEX IF NOT EXISTS "IX_packagerelation_target" ON business.business_inventory_packagerelation ("TargetPackageId");
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_packagerelation_edge"
+            ON business.business_inventory_packagerelation ("OperationId", "SourcePackageId", "TargetPackageId", "RelationType")
+            WHERE "IsDeleted" = false;
         UPDATE business.business_inventory_package
         SET "PublicId" = replace("Id"::text, '-', '')
         WHERE "PublicId" = '';

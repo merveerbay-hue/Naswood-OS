@@ -39,6 +39,7 @@ public static class PackagePassportComposer
 
     public static PackageContentDto ToContent(InventoryPackageContent c) => new()
     {
+        Id = c.Id,
         LineNo = c.LineNo,
         ThicknessMm = c.ThicknessMm,
         WidthMm = c.WidthMm,
@@ -59,6 +60,7 @@ public sealed class PackagePassportLoader
     private readonly IBatchRepository _batches;
     private readonly IProductionLotSourceRepository _lotSources;
     private readonly IProductionOrderRepository _orders;
+    private readonly IPackageRelationRepository _relations;
 
     public PackagePassportLoader(
         IInventoryPackageRepository packages,
@@ -67,7 +69,8 @@ public sealed class PackagePassportLoader
         IMaterialRepository materials,
         IBatchRepository batches,
         IProductionLotSourceRepository lotSources,
-        IProductionOrderRepository orders)
+        IProductionOrderRepository orders,
+        IPackageRelationRepository relations)
     {
         _packages = packages;
         _movements = movements;
@@ -76,6 +79,7 @@ public sealed class PackagePassportLoader
         _batches = batches;
         _lotSources = lotSources;
         _orders = orders;
+        _relations = relations;
     }
 
     public async Task<Result<PackagePassportDto>> LoadAsync(
@@ -103,6 +107,15 @@ public sealed class PackagePassportLoader
         var totalPcs = contents.Sum(c => c.PieceCount ?? 0);
         var contentQty = contents.Count == 0 ? pkg.Quantity : contents.Sum(c => c.Quantity);
         var mismatch = balance is not null && contentQty != balance.QuantityOnHand;
+
+        var rels = await _relations.ListByPackageIdAsync(pkg.Id, cancellationToken).ConfigureAwait(false);
+        var relatedIds = rels.SelectMany(r => new[] { r.SourcePackageId, r.TargetPackageId }).Distinct().ToArray();
+        var relatedPkgs = new Dictionary<Guid, InventoryPackage>();
+        foreach (var rid in relatedIds)
+        {
+            var row = await _packages.GetByIdAsync(rid, cancellationToken).ConfigureAwait(false);
+            if (row is not null) relatedPkgs[rid] = row;
+        }
 
         var sourceLots = Array.Empty<string>();
         var productionOrder = batch?.SourceReferenceNo ?? string.Empty;
@@ -158,6 +171,20 @@ public sealed class PackagePassportLoader
             LabelPrintedAt = pkg.LabelPrintedAt,
             LabelPrintCount = pkg.LabelPrintCount,
             PackageBalanceMismatch = mismatch,
+            AllowedActions = PackageStatePolicy.AllowedActions(pkg),
+            InactiveReason = PackageStatePolicy.InactiveReason(pkg),
+            LabelHint = PackageStatePolicy.LabelHint(pkg, rels),
+            Relations = rels.Select(r => new PackageRelationRowDto
+            {
+                RelationType = r.RelationType,
+                SourcePackageId = r.SourcePackageId,
+                TargetPackageId = r.TargetPackageId,
+                SourcePackageNo = relatedPkgs.TryGetValue(r.SourcePackageId, out var src) ? src.PackageNumber : "",
+                TargetPackageNo = relatedPkgs.TryGetValue(r.TargetPackageId, out var tgt) ? tgt.PackageNumber : "",
+                Quantity = r.Quantity,
+                Unit = r.Unit,
+                Direction = r.SourcePackageId == pkg.Id ? "OUT" : "IN"
+            }).ToArray(),
             Contents = contents.Select(PackagePassportComposer.ToContent).ToArray(),
             Movements = moves.Select(m => new PackageMovementRowDto
             {
@@ -327,6 +354,11 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
         var plantId = pkg.PlantId ?? string.Empty;
         if (command.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(command.AllowedPlantIds, plantId))
             return Result.Failure<PackagePassportDto>(Error.Forbidden("INV-PKG-403", "Bu paketi taşıma yetkiniz yok."));
+        var closed = PackageStatePolicy.GuardRejected(pkg, "MOVE");
+        if (closed.IsFailure)
+            return Result.Failure<PackagePassportDto>(closed.Error!);
+        if (!PackageStatePolicy.CanMove(pkg))
+            return Result.Failure<PackagePassportDto>(Error.Validation("PKG-LIFE-006", "Paket taşınamaz."));
 
         var toWh = command.WarehouseCode.Trim();
         var toLoc = command.LocationCode.Trim();
