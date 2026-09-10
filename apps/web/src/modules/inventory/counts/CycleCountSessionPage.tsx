@@ -9,7 +9,13 @@ import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog'
 import { rankMaterialMatches, type MaterialCandidate } from '@/modules/inventory/receiving/materialMatch';
 import { cancelCount, completeCount, isCountId, postCount, putCountLines, sessionId } from './countApi';
 import { ocrEngineAvailable, parseCountListText, type ParsedCountSuggestion } from './cycleCountAi';
-import { downloadCountTemplate, mapCountSheet, parseCountWorkbook, type CountExcelRow } from './cycleCountExcel';
+import {
+  applyLabelMapping,
+  downloadFieldCountTemplate,
+  parseCountWorkbook,
+  uniqueReviewLabels,
+  type CountExcelPreview,
+} from './cycleCountExcel';
 import {
   calculateStockQty,
   formatMm,
@@ -33,6 +39,7 @@ type MaterialOpt = MaterialCandidate & { unitOfMeasure?: string | null; category
 
 type DraftLine = {
   key: string;
+  materialId?: string;
   materialCode: string;
   materialName: string;
   locationCode: string;
@@ -44,6 +51,7 @@ type DraftLine = {
   source: 'MANUAL' | 'EXCEL' | 'AI';
   keepSeparate: boolean;
   note: string;
+  physicalGroupLabel?: string;
 };
 
 function n(v: string): number | null {
@@ -92,6 +100,7 @@ export function CycleCountSessionPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const [postResult, setPostResult] = useState<string | null>(null);
+  const [excelPreview, setExcelPreview] = useState<CountExcelPreview | null>(null);
 
   useEffect(() => {
     setWorkPlant(sessionPlantId || homePlantId);
@@ -179,10 +188,13 @@ export function CycleCountSessionPage() {
       const id = sessionId(opened);
       if (!isCountId(id)) throw new Error('Sayım oturumu yok — önce sayımı başlatın.');
       const lines = draftLines.map((l) => ({
+        materialId: l.materialId || undefined,
         materialCode: l.materialCode,
         materialName: l.materialName,
         locationCode: l.locationCode || opened?.locationCode || '',
         lotUnknown: true,
+        physicalGroupLabel: l.physicalGroupLabel || '',
+        packageNumber: '',
         thicknessMm: n(l.thicknessMm),
         widthMm: n(l.widthMm),
         lengthMm: n(l.lengthMm),
@@ -320,6 +332,7 @@ export function CycleCountSessionPage() {
         key: `${Date.now()}-${Math.random()}`,
         materialCode: mat.code,
         materialName: mat.name,
+        materialId: mat.id,
         locationCode: locationCode || opened?.locationCode || extra?.locationCode || '',
         thicknessMm: extra?.thicknessMm ?? '',
         widthMm: extra?.widthMm ?? '',
@@ -329,6 +342,7 @@ export function CycleCountSessionPage() {
         source,
         keepSeparate: false,
         note: extra?.note ?? '',
+        physicalGroupLabel: extra?.physicalGroupLabel ?? '',
       },
     ]);
     setAddOpen(false);
@@ -337,39 +351,48 @@ export function CycleCountSessionPage() {
 
   async function onExcel(file: File) {
     setError(null);
-    const table = await parseCountWorkbook(file);
-    const mapped = mapCountSheet(table, materials);
-    const blocked = mapped.filter((r) => r.match === 'missing' && !r.materialCode);
-    const needMatch = mapped.filter((r) => r.match !== 'code');
-    if (blocked.length && mapped.every((r) => r.match !== 'code')) {
-      setError('Malzeme kartı bulunamadı. Serbest metin stok oluşturulmaz — Material Master’a gidin.');
+    const preview = await parseCountWorkbook(file, materials);
+    setExcelPreview(preview);
+    if (preview.total === 0) {
+      setError('Excel’de sayım satırı bulunamadı.');
       return;
     }
-    const keys = new Map<string, CountExcelRow[]>();
-    for (const r of mapped.filter((x) => x.match === 'code')) {
-      const mat = materials.find((m) => m.code.toUpperCase() === r.materialCode.toUpperCase()) ?? {
-        id: '',
-        code: r.materialCode,
-        name: r.materialName,
-      };
-      const k = physicalKey(r.materialCode, r.locationCode, '', r.thicknessMm, r.widthMm, r.lengthMm);
-      if (!keys.has(k)) keys.set(k, []);
-      keys.get(k)!.push(r);
-      addDraft(mat, 'EXCEL', {
+    setSavedNote(
+      `Excel önizleme: ${preview.total} satır · ${preview.matched} eşleşti · ${preview.reviewRequired} eşleşme gerekli · ${preview.invalid} hatalı. Stoğa henüz yazılmadı.`,
+    );
+  }
+
+  function confirmExcelPreview() {
+    if (!excelPreview) return;
+    const matched = excelPreview.rows.filter((r) => r.status === 'MATCHED' && r.materialCode);
+    const loc = locationCode || opened?.locationCode || '';
+    setDraftLines((prev) => [
+      ...prev,
+      ...matched.map((r, i) => ({
+        key: `xl-${r.excelRow}-${Date.now()}-${i}`,
+        materialId: r.materialId,
+        materialCode: r.materialCode!,
+        materialName: r.materialName || r.materialLabel,
+        locationCode: loc,
         thicknessMm: r.thicknessMm != null ? String(r.thicknessMm) : '',
         widthMm: r.widthMm != null ? String(r.widthMm) : '',
         lengthMm: r.lengthMm != null ? String(r.lengthMm) : '',
-        pieceCount: r.pieceCount != null ? String(r.pieceCount) : '',
+        pieceCount: r.pieceCount != null ? String(r.pieceCount) : r.quantity != null ? String(r.quantity) : '',
         measuredVolumeM3: r.measuredVolumeM3 != null ? String(r.measuredVolumeM3) : '',
-        locationCode: r.locationCode,
+        source: 'EXCEL' as const,
+        keepSeparate: false,
         note: r.note,
-      });
-    }
-    if (needMatch.length) {
-      setError(`${needMatch.length} satır: Eşleşme gerekli / malzeme kartı yok. Onlar eklenmedi.`);
-    }
-    const dups = [...keys.values()].filter((g) => g.length > 1);
-    if (dups.length) setSavedNote('Aynı ölçü+malzeme Excel’de birden fazla — Birleştir veya Ayrı tut.');
+        physicalGroupLabel: r.physicalGroupLabel,
+      })),
+    ]);
+    setExcelPreview(null);
+    setSavedNote(`${matched.length} satır sayıma eklendi. ${excelPreview.reviewRequired + excelPreview.invalid} satır bekletildi.`);
+  }
+
+  function previewStatusTr(st: string): string {
+    if (st === 'MATCHED') return 'EŞLEŞTİ';
+    if (st === 'REVIEW_REQUIRED') return 'EŞLEŞME GEREKLİ';
+    return 'HATALI SATIR';
   }
 
   function applyAiRow(s: ParsedCountSuggestion, mat: MaterialOpt) {
@@ -483,9 +506,23 @@ export function CycleCountSessionPage() {
             </label>
           </div>
           {!opened ? (
-            <Button disabled={!canOpenDoc || !gate.ok || startMut.isPending} onClick={() => startMut.mutate()}>
-              Sayımı başlat
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={!canOpenDoc || !gate.ok || startMut.isPending} onClick={() => startMut.mutate()}>
+                Sayımı başlat
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={!warehouseCode}
+                onClick={() =>
+                  downloadFieldCountTemplate(
+                    materials,
+                    [],
+                  )
+                }
+              >
+                Sayım şablonunu indir
+              </Button>
+            </div>
           ) : (
             <p className="text-sm">
               {opened.number} · {opened.status}
@@ -507,24 +544,16 @@ export function CycleCountSessionPage() {
               variant="secondary"
               disabled={!counting}
               onClick={() =>
-                downloadCountTemplate(
-                  `${opened.number}-sayim.csv`,
+                downloadFieldCountTemplate(
+                  materials,
                   snapshotLines.map((l) => ({
                     materialCode: l.materialCode,
                     materialName: l.materialName,
-                    thicknessMm: null,
-                    widthMm: null,
-                    lengthMm: null,
-                    pieceCount: null,
-                    measuredVolumeM3: null,
-                    locationCode: l.locationCode,
-                    note: '',
-                    match: 'code',
                   })),
                 )
               }
             >
-              Şablonu indir
+              Sayım şablonunu indir
             </Button>
             <label className="inline-flex">
               <input
@@ -546,6 +575,102 @@ export function CycleCountSessionPage() {
             <Button variant="secondary" disabled={!counting} onClick={() => setAddOpen(true)}>
               Hızlı giriş / malzeme ekle
             </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {excelPreview ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Excel sayım önizlemesi</CardTitle>
+            <CardDescription>
+              Toplam {excelPreview.total} · Eşleşen {excelPreview.matched} · Eşleşme gereken {excelPreview.reviewRequired} ·
+              Hatalı {excelPreview.invalid} · Hazır {excelPreview.ready}. Dosya stoğa işlenmez.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {uniqueReviewLabels(excelPreview).map((label) => (
+              <label key={label} className="block text-sm">
+                {label} → NASWOOD malzemesi
+                <select
+                  className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const card = materials.find((m) => m.id === id || m.code === id);
+                    if (!card) return;
+                    setExcelPreview((p) => (p ? applyLabelMapping(p, label, card) : p));
+                  }}
+                >
+                  <option value="">Seçin (tüm aynı satırlara uygulanır)</option>
+                  {materials.map((m) => (
+                    <option key={m.id || m.code} value={m.id || m.code}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[var(--text-muted)]">
+                    <th>Excel Malzemesi</th>
+                    <th>NASWOOD Malzemesi</th>
+                    <th>Gerçek ölçü</th>
+                    <th>Adet</th>
+                    <th>Paket/İstif</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {excelPreview.rows.map((r) => (
+                    <tr key={r.excelRow} className="border-t border-[var(--border)]">
+                      <td>{r.materialLabel}</td>
+                      <td>
+                        {r.status === 'REVIEW_REQUIRED' ? (
+                          <select
+                            className="w-full rounded-md border border-[var(--border)] bg-transparent px-2 py-1"
+                            value={r.materialId ?? ''}
+                            onChange={(e) => {
+                              const card = materials.find((m) => m.id === e.target.value);
+                              if (!card) return;
+                              setExcelPreview((p) => (p ? applyLabelMapping(p, r.materialLabel, card, r.excelRow) : p));
+                            }}
+                          >
+                            <option value="">Seçin</option>
+                            {materials.map((m) => (
+                              <option key={m.id || m.code} value={m.id}>
+                                {m.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          r.materialName || '—'
+                        )}
+                      </td>
+                      <td>
+                        {[r.thicknessMm, r.widthMm, r.lengthMm].filter((x) => x != null).join('×') || '—'}
+                      </td>
+                      <td>{r.pieceCount ?? r.quantity ?? '—'}</td>
+                      <td>{r.physicalGroupLabel || '—'}</td>
+                      <td>
+                        {previewStatusTr(r.status)}
+                        {r.error ? <div className="text-xs text-red-600">{r.error}</div> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={excelPreview.matched === 0} onClick={confirmExcelPreview}>
+                Eşleşenleri sayıma ekle
+              </Button>
+              <Button variant="secondary" onClick={() => setExcelPreview(null)}>
+                Önizlemeyi kapat
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : null}
@@ -615,8 +740,11 @@ export function CycleCountSessionPage() {
               return (
                 <div key={l.key} className="grid gap-2 rounded-md border border-[var(--border)] p-2 md:grid-cols-8">
                   <div className="md:col-span-2 text-sm">
-                    {l.materialCode}
-                    <div className="text-xs text-[var(--text-muted)]">{l.materialName}</div>
+                    {l.materialName}
+                    <div className="text-xs text-[var(--text-muted)]">{l.materialCode}</div>
+                    {l.physicalGroupLabel ? (
+                      <div className="text-xs text-[var(--text-muted)]">İstif: {l.physicalGroupLabel}</div>
+                    ) : null}
                     {dup.length > 1 && !l.keepSeparate ? (
                       <div className="text-xs text-amber-600">
                         Çift satır{' '}

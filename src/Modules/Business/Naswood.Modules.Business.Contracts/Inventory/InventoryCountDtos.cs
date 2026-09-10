@@ -83,12 +83,14 @@ public sealed class UpsertInventoryCountRequestDto
 
 public sealed class UpsertInventoryCountLineRequestDto
 {
+    public Guid? MaterialId { get; init; }
     public string MaterialCode { get; init; } = string.Empty;
     public string MaterialName { get; init; } = string.Empty;
     public string LocationCode { get; init; } = string.Empty;
     public string BatchNumber { get; init; } = string.Empty;
     public bool LotUnknown { get; init; }
     public string PackageNumber { get; init; } = string.Empty;
+    public string PhysicalGroupLabel { get; init; } = string.Empty;
     public decimal? ThicknessMm { get; init; }
     public decimal? WidthMm { get; init; }
     public decimal? LengthMm { get; init; }

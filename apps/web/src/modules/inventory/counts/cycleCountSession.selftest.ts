@@ -10,7 +10,7 @@ import {
 } from './cycleCountSession';
 import { calculateStockQty, cubicMeters, difference, resolvePolicy, squareMeters } from './inventoryCountCalc';
 import { parseCountListText } from './cycleCountAi';
-import { buildCountTemplateCsv, mapCountSheet } from './cycleCountExcel';
+import { parseCountTable, buildFieldCountCsv } from './cycleCountExcel';
 
 function assert(cond: unknown, msg: string): void {
   if (!cond) throw new Error(msg);
@@ -27,29 +27,27 @@ const base: CycleCountOpenDraft = {
 assert(canOpenCountSession(base).ok, 'TEST1 open F01/WH-RM');
 assert(!canOpenCountSession({ ...base, warehouseCode: '' }).ok, 'TEST1b empty warehouse');
 
-const csv = buildCountTemplateCsv([
-  {
-    materialCode: 'HM-KR-PIN-001',
-    materialName: 'Çam Kereste',
-    thicknessMm: 45,
-    widthMm: 90,
-    lengthMm: 4000,
-    pieceCount: 118,
-    measuredVolumeM3: null,
-    locationCode: 'A-01',
-    note: '',
-    match: 'code',
-  },
-]);
-assert(csv.includes('HM-KR-PIN-001'), 'TEST2 template has code');
-const mapped = mapCountSheet(
+const csv = buildFieldCountCsv(
   [
-    ['MaterialCode', 'ThicknessMm', 'WidthMm', 'LengthMm', 'PieceCount'],
-    ['HM-KR-PIN-001', '45', '90', '4000', '118'],
+    {
+      id: '1',
+      code: 'HM-KR-PIN-001',
+      name: 'Çam Kereste',
+      status: 'Active',
+    },
   ],
-  [{ code: 'HM-KR-PIN-001', name: 'Çam Kereste' }],
+  [{ materialCode: 'HM-KR-PIN-001', materialName: 'Çam Kereste' }],
 );
-assert(mapped[0]?.match === 'code', 'TEST2 material auto match');
+assert(csv.includes('Çam Kereste'), 'TEST2 template has friendly name');
+assert(!csv.toLowerCase().includes('materialcode'), 'TEST2 template has no MaterialCode column');
+const mapped = parseCountTable(
+  [
+    ['Malzeme', 'Kalınlık mm', 'Genişlik mm', 'Uzunluk mm', 'Adet'],
+    ['Çam Kereste', '45', '90', '4000', '118'],
+  ],
+  [{ id: '1', code: 'HM-KR-PIN-001', name: 'Çam Kereste', status: 'Active' }],
+);
+assert(mapped.rows[0]?.status === 'MATCHED', 'TEST2 material name match');
 const lumber = resolvePolicy({ unitOfMeasure: 'M3', definitionJson: '{"stockUom":"M3","volumeCalcRequired":true}' });
 const m3 = calculateStockQty(lumber, { thicknessMm: 45, widthMm: 90, lengthMm: 4000, pieceCount: 118 });
 assert(m3.ok && Math.abs(m3.qty - cubicMeters(45, 90, 4000, 118)) < 1e-9, 'TEST2 m3');

@@ -211,16 +211,13 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
         var lineNo = existing.Where(l => l.Role == "SNAPSHOT").Select(l => l.LineNo).DefaultIfEmpty(0).Max();
         foreach (var dto in command.Lines ?? [])
         {
-            if (string.IsNullOrWhiteSpace(dto.MaterialCode))
-                return Result.Failure<InventoryCountDto>(Error.Validation(
-                    "INV-CNT-006",
-                    "Malzeme serbest metin olamaz. Material Master’dan seçin. Malzeme kartı bulunamadı."));
-
-            var material = await _materials.GetByCodeAsync(dto.MaterialCode.Trim(), cancellationToken).ConfigureAwait(false);
+            Material? material = null;
+            if (dto.MaterialId is { } mid && mid != Guid.Empty)
+                material = await _materials.GetByIdAsync(mid, cancellationToken).ConfigureAwait(false);
+            if (material is null && !string.IsNullOrWhiteSpace(dto.MaterialCode))
+                material = await _materials.GetByCodeAsync(dto.MaterialCode.Trim(), cancellationToken).ConfigureAwait(false);
             if (material is null)
-                return Result.Failure<InventoryCountDto>(Error.Validation(
-                    "INV-CNT-006",
-                    $"Malzeme kartı bulunamadı: {dto.MaterialCode.Trim()}"));
+                continue;
 
             var locCode = string.IsNullOrWhiteSpace(dto.LocationCode) ? e.LocationCode : dto.LocationCode.Trim();
             if (string.IsNullOrWhiteSpace(locCode))
@@ -272,14 +269,16 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                     lotUnknown = false;
                 }
             }
-            if (!string.IsNullOrWhiteSpace(dto.PackageNumber))
-            {
-                // Package is optional match-only; do not mint. Store as provided.
-            }
-
             lineNo++;
             var source = string.IsNullOrWhiteSpace(dto.Source) ? "MANUAL" : dto.Source.Trim().ToUpperInvariant();
             if (source is not "MANUAL" and not "EXCEL" and not "AI") source = "MANUAL";
+            var group = (dto.PhysicalGroupLabel ?? string.Empty).Trim();
+            var notes = dto.Notes ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(group))
+            {
+                var tag = $"İstif: {group}";
+                notes = string.IsNullOrWhiteSpace(notes) ? tag : $"{tag} | {notes}";
+            }
             var line = InventoryCountLine.CreatePhysical(
                 e.Id,
                 lineNo,
@@ -290,7 +289,7 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                 loc.Code,
                 batchNumber,
                 lotUnknown,
-                dto.PackageNumber?.Trim() ?? string.Empty,
+                packageNumber: string.Empty,
                 dto.ThicknessMm,
                 dto.WidthMm,
                 dto.LengthMm,
@@ -300,7 +299,7 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                 policy.StockUnit,
                 policy.CountUnit,
                 dto.KeepSeparate,
-                dto.Notes ?? string.Empty,
+                notes,
                 plantId);
             if (dto.Approved) line.SetApproved(true);
             await _repo.AddLineAsync(line, cancellationToken).ConfigureAwait(false);
