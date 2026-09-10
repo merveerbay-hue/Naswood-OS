@@ -1,4 +1,5 @@
 import { apiRequest } from '@/api/client';
+import { ApiClientError } from '@/api/types';
 
 export type MasterStockFilters = {
   plantId: string;
@@ -130,28 +131,43 @@ function qs(filters: MasterStockFilters): string {
   return p.toString();
 }
 
-export function searchMasterStock(filters: MasterStockFilters) {
-  return apiRequest<PagedMasterStock>(`/api/v1/inventory-master-stock?${qs(filters)}`, {
-    method: 'GET',
-    auth: true,
-  });
+function staleApi(path: string, err: unknown): Error {
+  if (err instanceof ApiClientError && err.status === 404) {
+    return new Error(
+      `Master Stok API 404: ${path}. API süreci eski — Naswood.Api’yi yeniden başlatın (GET /api/v1/inventory-master-stock).`,
+    );
+  }
+  return err instanceof Error ? err : new Error(String(err));
 }
 
-export function searchMasterStockPackages(filters: MasterStockFilters) {
-  return apiRequest<PagedMasterStockPackages>(`/api/v1/inventory-master-stock/packages?${qs(filters)}`, {
-    method: 'GET',
-    auth: true,
-  });
+export async function searchMasterStock(filters: MasterStockFilters) {
+  const path = `/api/v1/inventory-master-stock?${qs(filters)}`;
+  try {
+    return await apiRequest<PagedMasterStock>(path, { method: 'GET', auth: true });
+  } catch (err) {
+    throw staleApi(path, err);
+  }
 }
 
-export function getMasterStockRowPackages(balanceId: string) {
-  return apiRequest<MasterStockPackageRow[]>(`/api/v1/inventory-master-stock/${balanceId}/packages`, {
-    method: 'GET',
-    auth: true,
-  });
+export async function searchMasterStockPackages(filters: MasterStockFilters) {
+  const path = `/api/v1/inventory-master-stock/packages?${qs(filters)}`;
+  try {
+    return await apiRequest<PagedMasterStockPackages>(path, { method: 'GET', auth: true });
+  } catch (err) {
+    throw staleApi(path, err);
+  }
 }
 
-export function exportMasterStock(filters: Omit<MasterStockFilters, 'page' | 'pageSize' | 'sortBy' | 'sortDir'>) {
+export async function getMasterStockRowPackages(balanceId: string) {
+  const path = `/api/v1/inventory-master-stock/${balanceId}/packages`;
+  try {
+    return await apiRequest<MasterStockPackageRow[]>(path, { method: 'GET', auth: true });
+  } catch (err) {
+    throw staleApi(path, err);
+  }
+}
+
+export async function exportMasterStock(filters: Omit<MasterStockFilters, 'page' | 'pageSize' | 'sortBy' | 'sortDir'>) {
   const p = new URLSearchParams();
   p.set('plantId', filters.plantId);
   if (filters.warehouseCode) p.set('warehouseCode', filters.warehouseCode);
@@ -160,8 +176,10 @@ export function exportMasterStock(filters: Omit<MasterStockFilters, 'page' | 'pa
   if (filters.lotNumber) p.set('lotNumber', filters.lotNumber);
   if (filters.stockStatus) p.set('stockStatus', filters.stockStatus);
   if (filters.q) p.set('q', filters.q);
-  return apiRequest<MasterStockExport>(`/api/v1/inventory-master-stock/export?${p}`, {
-    method: 'GET',
-    auth: true,
-  });
+  const path = `/api/v1/inventory-master-stock/export?${p}`;
+  try {
+    return await apiRequest<MasterStockExport>(path, { method: 'GET', auth: true });
+  } catch (err) {
+    throw staleApi(path, err);
+  }
 }

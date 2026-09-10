@@ -347,6 +347,16 @@ export function MasterStockPage() {
       </Card>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {stockQuery.isError && tab === 'stock' ? (
+        <p className="text-sm text-red-600">
+          {stockQuery.error instanceof Error ? stockQuery.error.message : 'Stok listesi alınamadı.'}
+        </p>
+      ) : null}
+      {pkgQuery.isError && tab === 'packages' ? (
+        <p className="text-sm text-red-600">
+          {pkgQuery.error instanceof Error ? pkgQuery.error.message : 'Paket listesi alınamadı.'}
+        </p>
+      ) : null}
 
       <div className="flex gap-2">
         <Button variant={tab === 'stock' ? 'default' : 'secondary'} onClick={() => setTab('stock')}>
