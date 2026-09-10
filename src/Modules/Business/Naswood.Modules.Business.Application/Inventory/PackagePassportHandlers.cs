@@ -3,6 +3,7 @@ using System.Text.Json;
 using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.Domain;
 using Naswood.Modules.Business.Application.Common;
+using Naswood.Modules.Business.Application.Production;
 using Naswood.Modules.Business.Contracts.Inventory;
 using Naswood.Modules.Business.Domain.Inventory;
 
@@ -56,19 +57,25 @@ public sealed class PackagePassportLoader
     private readonly IInventoryBalanceRepository _balances;
     private readonly IMaterialRepository _materials;
     private readonly IBatchRepository _batches;
+    private readonly IProductionLotSourceRepository _lotSources;
+    private readonly IProductionOrderRepository _orders;
 
     public PackagePassportLoader(
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
         IInventoryBalanceRepository balances,
         IMaterialRepository materials,
-        IBatchRepository batches)
+        IBatchRepository batches,
+        IProductionLotSourceRepository lotSources,
+        IProductionOrderRepository orders)
     {
         _packages = packages;
         _movements = movements;
         _balances = balances;
         _materials = materials;
         _batches = batches;
+        _lotSources = lotSources;
+        _orders = orders;
     }
 
     public async Task<Result<PackagePassportDto>> LoadAsync(
@@ -97,6 +104,26 @@ public sealed class PackagePassportLoader
         var contentQty = contents.Count == 0 ? pkg.Quantity : contents.Sum(c => c.Quantity);
         var mismatch = balance is not null && contentQty != balance.QuantityOnHand;
 
+        var sourceLots = Array.Empty<string>();
+        var productionOrder = batch?.SourceReferenceNo ?? string.Empty;
+        if (batch is not null && string.Equals(batch.SourceType, ProductionLotCodes.SourceType, StringComparison.OrdinalIgnoreCase))
+        {
+            var links = await _lotSources.ListByProductionLotIdAsync(batch.Id, cancellationToken).ConfigureAwait(false);
+            var names = new List<string>();
+            foreach (var link in links)
+            {
+                var src = await _batches.GetByIdAsync(link.SourceLotId, cancellationToken).ConfigureAwait(false);
+                if (src is not null) names.Add(src.BatchNumber);
+            }
+            sourceLots = names.ToArray();
+            var first = links.FirstOrDefault();
+            if (first is not null)
+            {
+                var order = await _orders.GetByIdAsync(first.ProductionOrderId, cancellationToken).ConfigureAwait(false);
+                if (order is not null) productionOrder = order.Code;
+            }
+        }
+
         return Result.Success(new PackagePassportDto
         {
             Id = pkg.Id,
@@ -115,6 +142,9 @@ public sealed class PackagePassportLoader
             LotNumber = pkg.LotNumber,
             SourceType = batch?.SourceType ?? string.Empty,
             SourceReferenceNo = batch?.SourceReferenceNo ?? string.Empty,
+            ProductionOrderNumber = productionOrder,
+            SourceLotCount = sourceLots.Length,
+            SourceLotNumbers = sourceLots,
             Factory = pkg.PlantId ?? string.Empty,
             WarehouseCode = pkg.WarehouseCode,
             LocationCode = pkg.LocationCode,

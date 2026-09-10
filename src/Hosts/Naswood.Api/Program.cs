@@ -316,6 +316,17 @@ static async Task EnsurePackageIdentityIntegrityAsync(BusinessDbContext business
         """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_number_alive" ON business.business_inventory_package ("PackageNumber") WHERE "IsDeleted" = false AND "PackageNumber" <> ''""").ConfigureAwait(false);
     await businessDb.Database.ExecuteSqlRawAsync(
         """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_publicid_alive" ON business.business_inventory_package ("PublicId") WHERE "IsDeleted" = false AND "PublicId" <> ''""").ConfigureAwait(false);
+    await businessDb.Database.ExecuteSqlRawAsync(
+        """CREATE UNIQUE INDEX IF NOT EXISTS "UX_batch_production_lot_alive" ON business.business_inventory_batch ("BatchNumber") WHERE "IsDeleted" = false AND "SourceType" = 'PRODUCTION' AND "BatchNumber" <> ''""").ConfigureAwait(false);
+    try
+    {
+        await businessDb.Database.ExecuteSqlRawAsync(
+            """CREATE UNIQUE INDEX IF NOT EXISTS "UX_production_output_number_alive" ON business.business_production_output ("Number") WHERE "IsDeleted" = false AND "Number" <> ''""").ConfigureAwait(false);
+    }
+    catch (Exception ex) when (ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+    {
+        // Table created on next restart after GenerateCreateScript.
+    }
 }
 
 static async Task<List<string>> QueryDuplicatePackageKeysAsync(BusinessDbContext db, string sql)

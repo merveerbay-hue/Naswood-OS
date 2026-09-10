@@ -59,6 +59,8 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Production.Rework> Reworks => Set<Naswood.Modules.Business.Domain.Production.Rework>();
     public DbSet<Naswood.Modules.Business.Domain.Production.StructuralProductionLot> StructuralProductionLots => Set<Naswood.Modules.Business.Domain.Production.StructuralProductionLot>();
     public DbSet<Naswood.Modules.Business.Domain.Production.StructuralProductionLotInput> StructuralProductionLotInputs => Set<Naswood.Modules.Business.Domain.Production.StructuralProductionLotInput>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.ProductionOutput> ProductionOutputs => Set<Naswood.Modules.Business.Domain.Production.ProductionOutput>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.ProductionLotSource> ProductionLotSources => Set<Naswood.Modules.Business.Domain.Production.ProductionLotSource>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -867,6 +869,42 @@ public sealed class BusinessDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Unit).HasMaxLength(40);
             entity.HasIndex(x => x.ProductionLotId);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionOutput>(entity =>
+        {
+            entity.ToTable("business_production_output");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Number).HasMaxLength(80);
+            entity.Property(x => x.OutputMaterialCode).HasMaxLength(200);
+            entity.Property(x => x.WarehouseCode).HasMaxLength(200);
+            entity.Property(x => x.LocationCode).HasMaxLength(200);
+            entity.Property(x => x.WorkCenterCode).HasMaxLength(80);
+            entity.Property(x => x.StockStatus).HasMaxLength(40);
+            entity.Property(x => x.Status).HasMaxLength(40);
+            entity.Property(x => x.OutputLotNumber).HasMaxLength(80);
+            entity.Property(x => x.UnitOfMeasure).HasMaxLength(40);
+            entity.Property(x => x.PostedBy).HasMaxLength(200);
+            entity.HasIndex(x => x.Number);
+            entity.HasIndex(x => x.ProductionOrderId);
+            entity.HasIndex(x => x.OutputBatchId);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionLotSource>(entity =>
+        {
+            entity.ToTable("business_production_lot_source");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.SourceMaterialCode).HasMaxLength(200);
+            entity.Property(x => x.Unit).HasMaxLength(40);
+            entity.HasIndex(x => x.ProductionLotId);
+            entity.HasIndex(x => x.SourceLotId);
+            entity.HasIndex(x => x.ProductionOutputId);
         });
     }
 }

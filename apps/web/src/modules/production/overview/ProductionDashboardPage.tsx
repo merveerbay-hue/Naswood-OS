@@ -46,6 +46,7 @@ export function ProductionDashboardPage() {
     [t('production.machinePanel'), '/production/execution/machine-panel'],
     [t('production.confirmation'), '/production/execution/confirmation'],
     [t('production.wip'), '/production/execution/wip'],
+    ['Üretim Çıkışı', '/production/execution/output'],
   ] as const;
 
   return (

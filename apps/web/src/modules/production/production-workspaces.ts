@@ -29,6 +29,7 @@ export const productionWorkspaces: WorkspaceDefinition[] = [
       { id: 'prd-016', label: 'Yarı Mamul (WIP)', path: '/production/execution/wip', screenId: 'PRD-016' },
       { id: 'prd-017', label: 'Paketleme', path: '/production/execution/packaging', screenId: 'PRD-017' },
       { id: 'prd-018', label: 'Mamul', path: '/production/execution/finished-goods', screenId: 'PRD-018' },
+      { id: 'prd-out', label: 'Üretim Çıkışı', path: '/production/execution/output', screenId: 'PRD-OUT' },
       { id: 'prd-027', label: 'Hurda', path: '/production/execution/scrap', screenId: 'PRD-027' },
       { id: 'prd-028', label: 'Yeniden İşlem', path: '/production/execution/rework', screenId: 'PRD-028' },
     ],

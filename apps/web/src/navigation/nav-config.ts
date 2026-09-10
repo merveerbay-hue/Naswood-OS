@@ -132,6 +132,7 @@ export const navigationTree: NavItem[] = [
           { id: 'production-wips', label: 'Yarı Mamul (WIP)', path: '/production/execution/wip' },
           { id: 'production-packagings', label: 'Paketleme', path: '/production/execution/packaging' },
           { id: 'production-finished-goods', label: 'Mamul', path: '/production/execution/finished-goods' },
+          { id: 'production-output', label: 'Üretim Çıkışı', path: '/production/execution/output' },
           { id: 'production-scraps', label: 'Hurda', path: '/production/execution/scrap' },
           { id: 'production-reworks', label: 'Yeniden İşlem', path: '/production/execution/rework' },
         ],

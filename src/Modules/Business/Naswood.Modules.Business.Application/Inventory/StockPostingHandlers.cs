@@ -40,6 +40,7 @@ public interface IInventoryPackageRepository
     Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryPackage>> ListByBarcodeExactAsync(string barcode, CancellationToken cancellationToken = default);
     Task<InventoryPackage?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryPackage>> ListByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
     Task AddContentsAsync(IReadOnlyList<InventoryPackageContent> rows, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryPackageContent>> ListContentsAsync(Guid packageId, CancellationToken cancellationToken = default);
 }

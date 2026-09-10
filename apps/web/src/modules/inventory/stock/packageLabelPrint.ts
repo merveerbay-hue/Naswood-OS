@@ -1,6 +1,17 @@
 import { code128Svg } from './code128Svg';
 import type { PackagePassport } from './packagePassportApi';
 
+export function sourceLine(p: PackagePassport) {
+  const type = (p.sourceType || '').toUpperCase();
+  if (type === 'PRODUCTION') {
+    const lots = p.sourceLotCount ?? p.sourceLotNumbers?.length ?? 0;
+    return `Üretim${p.productionOrderNumber ? ` ${p.productionOrderNumber}` : ''}${lots ? ` · Kaynak lot: ${lots}` : ''}`;
+  }
+  if (type === 'GOODS_RECEIPT') return 'Kaynak: Mal kabul';
+  if (type === 'OPENING_INVENTORY') return 'Kaynak: Açılış sayımı';
+  return p.sourceType || '';
+}
+
 function esc(s: string) {
   return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 }
@@ -27,6 +38,7 @@ export function buildPackageLabelHtml(docs: PackagePassport[], printedAt = new D
         ${extra}
         <div class="total">TOPLAM ${p.totalPieceCount != null ? `${p.totalPieceCount} PCS · ` : ''}${p.quantity} ${esc(p.stockUnit || p.unitOfMeasure)}</div>
         <div class="ids">LOT ${esc(p.lotNumber)}<br/>PAKET ${esc(p.packageNo)}</div>
+        <div class="src">${esc(sourceLine(p))}</div>
         <div class="loc">${esc(p.factory)} · ${esc(p.warehouseCode)} / ${esc(p.locationCode)} · ${esc(p.status)}</div>
         <div class="codes">
           <div class="bc">${code128Svg(p.barcode)}</div>
@@ -45,7 +57,7 @@ body { font-family: Arial, sans-serif; margin: 0; color: #111; }
 header { font-size: 10px; letter-spacing: .2em; }
 h1 { font-size: 16px; margin: 2px 0; text-transform: uppercase; }
 .code { font-family: monospace; font-size: 12px; }
-.meta, .loc, .muted, footer { font-size: 10px; }
+.meta, .loc, .muted, .src, footer { font-size: 10px; }
 table { width: 100%; font-size: 11px; margin: 3px 0; }
 .total, .ids { font-size: 11px; font-weight: 700; }
 .codes { display: flex; align-items: flex-end; justify-content: space-between; gap: 4mm; margin-top: 2mm; }

@@ -38,6 +38,9 @@ export type PackagePassport = {
   lotNumber: string;
   sourceType: string;
   sourceReferenceNo: string;
+  productionOrderNumber?: string;
+  sourceLotCount?: number;
+  sourceLotNumbers?: string[];
   factory: string;
   warehouseCode: string;
   locationCode: string;

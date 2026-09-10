@@ -113,6 +113,12 @@ export function PackagePassportPage() {
           <div>Barkod: {p.barcode}</div>
           <div>Kaynak: {p.sourceType || '—'}</div>
           <div>Referans: {p.sourceReferenceNo || '—'}</div>
+          {p.sourceType === 'PRODUCTION' ? (
+            <>
+              <div>Üretim emri: {p.productionOrderNumber || '—'}</div>
+              <div>Kaynak lot: {(p.sourceLotNumbers ?? []).join(', ') || `${p.sourceLotCount ?? 0} lot`}</div>
+            </>
+          ) : null}
           <div>
             Konum: {plantDisplayName(p.factory)} · {p.warehouseCode} / {p.locationCode} · {p.status}
           </div>

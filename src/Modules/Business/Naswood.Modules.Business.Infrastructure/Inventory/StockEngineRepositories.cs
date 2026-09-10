@@ -154,6 +154,13 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
         return await _db.Set<InventoryPackage>().FirstOrDefaultAsync(x => !x.IsDeleted && x.PublicId == key, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<InventoryPackage>> ListByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default)
+        => await _db.Set<InventoryPackage>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.BatchId == batchId)
+            .OrderBy(x => x.PackageNumber)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public async Task AddContentsAsync(IReadOnlyList<InventoryPackageContent> rows, CancellationToken cancellationToken = default)
     {
         if (rows.Count == 0) return;
