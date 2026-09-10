@@ -44,4 +44,28 @@ public sealed class ProductionOutputController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this);
     }
+
+    [HttpGet("api/v1/production-outputs/consume-by-barcode/{barcode}")]
+    [RequirePermission("ProductionOrder.Update")]
+    public async Task<IActionResult> ConsumeByBarcode(string barcode, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new ScanProductionConsumptionQuery(barcode, PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+
+    [HttpPost("api/v1/production-outputs/{id:guid}/reverse")]
+    [RequirePermission("ProductionOrder.Update")]
+    public async Task<IActionResult> Reverse(Guid id, [FromBody] ReverseProductionOutputRequestDto? body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new ReverseProductionOutputCommand(
+                id,
+                body?.Reason ?? string.Empty,
+                PlantClaims.AllowedPlantIds(User),
+                User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Üretim çıkışı tersine çevrildi.");
+    }
 }

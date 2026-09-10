@@ -28,6 +28,7 @@ public class PreviewProductionOutputRequestDto
     public string LocationCode { get; init; } = string.Empty;
     public string WorkCenterCode { get; init; } = string.Empty;
     public string StockStatus { get; init; } = "Available";
+    public bool AllowQcOverride { get; init; }
     public string? PlantId { get; init; }
     public IReadOnlyList<ProductionOutputLineRequestDto> Lines { get; init; } = [];
     public IReadOnlyList<ProductionOutputSourceRequestDto> Sources { get; init; } = [];
@@ -62,7 +63,12 @@ public sealed class ProductionOutputPreviewDto
     public decimal InputQuantity { get; init; }
     public string Unit { get; init; } = string.Empty;
     public int SourceLotCount { get; set; }
+    public string ResolvedStockStatus { get; set; } = "Available";
+    public bool QcHoldRequired { get; set; }
+    public string QcPolicySource { get; set; } = "request";
+    public bool QcOverrideRequired { get; set; }
     public IReadOnlyList<ProductionOutputPreviewPackageDto> Packages { get; init; } = [];
+    public IReadOnlyList<ProductionLotSourceDto> Sources { get; set; } = [];
 }
 
 public sealed class ProductionOutputPackageCreatedDto
@@ -76,7 +82,7 @@ public sealed class ProductionOutputPackageCreatedDto
     public string Unit { get; init; } = string.Empty;
 }
 
-public sealed class ProductionOutputResultDto
+public sealed record ProductionOutputResultDto
 {
     public Guid OutputId { get; init; }
     public string Number { get; init; } = string.Empty;
@@ -93,6 +99,30 @@ public sealed class ProductionOutputResultDto
     public bool IdempotentReplay { get; init; }
     public IReadOnlyList<ProductionOutputPackageCreatedDto> Packages { get; init; } = [];
     public IReadOnlyList<string> SourceLotNumbers { get; init; } = [];
+    public string StockStatus { get; init; } = "Available";
+    public bool Reversed { get; init; }
+    public string CancelReason { get; init; } = string.Empty;
+}
+
+public sealed class ReverseProductionOutputRequestDto
+{
+    public string Reason { get; init; } = string.Empty;
+}
+
+public sealed class ProductionConsumptionScanDto
+{
+    public Guid PackageId { get; init; }
+    public string PackageNo { get; init; } = string.Empty;
+    public string Barcode { get; init; } = string.Empty;
+    public Guid SourceLotId { get; init; }
+    public string SourceLotNumber { get; init; } = string.Empty;
+    public string MaterialCode { get; init; } = string.Empty;
+    public string WarehouseCode { get; init; } = string.Empty;
+    public string LocationCode { get; init; } = string.Empty;
+    public decimal AvailableQuantity { get; init; }
+    public string Unit { get; init; } = string.Empty;
+    public string PlantId { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
 }
 
 public sealed class ProductionLotPassportDto

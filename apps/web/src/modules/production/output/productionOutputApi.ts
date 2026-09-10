@@ -26,9 +26,19 @@ export type ProductionOutputBody = {
   locationCode: string;
   workCenterCode?: string;
   stockStatus?: string;
+  allowQcOverride?: boolean;
   plantId: string;
   lines: ProductionOutputLine[];
   sources: ProductionOutputSource[];
+};
+
+export type ProductionLotSource = {
+  sourceLotId: string;
+  sourceLotNumber: string;
+  sourceMaterialCode: string;
+  consumedQuantity: number;
+  unit: string;
+  sourcePackageId?: string | null;
 };
 
 export type ProductionOutputPreview = {
@@ -44,6 +54,10 @@ export type ProductionOutputPreview = {
   inputQuantity: number;
   unit: string;
   sourceLotCount: number;
+  resolvedStockStatus: string;
+  qcHoldRequired: boolean;
+  qcPolicySource: string;
+  qcOverrideRequired: boolean;
   packages: {
     physicalGroupLabel: string;
     measurementCount: number;
@@ -52,6 +66,7 @@ export type ProductionOutputPreview = {
     pieceCount?: number | null;
     measurements: string[];
   }[];
+  sources: ProductionLotSource[];
 };
 
 export type ProductionOutputResult = {
@@ -78,6 +93,24 @@ export type ProductionOutputResult = {
     unit: string;
   }[];
   sourceLotNumbers: string[];
+  stockStatus: string;
+  reversed: boolean;
+  cancelReason: string;
+};
+
+export type ProductionConsumptionScan = {
+  packageId: string;
+  packageNo: string;
+  barcode: string;
+  sourceLotId: string;
+  sourceLotNumber: string;
+  materialCode: string;
+  warehouseCode: string;
+  locationCode: string;
+  availableQuantity: number;
+  unit: string;
+  plantId: string;
+  status: string;
 };
 
 export function previewProductionOutput(body: ProductionOutputBody) {
@@ -94,6 +127,21 @@ export function postProductionOutput(body: ProductionOutputBody) {
     auth: true,
     body,
   });
+}
+
+export function reverseProductionOutput(id: string, reason: string) {
+  return apiRequest<ProductionOutputResult>(`/api/v1/production-outputs/${id}/reverse`, {
+    method: 'POST',
+    auth: true,
+    body: { reason },
+  });
+}
+
+export function scanProductionConsumption(barcode: string) {
+  return apiRequest<ProductionConsumptionScan>(
+    `/api/v1/production-outputs/consume-by-barcode/${encodeURIComponent(barcode)}`,
+    { auth: true },
+  );
 }
 
 export function getProductionLotPassport(id: string) {

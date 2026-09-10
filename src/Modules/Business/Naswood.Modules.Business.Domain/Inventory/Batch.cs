@@ -55,6 +55,14 @@ public sealed class Batch : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void ApplyIssue(decimal quantity)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Issue quantity must be positive.");
+        if (Quantity < quantity) throw new InvalidOperationException("Insufficient lot quantity.");
+        Quantity -= quantity;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

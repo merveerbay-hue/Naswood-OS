@@ -35,6 +35,16 @@ public sealed record GetProductionLotPassportQuery(
     Guid ProductionLotId,
     IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<ProductionLotPassportDto>>;
 
+public sealed record ReverseProductionOutputCommand(
+    Guid OutputId,
+    string Reason,
+    IReadOnlyList<string>? AllowedPlantIds,
+    string Actor) : ICommand<Result<ProductionOutputResultDto>>;
+
+public sealed record ScanProductionConsumptionQuery(
+    string Barcode,
+    IReadOnlyList<string>? AllowedPlantIds) : IQuery<Result<ProductionConsumptionScanDto>>;
+
 public sealed class PreviewProductionOutputQueryHandler : IQueryHandler<PreviewProductionOutputQuery, Result<ProductionOutputPreviewDto>>
 {
     private readonly ProductionOutputGateway _gate;
@@ -72,6 +82,36 @@ public sealed class GetProductionLotPassportQueryHandler : IQueryHandler<GetProd
 
     public Task<Result<ProductionLotPassportDto>> HandleAsync(GetProductionLotPassportQuery query, CancellationToken cancellationToken = default)
         => _gate.LoadLotAsync(query.ProductionLotId, query.AllowedPlantIds, cancellationToken);
+}
+
+public sealed class ReverseProductionOutputCommandHandler : ICommandHandler<ReverseProductionOutputCommand, Result<ProductionOutputResultDto>>
+{
+    private readonly ProductionOutputGateway _gate;
+    private readonly IBusinessUnitOfWork _uow;
+
+    public ReverseProductionOutputCommandHandler(ProductionOutputGateway gate, IBusinessUnitOfWork uow)
+    {
+        _gate = gate;
+        _uow = uow;
+    }
+
+    public async Task<Result<ProductionOutputResultDto>> HandleAsync(ReverseProductionOutputCommand command, CancellationToken cancellationToken = default)
+    {
+        var reversed = await _gate.ReverseAsync(command.OutputId, command.Reason, command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
+        if (reversed.IsFailure) return reversed;
+        if (!reversed.Value.IdempotentReplay)
+            await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return reversed;
+    }
+}
+
+public sealed class ScanProductionConsumptionQueryHandler : IQueryHandler<ScanProductionConsumptionQuery, Result<ProductionConsumptionScanDto>>
+{
+    private readonly ProductionOutputGateway _gate;
+    public ScanProductionConsumptionQueryHandler(ProductionOutputGateway gate) => _gate = gate;
+
+    public Task<Result<ProductionConsumptionScanDto>> HandleAsync(ScanProductionConsumptionQuery query, CancellationToken cancellationToken = default)
+        => _gate.ScanConsumptionAsync(query.Barcode, query.AllowedPlantIds, cancellationToken);
 }
 
 public sealed class ProductionOutputGateway
@@ -127,6 +167,26 @@ public sealed class ProductionOutputGateway
             c.Order.Code, c.Material, c.Warehouse.Code, c.Location.Code, body.WorkCenterCode ?? "",
             c.Lines, stacks, body.Sources?.Sum(s => s.ConsumedQuantity) ?? 0);
         preview.SourceLotCount = body.Sources?.Count ?? 0;
+        var qc = ProductionOutputQcPolicy.Resolve(c.Material, body.WorkCenterCode, body.StockStatus);
+        preview.ResolvedStockStatus = ProductionOutputQcPolicy.Apply(qc, body.StockStatus, body.AllowQcOverride);
+        preview.QcHoldRequired = qc.HoldRequired;
+        preview.QcPolicySource = qc.PolicySource;
+        preview.QcOverrideRequired = qc.OverrideRequired && !body.AllowQcOverride;
+        var sourcePreview = new List<ProductionLotSourceDto>();
+        foreach (var src in body.Sources ?? Array.Empty<ProductionOutputSourceRequestDto>())
+        {
+            var lot = await _batches.GetByIdAsync(src.SourceLotId, cancellationToken).ConfigureAwait(false);
+            sourcePreview.Add(new ProductionLotSourceDto
+            {
+                SourceLotId = src.SourceLotId,
+                SourceLotNumber = lot?.BatchNumber ?? "",
+                SourceMaterialCode = lot?.MaterialCode ?? "",
+                ConsumedQuantity = src.ConsumedQuantity,
+                Unit = src.Unit,
+                SourcePackageId = src.SourcePackageId
+            });
+        }
+        preview.Sources = sourcePreview;
         return Result.Success(preview);
     }
 
@@ -147,6 +207,8 @@ public sealed class ProductionOutputGateway
         var ctx = await ResolveContextAsync(body, allowed, cancellationToken).ConfigureAwait(false);
         if (ctx.IsFailure) return Result.Failure<ProductionOutputResultDto>(ctx.Error!);
         var c = ctx.Value;
+        var qc = ProductionOutputQcPolicy.Resolve(c.Material, body.WorkCenterCode, body.StockStatus);
+        var stockStatus = ProductionOutputQcPolicy.Apply(qc, body.StockStatus, body.AllowQcOverride);
 
         var now = DateTimeOffset.UtcNow;
         var lotPrefix = ProductionLotCodes.LotPrefixForDay(c.PlantId, now);
@@ -164,64 +226,48 @@ public sealed class ProductionOutputGateway
         var doc = ProductionOutput.Create(
             number, c.Order.Id, c.Material.Id, c.Material.Code,
             c.Warehouse.Code, c.Location.Code, c.Warehouse.Id, c.Location.Id,
-            body.WorkCenterCode ?? "", body.StockStatus, c.PlantId);
+            body.WorkCenterCode ?? "", stockStatus, c.PlantId);
         await _outputs.AddAsync(doc, cancellationToken).ConfigureAwait(false);
+
+        var prepared = await PrepareSourcesAsync(body.Sources, c, cancellationToken).ConfigureAwait(false);
+        if (prepared.IsFailure) return Result.Failure<ProductionOutputResultDto>(prepared.Error!);
 
         var inputQty = 0m;
         var sourceLots = new List<string>();
         var sourceRows = new List<ProductionLotSource>();
-        foreach (var src in body.Sources ?? Array.Empty<ProductionOutputSourceRequestDto>())
+        foreach (var row in prepared.Value)
         {
-            if (src.ConsumedQuantity <= 0)
-                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-010", "Kaynak tüketim miktarı pozitif olmalı."));
-            var sourceLot = await _batches.GetByIdAsync(src.SourceLotId, cancellationToken).ConfigureAwait(false);
-            if (sourceLot is null || sourceLot.IsDeleted)
-                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-011", "Kaynak lot bulunamadı."));
-            if (!string.IsNullOrWhiteSpace(sourceLot.PlantId)
-                && !string.Equals(sourceLot.PlantId, c.PlantId, StringComparison.OrdinalIgnoreCase))
-                return Result.Failure<ProductionOutputResultDto>(Error.Forbidden("PRD-OUT-403", "Kaynak lot başka tesise ait."));
-
-            var srcMat = await _materials.GetByCodeAsync(sourceLot.MaterialCode, cancellationToken).ConfigureAwait(false);
-            if (srcMat is null)
-                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-012", $"Kaynak malzeme yok: {sourceLot.MaterialCode}"));
-
-            var srcWh = src.SourceWarehouseCode.Trim();
-            var srcLoc = src.SourceLocationCode.Trim();
-            var srcBalance = await _balances.FindByKeyAsync(sourceLot.MaterialCode, srcWh, srcLoc, sourceLot.BatchNumber, c.PlantId, cancellationToken).ConfigureAwait(false);
-            if (srcBalance is null)
-                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-013", $"Kaynak bakiye yok: {sourceLot.BatchNumber}"));
-            try { srcBalance.ApplyIssue(src.ConsumedQuantity); }
+            try { row.Balance.ApplyIssue(row.Request.ConsumedQuantity); }
             catch (InvalidOperationException ex)
             {
                 return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-014", ex.Message));
             }
 
-            if (src.SourcePackageId is Guid pkgId)
+            var pkgNo = "";
+            if (row.Package is not null)
             {
-                var srcPkg = await _packages.GetByIdAsync(pkgId, cancellationToken).ConfigureAwait(false);
-                if (srcPkg is null || srcPkg.IsDeleted)
-                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-015", "Kaynak paket bulunamadı."));
-                try { srcPkg.Issue(src.ConsumedQuantity); }
+                try { row.Package.Issue(row.Request.ConsumedQuantity); }
                 catch (InvalidOperationException ex)
                 {
                     return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-015", ex.Message));
                 }
+                pkgNo = row.Package.PackageNumber;
             }
 
             var consume = InventoryMovement.Post(
                 ProductionLotCodes.ConsumptionMovement, "Out", number,
-                sourceLot.MaterialCode, "", src.SourcePackageId?.ToString() ?? "",
-                srcWh, srcLoc, sourceLot.BatchNumber, src.ConsumedQuantity,
-                string.IsNullOrWhiteSpace(src.Unit) ? srcBalance.Status : src.Unit,
-                $"prd={c.Order.Code} outLot={lotNo}",
+                row.Lot.MaterialCode, "", pkgNo,
+                row.WarehouseCode, row.LocationCode, row.Lot.BatchNumber, row.Request.ConsumedQuantity,
+                row.Unit,
+                ProductionLotCodes.ConsumptionNotes(c.Order.Code, lotNo, row.Lot.BatchNumber, row.Lot.Id, pkgNo),
                 plantId: c.PlantId);
             await _movements.AddAsync(consume, cancellationToken).ConfigureAwait(false);
-            inputQty += src.ConsumedQuantity;
-            sourceLots.Add(sourceLot.BatchNumber);
+            inputQty += row.Request.ConsumedQuantity;
+            sourceLots.Add(row.Lot.BatchNumber);
             sourceRows.Add(ProductionLotSource.Create(
-                lot.Id, sourceLot.Id, srcMat.Id, sourceLot.MaterialCode,
-                src.ConsumedQuantity, string.IsNullOrWhiteSpace(src.Unit) ? c.Lines[0].Unit : src.Unit,
-                c.Order.Id, doc.Id, src.SourcePackageId, c.PlantId));
+                lot.Id, row.Lot.Id, row.Material.Id, row.Lot.MaterialCode,
+                row.Request.ConsumedQuantity, row.Unit,
+                c.Order.Id, doc.Id, row.Request.SourcePackageId, c.PlantId));
         }
 
         if (sourceRows.Count > 0)
@@ -232,10 +278,7 @@ public sealed class ProductionOutputGateway
         var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
             existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, c.PlantId, now)));
         var created = new List<ProductionOutputPackageCreatedDto>();
-        var packageStatus = string.Equals(body.StockStatus, "Quarantine", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(body.StockStatus, "Hold", StringComparison.OrdinalIgnoreCase)
-            ? "Quarantine"
-            : "Available";
+        var packageStatus = ProductionOutputQcPolicy.IsHold(stockStatus) ? "Quarantine" : "Available";
         var outputQty = c.Lines.Sum(l => l.Quantity);
 
         foreach (var stack in stacks)
@@ -272,7 +315,7 @@ public sealed class ProductionOutputGateway
                 ProductionLotCodes.OutputMovement, "In", number,
                 c.Material.Code, mi, mint.PackageNumber,
                 c.Warehouse.Code, c.Location.Code, lotNo, qty, stack.First().Unit,
-                $"prd={c.Order.Code} lot={lotNo} pkg={mint.PackageNumber} source={ProductionLotCodes.SourceType}",
+                ProductionLotCodes.OutputNotes(c.Order.Code, lotNo, mint.PackageNumber),
                 plantId: c.PlantId);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
             created.Add(new ProductionOutputPackageCreatedDto
@@ -296,7 +339,7 @@ public sealed class ProductionOutputGateway
                 plantId: c.PlantId);
             await _balances.AddAsync(dest, cancellationToken).ConfigureAwait(false);
         }
-        dest.ApplyReceipt(outputQty);
+        dest.ApplyReceipt(outputQty, packageStatus == "Quarantine" ? "Hold" : "Active");
         lot.ApplyReceipt(outputQty, packageStatus == "Quarantine" ? "Hold" : "Active");
         doc.MarkPosted(lot.Id, lotNo, inputQty, outputQty, 0, c.Lines[0].Unit, actor);
 
@@ -316,7 +359,8 @@ public sealed class ProductionOutputGateway
             SourceLotCount = sourceLots.Count,
             IdempotentReplay = false,
             Packages = created,
-            SourceLotNumbers = sourceLots
+            SourceLotNumbers = sourceLots,
+            StockStatus = stockStatus
         });
     }
 
@@ -379,6 +423,220 @@ public sealed class ProductionOutputGateway
             }).ToArray(),
             SourceLots = sourceDtos
         });
+    }
+
+    public async Task<Result<ProductionOutputResultDto>> ReverseAsync(
+        Guid outputId,
+        string reason,
+        IReadOnlyList<string>? allowed,
+        string actor,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-020", "İptal nedeni zorunlu."));
+        var doc = await _outputs.GetByIdAsync(outputId, cancellationToken).ConfigureAwait(false);
+        if (doc is null || doc.IsDeleted)
+            return Result.Failure<ProductionOutputResultDto>(Error.NotFound("PRD-OUT-404", "Üretim çıkışı bulunamadı."));
+        if (allowed is { Count: > 0 } && !PlantAccess.CanAccess(allowed, doc.PlantId))
+            return Result.Failure<ProductionOutputResultDto>(Error.Forbidden("PRD-OUT-403", "Bu tesiste üretim çıkışı yetkiniz yok."));
+        if (doc.Status == ProductionOutputStatuses.Cancelled)
+        {
+            var replay = await ReplayAsync(doc, cancellationToken).ConfigureAwait(false);
+            if (replay.IsFailure) return replay;
+            return Result.Success(replay.Value with { Reversed = true, CancelReason = doc.CancelReason, IdempotentReplay = true });
+        }
+        if (doc.Status != ProductionOutputStatuses.Posted)
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-021", "Sadece işlenmiş üretim çıkışı tersine çevrilebilir."));
+
+        var prior = await _movements.ListByDocumentAsync(doc.Number, doc.PlantId, cancellationToken).ConfigureAwait(false);
+        if (prior.Any(m => m.MovementType == ProductionLotCodes.OutputReversalMovement))
+        {
+            var replay = await ReplayAsync(doc, cancellationToken).ConfigureAwait(false);
+            if (replay.IsFailure) return replay;
+            return Result.Success(replay.Value with { Reversed = true, IdempotentReplay = true });
+        }
+
+        if (doc.OutputBatchId is not Guid lotId)
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-022", "Üretim lotu yok."));
+        var lot = await _batches.GetByIdAsync(lotId, cancellationToken).ConfigureAwait(false);
+        if (lot is null)
+            return Result.Failure<ProductionOutputResultDto>(Error.NotFound("PRD-OUT-404", "Üretim lotu bulunamadı."));
+
+        var dest = await _balances.FindByKeyAsync(
+            doc.OutputMaterialCode, doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber, doc.PlantId, cancellationToken).ConfigureAwait(false);
+        if (dest is null)
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-023", "Çıktı bakiyesi bulunamadı."));
+        try { dest.ApplyIssue(doc.OutputQuantity); }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-023", ex.Message));
+        }
+        try { lot.ApplyIssue(doc.OutputQuantity); }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-023", ex.Message));
+        }
+
+        var listed = await _packages.ListByBatchIdAsync(lot.Id, cancellationToken).ConfigureAwait(false);
+        foreach (var listedPkg in listed)
+        {
+            var pkg = await _packages.GetByIdAsync(listedPkg.Id, cancellationToken).ConfigureAwait(false);
+            if (pkg is null || pkg.IsDeleted) continue;
+            if (pkg.Quantity > 0
+                && string.Equals(pkg.Status, "Available", StringComparison.OrdinalIgnoreCase))
+            {
+                try { pkg.Issue(pkg.Quantity); }
+                catch (InvalidOperationException ex)
+                {
+                    return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-024", ex.Message));
+                }
+            }
+            else
+                pkg.MarkIssued();
+
+            await _movements.AddAsync(InventoryMovement.Post(
+                ProductionLotCodes.OutputReversalMovement, "Out", doc.Number,
+                doc.OutputMaterialCode, pkg.MaterialIdentityNumber, pkg.PackageNumber,
+                doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber, listedPkg.Quantity == 0 ? doc.OutputQuantity : listedPkg.Quantity,
+                pkg.UnitOfMeasure,
+                ProductionLotCodes.OutputNotes(lot.SourceReferenceNo, doc.OutputLotNumber, pkg.PackageNumber) + " reverse=1",
+                plantId: doc.PlantId), cancellationToken).ConfigureAwait(false);
+        }
+
+        var sources = await _sources.ListByOutputIdAsync(doc.Id, cancellationToken).ConfigureAwait(false);
+        foreach (var src in sources)
+        {
+            var sourceLot = await _batches.GetByIdAsync(src.SourceLotId, cancellationToken).ConfigureAwait(false);
+            if (sourceLot is null) continue;
+            var consumeMove = prior.FirstOrDefault(m =>
+                m.MovementType == ProductionLotCodes.ConsumptionMovement
+                && string.Equals(m.LotNumber, sourceLot.BatchNumber, StringComparison.OrdinalIgnoreCase)
+                && m.Quantity == src.ConsumedQuantity);
+            var wh = consumeMove?.WarehouseCode ?? "";
+            var loc = consumeMove?.LocationCode ?? "";
+            if (wh.Length == 0 || loc.Length == 0)
+                return Result.Failure<ProductionOutputResultDto>(Error.Validation("PRD-OUT-025", $"Kaynak hareketi bulunamadı: {sourceLot.BatchNumber}"));
+            var srcBalance = await _balances.FindByKeyAsync(sourceLot.MaterialCode, wh, loc, sourceLot.BatchNumber, doc.PlantId, cancellationToken).ConfigureAwait(false);
+            if (srcBalance is null)
+            {
+                srcBalance = InventoryBalance.Create(sourceLot.MaterialCode, wh, loc, sourceLot.BatchNumber, 0, 0, "Active", plantId: doc.PlantId);
+                await _balances.AddAsync(srcBalance, cancellationToken).ConfigureAwait(false);
+            }
+            srcBalance.ApplyReceipt(src.ConsumedQuantity);
+
+            var pkgNo = consumeMove?.PackageNumber ?? "";
+            if (src.SourcePackageId is Guid pkgId)
+            {
+                var srcPkg = await _packages.GetByIdAsync(pkgId, cancellationToken).ConfigureAwait(false);
+                if (srcPkg is not null)
+                {
+                    srcPkg.Restore(src.ConsumedQuantity);
+                    pkgNo = srcPkg.PackageNumber;
+                }
+            }
+
+            await _movements.AddAsync(InventoryMovement.Post(
+                ProductionLotCodes.ConsumptionReversalMovement, "In", doc.Number,
+                sourceLot.MaterialCode, "", pkgNo, wh, loc, sourceLot.BatchNumber, src.ConsumedQuantity, src.Unit,
+                ProductionLotCodes.ConsumptionNotes(lot.SourceReferenceNo, doc.OutputLotNumber, sourceLot.BatchNumber, sourceLot.Id, pkgNo) + " reverse=1",
+                plantId: doc.PlantId), cancellationToken).ConfigureAwait(false);
+        }
+
+        doc.MarkCancelled(actor, reason);
+        var result = await ReplayAsync(doc, cancellationToken).ConfigureAwait(false);
+        if (result.IsFailure) return result;
+        return Result.Success(result.Value with { Reversed = true, CancelReason = reason, IdempotentReplay = false, Status = doc.Status });
+    }
+
+    public async Task<Result<ProductionConsumptionScanDto>> ScanConsumptionAsync(
+        string barcode,
+        IReadOnlyList<string>? allowed,
+        CancellationToken cancellationToken)
+    {
+        var hits = await _packages.ListByBarcodeExactAsync(barcode ?? "", cancellationToken).ConfigureAwait(false);
+        if (hits.Count == 0)
+            return Result.Failure<ProductionConsumptionScanDto>(Error.NotFound("PRD-OUT-030", "Barkod ile paket bulunamadı."));
+        if (hits.Count > 1)
+            return Result.Failure<ProductionConsumptionScanDto>(Error.Validation("PRD-OUT-031", "Barkod birden fazla pakete ait."));
+        var pkg = hits[0];
+        if (allowed is { Count: > 0 } && !PlantAccess.CanAccess(allowed, pkg.PlantId))
+            return Result.Failure<ProductionConsumptionScanDto>(Error.Forbidden("PRD-OUT-403", "Bu paketi kullanma yetkiniz yok."));
+        if (!string.Equals(pkg.Status, "Available", StringComparison.OrdinalIgnoreCase))
+            return Result.Failure<ProductionConsumptionScanDto>(Error.Validation("PRD-OUT-032", "Paket tüketilebilir değil."));
+
+        Batch? lot = pkg.BatchId is Guid bid
+            ? await _batches.GetByIdAsync(bid, cancellationToken).ConfigureAwait(false)
+            : null;
+        lot ??= await _batches.GetByNumberAndMaterialAsync(pkg.LotNumber, pkg.MaterialCode, pkg.PlantId, cancellationToken).ConfigureAwait(false);
+        if (lot is null)
+            return Result.Failure<ProductionConsumptionScanDto>(Error.Validation("PRD-OUT-033", "Paket lotu bulunamadı."));
+
+        var balance = await _balances.FindByKeyAsync(
+            pkg.MaterialCode, pkg.WarehouseCode, pkg.LocationCode, lot.BatchNumber, pkg.PlantId, cancellationToken).ConfigureAwait(false);
+        var available = Math.Min(pkg.Quantity, balance is null ? 0 : balance.QuantityOnHand - balance.QuantityReserved);
+        if (available <= 0)
+            return Result.Failure<ProductionConsumptionScanDto>(Error.Validation("PRD-OUT-034", "Tüketilecek stok yok."));
+
+        return Result.Success(new ProductionConsumptionScanDto
+        {
+            PackageId = pkg.Id,
+            PackageNo = pkg.PackageNumber,
+            Barcode = pkg.Barcode,
+            SourceLotId = lot.Id,
+            SourceLotNumber = lot.BatchNumber,
+            MaterialCode = pkg.MaterialCode,
+            WarehouseCode = pkg.WarehouseCode,
+            LocationCode = pkg.LocationCode,
+            AvailableQuantity = available,
+            Unit = pkg.UnitOfMeasure,
+            PlantId = pkg.PlantId ?? "",
+            Status = pkg.Status
+        });
+    }
+
+    private async Task<Result<IReadOnlyList<PreparedSource>>> PrepareSourcesAsync(
+        IReadOnlyList<ProductionOutputSourceRequestDto>? sources,
+        Resolved c,
+        CancellationToken cancellationToken)
+    {
+        var rows = new List<PreparedSource>();
+        foreach (var src in sources ?? Array.Empty<ProductionOutputSourceRequestDto>())
+        {
+            if (src.ConsumedQuantity <= 0)
+                return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation("PRD-OUT-010", "Kaynak tüketim miktarı pozitif olmalı."));
+            var sourceLot = await _batches.GetByIdAsync(src.SourceLotId, cancellationToken).ConfigureAwait(false);
+            if (sourceLot is null || sourceLot.IsDeleted)
+                return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation("PRD-OUT-011", "Kaynak lot bulunamadı."));
+            if (!string.IsNullOrWhiteSpace(sourceLot.PlantId)
+                && !string.Equals(sourceLot.PlantId, c.PlantId, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Forbidden("PRD-OUT-403", "Kaynak lot başka tesise ait."));
+
+            var srcMat = await _materials.GetByCodeAsync(sourceLot.MaterialCode, cancellationToken).ConfigureAwait(false);
+            if (srcMat is null)
+                return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation("PRD-OUT-012", $"Kaynak malzeme yok: {sourceLot.MaterialCode}"));
+
+            var srcWh = src.SourceWarehouseCode.Trim();
+            var srcLoc = src.SourceLocationCode.Trim();
+            var srcBalance = await _balances.FindByKeyAsync(sourceLot.MaterialCode, srcWh, srcLoc, sourceLot.BatchNumber, c.PlantId, cancellationToken).ConfigureAwait(false);
+            if (srcBalance is null)
+                return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation("PRD-OUT-013", $"Kaynak bakiye yok: {sourceLot.BatchNumber}"));
+
+            InventoryPackage? srcPkg = null;
+            if (src.SourcePackageId is Guid pkgId)
+            {
+                srcPkg = await _packages.GetByIdAsync(pkgId, cancellationToken).ConfigureAwait(false);
+                if (srcPkg is null || srcPkg.IsDeleted)
+                    return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation("PRD-OUT-015", "Kaynak paket bulunamadı."));
+                if (srcPkg.BatchId is Guid pkgLot && pkgLot != sourceLot.Id)
+                    return Result.Failure<IReadOnlyList<PreparedSource>>(Error.Validation("PRD-OUT-016", "Paket lotu kaynak lot ile aynı değil."));
+            }
+
+            var unit = string.IsNullOrWhiteSpace(src.Unit)
+                ? (string.IsNullOrWhiteSpace(srcMat.UnitOfMeasure) ? c.Lines[0].Unit : srcMat.UnitOfMeasure)
+                : src.Unit.Trim();
+            rows.Add(new PreparedSource(src, sourceLot, srcMat, srcBalance, srcPkg, srcWh, srcLoc, unit));
+        }
+        return Result.Success<IReadOnlyList<PreparedSource>>(rows);
     }
 
     private async Task<Result<Resolved>> ResolveContextAsync(
@@ -463,9 +721,22 @@ public sealed class ProductionOutputGateway
                 Quantity = p.Quantity,
                 Unit = p.UnitOfMeasure
             }).ToArray(),
-            SourceLotNumbers = sourceNos
+            SourceLotNumbers = sourceNos,
+            StockStatus = existing.StockStatus,
+            Reversed = existing.Status == ProductionOutputStatuses.Cancelled,
+            CancelReason = existing.CancelReason
         });
     }
+
+    private sealed record PreparedSource(
+        ProductionOutputSourceRequestDto Request,
+        Batch Lot,
+        Material Material,
+        InventoryBalance Balance,
+        InventoryPackage? Package,
+        string WarehouseCode,
+        string LocationCode,
+        string Unit);
 
     private sealed record Resolved(
         ProductionOrder Order,

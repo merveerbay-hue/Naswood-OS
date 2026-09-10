@@ -50,4 +50,11 @@ const src = sourceLine(label);
 assert(src.includes('PRD-2026-0042'), 'TEST15 production order on label');
 assert(src.includes('2'), 'TEST15 source lot count not full list');
 
+const sources = [
+  { sourceLotId: 'a', sourceLotNumber: 'LOT-GR-1', consumedQuantity: 1 },
+  { sourceLotId: 'b', sourceLotNumber: 'LOT-GR-2', consumedQuantity: 2 },
+];
+assert(sources.length === 2, 'multi-source rows');
+assert(new Set(sources.map((s) => s.sourceLotId)).size === 2, 'distinct source lots');
+
 console.info('productionOutput.selftest: all passed');

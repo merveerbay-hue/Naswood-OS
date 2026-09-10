@@ -11,7 +11,27 @@ public static class ProductionLotCodes
     public const string SourceType = "PRODUCTION";
     public const string OutputMovement = "PRODUCTION_OUTPUT";
     public const string ConsumptionMovement = "PRODUCTION_CONSUMPTION";
+    public const string OutputReversalMovement = "PRODUCTION_OUTPUT_REVERSAL";
+    public const string ConsumptionReversalMovement = "PRODUCTION_CONSUMPTION_REVERSAL";
     public const string LotPrefix = "LOT-PR-";
+
+    public static string ConsumptionNotes(
+        string orderCode,
+        string outputLotNumber,
+        string sourceLotNumber,
+        Guid sourceLotId,
+        string? packageNumber)
+        => $"prd={orderCode} outLot={outputLotNumber} sourceLot={sourceLotNumber} sourceLotId={sourceLotId:D} pkg={packageNumber ?? ""}";
+
+    public static string OutputNotes(string orderCode, string outputLotNumber, string packageNumber)
+        => $"prd={orderCode} lot={outputLotNumber} pkg={packageNumber} source={SourceType}";
+
+    public static bool NotesBindSource(string? notes, string sourceLotNumber, Guid sourceLotId)
+    {
+        var text = notes ?? "";
+        return text.Contains($"sourceLot={sourceLotNumber}", StringComparison.OrdinalIgnoreCase)
+            && text.Contains($"sourceLotId={sourceLotId:D}", StringComparison.OrdinalIgnoreCase);
+    }
 
     public static string FactoryToken(string? plantId) => OpeningInventoryCodes.FactoryToken(plantId);
 

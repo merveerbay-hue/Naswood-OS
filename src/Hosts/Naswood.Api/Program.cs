@@ -55,6 +55,9 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL""",
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceReferenceNo" character varying(80) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelledBy" character varying(200) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelReason" character varying(500) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelledAt" timestamp with time zone NULL""",
     })
     {
         try { await businessDb.Database.ExecuteSqlRawAsync(stmt).ConfigureAwait(false); }

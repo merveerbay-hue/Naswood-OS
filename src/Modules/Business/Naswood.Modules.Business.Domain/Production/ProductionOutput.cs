@@ -82,6 +82,9 @@ public sealed class ProductionOutput : BusinessEntity
     public string UnitOfMeasure { get; private set; } = string.Empty;
     public string PostedBy { get; private set; } = string.Empty;
     public DateTimeOffset? PostedAt { get; private set; }
+    public string CancelledBy { get; private set; } = string.Empty;
+    public string CancelReason { get; private set; } = string.Empty;
+    public DateTimeOffset? CancelledAt { get; private set; }
 
     public static ProductionOutput Create(
         string number,
@@ -139,6 +142,19 @@ public sealed class ProductionOutput : BusinessEntity
         PostedBy = postedBy ?? string.Empty;
         PostedAt = DateTimeOffset.UtcNow;
         Status = ProductionOutputStatuses.Posted;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkCancelled(string cancelledBy, string reason)
+    {
+        if (Status == ProductionOutputStatuses.Cancelled)
+            return;
+        if (Status != ProductionOutputStatuses.Posted)
+            throw new InvalidOperationException("Only posted production output can be reversed.");
+        Status = ProductionOutputStatuses.Cancelled;
+        CancelledBy = cancelledBy ?? string.Empty;
+        CancelReason = (reason ?? string.Empty).Trim();
+        CancelledAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

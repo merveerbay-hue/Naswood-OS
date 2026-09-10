@@ -142,6 +142,21 @@ public sealed class InventoryPackage : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void Restore(decimal quantity)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Quantity must be positive.");
+        Quantity += quantity;
+        if (Quantity > 0 && string.Equals(Status, "Issued", StringComparison.OrdinalIgnoreCase))
+            Status = "Available";
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkIssued()
+    {
+        Status = "Issued";
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     /// <summary>Intra-factory relocate — does not change material, lot, qty, or status.</summary>
     public void Relocate(string warehouseCode, string locationCode, Guid? warehouseId = null, Guid? locationId = null)
     {

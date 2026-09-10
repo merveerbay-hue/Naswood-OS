@@ -3,6 +3,7 @@ using Naswood.Modules.Business.Application.Inventory;
 using Naswood.Modules.Business.Application.Production;
 using Naswood.Modules.Business.Contracts.Production;
 using Naswood.Modules.Business.Domain.Inventory;
+using Naswood.Modules.Business.Domain.Production;
 
 namespace Naswood.Modules.Business.UnitTests;
 
@@ -20,6 +21,8 @@ public sealed class ProductionOutputTests
         Assert.Equal("PRODUCTION", ProductionLotCodes.SourceType);
         Assert.Equal("PRODUCTION_OUTPUT", ProductionLotCodes.OutputMovement);
         Assert.Equal("PRODUCTION_CONSUMPTION", ProductionLotCodes.ConsumptionMovement);
+        Assert.Equal("PRODUCTION_OUTPUT_REVERSAL", ProductionLotCodes.OutputReversalMovement);
+        Assert.Equal("PRODUCTION_CONSUMPTION_REVERSAL", ProductionLotCodes.ConsumptionReversalMovement);
         var lot = Batch.Create("LOT-PR-F01-260910-0004", "YM-LM-PIN-FJ-001", 0, null, "Active",
             plantId: "F01", sourceType: ProductionLotCodes.SourceType, sourceReferenceNo: "PRD-2026-0042");
         Assert.Equal("PRODUCTION", lot.SourceType);
@@ -141,5 +144,51 @@ public sealed class ProductionOutputTests
         Assert.True(resolved.IsSuccess);
         Assert.Equal(50m, resolved.Value.OutputQty);
         Assert.Equal("PCS", resolved.Value.Unit);
+    }
+
+    [Fact]
+    public void Qc_policy_holds_clt_and_glulam_even_if_operator_asks_available()
+    {
+        var clt = Material.Create("CLT-001", "CLT", "", "CLT", "PCS", "Active",
+            """{"stockUom":"PCS","mainCategory":"CLT"}""", plantId: "PLANT-001");
+        var glu = Material.Create("GLU-001", "Glulam", "", "YM", "PCS", "Active",
+            """{"stockUom":"PCS","mainCategory":"GLULAM","qcHold":true}""", plantId: "PLANT-001");
+        var fj = Material.Create("FJ-001", "FJ", "", "YM", "PCS", "Active",
+            """{"stockUom":"PCS","mainCategory":"YM"}""", plantId: "PLANT-001");
+        var cltQc = ProductionOutputQcPolicy.Resolve(clt, "WC-FJ", "Available");
+        Assert.True(cltQc.HoldRequired);
+        Assert.Equal("Quarantine", ProductionOutputQcPolicy.Apply(cltQc, "Available", false));
+        Assert.Equal("Available", ProductionOutputQcPolicy.Apply(cltQc, "Available", true));
+        var gluQc = ProductionOutputQcPolicy.Resolve(glu, "", "Available");
+        Assert.Equal("material", gluQc.PolicySource);
+        Assert.Equal("Quarantine", ProductionOutputQcPolicy.Apply(gluQc, "Available", false));
+        var fjQc = ProductionOutputQcPolicy.Resolve(fj, "WC-FJ", "Available");
+        Assert.False(fjQc.HoldRequired);
+        Assert.Equal("Available", ProductionOutputQcPolicy.Apply(fjQc, "Available", false));
+        var wc = ProductionOutputQcPolicy.Resolve(fj, "WC-CLT", "Available");
+        Assert.True(wc.HoldRequired);
+        Assert.Equal("workCenter", wc.PolicySource);
+    }
+
+    [Fact]
+    public void Consumption_notes_bind_same_source_lot_as_genealogy()
+    {
+        var sourceId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var notes = ProductionLotCodes.ConsumptionNotes("PRD-1", "LOT-PR-F01-260910-0001", "LOT-GR-A", sourceId, "NW-PKG-F01-26-000010");
+        Assert.True(ProductionLotCodes.NotesBindSource(notes, "LOT-GR-A", sourceId));
+        Assert.False(ProductionLotCodes.NotesBindSource(notes, "LOT-GR-B", sourceId));
+        Assert.False(ProductionLotCodes.NotesBindSource(notes, "LOT-GR-A", Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void Posted_output_can_be_cancelled_not_deleted()
+    {
+        var doc = ProductionOutput.Create("POUT-1", Guid.NewGuid(), Guid.NewGuid(), "CLT-001", "WH", "A", null, null, "WC-CLT", "Quarantine", "PLANT-001");
+        doc.MarkPosted(Guid.NewGuid(), "LOT-PR-1", 2, 1, 0, "PCS", "admin");
+        doc.MarkCancelled("admin", "yanlış miktar");
+        Assert.Equal(ProductionOutputStatuses.Cancelled, doc.Status);
+        Assert.Equal("yanlış miktar", doc.CancelReason);
+        Assert.False(doc.IsDeleted);
+        Assert.Throws<InvalidOperationException>(() => doc.MarkPosted(Guid.NewGuid(), "X", 1, 1, 0, "PCS", "admin"));
     }
 }
