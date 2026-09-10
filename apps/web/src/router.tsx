@@ -14,6 +14,7 @@ import { isAuthenticated } from './auth/session';
 import { collectNavPaths } from './navigation/nav-config';
 import { FilesPage } from './pages/FilesPage';
 import { PlantFactoryAdminPage } from './modules/admin/PlantFactoryAdminPage';
+import { InventoryWorkspaceLayout } from './modules/inventory/InventoryWorkspaceLayout';
 import { ProductionPointsPage } from './modules/inventory/production-points/ProductionPointsPage';
 import { InventoryDashboardPage } from './modules/inventory/overview/InventoryDashboardPage';
 import {
