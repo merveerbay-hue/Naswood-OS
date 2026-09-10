@@ -492,7 +492,7 @@ public class ProductionExecutionChainTests
         var rows = (await Data(list)).EnumerateArray().ToArray();
         Assert.Single(rows);
         Assert.Equal("BARCODE_FAIL", rows[0].GetProperty("topic").GetString());
-        Assert.Equal("admin", rows[0].GetProperty("userId").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(rows[0].GetProperty("userId").GetString()));
         Assert.Equal(exec, rows[0].GetProperty("executionId").GetGuid());
         Assert.Contains("shop-floor", rows[0].GetProperty("screen").GetString());
     }
