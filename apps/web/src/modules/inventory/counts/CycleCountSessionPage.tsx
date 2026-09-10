@@ -828,9 +828,14 @@ export function CycleCountSessionPage() {
               <select
                 className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
                 value={createDraft.mainCategory}
-                onChange={(e) =>
-                  setCreateDraft((d) => ({ ...d, mainCategory: e.target.value as CountMaterialCreateDraft['mainCategory'] }))
-                }
+                onChange={(e) => {
+                  const mainCategory = e.target.value as CountMaterialCreateDraft['mainCategory'];
+                  setCreateDraft((d) => ({
+                    ...d,
+                    mainCategory,
+                    stockUom: mainCategory === 'TW' ? 'M2' : 'M3',
+                  }));
+                }}
               >
                 <option value="HM">Hammadde</option>
                 <option value="YM">Yarı Mamul</option>

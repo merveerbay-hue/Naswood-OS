@@ -120,6 +120,23 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_inventorycountline ADD COLUMN IF NOT EXISTS "PhysicalGroupLabel" character varying(200) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_inventorycountline ADD COLUMN IF NOT EXISTS "Barcode" character varying(200) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceType" character varying(40) NOT NULL DEFAULT '';
+        UPDATE business.business_inventory_material
+        SET
+            "UnitOfMeasure" = 'M3',
+            "DefinitionJson" = replace(replace(replace(replace(
+                "DefinitionJson",
+                '"stockUom":"M2"', '"stockUom":"M3"'),
+                '"stockUom": "M2"', '"stockUom": "M3"'),
+                '"volumeCalcRequired":false', '"volumeCalcRequired":true'),
+                '"volumeCalcRequired": false', '"volumeCalcRequired": true')
+        WHERE "IsDeleted" = false
+          AND (
+                "Code" LIKE 'MP-%'
+                OR "Category" ILIKE '%Masif%'
+                OR "Category" = 'MP'
+                OR "DefinitionJson" ILIKE '%"mainCategory":"MP"%'
+                OR "DefinitionJson" ILIKE '%"mainCategory": "MP"%'
+          );
         """).ConfigureAwait(false);
 }
 

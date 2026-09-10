@@ -66,11 +66,12 @@ export function resolvePolicy(input: {
     cat.includes('HARDWARE') ||
     cat.includes('ELEKTRIK') ||
     cat.includes('MEKANIK');
-  const isPanel = stock === 'M2' || main === 'MP' || main === 'PANEL';
+  const isMasifPanel = main === 'MP' || main === 'PANEL' || cat.includes('MASIF');
   if (isLog) return { stockUnit: 'M3', countUnit: count || 'PCS', mode: 'MeasuredVolume', dimsRequired: false };
-  if (isHardware || (stock === 'PCS' && !volumeReq && !isPanel))
+  if (isHardware || (stock === 'PCS' && !volumeReq && !isMasifPanel))
     return { stockUnit: stock, countUnit: count, mode: 'Piece', dimsRequired: false };
-  if (isPanel || stock === 'M2') return { stockUnit: 'M2', countUnit: count, mode: 'SquareMeter', dimsRequired: true };
+  if (isMasifPanel) return { stockUnit: 'M3', countUnit: count, mode: 'CubicMeter', dimsRequired: true };
+  if (stock === 'M2') return { stockUnit: 'M2', countUnit: count, mode: 'SquareMeter', dimsRequired: true };
   if (stock === 'M3' || volumeReq) return { stockUnit: 'M3', countUnit: count, mode: 'CubicMeter', dimsRequired: true };
   return { stockUnit: stock, countUnit: count, mode: 'Piece', dimsRequired: false };
 }

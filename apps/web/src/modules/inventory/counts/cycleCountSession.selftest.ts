@@ -70,8 +70,12 @@ const hwQty = calculateStockQty(hw, { pieceCount: 4500 });
 assert(hwQty.ok && hwQty.qty === 4500, 'TEST13 4500 pcs');
 
 const panel = resolvePolicy({ unitOfMeasure: 'M2', definitionJson: '{"stockUom":"M2","mainCategory":"MP"}' });
-const m2 = calculateStockQty(panel, { widthMm: 1220, lengthMm: 2440, pieceCount: 20 });
-assert(m2.ok && Math.abs(m2.qty - squareMeters(1220, 2440, 20)) < 1e-9, 'TEST14 m2');
+assert(panel.stockUnit === 'M3' && panel.mode === 'CubicMeter', 'TEST14 MP stores m3');
+const m3Panel = calculateStockQty(panel, { thicknessMm: 18, widthMm: 1220, lengthMm: 2440, pieceCount: 20 });
+assert(m3Panel.ok && Math.abs(m3Panel.qty - cubicMeters(18, 1220, 2440, 20)) < 1e-9, 'TEST14 mp m3');
+const tw = resolvePolicy({ unitOfMeasure: 'M2', definitionJson: '{"stockUom":"M2","mainCategory":"TW"}' });
+const m2 = calculateStockQty(tw, { widthMm: 1220, lengthMm: 2440, pieceCount: 20 });
+assert(tw.mode === 'SquareMeter' && m2.ok && Math.abs(m2.qty - squareMeters(1220, 2440, 20)) < 1e-9, 'TEST14 tw m2');
 
 const log = resolvePolicy({ category: 'Tomruk', definitionJson: '{"mainCategory":"LOG"}' });
 const logQty = calculateStockQty(log, { pieceCount: 35, measuredVolumeM3: 18.4 });

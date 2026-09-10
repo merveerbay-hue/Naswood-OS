@@ -29,6 +29,17 @@ public sealed class InventoryCountMathTests
     }
 
     [Fact]
+    public void Masif_panel_stores_cubic_meters()
+    {
+        var p = InventoryCountMath.ResolvePolicy("M2", "Masif Panel", """{"stockUom":"M2","mainCategory":"MP"}""");
+        Assert.Equal("M3", p.StockUnit);
+        Assert.Equal(CountQtyMode.CubicMeter, p.Mode);
+        var calc = InventoryCountMath.CalculateStockQty(p, 18, 1220, 2440, 20, null);
+        Assert.True(calc.Ok);
+        Assert.Equal(InventoryCountMath.CubicMeters(18, 1220, 2440, 20), calc.StockQty);
+    }
+
+    [Fact]
     public void Hardware_policy_no_dims()
     {
         var p = InventoryCountMath.ResolvePolicy("PCS", "Hırdavat", """{"stockUom":"PCS","mainCategory":"HW"}""");

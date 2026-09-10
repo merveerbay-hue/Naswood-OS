@@ -565,9 +565,9 @@ export function MaterialDefinitionDesigner() {
           widthMm: '',
           lengthMm: '',
           thicknessMm: d.thicknessMm || '18',
-          stockUom: 'M2',
+          stockUom: 'M3',
           countUom: 'PCS',
-          volumeCalcRequired: false,
+          volumeCalcRequired: true,
           lotTracking: true,
         };
       } else {
