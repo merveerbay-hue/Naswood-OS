@@ -2,119 +2,147 @@ import { Link } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
-import { createResource, searchAllResource, searchResource, updateResource } from '@/api/business';
+import { createResource, getResource, searchAllResource } from '@/api/business';
 import { useAuth } from '@/auth/useAuth';
 import { usePlantContext } from '@/auth/usePlantContext';
-import { useI18n } from '@/i18n';
 import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
+import { rankMaterialMatches, type MaterialCandidate } from '@/modules/inventory/receiving/materialMatch';
+import { cancelCount, completeCount, isCountId, postCount, putCountLines, sessionId } from './countApi';
+import { ocrEngineAvailable, parseCountListText, type ParsedCountSuggestion } from './cycleCountAi';
 import {
-  COUNT_TYPES,
-  FREEZE_MODES,
-  buildCountSessionCreateBody,
+  applyLabelMapping,
+  downloadFieldCountTemplate,
+  parseCountWorkbook,
+  skipUniqueLabel,
+  type CountExcelMaterial,
+  type CountExcelPreview,
+} from './cycleCountExcel';
+import {
+  buildCountMaterialCreateBody,
+  canCreateCountMaterial,
+  emptyCountMaterialDraft,
+  findCountMaterialDuplicate,
+  previewCountMaterialCode,
+  HM_TYPE_OPTIONS,
+  WOOD_OPTIONS_HM,
+  type CountMaterialCreateDraft,
+} from './countMaterialCreate';
+import {
+  calculateStockQty,
+  formatMm,
+  lineStatus,
+  physicalKey,
+  resolvePolicy,
+} from './inventoryCountCalc';
+import {
   canOpenCountDocument,
   canOpenCountSession,
   canSaveCountLines,
-  lineVariance,
   showSystemQuantity,
-  summarizeVariances,
-  type CountLine,
-  type CountType,
-  type FreezeMode,
+  type CountLineDto,
+  type CycleCountOpenDraft,
+  type InventoryCountSession,
 } from './cycleCountSession';
 
 type WarehouseOpt = { code?: string; name?: string; status?: string };
-type LocationOpt = { code?: string; name?: string; warehouseCode?: string; status?: string };
-type BalanceRow = {
-  materialCode?: string;
-  warehouseCode?: string;
-  locationCode?: string;
-  batchNumber?: string;
-  quantityOnHand?: number;
+type LocationOpt = { code?: string; name?: string; warehouseCode?: string; status?: string; locationType?: string };
+type MaterialOpt = MaterialCandidate & { unitOfMeasure?: string | null; category?: string | null; definitionJson?: string | null };
+
+type DraftLine = {
+  key: string;
+  materialId?: string;
+  materialCode: string;
+  materialName: string;
+  locationCode: string;
+  thicknessMm: string;
+  widthMm: string;
+  lengthMm: string;
+  pieceCount: string;
+  measuredVolumeM3: string;
+  source: 'MANUAL' | 'EXCEL' | 'AI';
+  keepSeparate: boolean;
+  note: string;
+  physicalGroupLabel?: string;
 };
-type CountDoc = { id: string; number: string; warehouseCode: string; status: string; plantId?: string; notes?: string };
 
-const STEPS = ['scope', 'open', 'count', 'variance', 'close'] as const;
-type StepId = (typeof STEPS)[number];
-
-function lineKey(material: string, loc: string, lot: string): string {
-  return `${material}|${loc}|${lot}`.toUpperCase();
+function n(v: string): number | null {
+  const x = Number(String(v).replace(',', '.').trim());
+  return Number.isFinite(x) && String(v).trim() !== '' ? x : null;
 }
 
-/**
- * INV-CNT-001 — Cycle count wizard.
- * Login already authorized the user. Step 2 opens a count *document*, not a second login.
- * Administrator always sees every step page; save is gated separately.
- */
+function statusLabel(st: string): string {
+  switch (st) {
+    case 'MATCHED':
+      return 'UYUMLU';
+    case 'VARIANCE':
+      return 'FARK VAR';
+    case 'UNEXPECTED':
+      return 'BEKLENMEYEN STOK';
+    case 'MISSING':
+      return 'EKSİK STOK';
+    case 'DUPLICATE':
+      return 'ÇİFT SATIR';
+    default:
+      return st;
+  }
+}
+
 export function CycleCountSessionPage() {
-  const { t } = useI18n();
   const { user } = useAuth();
   const roles = user?.roles ?? [];
   const canSave = canSaveCountLines(roles);
   const canOpenDoc = canOpenCountDocument(roles);
+  const canMintMaterial = canCreateCountMaterial(roles);
   const queryClient = useQueryClient();
-  const { homePlantId, plantId: sessionPlantId, visiblePlantIds, canSwitchPlant } = usePlantContext();
-  const plantIds = visiblePlantIds.length ? visiblePlantIds : [homePlantId || 'PLANT-001'];
-  const [plantId, setPlantId] = useState(sessionPlantId || homePlantId);
-  const [step, setStep] = useState<StepId>('scope');
+  const { homePlantId, plantId: sessionPlantId, visiblePlantIds, canSwitchPlant, switchPlant, isHomeContext } =
+    usePlantContext();
 
+  const [workPlant, setWorkPlant] = useState(sessionPlantId || homePlantId);
   const [warehouseCode, setWarehouseCode] = useState('');
-  const [zone, setZone] = useState('');
-  const [abcClass, setAbcClass] = useState('');
-  const [countType, setCountType] = useState<CountType>('Cycle');
-  const [countDate, setCountDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [assignedTo, setAssignedTo] = useState('');
-  const [blindCount, setBlindCount] = useState(false);
-  const [freezeMode, setFreezeMode] = useState<FreezeMode>('None');
-  const [opened, setOpened] = useState<CountDoc | null>(null);
-  const [lines, setLines] = useState<CountLine[]>([]);
-  const [scan, setScan] = useState('');
-  const [savedNote, setSavedNote] = useState<string | null>(null);
+  const [locationCode, setLocationCode] = useState('');
+  const [countType, setCountType] = useState<'Normal' | 'Blind'>('Normal');
+  const [notes, setNotes] = useState('');
+  const [opened, setOpened] = useState<InventoryCountSession | null>(null);
+  const [draftLines, setDraftLines] = useState<DraftLine[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'variance' | 'matched' | 'unmatched'>('all');
+  const [aiPreview, setAiPreview] = useState<ParsedCountSuggestion[] | null>(null);
+  const [aiText, setAiText] = useState('');
+  const [addQuery, setAddQuery] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [savedNote, setSavedNote] = useState<string | null>(null);
+  const [postResult, setPostResult] = useState<string | null>(null);
+  const [excelPreview, setExcelPreview] = useState<CountExcelPreview | null>(null);
+  const [createFor, setCreateFor] = useState<string | null>(null);
+  const [createDraft, setCreateDraft] = useState<CountMaterialCreateDraft>(emptyCountMaterialDraft(''));
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
-    setPlantId(sessionPlantId || homePlantId);
+    setWorkPlant(sessionPlantId || homePlantId);
   }, [sessionPlantId, homePlantId]);
 
-  useEffect(() => {
-    if (countType === 'Blind') setBlindCount(true);
-  }, [countType]);
-
   const warehousesQuery = useQuery({
-    queryKey: ['business', 'warehouses', 'cnt', plantId],
-    queryFn: () => searchAllResource<WarehouseOpt>('warehouses', undefined, { plantId }),
+    queryKey: ['business', 'warehouses', 'cnt', workPlant],
+    queryFn: () => searchAllResource<WarehouseOpt>('warehouses', undefined, { plantId: workPlant }),
   });
   const locationsQuery = useQuery({
-    queryKey: ['business', 'locations', 'cnt', plantId],
-    queryFn: () => searchAllResource<LocationOpt>('locations', undefined, { plantId }),
+    queryKey: ['business', 'locations', 'cnt', workPlant],
+    queryFn: () => searchAllResource<LocationOpt>('locations', undefined, { plantId: workPlant }),
   });
-  const balancesQuery = useQuery({
-    queryKey: ['business', 'inventory', 'cnt', plantId, warehouseCode],
-    enabled: Boolean(warehouseCode),
-    queryFn: () =>
-      searchResource<BalanceRow>('inventory', undefined, {
-        page: 1,
-        pageSize: 100,
-        plantId,
-        warehouseCode,
-      }),
+  const materialsQuery = useQuery({
+    queryKey: ['business', 'materials', 'cnt'],
+    queryFn: () => searchAllResource<MaterialOpt>('materials'),
   });
-  const openDocsQuery = useQuery({
-    queryKey: ['business', 'inventory-counts', 'open', plantId],
-    queryFn: () => searchResource<CountDoc>('inventory-counts', undefined, { page: 1, pageSize: 50, plantId }),
+
+  const sessionQuery = useQuery({
+    queryKey: ['business', 'inventory-counts', opened ? sessionId(opened) : ''],
+    enabled: isCountId(opened ? sessionId(opened) : ''),
+    queryFn: () => getResource<InventoryCountSession>('inventory-counts', sessionId(opened)),
   });
 
   useEffect(() => {
-    if (opened) return;
-    const items = openDocsQuery.data?.items ?? [];
-    const existing = items.find((d) => {
-      const st = String(d.status ?? '').toLowerCase();
-      return st === 'in progress' || st === 'inprogress' || st === 'released' || st === 'draft';
-    });
-    if (existing) {
-      setOpened(existing);
-      if (existing.warehouseCode) setWarehouseCode(existing.warehouseCode);
-    }
-  }, [openDocsQuery.data, opened]);
+    if (sessionQuery.data) setOpened(sessionQuery.data);
+  }, [sessionQuery.data]);
 
   const warehouses = useMemo(
     () =>
@@ -123,516 +151,1068 @@ export function CycleCountSessionPage() {
       ),
     [warehousesQuery.data],
   );
-  const zones = useMemo(
+  const locations = useMemo(
     () =>
       (locationsQuery.data ?? []).filter(
         (l) =>
           String(l.status ?? 'Active').toLowerCase() === 'active' &&
-          String(l.warehouseCode ?? '').toUpperCase() === warehouseCode.toUpperCase(),
+          String(l.warehouseCode ?? '').toUpperCase() === warehouseCode.toUpperCase() &&
+          String(l.locationType ?? '').toUpperCase() !== 'WIP',
       ),
     [locationsQuery.data, warehouseCode],
   );
+  const materials = materialsQuery.data ?? [];
 
-  useEffect(() => {
-    setLines((prev) => {
-      if (prev.length > 0) return prev;
-      return [
-        { key: 'DEMO-1', materialCode: '', locationCode: '', lotNumber: '', systemQty: 0, countedQty: '' },
-        { key: 'DEMO-2', materialCode: '', locationCode: '', lotNumber: '', systemQty: 0, countedQty: '' },
-        { key: 'DEMO-3', materialCode: '', locationCode: '', lotNumber: '', systemQty: 0, countedQty: '' },
-      ];
-    });
-  }, []);
-
-  useEffect(() => {
-    const items = balancesQuery.data?.items ?? [];
-    if (!items.length) return;
-    setLines((prev) => {
-      const next = [...prev];
-      const have = new Set(next.map((l) => l.key));
-      for (const row of items) {
-        if (zone && String(row.locationCode ?? '').toUpperCase() !== zone.toUpperCase()) continue;
-        const materialCode = String(row.materialCode ?? '').trim();
-        if (!materialCode) continue;
-        const locationCode = String(row.locationCode ?? '').trim();
-        const lotNumber = String(row.batchNumber ?? '').trim();
-        const key = lineKey(materialCode, locationCode, lotNumber);
-        if (have.has(key)) continue;
-        have.add(key);
-        next.push({
-          key,
-          materialCode,
-          locationCode,
-          lotNumber,
-          systemQty: Number(row.quantityOnHand ?? 0),
-          countedQty: '',
-        });
-      }
-      return next;
-    });
-  }, [balancesQuery.data, zone]);
-
-  const draft = {
-    plantId,
+  const draft: CycleCountOpenDraft = {
+    plantId: workPlant,
     warehouseCode,
-    zone,
-    abcClass,
+    locationCode,
     countType,
-    countDate,
-    assignedTo,
-    blindCount,
-    freezeMode,
+    notes,
   };
   const gate = canOpenCountSession(draft);
-  const showSys = showSystemQuantity(roles, blindCount);
-  const totals = summarizeVariances(lines);
+  const blind = (opened?.countType ?? countType) === 'Blind';
+  const showSys = showSystemQuantity(roles, blind, opened?.status);
 
-  const openMutation = useMutation({
+  const startMut = useMutation({
     mutationFn: async () => {
-      if (!canOpenDoc) throw new Error(t('wizard.cnt.countSaveDenied'));
       if (!gate.ok) throw new Error(gate.reason);
-      return createResource<CountDoc>('inventory-counts', buildCountSessionCreateBody(draft), { plantId });
+      return createResource<InventoryCountSession>(
+        'inventory-counts',
+        {
+          number: '',
+          warehouseCode: warehouseCode.trim(),
+          locationCode: locationCode.trim(),
+          countType,
+          status: 'COUNTING',
+          notes: notes.trim(),
+        },
+        { plantId: workPlant },
+      );
     },
-    onSuccess: async (row) => {
+    onSuccess: (doc) => {
+      setOpened(doc);
       setError(null);
-      setOpened(row);
-      await queryClient.invalidateQueries({ queryKey: ['business', 'inventory-counts'] });
+      void queryClient.invalidateQueries({ queryKey: ['business', 'inventory-counts'] });
     },
     onError: (e: Error) => setError(e.message),
   });
 
-  const saveLinesMutation = useMutation({
+  const saveMut = useMutation({
     mutationFn: async () => {
-      if (!canSave) throw new Error(t('wizard.cnt.countSaveDenied'));
-      if (!opened) throw new Error(t('wizard.cnt.needOpen'));
-      const notes = `${opened.notes ?? ''}\nlines=${JSON.stringify(
-        lines.map((l) => ({ m: l.materialCode, loc: l.locationCode, lot: l.lotNumber, qty: l.countedQty })),
-      )}`;
-      return updateResource<CountDoc>('inventory-counts', opened.id, {
-        number: opened.number,
-        warehouseCode: opened.warehouseCode || warehouseCode,
-        status: opened.status || 'In Progress',
-        notes,
-      });
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım oturumu yok — önce sayımı başlatın.');
+      const lines = draftLines.map((l) => ({
+        materialId: l.materialId || undefined,
+        materialCode: l.materialCode,
+        materialName: l.materialName,
+        locationCode: l.locationCode || opened?.locationCode || '',
+        lotUnknown: true,
+        physicalGroupLabel: l.physicalGroupLabel || '',
+        packageNumber: '',
+        thicknessMm: n(l.thicknessMm),
+        widthMm: n(l.widthMm),
+        lengthMm: n(l.lengthMm),
+        pieceCount: n(l.pieceCount),
+        measuredVolumeM3: n(l.measuredVolumeM3),
+        source: l.source,
+        keepSeparate: l.keepSeparate,
+        notes: l.note,
+      }));
+      return putCountLines(id, lines);
     },
-    onSuccess: () => {
+    onSuccess: (doc) => {
+      setOpened(doc);
+      setSavedNote('Sayılanlar kaydedildi — stok henüz değişmedi.');
       setError(null);
-      setSavedNote(t('wizard.cnt.countSaved'));
     },
     onError: (e: Error) => setError(e.message),
   });
 
-  const closeMutation = useMutation({
+  const completeMut = useMutation({
     mutationFn: async () => {
-      if (!canSave) throw new Error(t('wizard.cnt.countSaveDenied'));
-      if (!opened) throw new Error(t('wizard.cnt.needOpen'));
-      return updateResource<CountDoc>('inventory-counts', opened.id, {
-        number: opened.number,
-        warehouseCode: opened.warehouseCode || warehouseCode,
-        status: 'Closed',
-        notes: opened.notes ?? '',
-      });
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım yok');
+      await saveMut.mutateAsync();
+      return completeCount(id);
     },
-    onSuccess: (row) => {
-      setOpened(row);
-      setError(null);
+    onSuccess: (doc) => {
+      setOpened(doc);
+      setSavedNote('Sayım incelemeye alındı.');
     },
     onError: (e: Error) => setError(e.message),
   });
 
-  const stepIndex = STEPS.indexOf(step);
-  const stepTitle: Record<StepId, string> = {
-    scope: t('wizard.cnt.scope'),
-    open: t('wizard.cnt.open'),
-    count: t('wizard.cnt.count'),
-    variance: t('wizard.cnt.variance'),
-    close: t('wizard.cnt.close'),
-  };
-  const stepHint: Record<StepId, string> = {
-    scope: t('wizard.cnt.stepHint'),
-    open: t('wizard.cnt.openHint'),
-    count: t('wizard.cnt.countHint'),
-    variance: t('wizard.cnt.varianceHint'),
-    close: t('wizard.cnt.closeHint'),
-  };
+  const postMut = useMutation({
+    mutationFn: async () => {
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım yok');
+      return postCount(id);
+    },
+    onSuccess: (res) => {
+      setPostResult(
+        `${res.countNumber}: ${res.adjustmentCount} INVENTORY_COUNT_ADJUSTMENT hareketi. Bakiye overwrite edilmedi.`,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['business', 'inventory-counts', opened?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['business', 'inventory'] });
+    },
+    onError: (e: Error) => setError(e.message),
+  });
 
-  function applyScan() {
-    const q = scan.trim().toUpperCase();
-    if (!q) return;
-    const hit = lines.find(
-      (l) =>
-        l.materialCode.toUpperCase().includes(q) ||
-        l.lotNumber.toUpperCase().includes(q) ||
-        l.locationCode.toUpperCase().includes(q),
-    );
-    if (hit) {
-      const el = document.getElementById(`cnt-qty-${hit.key}`);
-      el?.focus();
+  const cancelMut = useMutation({
+    mutationFn: async () => {
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım yok');
+      return cancelCount(id);
+    },
+    onSuccess: (doc) => setOpened(doc),
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const snapshotLines = opened?.lines?.filter((l) => l.role === 'SNAPSHOT') ?? [];
+  const physicalLines = opened?.lines?.filter((l) => l.role === 'PHYSICAL') ?? [];
+
+  const resultRows = useMemo(() => {
+    const groups = new Map<string, { snap?: CountLineDto; phys: CountLineDto[] }>();
+    for (const l of opened?.lines ?? []) {
+      const k = `${l.materialCode}|${l.locationCode}|${l.batchNumber}`.toUpperCase();
+      if (!groups.has(k)) groups.set(k, { phys: [] });
+      const g = groups.get(k)!;
+      if (l.role === 'SNAPSHOT') g.snap = l;
+      else g.phys.push(l);
+    }
+    const rows: Array<{
+      material: string;
+      code: string;
+      phys: string;
+      system: number;
+      counted: number;
+      diff: number;
+      unit: string;
+      status: string;
+      duplicate: boolean;
+    }> = [];
+    for (const g of groups.values()) {
+      if (g.phys.length === 0) {
+        const s = g.snap;
+        if (!s) continue;
+        rows.push({
+          material: s.materialName,
+          code: s.materialCode,
+          phys: '—',
+          system: s.systemQuantityAtStart,
+          counted: 0,
+          diff: -s.systemQuantityAtStart,
+          unit: s.stockUnit,
+          status: lineStatus(s.systemQuantityAtStart, 0, false),
+          duplicate: false,
+        });
+        continue;
+      }
+      for (const p of g.phys) {
+        rows.push({
+          material: p.materialName,
+          code: p.materialCode,
+          phys: formatMm(p.thicknessMm, p.widthMm, p.lengthMm),
+          system: g.phys.length === 1 ? (g.snap?.systemQuantityAtStart ?? 0) : g.snap?.systemQuantityAtStart ?? 0,
+          counted: p.countedQuantity,
+          diff: p.difference,
+          unit: p.stockUnit,
+          status: p.duplicate ? 'DUPLICATE' : p.lineStatus,
+          duplicate: p.duplicate,
+        });
+      }
+    }
+    return rows;
+  }, [opened?.lines]);
+
+  const filteredRows = resultRows.filter((r) => {
+    if (filter === 'variance') return r.status === 'VARIANCE' || r.status === 'UNEXPECTED' || r.status === 'MISSING' || r.duplicate;
+    if (filter === 'matched') return r.status === 'MATCHED';
+    if (filter === 'unmatched') return r.status === 'UNEXPECTED' || !r.code;
+    return true;
+  });
+
+  const materialHits = useMemo(() => {
+    const q = addQuery.trim();
+    if (!q) return materials.slice(0, 20);
+    const ranked = rankMaterialMatches(q, materials, q, 20);
+    return ranked.map((r) => r.material);
+  }, [addQuery, materials]);
+
+  function addDraft(mat: MaterialOpt, source: DraftLine['source'] = 'MANUAL', extra?: Partial<DraftLine>) {
+    setDraftLines((prev) => [
+      ...prev,
+      {
+        key: `${Date.now()}-${Math.random()}`,
+        materialCode: mat.code,
+        materialName: mat.name,
+        materialId: mat.id,
+        locationCode: locationCode || opened?.locationCode || extra?.locationCode || '',
+        thicknessMm: extra?.thicknessMm ?? '',
+        widthMm: extra?.widthMm ?? '',
+        lengthMm: extra?.lengthMm ?? '',
+        pieceCount: extra?.pieceCount ?? '',
+        measuredVolumeM3: extra?.measuredVolumeM3 ?? '',
+        source,
+        keepSeparate: false,
+        note: extra?.note ?? '',
+        physicalGroupLabel: extra?.physicalGroupLabel ?? '',
+      },
+    ]);
+    setAddOpen(false);
+    setAddQuery('');
+  }
+
+  async function onExcel(file: File) {
+    setError(null);
+    const preview = await parseCountWorkbook(file, materials);
+    setExcelPreview(preview);
+    if (preview.total === 0) {
+      setError('Excel’de sayım satırı bulunamadı.');
       return;
     }
-    setLines((prev) => [
-      ...prev,
-      {
-        key: lineKey(q, zone || warehouseCode || '—', ''),
-        materialCode: scan.trim(),
-        locationCode: zone || '',
-        lotNumber: '',
-        systemQty: 0,
-        countedQty: '',
-      },
-    ]);
+    setSavedNote(
+      `Sayım dosyası kontrolü: ${preview.total} satır · ${preview.uniqueCount} unique tanım · ${preview.matched} eşleşti · ${preview.suggested} kontrol · ${preview.newCandidates} yeni aday · ${preview.invalid} hatalı.`,
+    );
   }
 
-  function addEmptyLine() {
-    const n = lines.length + 1;
-    setLines((prev) => [
+  function confirmExcelPreview() {
+    if (!excelPreview) return;
+    const matched = excelPreview.rows.filter((r) => r.status === 'MATCHED' && r.materialCode && !r.skipped);
+    const loc = locationCode || opened?.locationCode || '';
+    setDraftLines((prev) => [
       ...prev,
-      {
-        key: `NEW-${n}-${Date.now()}`,
-        materialCode: '',
-        locationCode: zone || '',
-        lotNumber: '',
-        systemQty: 0,
-        countedQty: '',
-      },
+      ...matched.map((r, i) => ({
+        key: `xl-${r.excelRow}-${Date.now()}-${i}`,
+        materialId: r.materialId,
+        materialCode: r.materialCode!,
+        materialName: r.materialName || r.materialLabel,
+        locationCode: loc,
+        thicknessMm: r.thicknessMm != null ? String(r.thicknessMm) : '',
+        widthMm: r.widthMm != null ? String(r.widthMm) : '',
+        lengthMm: r.lengthMm != null ? String(r.lengthMm) : '',
+        pieceCount: r.pieceCount != null ? String(r.pieceCount) : r.quantity != null ? String(r.quantity) : '',
+        measuredVolumeM3: r.measuredVolumeM3 != null ? String(r.measuredVolumeM3) : '',
+        source: 'EXCEL' as const,
+        keepSeparate: false,
+        note: r.note,
+        physicalGroupLabel: r.physicalGroupLabel,
+      })),
     ]);
+    setExcelPreview(null);
+    setSavedNote(
+      `${matched.length} satır sayıma eklendi. ${excelPreview.suggested + excelPreview.newCandidates + excelPreview.invalid} satır bekletildi.`,
+    );
   }
 
-  function patchLine(key: string, patch: Partial<CountLine>) {
-    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  function previewStatusTr(st: string): string {
+    if (st === 'MATCHED') return 'EŞLEŞTİ';
+    if (st === 'SUGGESTED') return 'KONTROL GEREKİYOR';
+    if (st === 'NEW_CANDIDATE') return 'YENİ MATERIAL ADAYI';
+    if (st === 'REVIEW_REQUIRED') return 'KONTROL GEREKİYOR';
+    return 'HATALI SATIR';
   }
+
+  async function createCandidateMaterial() {
+    setCreateError(null);
+    const dup = findCountMaterialDuplicate(createDraft, materials);
+    if (dup) {
+      setCreateError(`Aynı kart zaten var: ${dup.name} (${dup.code}). Yeni kart oluşturulmadı.`);
+      if (createFor && excelPreview) {
+        setExcelPreview(applyLabelMapping(excelPreview, createFor, dup as CountExcelMaterial));
+        setCreateFor(null);
+      }
+      return;
+    }
+    try {
+      const body = buildCountMaterialCreateBody(createDraft, materials.map((m) => m.code));
+      const created = await createResource<CountExcelMaterial>('materials', body);
+      void queryClient.invalidateQueries({ queryKey: ['business', 'materials'] });
+      if (createFor) {
+        setExcelPreview((p) => (p ? applyLabelMapping(p, createFor, { ...created, name: created.name || createDraft.name }) : p));
+      }
+      setCreateFor(null);
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function applyAiRow(s: ParsedCountSuggestion, mat: MaterialOpt) {
+    addDraft(mat, 'AI', {
+      thicknessMm: s.thicknessMm != null ? String(s.thicknessMm) : '',
+      widthMm: s.widthMm != null ? String(s.widthMm) : '',
+      lengthMm: s.lengthMm != null ? String(s.lengthMm) : '',
+      pieceCount: s.pieceCount != null ? String(s.pieceCount) : '',
+      measuredVolumeM3: s.measuredVolumeM3 != null ? String(s.measuredVolumeM3) : '',
+      note: s.note ?? '',
+    });
+  }
+
+  const counting = !opened || ['DRAFT', 'COUNTING'].includes(String(opened.status).toUpperCase());
+  const review = opened && ['REVIEW', 'APPROVED'].includes(String(opened.status).toUpperCase());
+  const posted = opened && String(opened.status).toUpperCase() === 'POSTED';
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-[var(--text-muted)]">INV-CNT-001</p>
-          <h2 className="text-xl font-semibold tracking-tight">{t('wizard.countTitle')}</h2>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('wizard.countDesc')}</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">{t('wizard.screenType')}</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 py-2 text-right">
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{t('wizard.systemCode')}</p>
-            <p className="font-mono text-sm font-medium text-[var(--text-primary)]">
-              {opened?.number || t('wizard.cnt.numberPending')}
-            </p>
-            <p className="text-[10px] text-[var(--text-muted)]">{t('wizard.cnt.numberHint')}</p>
-          </div>
-          <Link to="/inventory/counts/cycle-counts" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
-            {t('wizard.backToLibrary')}
-          </Link>
-        </div>
+      <div>
+        <p className="text-xs text-[var(--text-muted)]">INV-CNT · stok ledger</p>
+        <h1 className="text-2xl font-semibold">Stok Sayımı</h1>
+        <p className="text-sm text-[var(--text-muted)]">
+          Mevcut stok listesi gelir. Düzeltme yalnızca INVENTORY_COUNT_ADJUSTMENT hareketidir.
+        </p>
       </div>
-
-      <ol className="flex flex-wrap gap-2">
-        {STEPS.map((id, i) => (
-          <li key={id}>
-            <button
-              type="button"
-              onClick={() => setStep(id)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                id === step
-                  ? 'bg-[var(--color-primary)] text-white'
-                  : 'bg-[var(--color-surface-hover)] text-[var(--text-primary)]'
-              }`}
-            >
-              {i + 1}. {stepTitle[id]}
-            </button>
-          </li>
-        ))}
-      </ol>
 
       <Card>
         <CardHeader>
-          <CardTitle>
-            {stepIndex + 1}. {stepTitle[step]}
-          </CardTitle>
-          <CardDescription>{stepHint[step]}</CardDescription>
+          <CardTitle>Yeni stok sayımı</CardTitle>
+          <CardDescription>Ana Üs otomatik gelir; günlük fabrika seçimi yok.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {step === 'scope' ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1 text-sm">
-                <span className="text-[var(--text-secondary)]">{t('wizard.cnt.plant')}</span>
-                {canSwitchPlant && plantIds.length > 1 ? (
-                  <select
-                    className="h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
-                    value={plantId}
-                    onChange={(e) => {
-                      setPlantId(e.target.value);
-                      setWarehouseCode('');
-                      setZone('');
-                    }}
-                  >
-                    {plantIds.map((p) => (
-                      <option key={p} value={p}>
-                        {plantDisplayName(p)} · {p}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <Input value={`${plantDisplayName(plantId)} · ${plantId}`} readOnly />
-                )}
-              </label>
-              <label className="space-y-1 text-sm">
-                <span className="text-[var(--text-secondary)]">{t('wizard.cnt.warehouse')}</span>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="text-sm">
+              Ana Üs
+              <Input value={plantDisplayName(homePlantId)} disabled readOnly />
+            </label>
+            {canSwitchPlant ? (
+              <label className="text-sm">
+                Diğer tesis
                 <select
-                  className="h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
-                  value={warehouseCode}
+                  className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                  value={workPlant}
                   onChange={(e) => {
-                    setWarehouseCode(e.target.value);
-                    setZone('');
+                    const next = e.target.value;
+                    setWorkPlant(next);
+                    switchPlant?.(next);
                   }}
                 >
-                  <option value="">{t('wizard.cnt.warehousePlaceholder')}</option>
-                  {warehouses.map((w) => (
-                    <option key={w.code} value={w.code}>
-                      {w.name || w.code} · {w.code}
+                  {visiblePlantIds.map((id) => (
+                    <option key={id} value={id}>
+                      {plantDisplayName(id)}
+                      {id === homePlantId ? ' (Ana Üs)' : ''}
                     </option>
                   ))}
                 </select>
               </label>
-              <label className="space-y-1 text-sm">
-                <span className="text-[var(--text-secondary)]">{t('wizard.cnt.zone')}</span>
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
-                  value={zone}
-                  onChange={(e) => setZone(e.target.value)}
-                  disabled={!warehouseCode}
-                >
-                  <option value="">{t('wizard.cnt.zoneAll')}</option>
-                  {zones.map((z) => (
-                    <option key={z.code} value={z.code}>
-                      {z.name || z.code} · {z.code}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-1 text-sm">
-                <span className="text-[var(--text-secondary)]">{t('wizard.cnt.abc')}</span>
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
-                  value={abcClass}
-                  onChange={(e) => setAbcClass(e.target.value)}
-                >
-                  <option value="">{t('wizard.cnt.abcAll')}</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                </select>
-              </label>
-            </div>
-          ) : null}
-
-          {step === 'open' ? (
-            <div className="space-y-4">
-              <p className="text-sm text-[var(--text-secondary)]">{t('wizard.cnt.openBody')}</p>
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1 text-sm">
-                  <span className="text-[var(--text-secondary)]">{t('wizard.cnt.countType')}</span>
-                  <select
-                    className="h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
-                    value={countType}
-                    disabled={Boolean(opened)}
-                    onChange={(e) => setCountType(e.target.value as CountType)}
-                  >
-                    {COUNT_TYPES.map((c) => (
-                      <option key={c} value={c}>
-                        {t(`wizard.cnt.type${c}`)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="space-y-1 text-sm">
-                  <span className="text-[var(--text-secondary)]">{t('wizard.cnt.countDate')}</span>
-                  <Input type="date" value={countDate} disabled={Boolean(opened)} onChange={(e) => setCountDate(e.target.value)} />
-                </label>
-                <label className="space-y-1 text-sm">
-                  <span className="text-[var(--text-secondary)]">{t('wizard.cnt.assignedTo')}</span>
-                  <Input
-                    value={assignedTo}
-                    disabled={Boolean(opened)}
-                    placeholder={t('wizard.cnt.assignedPlaceholder')}
-                    onChange={(e) => setAssignedTo(e.target.value)}
-                  />
-                </label>
-                <label className="space-y-1 text-sm">
-                  <span className="text-[var(--text-secondary)]">{t('wizard.cnt.freeze')}</span>
-                  <select
-                    className="h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 text-sm"
-                    value={freezeMode}
-                    disabled={Boolean(opened)}
-                    onChange={(e) => setFreezeMode(e.target.value as FreezeMode)}
-                  >
-                    {FREEZE_MODES.map((m) => (
-                      <option key={m} value={m}>
-                        {t(`wizard.cnt.freeze${m}`)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex items-center gap-2 text-sm md:col-span-2">
-                  <input
-                    type="checkbox"
-                    checked={blindCount}
-                    disabled={Boolean(opened) || countType === 'Blind'}
-                    onChange={(e) => setBlindCount(e.target.checked)}
-                  />
-                  <span>{t('wizard.cnt.blind')}</span>
-                </label>
-              </div>
-              {opened ? (
-                <p className="text-sm font-medium text-[var(--color-primary)]">
-                  {t('wizard.cnt.alreadyOpen')} {opened.number} · {opened.status}
-                </p>
-              ) : (
-                <Button type="button" disabled={!gate.ok || !canOpenDoc || openMutation.isPending} onClick={() => openMutation.mutate()}>
-                  {openMutation.isPending ? t('saving') : t('wizard.cnt.openAction')}
-                </Button>
-              )}
-              {!opened && !gate.ok ? <p className="text-sm text-[var(--text-muted)]">{gate.reason}</p> : null}
-            </div>
-          ) : null}
-
-          {step === 'count' ? (
-            <div className="space-y-3">
-              <p className="text-sm text-[var(--text-secondary)]">{t('wizard.cnt.countBody')}</p>
-              <p className="font-mono text-sm text-[var(--text-primary)]">
-                {opened?.number ?? t('wizard.cnt.countViewWithoutDoc')}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Input
-                  className="max-w-xs"
-                  value={scan}
-                  placeholder={t('wizard.cnt.countScanPh')}
-                  onChange={(e) => setScan(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') applyScan();
-                  }}
-                />
-                <Button type="button" variant="secondary" onClick={applyScan}>
-                  {t('wizard.cnt.countScan')}
-                </Button>
-                <Button type="button" variant="secondary" onClick={addEmptyLine}>
-                  {t('wizard.cnt.countAdd')}
-                </Button>
-              </div>
-              {lines.length === 0 ? (
-                <p className="text-sm text-[var(--text-muted)]">{t('wizard.cnt.countEmpty')}</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-[var(--border-default)] text-[var(--text-muted)]">
-                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColMaterial')}</th>
-                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColLoc')}</th>
-                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColLot')}</th>
-                        {showSys ? <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColSystem')}</th> : null}
-                        <th className="py-2 pr-3 font-medium">{t('wizard.cnt.countColCounted')}</th>
-                        {showSys ? <th className="py-2 font-medium">{t('wizard.cnt.countColVar')}</th> : null}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lines.map((line) => {
-                        const v = lineVariance(line);
-                        return (
-                          <tr key={line.key} className="border-b border-[var(--border-default)]">
-                            <td className="py-1.5 pr-3">
-                              <Input value={line.materialCode} onChange={(e) => patchLine(line.key, { materialCode: e.target.value })} />
-                            </td>
-                            <td className="py-1.5 pr-3">
-                              <Input value={line.locationCode} onChange={(e) => patchLine(line.key, { locationCode: e.target.value })} />
-                            </td>
-                            <td className="py-1.5 pr-3">
-                              <Input value={line.lotNumber} onChange={(e) => patchLine(line.key, { lotNumber: e.target.value })} />
-                            </td>
-                            {showSys ? <td className="py-1.5 pr-3 font-mono">{line.systemQty}</td> : null}
-                            <td className="py-1.5 pr-3">
-                              <Input
-                                id={`cnt-qty-${line.key}`}
-                                type="number"
-                                value={line.countedQty}
-                                onChange={(e) => patchLine(line.key, { countedQty: e.target.value })}
-                              />
-                            </td>
-                            {showSys ? (
-                              <td className={`py-1.5 font-mono ${v && v !== 0 ? 'text-[var(--color-danger)]' : ''}`}>
-                                {v === null ? '—' : v}
-                              </td>
-                            ) : null}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              <Button type="button" disabled={!canSave || !opened || saveLinesMutation.isPending} onClick={() => saveLinesMutation.mutate()}>
-                {saveLinesMutation.isPending ? t('saving') : t('wizard.cnt.countSave')}
-              </Button>
-              {!canSave ? <p className="text-sm text-[var(--text-muted)]">{t('wizard.cnt.countSaveDenied')}</p> : null}
-              {savedNote ? <p className="text-sm text-[var(--color-primary)]">{savedNote}</p> : null}
-            </div>
-          ) : null}
-
-          {step === 'variance' ? (
-            <div className="space-y-3 text-sm">
-              <p className="text-[var(--text-secondary)]">{t('wizard.cnt.varianceBody')}</p>
-              <p className="text-[var(--text-primary)]">
-                {totals.counted} sayılan · {totals.differed} fark
-              </p>
-              {totals.counted === 0 ? (
-                <p className="text-[var(--text-muted)]">{t('wizard.cnt.varianceNone')}</p>
-              ) : (
-                <ul className="space-y-1">
-                  {lines
-                    .filter((l) => {
-                      const v = lineVariance(l);
-                      return v !== null && v !== 0;
-                    })
-                    .map((l) => (
-                      <li key={l.key} className="font-mono">
-                        {l.materialCode} · {l.locationCode} · {showSys ? lineVariance(l) : t('wizard.cnt.countColCounted')}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-          ) : null}
-
-          {step === 'close' ? (
-            <div className="space-y-3 text-sm">
-              <p className="text-[var(--text-secondary)]">{t('wizard.cnt.closeBody')}</p>
-              <p className="font-medium text-[var(--text-primary)]">
-                {opened ? `${opened.number} · ${opened.status}` : t('wizard.cnt.countViewWithoutDoc')}
-              </p>
-              <Button type="button" disabled={!canSave || !opened || closeMutation.isPending} onClick={() => closeMutation.mutate()}>
-                {closeMutation.isPending ? t('saving') : t('wizard.cnt.closeAction')}
-              </Button>
-            </div>
-          ) : null}
-
-          {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
-
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" disabled={stepIndex === 0} onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}>
-              {t('wizard.back')}
-            </Button>
-            {stepIndex < STEPS.length - 1 ? (
-              <Button type="button" onClick={() => setStep(STEPS[stepIndex + 1])}>
-                {t('wizard.next')}
-              </Button>
             ) : (
-              <Link to="/inventory/counts/cycle-counts">
-                <Button type="button" variant="secondary">
-                  {t('wizard.backToLibrary')}
-                </Button>
-              </Link>
+              <p className="text-sm text-[var(--text-muted)] self-end">
+                {isHomeContext ? 'Yalnızca Ana Üs sayımı.' : `Çalışma tesisi: ${plantDisplayName(workPlant)}`}
+              </p>
             )}
+            <label className="text-sm">
+              Depo
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={warehouseCode}
+                onChange={(e) => setWarehouseCode(e.target.value)}
+                disabled={Boolean(opened)}
+              >
+                <option value="">Seçin</option>
+                {warehouses.map((w) => (
+                  <option key={w.code} value={w.code}>
+                    {w.code} · {w.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Lokasyon
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={locationCode}
+                onChange={(e) => setLocationCode(e.target.value)}
+                disabled={Boolean(opened)}
+              >
+                <option value="">Tümü</option>
+                {locations.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.code} · {l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Sayım tipi
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={countType}
+                onChange={(e) => setCountType(e.target.value as 'Normal' | 'Blind')}
+                disabled={Boolean(opened)}
+              >
+                <option value="Normal">Normal Sayım</option>
+                <option value="Blind">Kör Sayım</option>
+              </select>
+            </label>
+            <label className="text-sm">
+              Açıklama
+              <Input value={notes} onChange={(e) => setNotes(e.target.value)} disabled={Boolean(opened)} />
+            </label>
           </div>
+          {!opened ? (
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={!canOpenDoc || !gate.ok || startMut.isPending} onClick={() => startMut.mutate()}>
+                Sayımı başlat
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={!warehouseCode}
+                onClick={() =>
+                  downloadFieldCountTemplate(
+                    materials,
+                    [],
+                    warehouseCode,
+                  )
+                }
+              >
+                Sayım şablonunu indir
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm">
+              {opened.number} · {opened.status}
+              {opened.snapshotAt ? ` · snapshot ${new Date(opened.snapshotAt).toLocaleString('tr-TR')}` : ''}
+            </p>
+          )}
+          {!gate.ok && !opened ? <p className="text-sm text-red-600">{gate.reason}</p> : null}
         </CardContent>
       </Card>
+
+      {opened ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Giriş yöntemleri</CardTitle>
+            <CardDescription>
+              Şablon {opened.number ? `${opened.number}-sayim.xlsx` : 'sayım kodu' } adıyla iner; aynı dosyayı kaydedip yükleyin.
+              Paket sütununa 1, 2, 3 yazın — sistem paket no ve barkod üretir.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              disabled={!counting}
+              onClick={() =>
+                downloadFieldCountTemplate(
+                  materials,
+                  snapshotLines.map((l) => ({
+                    materialCode: l.materialCode,
+                    materialName: l.materialName,
+                  })),
+                  opened.number,
+                )
+              }
+            >
+              Sayım şablonunu indir
+            </Button>
+            <label className="inline-flex">
+              <input
+                type="file"
+                accept=".csv,.xls,.xlsx,.xml,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="hidden"
+                disabled={!counting || !canSave}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void onExcel(f);
+                  e.target.value = '';
+                }}
+              />
+              <span className="inline-flex h-9 cursor-pointer items-center rounded-md border px-3 text-sm">Excel yükle</span>
+            </label>
+            <Button variant="secondary" disabled={!counting} onClick={() => setAiPreview([])}>
+              Sayım listesi / fotoğraf
+            </Button>
+            <Button variant="secondary" disabled={!counting} onClick={() => setAddOpen(true)}>
+              Hızlı giriş / malzeme ekle
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {excelPreview ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sayım dosyası kontrolü</CardTitle>
+            <CardDescription>
+              Toplam {excelPreview.total} · Unique tanım {excelPreview.uniqueCount} · Eşleşen {excelPreview.matched} ·
+              Eşleştirme gereken {excelPreview.suggested} · Yeni aday {excelPreview.newCandidates} · Hatalı{' '}
+              {excelPreview.invalid}. Stoğa yazılmaz.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {excelPreview.uniques
+              .filter((u) => u.status === 'SUGGESTED' || u.status === 'NEW_CANDIDATE')
+              .map((u) => (
+                <div key={u.key} className="rounded-md border border-[var(--border)] p-3 space-y-2">
+                  <p className="text-sm font-medium">
+                    Excel tanımı: {u.excelLabel}{' '}
+                    <span className="text-[var(--text-muted)] font-normal">({u.rowCount} satır)</span>
+                  </p>
+                  {u.status === 'SUGGESTED' ? (
+                    <>
+                      <p className="text-sm">Önerilen material: {u.suggestedName || '—'}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          disabled={!u.suggestedId}
+                          onClick={() => {
+                            const card = materials.find((m) => m.id === u.suggestedId);
+                            if (card) setExcelPreview((p) => (p ? applyLabelMapping(p, u.excelLabel, card) : p));
+                          }}
+                        >
+                          Eşleştir
+                        </Button>
+                        <select
+                          className="rounded-md border border-[var(--border)] bg-transparent px-2 py-1 text-sm"
+                          defaultValue=""
+                          onChange={(e) => {
+                            const card = materials.find((m) => m.id === e.target.value);
+                            if (!card) return;
+                            setExcelPreview((p) => (p ? applyLabelMapping(p, u.excelLabel, card) : p));
+                          }}
+                        >
+                          <option value="">Başka malzeme seç</option>
+                          {materials.map((m) => (
+                            <option key={m.id || m.code} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setCreateDraft(emptyCountMaterialDraft(u.excelLabel));
+                            setCreateError(null);
+                            setCreateFor(u.excelLabel);
+                          }}
+                        >
+                          Yeni malzeme oluştur
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm">Bu tanım Material Master’da bulunamadı.</p>
+                      <div className="flex flex-wrap gap-2">
+                        <select
+                          className="rounded-md border border-[var(--border)] bg-transparent px-2 py-1 text-sm"
+                          defaultValue=""
+                          onChange={(e) => {
+                            const card = materials.find((m) => m.id === e.target.value);
+                            if (!card) return;
+                            setExcelPreview((p) => (p ? applyLabelMapping(p, u.excelLabel, card) : p));
+                          }}
+                        >
+                          <option value="">Mevcut malzemeyle eşleştir</option>
+                          {materials.map((m) => (
+                            <option key={m.id || m.code} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          disabled={!canMintMaterial}
+                          onClick={() => {
+                            setCreateDraft(emptyCountMaterialDraft(u.excelLabel));
+                            setCreateError(null);
+                            setCreateFor(u.excelLabel);
+                          }}
+                        >
+                          Yeni malzeme kartı oluştur
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setExcelPreview((p) => (p ? skipUniqueLabel(p, u.excelLabel) : p))}
+                        >
+                          Bu satırları atla
+                        </Button>
+                      </div>
+                      {!canMintMaterial ? (
+                        <p className="text-xs text-[var(--text-muted)]">
+                          Yeni kart yalnızca Material.Create yetkisi (Administrator) ile oluşturulur. Aday kaydı duruyor.
+                        </p>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[var(--text-muted)]">
+                    <th>Excel Malzemesi</th>
+                    <th>NASWOOD Malzemesi</th>
+                    <th>Gerçek ölçü</th>
+                    <th>Adet</th>
+                    <th>Paket/İstif</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {excelPreview.rows.map((r) => (
+                    <tr key={r.excelRow} className="border-t border-[var(--border)]">
+                      <td>{r.materialLabel}</td>
+                      <td>{r.materialName || r.suggestedName || '—'}</td>
+                      <td>{[r.thicknessMm, r.widthMm, r.lengthMm].filter((x) => x != null).join('×') || '—'}</td>
+                      <td>{r.pieceCount ?? r.quantity ?? '—'}</td>
+                      <td>{r.physicalGroupLabel || '—'}</td>
+                      <td>
+                        {r.skipped ? 'ATLANDI' : previewStatusTr(r.status)}
+                        {r.error ? <div className="text-xs text-red-600">{r.error}</div> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={excelPreview.matched === 0} onClick={confirmExcelPreview}>
+                Eşleşenleri sayıma ekle
+              </Button>
+              <Button variant="secondary" onClick={() => setExcelPreview(null)}>
+                Önizlemeyi kapat
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {createFor ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Yeni malzeme kartı</CardTitle>
+            <CardDescription>
+              Excel tanımı: {createFor}. Kod otomatik. Fiziksel sayım ölçüsü nominal olmaz.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <label className="text-sm md:col-span-2">
+              Ad
+              <Input value={createDraft.name} onChange={(e) => setCreateDraft((d) => ({ ...d, name: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Ana grup
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={createDraft.mainCategory}
+                onChange={(e) =>
+                  setCreateDraft((d) => ({ ...d, mainCategory: e.target.value as CountMaterialCreateDraft['mainCategory'] }))
+                }
+              >
+                <option value="HM">Hammadde</option>
+                <option value="YM">Yarı Mamul</option>
+                <option value="MP">Masif Panel</option>
+                <option value="TW">Thermowood</option>
+              </select>
+            </label>
+            <label className="text-sm">
+              Malzeme cinsi
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={createDraft.materialTypeToken}
+                onChange={(e) => setCreateDraft((d) => ({ ...d, materialTypeToken: e.target.value }))}
+              >
+                {HM_TYPE_OPTIONS.map((o) => (
+                  <option key={o.token} value={o.token}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Ağaç türü
+              <select
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-transparent px-3 py-2"
+                value={createDraft.woodToken}
+                onChange={(e) => setCreateDraft((d) => ({ ...d, woodToken: e.target.value }))}
+              >
+                {WOOD_OPTIONS_HM.map((o) => (
+                  <option key={o.token} value={o.token}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Nominal kalınlık (opsiyonel)
+              <Input value={createDraft.thicknessMm} onChange={(e) => setCreateDraft((d) => ({ ...d, thicknessMm: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Nominal genişlik (opsiyonel)
+              <Input value={createDraft.widthMm} onChange={(e) => setCreateDraft((d) => ({ ...d, widthMm: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Stok birimi
+              <Input value={createDraft.stockUom} onChange={(e) => setCreateDraft((d) => ({ ...d, stockUom: e.target.value }))} />
+            </label>
+            <label className="text-sm">
+              Sayım birimi
+              <Input value={createDraft.countUom} onChange={(e) => setCreateDraft((d) => ({ ...d, countUom: e.target.value }))} />
+            </label>
+            <p className="text-sm md:col-span-2">
+              Sistem kodu: {previewCountMaterialCode(createDraft, materials.map((m) => m.code)) || '—'}
+            </p>
+            {createError ? <p className="text-sm text-red-600 md:col-span-2">{createError}</p> : null}
+            <div className="flex gap-2 md:col-span-2">
+              <Button onClick={() => void createCandidateMaterial()}>Oluştur ve eşleştir</Button>
+              <Button variant="secondary" onClick={() => setCreateFor(null)}>
+                Vazgeç
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {opened?.midCountMovement ? (
+        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
+          SAYIM SIRASINDA STOK HAREKETİ VAR ({opened.midCountMovementCount}). Snapshot korunur; bu otomatik hata değildir.
+        </p>
+      ) : null}
+
+      {opened && counting ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sistem stok listesi</CardTitle>
+            <CardDescription>Sayım başındaki snapshot. Kör sayımda miktar gizlidir.</CardDescription>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[var(--text-muted)]">
+                  <th className="py-1">Malzeme</th>
+                  <th>Lokasyon</th>
+                  <th>Lot</th>
+                  <th>Sistem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshotLines.map((l) => (
+                  <tr key={l.id} className="border-t border-[var(--border)]">
+                    <td className="py-1">
+                      {l.materialCode}
+                      <div className="text-xs text-[var(--text-muted)]">{l.materialName}</div>
+                    </td>
+                    <td>{l.locationCode}</td>
+                    <td>{l.lotUnknown ? 'LOT BELİRSİZ' : l.batchNumber || '—'}</td>
+                    <td>{showSys ? `${l.systemQuantityAtStart} ${l.stockUnit}` : 'GİZLİ'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {snapshotLines.length === 0 ? <p className="text-sm text-[var(--text-muted)]">Bu depoda snapshot satırı yok — malzeme ekleyin.</p> : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {opened && counting ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sayılanlar</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {draftLines.map((l, idx) => {
+              const mat = materials.find((m) => m.code === l.materialCode);
+              const policy = resolvePolicy(mat ?? {});
+              const calc = calculateStockQty(policy, {
+                thicknessMm: n(l.thicknessMm),
+                widthMm: n(l.widthMm),
+                lengthMm: n(l.lengthMm),
+                pieceCount: n(l.pieceCount),
+                measuredVolumeM3: n(l.measuredVolumeM3),
+              });
+              const dup = draftLines.filter(
+                (o) =>
+                  physicalKey(o.materialCode, o.locationCode, '', n(o.thicknessMm), n(o.widthMm), n(o.lengthMm)) ===
+                  physicalKey(l.materialCode, l.locationCode, '', n(l.thicknessMm), n(l.widthMm), n(l.lengthMm)),
+              );
+              return (
+                <div key={l.key} className="grid gap-2 rounded-md border border-[var(--border)] p-2 md:grid-cols-8">
+                  <div className="md:col-span-2 text-sm">
+                    {l.materialName}
+                    <div className="text-xs text-[var(--text-muted)]">{l.materialCode}</div>
+                    {l.physicalGroupLabel ? (
+                      <div className="text-xs text-[var(--text-muted)]">İstif: {l.physicalGroupLabel}</div>
+                    ) : null}
+                    {dup.length > 1 && !l.keepSeparate ? (
+                      <div className="text-xs text-amber-600">
+                        Çift satır{' '}
+                        <button
+                          className="underline"
+                          type="button"
+                          onClick={() => {
+                            const keep = dup[0]!;
+                            const pcs = dup.reduce((s, x) => s + (n(x.pieceCount) ?? 0), 0);
+                            setDraftLines((prev) => [
+                              ...prev.filter((x) => !dup.some((d) => d.key === x.key)),
+                              { ...keep, pieceCount: String(pcs) },
+                            ]);
+                          }}
+                        >
+                          Birleştir
+                        </button>{' '}
+                        /{' '}
+                        <button
+                          className="underline"
+                          type="button"
+                          onClick={() =>
+                            setDraftLines((prev) => prev.map((x) => (x.key === l.key ? { ...x, keepSeparate: true } : x)))
+                          }
+                        >
+                          Ayrı tut
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {policy.dimsRequired || policy.mode === 'CubicMeter' ? (
+                    <>
+                      <Input placeholder="Kalınlık" value={l.thicknessMm} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, thicknessMm: e.target.value } : x)))} />
+                      <Input placeholder="Genişlik" value={l.widthMm} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, widthMm: e.target.value } : x)))} />
+                      <Input placeholder="Boy" value={l.lengthMm} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, lengthMm: e.target.value } : x)))} />
+                    </>
+                  ) : policy.mode === 'SquareMeter' ? (
+                    <>
+                      <Input placeholder="Genişlik" value={l.widthMm} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, widthMm: e.target.value } : x)))} />
+                      <Input placeholder="Boy" value={l.lengthMm} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, lengthMm: e.target.value } : x)))} />
+                      <span />
+                    </>
+                  ) : policy.mode === 'MeasuredVolume' ? (
+                    <>
+                      <Input placeholder="Hacim m³" value={l.measuredVolumeM3} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, measuredVolumeM3: e.target.value } : x)))} />
+                      <span />
+                      <span />
+                    </>
+                  ) : (
+                    <span className="md:col-span-3 text-xs text-[var(--text-muted)]">Ölçü zorunlu değil</span>
+                  )}
+                  <Input placeholder="Adet" value={l.pieceCount} onChange={(e) => setDraftLines((p) => p.map((x, i) => (i === idx ? { ...x, pieceCount: e.target.value } : x)))} />
+                  <div className="text-sm self-center">{calc.ok ? `${calc.qty.toFixed(4)} ${policy.stockUnit}` : calc.error}</div>
+                  <Button variant="secondary" onClick={() => setDraftLines((p) => p.filter((_, i) => i !== idx))}>
+                    Sil
+                  </Button>
+                </div>
+              );
+            })}
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={!canSave || saveMut.isPending} onClick={() => saveMut.mutate()}>
+                Sayılanları kaydet
+              </Button>
+              <Button disabled={!canSave || completeMut.isPending} onClick={() => completeMut.mutate()}>
+                Sayımı tamamla
+              </Button>
+              <Button variant="secondary" onClick={() => cancelMut.mutate()}>
+                İptal
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {opened && (review || posted || physicalLines.length > 0) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Stok sayım sonucu</CardTitle>
+            <CardDescription>
+              Toplam {opened.summary?.totalLines ?? resultRows.length} · Uyumlu {opened.summary?.matched ?? 0} · Farklı{' '}
+              {opened.summary?.variance ?? 0} · Eşleşmeyen {(opened.summary?.unexpected ?? 0) + (opened.summary?.missing ?? 0)} ·
+              Sayım sırasında hareket {opened.midCountMovement ? 'VAR' : 'yok'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2 text-sm">
+              {(['all', 'variance', 'matched', 'unmatched'] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  className={filter === f ? 'underline' : 'text-[var(--text-muted)]'}
+                  onClick={() => setFilter(f)}
+                >
+                  {f === 'all' ? 'Tümü' : f === 'variance' ? 'Fark olanlar' : f === 'matched' ? 'Uyumlu' : 'Eşleşmeyen'}
+                </button>
+              ))}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[var(--text-muted)]">
+                    <th>Malzeme</th>
+                    <th>Fiziksel ölçü</th>
+                    <th>Sistem</th>
+                    <th>Sayım</th>
+                    <th>Fark</th>
+                    <th>Birim</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRows.map((r, i) => (
+                    <tr key={`${r.code}-${i}`} className="border-t border-[var(--border)]">
+                      <td>
+                        {r.code}
+                        <div className="text-xs text-[var(--text-muted)]">{r.material}</div>
+                      </td>
+                      <td>{r.phys}</td>
+                      <td>{showSys || review || posted ? r.system : 'GİZLİ'}</td>
+                      <td>{r.counted}</td>
+                      <td>{showSys || review || posted ? r.diff : '—'}</td>
+                      <td>{r.unit}</td>
+                      <td>{statusLabel(r.status)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {review && !posted ? (
+              <Button disabled={!canSave || postMut.isPending} onClick={() => postMut.mutate()}>
+                Farkları onayla ve stoğa işle
+              </Button>
+            ) : null}
+            {postResult ? <p className="text-sm">{postResult}</p> : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {addOpen ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Malzeme ekle</CardTitle>
+            <CardDescription>
+              Material Master araması. Kart yoksa serbest metin stok yok —{' '}
+				<Link to="/inventory/master-data/materials" className="underline">
+                Material Master
+              </Link>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Input
+              placeholder="Kod, ad, ağaç, cins, 50 100…"
+              value={addQuery}
+              onChange={(e) => setAddQuery(e.target.value)}
+            />
+            {materialHits.map((m) => (
+              <button
+                key={m.id || m.code}
+                type="button"
+                className="block w-full rounded-md border border-[var(--border)] px-3 py-2 text-left text-sm"
+                onClick={() => addDraft(m as MaterialOpt)}
+              >
+                {m.code} · {m.name}
+              </button>
+            ))}
+            {addQuery && materialHits.length === 0 ? (
+              <p className="text-sm text-red-600">Malzeme kartı bulunamadı. Yeni kart sayım ekranında oluşturulmaz.</p>
+            ) : null}
+            <Button variant="secondary" onClick={() => setAddOpen(false)}>
+              Kapat
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {aiPreview ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>AI sayım önizlemesi</CardTitle>
+            <CardDescription>
+              {ocrEngineAvailable()
+                ? 'Motor metni okudu. Onayınız olmadan stok yazılmaz.'
+                : 'Sunucuda OCR/AI motoru yok. Fotoğraf dosyası otomatik okunmaz. Metni yapıştırın veya yazın; öneriler onayınızdan sonra tabloya eklenir. Sahte güven yüzdesi gösterilmez.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <textarea
+              className="w-full min-h-28 rounded-md border border-[var(--border)] bg-transparent p-2 text-sm"
+              placeholder={'Çam\n45x90x4000 - 120\n45x90x3000 - 80'}
+              value={aiText}
+              onChange={(e) => setAiText(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setAiPreview(parseCountListText(aiText))}
+              >
+                Metni çözümle
+              </Button>
+              <label className="inline-flex items-center text-sm">
+                <input
+                  type="file"
+                  accept="image/*,.pdf,.txt"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.type.startsWith('text') || f.name.endsWith('.txt')) {
+                      setAiText(await f.text());
+                    } else {
+                      setSavedNote('Görüntü/PDF için OCR motoru yok — listeyi yazın. Dosya yalnızca kanıt olarak yüklenebilir (files API).');
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                <span className="cursor-pointer underline">Dosya seç</span>
+              </label>
+            </div>
+            {(aiPreview ?? []).map((s, i) => {
+              const ranked = rankMaterialMatches(s.rawMaterial, materials, formatMm(s.thicknessMm, s.widthMm, s.lengthMm), 3);
+              const top = ranked[0];
+              return (
+                <div key={i} className="rounded-md border border-[var(--border)] p-2 text-sm space-y-1">
+                  <div>
+                    Malzeme: {s.rawMaterial}
+                    {s.suggestionKind === 'package-estimate' ? ' · AI ÖNERİSİ (paket tahmini, stok değil)' : ''}
+                  </div>
+                  <div>
+                    Önerilen eşleşme:{' '}
+                    {top && top.status !== 'NO_MATCH' ? `${top.material.code} (${top.status})` : 'yok — Material Master’dan seçin'}
+                  </div>
+                  <div>
+                    Ölçü: {formatMm(s.thicknessMm, s.widthMm, s.lengthMm)} · Adet: {s.pieceCount ?? '—'}
+                  </div>
+                  {top && top.status !== 'NO_MATCH' ? (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          applyAiRow(s, top.material as MaterialOpt);
+                          setAiPreview((prev) => (prev ?? []).filter((_, j) => j !== i));
+                        }}
+                      >
+                        Onayla
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-red-600">Malzeme kartı bulunamadı</p>
+                  )}
+                  {ranked.length > 1 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {ranked.slice(1).map((r) => (
+                        <button
+                          key={r.material.code}
+                          type="button"
+                          className="text-xs underline"
+                          onClick={() => {
+                            applyAiRow(s, r.material as MaterialOpt);
+                            setAiPreview((prev) => (prev ?? []).filter((_, j) => j !== i));
+                          }}
+                        >
+                          Düzelt: {r.material.code}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+            <Button variant="secondary" onClick={() => setAiPreview(null)}>
+              Kapat
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {savedNote ? <p className="text-sm text-[var(--text-muted)]">{savedNote}</p> : null}
+      {warehousesQuery.isError ? (
+        <p className="text-sm text-red-600">{(warehousesQuery.error as Error).message}</p>
+      ) : null}
+      {sessionQuery.isError ? (
+        <p className="text-sm text-red-600">{(sessionQuery.error as Error).message}</p>
+      ) : null}
     </div>
   );
 }

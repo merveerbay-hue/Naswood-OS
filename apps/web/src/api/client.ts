@@ -95,13 +95,23 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
 
-  const payload = await parseJson<T>(response);
+  let payload: ApiResponse<T> | null = null;
+  try {
+    payload = await parseJson<T>(response);
+  } catch {
+    throw new ApiClientError(response.status, null, `${options.method ?? 'GET'} ${path} → ${response.status} (JSON yok)`);
+  }
 
-  if (!response.ok || !payload || !payload.success) {
+  if (!response.ok || !payload || !('success' in payload ? payload.success : false)) {
+    const raw = payload as (ApiFailure & { title?: string; detail?: string }) | null;
     throw new ApiClientError(
       response.status,
-      (payload as ApiFailure | null) ?? null,
-      `Request failed (${response.status})`,
+      raw,
+      raw?.errors?.[0]?.message ??
+        raw?.message ??
+        raw?.title ??
+        raw?.detail ??
+        `${options.method ?? 'GET'} ${path} → ${response.status}`,
     );
   }
 

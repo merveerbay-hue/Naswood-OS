@@ -218,4 +218,29 @@ public sealed class InventoryMovementRepository : IInventoryMovementRepository
         }
         return await query.OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    public async Task<int> CountPostedAfterAsync(
+        string plantId,
+        string warehouseCode,
+        string? locationCode,
+        DateTimeOffset after,
+        string? excludeDocumentNumber,
+        CancellationToken cancellationToken = default)
+    {
+        var plant = plantId.Trim();
+        var wh = warehouseCode.Trim();
+        var query = _db.Set<InventoryMovement>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PlantId == plant && x.WarehouseCode == wh && x.CreatedAt >= after);
+        if (!string.IsNullOrWhiteSpace(locationCode))
+        {
+            var loc = locationCode.Trim();
+            query = query.Where(x => x.LocationCode == loc);
+        }
+        if (!string.IsNullOrWhiteSpace(excludeDocumentNumber))
+        {
+            var doc = excludeDocumentNumber.Trim();
+            query = query.Where(x => x.DocumentNumber != doc);
+        }
+        return await query.CountAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

@@ -56,6 +56,13 @@ public interface IInventoryMovementRepository
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryMovement>> ListByDocumentAsync(
         string documentNumber, string? plantId = null, CancellationToken cancellationToken = default);
+    Task<int> CountPostedAfterAsync(
+        string plantId,
+        string warehouseCode,
+        string? locationCode,
+        DateTimeOffset after,
+        string? excludeDocumentNumber,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record ExecuteGoodsReceiptCommand(

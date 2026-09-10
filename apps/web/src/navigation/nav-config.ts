@@ -46,7 +46,7 @@ export const navigationTree: NavItem[] = [
         id: 'inventory-counts-ws',
         label: 'Sayım & Düzeltme',
         children: [
-          { id: 'inventory-counts', label: 'Çevrim Sayımı', path: '/inventory/counts/cycle-counts' },
+          { id: 'inventory-counts', label: 'Stok Sayımı', path: '/inventory/counts/cycle-counts' },
           { id: 'inventory-adjustments', label: 'Düzeltme', path: '/inventory/counts/adjustments' },
         ],
       },

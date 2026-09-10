@@ -15,6 +15,7 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Inventory.GoodsIssue> GoodsIssues => Set<Naswood.Modules.Business.Domain.Inventory.GoodsIssue>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.StockTransfer> StockTransfers => Set<Naswood.Modules.Business.Domain.Inventory.StockTransfer>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.InventoryCount> InventoryCounts => Set<Naswood.Modules.Business.Domain.Inventory.InventoryCount>();
+    public DbSet<Naswood.Modules.Business.Domain.Inventory.InventoryCountLine> InventoryCountLines => Set<Naswood.Modules.Business.Domain.Inventory.InventoryCountLine>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.InventoryAdjustment> InventoryAdjustments => Set<Naswood.Modules.Business.Domain.Inventory.InventoryAdjustment>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.MaterialIdentity> MaterialIdentities => Set<Naswood.Modules.Business.Domain.Inventory.MaterialIdentity>();
     public DbSet<Naswood.Modules.Business.Domain.Inventory.InventoryPackage> InventoryPackages => Set<Naswood.Modules.Business.Domain.Inventory.InventoryPackage>();
@@ -251,8 +252,42 @@ public sealed class BusinessDbContext : DbContext
             entity.Ignore(x => x.DomainEvents);
             entity.Property(x => x.Number).HasMaxLength(200);
             entity.Property(x => x.WarehouseCode).HasMaxLength(200);
+            entity.Property(x => x.LocationCode).HasMaxLength(200);
+            entity.Property(x => x.CountType).HasMaxLength(40);
             entity.Property(x => x.Status).HasMaxLength(200);
-            entity.Property(x => x.Notes).HasMaxLength(200);
+            entity.Property(x => x.Notes).HasColumnType("text");
+            entity.Property(x => x.StartedBy).HasMaxLength(200);
+            entity.Property(x => x.CountedBy).HasMaxLength(200);
+            entity.Property(x => x.CompletedBy).HasMaxLength(200);
+            entity.Property(x => x.ApprovedBy).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryCountLine>(entity =>
+        {
+            entity.ToTable("business_inventory_inventorycountline");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.HasIndex(x => x.CountId);
+            entity.Property(x => x.Role).HasMaxLength(40);
+            entity.Property(x => x.Source).HasMaxLength(40);
+            entity.Property(x => x.MaterialCode).HasMaxLength(200);
+            entity.Property(x => x.MaterialName).HasMaxLength(400);
+            entity.Property(x => x.LocationCode).HasMaxLength(200);
+            entity.Property(x => x.BatchNumber).HasMaxLength(200);
+            entity.Property(x => x.PackageNumber).HasMaxLength(200);
+            entity.Property(x => x.StockUnit).HasMaxLength(40);
+            entity.Property(x => x.CountUnit).HasMaxLength(40);
+            entity.Property(x => x.Notes).HasColumnType("text");
+            entity.Property(x => x.SystemQuantityAtStart).HasPrecision(18, 6);
+            entity.Property(x => x.CountedQuantity).HasPrecision(18, 6);
+            entity.Property(x => x.CalculatedStockQty).HasPrecision(18, 6);
+            entity.Property(x => x.ThicknessMm).HasPrecision(18, 4);
+            entity.Property(x => x.WidthMm).HasPrecision(18, 4);
+            entity.Property(x => x.LengthMm).HasPrecision(18, 4);
+            entity.Property(x => x.PieceCount).HasPrecision(18, 4);
+            entity.Property(x => x.MeasuredVolumeM3).HasPrecision(18, 6);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryAdjustment>(entity =>
