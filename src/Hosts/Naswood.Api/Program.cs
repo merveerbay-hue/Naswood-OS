@@ -83,6 +83,40 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "CompletedAt" timestamp with time zone NULL;
         ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "ApprovedBy" character varying(200) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "ApprovedAt" timestamp with time zone NULL;
+        CREATE TABLE IF NOT EXISTS business.business_inventory_inventorycountline (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "CountId" uuid NOT NULL,
+            "LineNo" integer NOT NULL,
+            "Role" character varying(40),
+            "Source" character varying(40),
+            "MaterialId" uuid NULL,
+            "MaterialCode" character varying(200),
+            "MaterialName" character varying(400),
+            "LocationCode" character varying(200),
+            "BatchNumber" character varying(200),
+            "LotUnknown" boolean NOT NULL DEFAULT FALSE,
+            "PackageNumber" character varying(200),
+            "ThicknessMm" numeric(18,4) NULL,
+            "WidthMm" numeric(18,4) NULL,
+            "LengthMm" numeric(18,4) NULL,
+            "PieceCount" numeric(18,4) NULL,
+            "MeasuredVolumeM3" numeric(18,6) NULL,
+            "SystemQuantityAtStart" numeric(18,6) NOT NULL DEFAULT 0,
+            "CountedQuantity" numeric(18,6) NOT NULL DEFAULT 0,
+            "StockUnit" character varying(40),
+            "CountUnit" character varying(40),
+            "CalculatedStockQty" numeric(18,6) NOT NULL DEFAULT 0,
+            "KeepSeparate" boolean NOT NULL DEFAULT FALSE,
+            "Approved" boolean NOT NULL DEFAULT FALSE,
+            "Notes" text
+        );
+        CREATE INDEX IF NOT EXISTS "IX_business_inventory_inventorycountline_CountId"
+            ON business.business_inventory_inventorycountline ("CountId");
         """).ConfigureAwait(false);
 }
 

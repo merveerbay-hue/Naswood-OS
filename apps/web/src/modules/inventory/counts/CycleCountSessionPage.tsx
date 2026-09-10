@@ -7,7 +7,7 @@ import { useAuth } from '@/auth/useAuth';
 import { usePlantContext } from '@/auth/usePlantContext';
 import { plantDisplayName } from '@/modules/inventory/locations/locationCatalog';
 import { rankMaterialMatches, type MaterialCandidate } from '@/modules/inventory/receiving/materialMatch';
-import { cancelCount, completeCount, postCount, putCountLines } from './countApi';
+import { cancelCount, completeCount, isCountId, postCount, putCountLines, sessionId } from './countApi';
 import { ocrEngineAvailable, parseCountListText, type ParsedCountSuggestion } from './cycleCountAi';
 import { downloadCountTemplate, mapCountSheet, parseCountWorkbook, type CountExcelRow } from './cycleCountExcel';
 import {
@@ -111,9 +111,9 @@ export function CycleCountSessionPage() {
   });
 
   const sessionQuery = useQuery({
-    queryKey: ['business', 'inventory-counts', opened?.id],
-    enabled: Boolean(opened?.id),
-    queryFn: () => getResource<InventoryCountSession>('inventory-counts', opened!.id),
+    queryKey: ['business', 'inventory-counts', opened ? sessionId(opened) : ''],
+    enabled: isCountId(opened ? sessionId(opened) : ''),
+    queryFn: () => getResource<InventoryCountSession>('inventory-counts', sessionId(opened)),
   });
 
   useEffect(() => {
@@ -176,11 +176,12 @@ export function CycleCountSessionPage() {
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      if (!opened) throw new Error('Sayım oturumu yok.');
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım oturumu yok — önce sayımı başlatın.');
       const lines = draftLines.map((l) => ({
         materialCode: l.materialCode,
         materialName: l.materialName,
-        locationCode: l.locationCode || opened.locationCode || '',
+        locationCode: l.locationCode || opened?.locationCode || '',
         lotUnknown: true,
         thicknessMm: n(l.thicknessMm),
         widthMm: n(l.widthMm),
@@ -191,7 +192,7 @@ export function CycleCountSessionPage() {
         keepSeparate: l.keepSeparate,
         notes: l.note,
       }));
-      return putCountLines(opened.id, lines);
+      return putCountLines(id, lines);
     },
     onSuccess: (doc) => {
       setOpened(doc);
@@ -203,9 +204,10 @@ export function CycleCountSessionPage() {
 
   const completeMut = useMutation({
     mutationFn: async () => {
-      if (!opened) throw new Error('Sayım yok');
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım yok');
       await saveMut.mutateAsync();
-      return completeCount(opened.id);
+      return completeCount(id);
     },
     onSuccess: (doc) => {
       setOpened(doc);
@@ -216,8 +218,9 @@ export function CycleCountSessionPage() {
 
   const postMut = useMutation({
     mutationFn: async () => {
-      if (!opened) throw new Error('Sayım yok');
-      return postCount(opened.id);
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım yok');
+      return postCount(id);
     },
     onSuccess: (res) => {
       setPostResult(
@@ -231,8 +234,9 @@ export function CycleCountSessionPage() {
 
   const cancelMut = useMutation({
     mutationFn: async () => {
-      if (!opened) throw new Error('Sayım yok');
-      return cancelCount(opened.id);
+      const id = sessionId(opened);
+      if (!isCountId(id)) throw new Error('Sayım yok');
+      return cancelCount(id);
     },
     onSuccess: (doc) => setOpened(doc),
     onError: (e: Error) => setError(e.message),
@@ -890,6 +894,12 @@ export function CycleCountSessionPage() {
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {savedNote ? <p className="text-sm text-[var(--text-muted)]">{savedNote}</p> : null}
+      {warehousesQuery.isError ? (
+        <p className="text-sm text-red-600">{(warehousesQuery.error as Error).message}</p>
+      ) : null}
+      {sessionQuery.isError ? (
+        <p className="text-sm text-red-600">{(sessionQuery.error as Error).message}</p>
+      ) : null}
     </div>
   );
 }

@@ -96,6 +96,7 @@ public sealed class InventoryCountController : ControllerBase
         return result.ToActionResult(this, successMessage: "InventoryCount updated.");
     }
 
+    [HttpPost("api/v1/inventory-counts/{id:guid}/lines")]
     [HttpPut("api/v1/inventory-counts/{id:guid}/lines")]
     [RequirePermission("InventoryCount.Update")]
     public async Task<IActionResult> ReplaceLines(
