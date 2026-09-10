@@ -61,6 +61,10 @@ import { SalesReportPage } from './pages/business/SalesReportPage';
 import { ProductionWorkspaceLayout } from './modules/production/ProductionWorkspaceLayout';
 import { ProductionDashboardPage } from './modules/production/overview/ProductionDashboardPage';
 import { ProductionOutputPage } from './modules/production/output/ProductionOutputPage';
+import { ShopFloorHomePage } from './modules/production/shop-floor/ShopFloorHomePage';
+import { ShopFloorWorkCenterPage } from './modules/production/shop-floor/ShopFloorWorkCenterPage';
+import { ShopFloorExecutionPage } from './modules/production/shop-floor/ShopFloorExecutionPage';
+import { ShopFloorFeedbackPage } from './modules/production/shop-floor/ShopFloorFeedbackPage';
 import {
   BomDetailPage,
   BomListPage,
@@ -430,6 +434,10 @@ const prdWip = createRoute({ getParentRoute: () => productionRoute, path: 'execu
 const prdPackaging = createRoute({ getParentRoute: () => productionRoute, path: 'execution/packaging', component: PackagingPage });
 const prdFg = createRoute({ getParentRoute: () => productionRoute, path: 'execution/finished-goods', component: FinishedGoodsPage });
 const prdOutput = createRoute({ getParentRoute: () => productionRoute, path: 'execution/output', component: ProductionOutputPage });
+const prdShopFloor = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor', component: ShopFloorHomePage });
+const prdShopFloorWc = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor/work-centers/$id', component: ShopFloorWorkCenterPage });
+const prdShopFloorExec = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor/executions/$id', component: ShopFloorExecutionPage });
+const prdShopFloorFeedback = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor/feedback', component: ShopFloorFeedbackPage });
 const prdScrap = createRoute({ getParentRoute: () => productionRoute, path: 'execution/scrap', component: ScrapPage });
 const prdRework = createRoute({ getParentRoute: () => productionRoute, path: 'execution/rework', component: ReworkPage });
 const prdBoms = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/boms', component: BomListPage });
@@ -589,6 +597,10 @@ const implemented = new Set([
   '/production/execution/packaging',
   '/production/execution/finished-goods',
   '/production/execution/output',
+  '/production/shop-floor',
+  '/production/shop-floor/work-centers/$id',
+  '/production/shop-floor/executions/$id',
+  '/production/shop-floor/feedback',
   '/production/execution/scrap',
   '/production/execution/rework',
   '/production/master-data/boms',
@@ -731,6 +743,10 @@ export const routeTree = rootRoute.addChildren([
       prdPackaging,
       prdFg,
       prdOutput,
+      prdShopFloor,
+      prdShopFloorWc,
+      prdShopFloorExec,
+      prdShopFloorFeedback,
       prdScrap,
       prdRework,
       prdBoms,

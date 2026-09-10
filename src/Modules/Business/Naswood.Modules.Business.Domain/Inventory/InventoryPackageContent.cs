@@ -86,6 +86,15 @@ public sealed class InventoryPackageContent : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    public void Restore(decimal quantity, decimal? pieceCount)
+    {
+        if (quantity <= 0) throw new InvalidOperationException("Content quantity must be positive.");
+        Quantity += quantity;
+        if (pieceCount is decimal pcs)
+            PieceCount = (PieceCount ?? 0) + pcs;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public bool SameMeasurement(decimal? t, decimal? w, decimal? l)
         => ThicknessMm == t && WidthMm == w && LengthMm == l;
 }

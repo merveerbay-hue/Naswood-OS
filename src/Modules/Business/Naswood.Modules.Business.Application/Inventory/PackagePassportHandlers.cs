@@ -61,6 +61,7 @@ public sealed class PackagePassportLoader
     private readonly IProductionLotSourceRepository _lotSources;
     private readonly IProductionOrderRepository _orders;
     private readonly IPackageRelationRepository _relations;
+    private readonly IProductionExecutionStore _executions;
 
     public PackagePassportLoader(
         IInventoryPackageRepository packages,
@@ -70,7 +71,8 @@ public sealed class PackagePassportLoader
         IBatchRepository batches,
         IProductionLotSourceRepository lotSources,
         IProductionOrderRepository orders,
-        IPackageRelationRepository relations)
+        IPackageRelationRepository relations,
+        IProductionExecutionStore executions)
     {
         _packages = packages;
         _movements = movements;
@@ -80,6 +82,7 @@ public sealed class PackagePassportLoader
         _lotSources = lotSources;
         _orders = orders;
         _relations = relations;
+        _executions = executions;
     }
 
     public async Task<Result<PackagePassportDto>> LoadAsync(
@@ -119,6 +122,7 @@ public sealed class PackagePassportLoader
 
         var sourceLots = Array.Empty<string>();
         var productionOrder = batch?.SourceReferenceNo ?? string.Empty;
+        var executionNumber = "";
         if (batch is not null && string.Equals(batch.SourceType, ProductionLotCodes.SourceType, StringComparison.OrdinalIgnoreCase))
         {
             var links = await _lotSources.ListByProductionLotIdAsync(batch.Id, cancellationToken).ConfigureAwait(false);
@@ -134,6 +138,11 @@ public sealed class PackagePassportLoader
             {
                 var order = await _orders.GetByIdAsync(first.ProductionOrderId, cancellationToken).ConfigureAwait(false);
                 if (order is not null) productionOrder = order.Code;
+                if (first.ProductionOperationExecutionId is Guid eid)
+                {
+                    var ex = await _executions.GetExecutionAsync(eid, cancellationToken).ConfigureAwait(false);
+                    if (ex is not null) executionNumber = ex.Number;
+                }
             }
         }
 
@@ -156,6 +165,7 @@ public sealed class PackagePassportLoader
             SourceType = batch?.SourceType ?? string.Empty,
             SourceReferenceNo = batch?.SourceReferenceNo ?? string.Empty,
             ProductionOrderNumber = productionOrder,
+            ProductionExecutionNumber = executionNumber,
             SourceLotCount = sourceLots.Length,
             SourceLotNumbers = sourceLots,
             Factory = pkg.PlantId ?? string.Empty,

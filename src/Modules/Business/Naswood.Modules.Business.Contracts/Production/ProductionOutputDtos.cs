@@ -37,6 +37,7 @@ public class PreviewProductionOutputRequestDto
 public sealed class PostProductionOutputRequestDto : PreviewProductionOutputRequestDto
 {
     public string Number { get; init; } = string.Empty;
+    public Guid? ProductionOperationExecutionId { get; init; }
 }
 
 public sealed class ProductionOutputPreviewPackageDto
@@ -155,6 +156,9 @@ public sealed class ProductionLotPassportDto
     public string CreatedBy { get; init; } = string.Empty;
     public IReadOnlyList<ProductionOutputPackageCreatedDto> Packages { get; init; } = [];
     public IReadOnlyList<ProductionLotSourceDto> SourceLots { get; init; } = [];
+    public Guid? ProductionOperationExecutionId { get; init; }
+    public string ProductionExecutionNumber { get; init; } = string.Empty;
+    public string OperationName { get; init; } = string.Empty;
 }
 
 public sealed class ProductionLotSourceDto

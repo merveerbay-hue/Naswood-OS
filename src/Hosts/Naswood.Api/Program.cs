@@ -205,6 +205,156 @@ using (var scope = app.Services.CreateScope())
         CREATE UNIQUE INDEX IF NOT EXISTS "UX_packagerelation_edge"
             ON business.business_inventory_packagerelation ("OperationId", "SourcePackageId", "TargetPackageId", "RelationType")
             WHERE "IsDeleted" = false;
+        ALTER TABLE IF EXISTS business.business_production_lot_source ADD COLUMN IF NOT EXISTS "ProductionOperationExecutionId" uuid NULL;
+        ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "ProductionOperationExecutionId" uuid NULL;
+        CREATE TABLE IF NOT EXISTS business.business_production_order_operation (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "ProductionOrderId" uuid NOT NULL,
+            "Sequence" integer NOT NULL,
+            "OperationId" uuid NOT NULL,
+            "WorkCenterId" uuid NOT NULL,
+            "ExpectedMaterialId" uuid NULL,
+            "OutputType" character varying(40) NOT NULL DEFAULT 'NONE',
+            "Status" character varying(40) NOT NULL DEFAULT 'WAITING',
+            "StructuralProductionLotId" uuid NULL
+        );
+        CREATE INDEX IF NOT EXISTS "IX_prd_op_order" ON business.business_production_order_operation ("ProductionOrderId");
+        CREATE TABLE IF NOT EXISTS business.business_production_operation_execution (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "Number" character varying(80) NOT NULL,
+            "ProductionOrderId" uuid NOT NULL,
+            "ProductionOperationId" uuid NOT NULL,
+            "WorkCenterId" uuid NOT NULL,
+            "Status" character varying(40) NOT NULL,
+            "StartedAt" timestamp with time zone NULL,
+            "StartedByUserId" character varying(200) NOT NULL DEFAULT '',
+            "PausedAt" timestamp with time zone NULL,
+            "CompletedAt" timestamp with time zone NULL,
+            "CompletedByUserId" character varying(200) NOT NULL DEFAULT '',
+            "TotalRunMinutes" numeric(18,4) NOT NULL DEFAULT 0,
+            "TotalPauseMinutes" numeric(18,4) NOT NULL DEFAULT 0,
+            "TotalDowntimeMinutes" numeric(18,4) NOT NULL DEFAULT 0,
+            "InputQuantity" numeric(18,4) NOT NULL DEFAULT 0,
+            "OutputQuantity" numeric(18,4) NOT NULL DEFAULT 0,
+            "ScrapQuantity" numeric(18,4) NOT NULL DEFAULT 0,
+            "Unit" character varying(40) NOT NULL DEFAULT '',
+            "DestinationWarehouseId" uuid NULL,
+            "DestinationLocationId" uuid NULL,
+            "StructuralProductionLotId" uuid NULL,
+            "ProductionOutputId" uuid NULL,
+            "IntervalStartedAt" timestamp with time zone NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_exec_number"
+            ON business.business_production_operation_execution ("PlantId", "Number")
+            WHERE "IsDeleted" = false AND "Number" <> '';
+        CREATE TABLE IF NOT EXISTS business.business_production_execution_event (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "ExecutionId" uuid NOT NULL,
+            "EventType" character varying(40) NOT NULL,
+            "OccurredAt" timestamp with time zone NOT NULL,
+            "UserId" character varying(200) NOT NULL DEFAULT '',
+            "ReasonCode" character varying(40) NOT NULL DEFAULT '',
+            "Note" character varying(500) NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS "IX_prd_exec_event" ON business.business_production_execution_event ("ExecutionId");
+        CREATE TABLE IF NOT EXISTS business.business_production_execution_consumption (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "ExecutionId" uuid NOT NULL,
+            "ProductionOrderId" uuid NOT NULL,
+            "SourcePackageId" uuid NOT NULL,
+            "SourceLotId" uuid NOT NULL,
+            "SourceMaterialId" uuid NOT NULL,
+            "SourceMaterialCode" character varying(200) NOT NULL DEFAULT '',
+            "PackageNumber" character varying(80) NOT NULL DEFAULT '',
+            "Barcode" character varying(80) NOT NULL DEFAULT '',
+            "SourceWarehouseCode" character varying(200) NOT NULL DEFAULT '',
+            "SourceLocationCode" character varying(200) NOT NULL DEFAULT '',
+            "PackageContentId" uuid NULL,
+            "PhysicalMeasure" character varying(80) NOT NULL DEFAULT '',
+            "ConsumedQuantity" numeric(18,4) NOT NULL,
+            "Unit" character varying(40) NOT NULL DEFAULT '',
+            "RemainingPackageQuantity" numeric(18,4) NOT NULL DEFAULT 0,
+            "IdempotencyKey" character varying(80) NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS "IX_prd_exec_cons" ON business.business_production_execution_consumption ("ExecutionId");
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelReason" character varying(40) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelNote" character varying(500) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelledByUserId" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CompleteIdempotencyKey" character varying(80) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CompletePayloadHash" character varying(64) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelIdempotencyKey" character varying(80) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_operation_execution ADD COLUMN IF NOT EXISTS "CancelPayloadHash" character varying(64) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_execution_consumption ADD COLUMN IF NOT EXISTS "PayloadHash" character varying(64) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_execution_consumption ADD COLUMN IF NOT EXISTS "ConsumedPieceCount" numeric(18,4) NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_exec_open_operation"
+            ON business.business_production_operation_execution ("ProductionOperationId")
+            WHERE "IsDeleted" = false AND "Status" IN ('RUNNING','PAUSED','NOT_STARTED');
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_out_execution"
+            ON business.business_production_output ("ProductionOperationExecutionId")
+            WHERE "IsDeleted" = false AND "ProductionOperationExecutionId" IS NOT NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS "UX_prd_exec_consume_idem"
+            ON business.business_production_execution_consumption ("ExecutionId", "IdempotencyKey")
+            WHERE "IsDeleted" = false AND "IdempotencyKey" <> '';
+        CREATE TABLE IF NOT EXISTS business.business_production_execution_scrap (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "ExecutionId" uuid NOT NULL,
+            "Quantity" numeric(18,4) NOT NULL,
+            "Unit" character varying(40) NOT NULL DEFAULT '',
+            "ReasonCode" character varying(40) NOT NULL DEFAULT '',
+            "Note" character varying(500) NOT NULL DEFAULT '',
+            "UserId" character varying(200) NOT NULL DEFAULT '',
+            "RecordedAt" timestamp with time zone NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS "IX_prd_exec_scrap" ON business.business_production_execution_scrap ("ExecutionId");
+        CREATE TABLE IF NOT EXISTS business.business_production_shopfloor_feedback (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "Topic" character varying(40) NOT NULL,
+            "Note" character varying(500) NOT NULL DEFAULT '',
+            "Screen" character varying(200) NOT NULL DEFAULT '',
+            "UserId" character varying(200) NOT NULL DEFAULT '',
+            "WorkCenterId" uuid NULL,
+            "WorkCenterCode" character varying(80) NOT NULL DEFAULT '',
+            "ExecutionId" uuid NULL,
+            "ExecutionNumber" character varying(80) NOT NULL DEFAULT '',
+            "ProductionOrderNumber" character varying(80) NOT NULL DEFAULT '',
+            "Impact" character varying(20) NOT NULL DEFAULT 'CAN_CONTINUE',
+            "AppVersion" character varying(120) NOT NULL DEFAULT '',
+            "GitSha" character varying(40) NOT NULL DEFAULT ''
+        );
+        ALTER TABLE IF EXISTS business.business_production_shopfloor_feedback ADD COLUMN IF NOT EXISTS "Impact" character varying(20) NOT NULL DEFAULT 'CAN_CONTINUE';
+        ALTER TABLE IF EXISTS business.business_production_shopfloor_feedback ADD COLUMN IF NOT EXISTS "AppVersion" character varying(120) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_production_shopfloor_feedback ADD COLUMN IF NOT EXISTS "GitSha" character varying(40) NOT NULL DEFAULT '';
+        CREATE INDEX IF NOT EXISTS "IX_prd_sf_feedback_created" ON business.business_production_shopfloor_feedback ("CreatedAt");
         UPDATE business.business_inventory_package
         SET "PublicId" = replace("Id"::text, '-', '')
         WHERE "PublicId" = '';

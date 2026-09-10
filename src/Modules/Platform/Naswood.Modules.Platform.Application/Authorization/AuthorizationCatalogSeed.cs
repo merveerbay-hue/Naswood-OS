@@ -272,6 +272,13 @@ public static class AuthorizationCatalogSeed
             ("PurchaseOrder.Own", "Purchasing", "PurchaseOrder", "Own", null, "Own Purchase Order Access"),
             ("SalesOrder.Approve", "Sales", "SalesOrder", "Approve", null, "Approve Sales Order"),
             ("Production.View", "Production", null, "View", null, "View Production"),
+            ("Production.Execution.View", "Production", "Execution", "View", null, "View Production Execution"),
+            ("Production.Execution.Start", "Production", "Execution", "Start", null, "Start Production Execution"),
+            ("Production.Execution.Pause", "Production", "Execution", "Pause", null, "Pause Production Execution"),
+            ("Production.Execution.Consume", "Production", "Execution", "Consume", null, "Consume Production Execution Input"),
+            ("Production.Execution.Scrap", "Production", "Execution", "Scrap", null, "Record Production Execution Scrap"),
+            ("Production.Execution.Complete", "Production", "Execution", "Complete", null, "Complete Production Execution"),
+            ("Production.Execution.Cancel", "Production", "Execution", "Cancel", null, "Cancel Production Execution"),
             ("ProductionOrder.Approve", "Production", "ProductionOrder", "Approve", null, "Approve Production Order"),
             ("Quality.View", "Quality", null, "View", null, "View Quality"),
             ("QualityInspection.Execute", "Quality", "QualityInspection", "Execute", null, "Execute Quality Inspection"),
@@ -332,6 +339,8 @@ public static class AuthorizationCatalogSeed
                 "Sales.View",
                 "Production.View",
                 "StructuralProductionLot.View",
+                "Production.Execution.View",
+                "Production.Execution.Cancel",
                 "Quality.View",
                 "Finance.Report.View"
             ]);
@@ -363,6 +372,12 @@ public static class AuthorizationCatalogSeed
                 "InventoryCount.Update",
                 "StructuralProductionLot.View",
                 "StructuralProductionLot.Create",
-                "StructuralProductionLot.Update"
+                "StructuralProductionLot.Update",
+                "Production.Execution.View",
+                "Production.Execution.Start",
+                "Production.Execution.Pause",
+                "Production.Execution.Consume",
+                "Production.Execution.Scrap",
+                "Production.Execution.Complete"
             ]);
 }

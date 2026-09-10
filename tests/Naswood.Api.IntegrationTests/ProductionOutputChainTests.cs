@@ -19,6 +19,38 @@ public class ProductionOutputChainTests
     public ProductionOutputChainTests(NaswoodApiFactory factory) => _factory = factory;
 
     [Fact]
+    public async Task Public_output_post_ignores_client_skip_source_issue()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 10);
+        var client = await LoginAsync();
+        var posted = await client.PostAsJsonAsync("/api/v1/production-outputs", new
+        {
+            productionOrderId = world.OrderId,
+            outputMaterialId = world.OutputMaterialId,
+            warehouseCode = "WH-SFG",
+            locationCode = "YM-A01",
+            workCenterCode = "WC-CLT",
+            stockStatus = "Available",
+            plantId = Plant,
+            skipSourceIssue = true,
+            lines = new[] { new { physicalGroupLabel = "İstif A", pieceCount = 4m } },
+            sources = new[]
+            {
+                world.Source(world.SourceLotA.Id, 3m, world.SourcePackageAId),
+                world.Source(world.SourceLotB.Id, 2m, null)
+            }
+        });
+        posted.EnsureSuccessStatusCode();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
+        Assert.Equal(7m, db.InventoryPackages.Single(p => p.Id == world.SourcePackageAId).Quantity);
+        Assert.Equal(7m, db.InventoryBalances.Single(b => b.BatchNumber == world.SourceLotA.BatchNumber).QuantityOnHand);
+        var number = (await JsonDocument.ParseAsync(await posted.Content.ReadAsStreamAsync())).RootElement.GetProperty("data").GetProperty("number").GetString();
+        Assert.True(db.InventoryMovements.Count(m => m.DocumentNumber == number && m.MovementType == ProductionLotCodes.ConsumptionMovement) >= 2);
+    }
+
+    [Fact]
     public async Task Full_chain_multi_source_qc_genealogy_matches_movements_then_reverses()
     {
         await _factory.ResetDatabaseAsync();

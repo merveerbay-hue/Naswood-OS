@@ -22,6 +22,7 @@ export const productionWorkspaces: WorkspaceDefinition[] = [
     id: 'execution',
     label: 'İcra',
     items: [
+      { id: 'prd-sf', label: 'Saha / Shop Floor', path: '/production/shop-floor', screenId: 'PRD-SF' },
       { id: 'prd-013', label: 'Operatör Terminali', path: '/production/execution/operator-terminal', screenId: 'PRD-013' },
       { id: 'prd-024', label: 'Makine Paneli', path: '/production/execution/machine-panel', screenId: 'PRD-024' },
       { id: 'prd-014', label: 'Sarfiyat', path: '/production/execution/consumption', screenId: 'PRD-014' },
