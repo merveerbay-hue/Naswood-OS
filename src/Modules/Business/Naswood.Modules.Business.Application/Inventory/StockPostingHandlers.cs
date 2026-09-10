@@ -423,7 +423,8 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             var movement = InventoryMovement.Post(
                 "GoodsReceipt", "In", receipt.Number, materialCode, miNumber, packageNumber,
                 warehouseCode, locationCode, lotNumber, line.Quantity, uom, Truncate(movementNotes, 2000),
-                plantId: plantId);
+                plantId: plantId,
+                packageId: package.Id);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
 
             results.Add(new StockPostLineResultDto
@@ -643,7 +644,8 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
             var movement = InventoryMovement.Post(
                 "GoodsIssue", "Out", issue.Number, materialCode, miNumber, packageNumber,
                 warehouseCode, locationCode, lotNumber, line.Quantity, uom, command.Notes ?? string.Empty,
-                plantId: movementPlantId);
+                plantId: movementPlantId,
+                packageId: package?.Id);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
 
             results.Add(new StockPostLineResultDto
@@ -950,6 +952,7 @@ public sealed class SearchInventoryMovementQueryHandler : IQueryHandler<SearchIn
         MaterialCode = e.MaterialCode,
         LotNumber = e.LotNumber,
         PackageNumber = e.PackageNumber,
+        PackageId = e.PackageId,
         Quantity = e.Quantity,
         WarehouseCode = e.WarehouseCode,
         Status = e.Status,

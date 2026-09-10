@@ -66,6 +66,7 @@ public sealed class LocationController : ControllerBase
                 request.LocationType,
                 request.Status,
                 request.Description ?? string.Empty,
+                request.StockZoneType ?? string.Empty,
                 resolved,
                 allowed),
             cancellationToken).ConfigureAwait(false);
@@ -86,6 +87,7 @@ public sealed class LocationController : ControllerBase
                 request.LocationType,
                 request.Status,
                 request.Description ?? string.Empty,
+                request.StockZoneType ?? string.Empty,
                 allowed),
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "Location updated.");

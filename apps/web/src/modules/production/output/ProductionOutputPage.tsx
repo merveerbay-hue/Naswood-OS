@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@naswood/ui';
 import { searchResource } from '@/api/business';
@@ -75,7 +75,8 @@ export function ProductionOutputPage() {
     { key: '1', physicalGroupLabel: 'İstif A', thicknessMm: '', widthMm: '', lengthMm: '', pieceCount: '' },
   ]);
   const [sources, setSources] = useState<SourceRow[]>([]);
-  const [scanCode, setScanCode] = useState('');
+  const search = useSearch({ strict: false }) as { consumeBarcode?: string };
+  const [scanCode, setScanCode] = useState(search.consumeBarcode ?? '');
   const [preview, setPreview] = useState<ProductionOutputPreview | null>(null);
   const [result, setResult] = useState<ProductionOutputResult | null>(null);
   const [reverseReason, setReverseReason] = useState('');
@@ -166,6 +167,13 @@ export function ProductionOutputPage() {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    const code = (search.consumeBarcode ?? '').trim();
+    if (!code) return;
+    void onScan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot from scanner
+  }, [search.consumeBarcode]);
 
   async function onScan() {
     const code = scanCode.trim();

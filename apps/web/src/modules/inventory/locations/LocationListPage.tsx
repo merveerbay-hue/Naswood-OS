@@ -9,7 +9,11 @@ import {
   LOCATION_TYPE_OPTIONS,
   locationTypeLabel,
   plantDisplayName,
+  stockZoneFromLocationType,
+  stockZoneLabel,
+  STOCK_ZONE_OPTIONS,
   type LocationTypeCode,
+  type StockZoneCode,
 } from '@/modules/inventory/locations/locationCatalog';
 
 type WarehouseRow = {
@@ -26,6 +30,7 @@ type LocationRow = {
   name?: string;
   warehouseCode?: string;
   locationType?: string;
+  stockZoneType?: string;
   status?: string;
   description?: string;
   plantId?: string;
@@ -36,6 +41,7 @@ type FormState = {
   code: string;
   name: string;
   locationType: LocationTypeCode;
+  stockZoneType: StockZoneCode;
   description: string;
   status: 'Active' | 'Inactive';
 };
@@ -45,6 +51,7 @@ const DEFAULT_FORM: FormState = {
   code: '',
   name: '',
   locationType: 'OPEN_AREA',
+  stockZoneType: 'NORMAL',
   description: '',
   status: 'Active',
 };
@@ -123,6 +130,7 @@ export function LocationListPage() {
         name,
         warehouseCode: form.warehouseCode.trim().toUpperCase(),
         locationType: form.locationType,
+        stockZoneType: form.stockZoneType,
         description: form.description.trim(),
         status: form.status,
         plantId: effectiveView,
@@ -256,11 +264,33 @@ export function LocationListPage() {
                 <select
                   className="flex h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
                   value={form.locationType}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, locationType: e.target.value as LocationTypeCode }))
-                  }
+                  onChange={(e) => {
+                    const locationType = e.target.value as LocationTypeCode;
+                    setForm((f) => ({
+                      ...f,
+                      locationType,
+                      stockZoneType: stockZoneFromLocationType(locationType),
+                    }));
+                  }}
                 >
                   {LOCATION_TYPE_OPTIONS.map((o) => (
+                    <option key={o.token} value={o.token}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-[var(--text-secondary)]">Stok bölgesi</span>
+                <select
+                  className="flex h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+                  value={form.stockZoneType}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, stockZoneType: e.target.value as StockZoneCode }))
+                  }
+                >
+                  {STOCK_ZONE_OPTIONS.map((o) => (
                     <option key={o.token} value={o.token}>
                       {o.label}
                     </option>
@@ -362,6 +392,7 @@ export function LocationListPage() {
                     <th className="py-2 pr-3 font-medium">Kod</th>
                     <th className="py-2 pr-3 font-medium">Ad</th>
                     <th className="py-2 pr-3 font-medium">Tip</th>
+                    <th className="py-2 pr-3 font-medium">Bölge</th>
                     <th className="py-2 pr-3 font-medium">Durum</th>
                     <th className="py-2 font-medium" />
                   </tr>
@@ -376,6 +407,7 @@ export function LocationListPage() {
                         <td className="py-2 pr-3 font-medium">{String(row.code ?? '—')}</td>
                         <td className="py-2 pr-3">{String(row.name ?? '—')}</td>
                         <td className="py-2 pr-3">{locationTypeLabel(String(row.locationType ?? ''))}</td>
+                        <td className="py-2 pr-3">{stockZoneLabel(String(row.stockZoneType ?? ''))}</td>
                         <td className="py-2 pr-3">
                           <StatusBadge status={String(row.status ?? 'Active')} />
                         </td>

@@ -7,6 +7,7 @@ public sealed class LocationDto
     public required string Name { get; init; }
     public required string WarehouseCode { get; init; }
     public required string LocationType { get; init; }
+    public string StockZoneType { get; init; } = "NORMAL";
     public required string Status { get; init; }
     public string Description { get; init; } = string.Empty;
     public required string CompanyId { get; init; }
@@ -20,6 +21,7 @@ public sealed class UpsertLocationRequestDto
     public string Name { get; init; } = string.Empty;
     public string WarehouseCode { get; init; } = string.Empty;
     public string LocationType { get; init; } = string.Empty;
+    public string StockZoneType { get; init; } = string.Empty;
     public string Status { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     /// <summary>Factory / Plant. Defaults to Ana Üs (home) when omitted.</summary>

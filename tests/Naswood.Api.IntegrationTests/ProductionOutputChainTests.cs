@@ -200,6 +200,7 @@ public class ProductionOutputChainTests
             var pkg = db.InventoryPackages.Single(p => p.Barcode == barcode);
             Assert.Equal(4m, pkg.Quantity);
             Assert.Equal(InventoryPackageStatuses.Available, pkg.Status);
+            Assert.Equal("YM-A01", pkg.LocationCode);
             Assert.Single(db.InventoryMovements.Where(m => m.DocumentNumber == data.GetProperty("number").GetString()
                 && m.MovementType == ProductionLotCodes.QcReleaseMovement && m.Quantity == 0));
         }

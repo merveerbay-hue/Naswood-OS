@@ -6,6 +6,7 @@ public interface IPackageOperationRepository
 {
     Task AddAsync(PackageOperation entity, CancellationToken cancellationToken = default);
     Task<PackageOperation?> GetByNumberAsync(string number, string? plantId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> ListNumbersAsync(string? plantId, CancellationToken cancellationToken = default);
 }
 
 public interface IPackageRelationRepository

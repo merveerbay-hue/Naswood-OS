@@ -295,7 +295,8 @@ public sealed class ProductionOutputGateway
                 row.WarehouseCode, row.LocationCode, row.Lot.BatchNumber, row.Request.ConsumedQuantity,
                 row.Unit,
                 ProductionLotCodes.ConsumptionNotes(c.Order.Code, lotNo, row.Lot.BatchNumber, row.Lot.Id, pkgNo),
-                plantId: c.PlantId);
+                plantId: c.PlantId,
+                packageId: row.Package?.Id);
             await _movements.AddAsync(consume, cancellationToken).ConfigureAwait(false);
             inputQty += row.Request.ConsumedQuantity;
             sourceLots.Add(row.Lot.BatchNumber);
@@ -351,7 +352,8 @@ public sealed class ProductionOutputGateway
                 c.Material.Code, mi, mint.PackageNumber,
                 c.Warehouse.Code, c.Location.Code, lotNo, qty, stack.First().Unit,
                 ProductionLotCodes.OutputNotes(c.Order.Code, lotNo, mint.PackageNumber),
-                plantId: c.PlantId);
+                plantId: c.PlantId,
+                packageId: package.Id);
             await _movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
             created.Add(new ProductionOutputPackageCreatedDto
             {
@@ -554,7 +556,8 @@ public sealed class ProductionOutputGateway
                 doc.WarehouseCode, doc.LocationCode, doc.OutputLotNumber, snapshotQty == 0 ? doc.OutputQuantity : snapshotQty,
                 pkg.UnitOfMeasure,
                 ProductionLotCodes.OutputNotes(lot.SourceReferenceNo, doc.OutputLotNumber, pkg.PackageNumber) + " reverse=1",
-                plantId: doc.PlantId), cancellationToken).ConfigureAwait(false);
+                plantId: doc.PlantId,
+                packageId: pkg.Id), cancellationToken).ConfigureAwait(false);
         }
 
         var sources = await _sources.ListByOutputIdAsync(doc.Id, cancellationToken).ConfigureAwait(false);
@@ -598,7 +601,8 @@ public sealed class ProductionOutputGateway
                 ProductionLotCodes.ConsumptionReversalMovement, "In", doc.Number,
                 sourceLot.MaterialCode, "", pkgNo, wh, loc, sourceLot.BatchNumber, src.ConsumedQuantity, src.Unit,
                 ProductionLotCodes.ConsumptionNotes(lot.SourceReferenceNo, doc.OutputLotNumber, sourceLot.BatchNumber, sourceLot.Id, pkgNo) + " reverse=1",
-                plantId: doc.PlantId), cancellationToken).ConfigureAwait(false);
+                plantId: doc.PlantId,
+                packageId: src.SourcePackageId), cancellationToken).ConfigureAwait(false);
         }
 
         doc.MarkCancelled(actor, reason);

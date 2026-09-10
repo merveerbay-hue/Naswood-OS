@@ -158,6 +158,15 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "WarehouseId" uuid NULL;
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL;
         ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_movement ADD COLUMN IF NOT EXISTS "PackageId" uuid NULL;
+        CREATE INDEX IF NOT EXISTS "IX_movement_packageid" ON business.business_inventory_movement ("PackageId");
+        ALTER TABLE IF EXISTS business.business_inventory_location ADD COLUMN IF NOT EXISTS "StockZoneType" character varying(40) NOT NULL DEFAULT '';
+        UPDATE business.business_inventory_location
+        SET "StockZoneType" = 'QUARANTINE'
+        WHERE "StockZoneType" = '' AND UPPER("LocationType") IN ('QUARANTINE', 'QUARANTINE_AREA');
+        UPDATE business.business_inventory_location
+        SET "StockZoneType" = 'NORMAL'
+        WHERE "StockZoneType" = '';
         CREATE TABLE IF NOT EXISTS business.business_inventory_packageoperation (
             "Id" uuid NOT NULL PRIMARY KEY,
             "CompanyId" character varying(20) NOT NULL,

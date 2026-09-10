@@ -6,6 +6,8 @@ namespace Naswood.Modules.Business.Application.Inventory;
 public static class PackageActions
 {
     public const string Move = "MOVE";
+    public const string MoveFull = "MOVE_FULL";
+    public const string MovePartial = "MOVE_PARTIAL";
     public const string Split = "SPLIT";
     public const string Repack = "REPACK";
     public const string Consume = "CONSUME";
@@ -59,7 +61,12 @@ public static class PackageStatePolicy
     public static IReadOnlyList<string> AllowedActions(InventoryPackage pkg)
     {
         var actions = new List<string> { PackageActions.PrintLabel };
-        if (CanMove(pkg)) actions.Add(PackageActions.Move);
+        if (CanMove(pkg))
+        {
+            actions.Add(PackageActions.Move);
+            actions.Add(PackageActions.MoveFull);
+            actions.Add(PackageActions.MovePartial);
+        }
         if (CanSplit(pkg)) actions.Add(PackageActions.Split);
         if (CanRepack(pkg)) actions.Add(PackageActions.Repack);
         if (CanMerge(pkg)) actions.Add(PackageActions.Merge);

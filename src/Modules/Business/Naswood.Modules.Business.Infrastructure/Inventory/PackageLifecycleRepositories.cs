@@ -25,6 +25,17 @@ public sealed class PackageOperationRepository : IPackageOperationRepository
         }
         return q.FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<string>> ListNumbersAsync(string? plantId, CancellationToken cancellationToken = default)
+    {
+        var q = _db.Set<PackageOperation>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            q = q.Where(x => x.PlantId == plant);
+        }
+        return await q.Select(x => x.Number).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
 }
 
 public sealed class PackageRelationRepository : IPackageRelationRepository

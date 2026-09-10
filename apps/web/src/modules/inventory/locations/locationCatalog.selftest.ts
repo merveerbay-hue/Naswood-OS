@@ -8,6 +8,7 @@ import {
   locationUniquenessKey,
   plantDisplayName,
   stockBalanceKeyWithPlant,
+  stockZoneFromLocationType,
   type LocationTypeCode,
 } from './locationCatalog';
 
@@ -80,6 +81,8 @@ export function runLocationCatalogSelftest(): void {
     locationCode: 'A-04',
   });
   assert(a03 !== a04, 'same lot two locations stay separate');
+  assert(stockZoneFromLocationType('QUARANTINE_AREA') === 'QUARANTINE', 'qa zone');
+  assert(stockZoneFromLocationType('OPEN_AREA') === 'NORMAL', 'normal zone');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
