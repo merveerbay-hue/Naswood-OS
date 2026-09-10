@@ -464,6 +464,40 @@ public class ProductionExecutionChainTests
     }
 
     [Fact]
+    public async Task Shop_floor_feedback_stores_screen_user_and_execution()
+    {
+        await _factory.ResetDatabaseAsync();
+        var world = await SeedAsync();
+        var client = await LoginAsync();
+        (await client.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
+        {
+            new { sequence = 10, operationId = world.OpFjId, workCenterId = world.WcFjId, outputType = "NONE" }
+        })).EnsureSuccessStatusCode();
+        var exec = (await Data(await client.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { })))
+            .GetProperty("id").GetGuid();
+        var posted = await client.PostAsJsonAsync("/api/v1/production-execution/feedback", new
+        {
+            topic = "BARCODE_FAIL",
+            note = "okuyucu Enter sonrası boş",
+            screen = "/production/shop-floor/executions/" + exec,
+            workCenterId = world.WcFjId,
+            workCenterCode = "WC-FJ",
+            executionId = exec,
+            executionNumber = "PEX-TEST",
+            productionOrderNumber = "PO-260901"
+        });
+        posted.EnsureSuccessStatusCode();
+        var list = await client.GetAsync("/api/v1/production-execution/feedback");
+        list.EnsureSuccessStatusCode();
+        var rows = (await Data(list)).EnumerateArray().ToArray();
+        Assert.Single(rows);
+        Assert.Equal("BARCODE_FAIL", rows[0].GetProperty("topic").GetString());
+        Assert.Equal("admin", rows[0].GetProperty("userId").GetString());
+        Assert.Equal(exec, rows[0].GetProperty("executionId").GetGuid());
+        Assert.Contains("shop-floor", rows[0].GetProperty("screen").GetString());
+    }
+
+    [Fact]
     public async Task Wrong_material_is_rejected()
     {
         await _factory.ResetDatabaseAsync();

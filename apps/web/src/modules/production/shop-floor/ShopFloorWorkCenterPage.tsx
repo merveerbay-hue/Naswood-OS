@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { getShopFloorQueue, startOperation } from './shopFloorApi';
+import { ShopFloorReportButton } from './ShopFloorReportButton';
 
 export function ShopFloorWorkCenterPage() {
   const { id } = useParams({ strict: false }) as { id: string };
@@ -19,7 +20,10 @@ export function ShopFloorWorkCenterPage() {
   const data = q.data;
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4">
-      <Link to="/production/shop-floor" className="text-sm underline">← İş merkezleri</Link>
+      <div className="flex items-start justify-between gap-3">
+        <Link to="/production/shop-floor" className="text-sm underline">← İş merkezleri</Link>
+        <ShopFloorReportButton workCenterId={id} workCenterCode={data?.workCenterCode} />
+      </div>
       <h1 className="text-2xl font-semibold">{data?.workCenterName ?? 'İş merkezi'}</h1>
       <p className="text-muted-foreground">{data?.workCenterCode}</p>
       <Section title="Çalışan" items={data?.running ?? []} running />

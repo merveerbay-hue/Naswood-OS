@@ -221,6 +221,7 @@ public sealed class ProductionExecutionPassportDto
     public Guid? ProductionLotId { get; init; }
     public string ProductionLotNumber { get; init; } = string.Empty;
     public string QcStatus { get; init; } = string.Empty;
+    public Guid? ExpectedMaterialId { get; init; }
     public bool IdempotentReplay { get; init; }
     public IReadOnlyList<string> AllowedActions { get; init; } = [];
     public IReadOnlyList<ProductionExecutionEventDto> Events { get; init; } = [];
@@ -228,4 +229,32 @@ public sealed class ProductionExecutionPassportDto
     public IReadOnlyList<ProductionExecutionScrapDto> Scraps { get; init; } = [];
     public IReadOnlyList<ProductionOutputPackageCreatedDto> Packages { get; init; } = [];
     public IReadOnlyList<ProductionLotSourceDto> SourceLots { get; init; } = [];
+}
+
+public sealed class ShopFloorFeedbackRequestDto
+{
+    public string Topic { get; init; } = string.Empty;
+    public string Note { get; init; } = string.Empty;
+    public string Screen { get; init; } = string.Empty;
+    public Guid? WorkCenterId { get; init; }
+    public string WorkCenterCode { get; init; } = string.Empty;
+    public Guid? ExecutionId { get; init; }
+    public string ExecutionNumber { get; init; } = string.Empty;
+    public string ProductionOrderNumber { get; init; } = string.Empty;
+}
+
+public sealed class ShopFloorFeedbackDto
+{
+    public Guid Id { get; init; }
+    public string Topic { get; init; } = string.Empty;
+    public string Note { get; init; } = string.Empty;
+    public string Screen { get; init; } = string.Empty;
+    public string UserId { get; init; } = string.Empty;
+    public Guid? WorkCenterId { get; init; }
+    public string WorkCenterCode { get; init; } = string.Empty;
+    public Guid? ExecutionId { get; init; }
+    public string ExecutionNumber { get; init; } = string.Empty;
+    public string ProductionOrderNumber { get; init; } = string.Empty;
+    public string PlantId { get; init; } = string.Empty;
+    public DateTimeOffset OccurredAt { get; init; }
 }

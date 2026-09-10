@@ -331,6 +331,24 @@ using (var scope = app.Services.CreateScope())
             "RecordedAt" timestamp with time zone NOT NULL
         );
         CREATE INDEX IF NOT EXISTS "IX_prd_exec_scrap" ON business.business_production_execution_scrap ("ExecutionId");
+        CREATE TABLE IF NOT EXISTS business.business_production_shopfloor_feedback (
+            "Id" uuid NOT NULL PRIMARY KEY,
+            "CompanyId" character varying(20) NOT NULL,
+            "PlantId" character varying(20),
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NOT NULL,
+            "IsDeleted" boolean NOT NULL,
+            "Topic" character varying(40) NOT NULL,
+            "Note" character varying(500) NOT NULL DEFAULT '',
+            "Screen" character varying(200) NOT NULL DEFAULT '',
+            "UserId" character varying(200) NOT NULL DEFAULT '',
+            "WorkCenterId" uuid NULL,
+            "WorkCenterCode" character varying(80) NOT NULL DEFAULT '',
+            "ExecutionId" uuid NULL,
+            "ExecutionNumber" character varying(80) NOT NULL DEFAULT '',
+            "ProductionOrderNumber" character varying(80) NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS "IX_prd_sf_feedback_created" ON business.business_production_shopfloor_feedback ("CreatedAt");
         UPDATE business.business_inventory_package
         SET "PublicId" = replace("Id"::text, '-', '')
         WHERE "PublicId" = '';

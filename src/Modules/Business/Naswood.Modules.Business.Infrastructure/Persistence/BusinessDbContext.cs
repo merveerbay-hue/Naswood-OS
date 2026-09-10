@@ -68,6 +68,7 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Production.ProductionExecutionEvent> ProductionExecutionEvents => Set<Naswood.Modules.Business.Domain.Production.ProductionExecutionEvent>();
     public DbSet<Naswood.Modules.Business.Domain.Production.ProductionExecutionConsumption> ProductionExecutionConsumptions => Set<Naswood.Modules.Business.Domain.Production.ProductionExecutionConsumption>();
     public DbSet<Naswood.Modules.Business.Domain.Production.ProductionExecutionScrap> ProductionExecutionScraps => Set<Naswood.Modules.Business.Domain.Production.ProductionExecutionScrap>();
+    public DbSet<Naswood.Modules.Business.Domain.Production.ShopFloorFieldFeedback> ShopFloorFieldFeedbacks => Set<Naswood.Modules.Business.Domain.Production.ShopFloorFieldFeedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1021,6 +1022,24 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Note).HasMaxLength(500);
             entity.Property(x => x.UserId).HasMaxLength(200);
             entity.HasIndex(x => x.ExecutionId);
+        });
+
+        modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ShopFloorFieldFeedback>(entity =>
+        {
+            entity.ToTable("business_production_shopfloor_feedback");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CompanyId).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.PlantId).HasMaxLength(20);
+            entity.Ignore(x => x.DomainEvents);
+            entity.Property(x => x.Topic).HasMaxLength(40);
+            entity.Property(x => x.Note).HasMaxLength(500);
+            entity.Property(x => x.Screen).HasMaxLength(200);
+            entity.Property(x => x.UserId).HasMaxLength(200);
+            entity.Property(x => x.WorkCenterCode).HasMaxLength(80);
+            entity.Property(x => x.ExecutionNumber).HasMaxLength(80);
+            entity.Property(x => x.ProductionOrderNumber).HasMaxLength(80);
+            entity.HasIndex(x => x.CreatedAt);
+            entity.HasIndex(x => x.WorkCenterId);
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.PackageOperation>(entity =>

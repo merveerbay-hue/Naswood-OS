@@ -142,4 +142,18 @@ public sealed class ProductionExecutionStore : IProductionExecutionStore
             .OrderBy(x => x.RecordedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
         return stored.Concat(local.Where(l => stored.All(s => s.Id != l.Id))).OrderBy(x => x.RecordedAt).ToArray();
     }
+
+    public Task AddFeedbackAsync(ShopFloorFieldFeedback entity, CancellationToken cancellationToken = default)
+        => _db.Set<ShopFloorFieldFeedback>().AddAsync(entity, cancellationToken).AsTask();
+
+    public async Task<IReadOnlyList<ShopFloorFieldFeedback>> ListFeedbackAsync(string? plantId, int take, CancellationToken cancellationToken = default)
+    {
+        var q = _db.Set<ShopFloorFieldFeedback>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var p = plantId.Trim();
+            q = q.Where(x => x.PlantId == p);
+        }
+        return await q.OrderByDescending(x => x.CreatedAt).Take(Math.Clamp(take, 1, 200)).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

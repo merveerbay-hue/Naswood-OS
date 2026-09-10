@@ -302,3 +302,35 @@ public sealed class CancelProductionExecutionCommandHandler : ICommandHandler<Ca
         }
     }
 }
+
+public sealed record SubmitShopFloorFeedbackCommand(
+    ShopFloorFeedbackRequestDto Body,
+    IReadOnlyList<string>? AllowedPlantIds,
+    string Actor) : ICommand<Result<ShopFloorFeedbackDto>>;
+
+public sealed record ListShopFloorFeedbackQuery(IReadOnlyList<string>? AllowedPlantIds)
+    : IQuery<Result<IReadOnlyList<ShopFloorFeedbackDto>>>;
+
+public sealed class SubmitShopFloorFeedbackCommandHandler : ICommandHandler<SubmitShopFloorFeedbackCommand, Result<ShopFloorFeedbackDto>>
+{
+    private readonly ProductionExecutionGateway _gate;
+    private readonly IBusinessUnitOfWork _uow;
+    public SubmitShopFloorFeedbackCommandHandler(ProductionExecutionGateway gate, IBusinessUnitOfWork uow)
+    { _gate = gate; _uow = uow; }
+
+    public async Task<Result<ShopFloorFeedbackDto>> HandleAsync(SubmitShopFloorFeedbackCommand command, CancellationToken cancellationToken = default)
+    {
+        var r = await _gate.SubmitFeedbackAsync(command.Body, command.AllowedPlantIds, command.Actor, cancellationToken).ConfigureAwait(false);
+        if (r.IsFailure) return r;
+        await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return r;
+    }
+}
+
+public sealed class ListShopFloorFeedbackQueryHandler : IQueryHandler<ListShopFloorFeedbackQuery, Result<IReadOnlyList<ShopFloorFeedbackDto>>>
+{
+    private readonly ProductionExecutionGateway _gate;
+    public ListShopFloorFeedbackQueryHandler(ProductionExecutionGateway gate) => _gate = gate;
+    public Task<Result<IReadOnlyList<ShopFloorFeedbackDto>>> HandleAsync(ListShopFloorFeedbackQuery query, CancellationToken cancellationToken = default)
+        => _gate.ListFeedbackAsync(query.AllowedPlantIds, cancellationToken);
+}

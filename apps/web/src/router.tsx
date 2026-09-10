@@ -64,6 +64,7 @@ import { ProductionOutputPage } from './modules/production/output/ProductionOutp
 import { ShopFloorHomePage } from './modules/production/shop-floor/ShopFloorHomePage';
 import { ShopFloorWorkCenterPage } from './modules/production/shop-floor/ShopFloorWorkCenterPage';
 import { ShopFloorExecutionPage } from './modules/production/shop-floor/ShopFloorExecutionPage';
+import { ShopFloorFeedbackPage } from './modules/production/shop-floor/ShopFloorFeedbackPage';
 import {
   BomDetailPage,
   BomListPage,
@@ -436,6 +437,7 @@ const prdOutput = createRoute({ getParentRoute: () => productionRoute, path: 'ex
 const prdShopFloor = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor', component: ShopFloorHomePage });
 const prdShopFloorWc = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor/work-centers/$id', component: ShopFloorWorkCenterPage });
 const prdShopFloorExec = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor/executions/$id', component: ShopFloorExecutionPage });
+const prdShopFloorFeedback = createRoute({ getParentRoute: () => productionRoute, path: 'shop-floor/feedback', component: ShopFloorFeedbackPage });
 const prdScrap = createRoute({ getParentRoute: () => productionRoute, path: 'execution/scrap', component: ScrapPage });
 const prdRework = createRoute({ getParentRoute: () => productionRoute, path: 'execution/rework', component: ReworkPage });
 const prdBoms = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/boms', component: BomListPage });
@@ -598,6 +600,7 @@ const implemented = new Set([
   '/production/shop-floor',
   '/production/shop-floor/work-centers/$id',
   '/production/shop-floor/executions/$id',
+  '/production/shop-floor/feedback',
   '/production/execution/scrap',
   '/production/execution/rework',
   '/production/master-data/boms',
@@ -743,6 +746,7 @@ export const routeTree = rootRoute.addChildren([
       prdShopFloor,
       prdShopFloorWc,
       prdShopFloorExec,
+      prdShopFloorFeedback,
       prdScrap,
       prdRework,
       prdBoms,

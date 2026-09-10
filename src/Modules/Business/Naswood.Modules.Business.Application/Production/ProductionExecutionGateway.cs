@@ -903,6 +903,7 @@ public sealed class ProductionExecutionGateway
             ProductionLotId = output?.OutputBatchId,
             ProductionLotNumber = output?.OutputLotNumber ?? "",
             QcStatus = output?.StockStatus ?? "",
+            ExpectedMaterialId = plan?.ExpectedMaterialId,
             IdempotentReplay = idempotent,
             AllowedActions = actions,
             Events = events.Select(e => new ProductionExecutionEventDto
@@ -1060,6 +1061,56 @@ public sealed class ProductionExecutionGateway
         return s.Equals("Cancelled", StringComparison.OrdinalIgnoreCase)
             || s.Equals("Closed", StringComparison.OrdinalIgnoreCase);
     }
+
+    public async Task<Result<ShopFloorFeedbackDto>> SubmitFeedbackAsync(
+        ShopFloorFeedbackRequestDto body, IReadOnlyList<string>? allowed, string actor, CancellationToken cancellationToken)
+    {
+        var topic = (body.Topic ?? "").Trim().ToUpperInvariant();
+        if (!ShopFloorFeedbackTopics.All.Contains(topic))
+            return Result.Failure<ShopFloorFeedbackDto>(Error.Validation("PRD-FB-001", "Geçerli bir sorun türü seçin."));
+        string? plant = allowed is { Count: > 0 } ? allowed[0] : null;
+        if (body.ExecutionId is Guid eid)
+        {
+            var exec = await _store.GetExecutionAsync(eid, cancellationToken).ConfigureAwait(false);
+            if (exec is not null)
+            {
+                if (allowed is { Count: > 0 } && !PlantAccess.CanAccess(allowed, exec.PlantId))
+                    return Result.Failure<ShopFloorFeedbackDto>(Error.Forbidden("PRD-EXEC-403", "Bu tesiste yetkiniz yok."));
+                plant = exec.PlantId ?? plant;
+            }
+        }
+        var row = ShopFloorFieldFeedback.Create(
+            topic, body.Note, body.Screen, actor,
+            body.WorkCenterId, body.WorkCenterCode, body.ExecutionId, body.ExecutionNumber,
+            body.ProductionOrderNumber, plant);
+        await _store.AddFeedbackAsync(row, cancellationToken).ConfigureAwait(false);
+        return Result.Success(MapFeedback(row));
+    }
+
+    public async Task<Result<IReadOnlyList<ShopFloorFeedbackDto>>> ListFeedbackAsync(
+        IReadOnlyList<string>? allowed, CancellationToken cancellationToken)
+    {
+        var plant = allowed is { Count: > 0 } ? allowed[0] : null;
+        var rows = await _store.ListFeedbackAsync(plant, 100, cancellationToken).ConfigureAwait(false);
+        return Result.Success<IReadOnlyList<ShopFloorFeedbackDto>>(rows.Select(MapFeedback).ToArray());
+    }
+
+    private static ShopFloorFeedbackDto MapFeedback(ShopFloorFieldFeedback row)
+        => new()
+        {
+            Id = row.Id,
+            Topic = row.Topic,
+            Note = row.Note,
+            Screen = row.Screen,
+            UserId = row.UserId,
+            WorkCenterId = row.WorkCenterId,
+            WorkCenterCode = row.WorkCenterCode,
+            ExecutionId = row.ExecutionId,
+            ExecutionNumber = row.ExecutionNumber,
+            ProductionOrderNumber = row.ProductionOrderNumber,
+            PlantId = row.PlantId ?? "",
+            OccurredAt = row.CreatedAt
+        };
 
     private static Result<ProductionExecutionPassportDto> Fail(string code, string msg)
         => Result.Failure<ProductionExecutionPassportDto>(Error.Validation(code, msg));

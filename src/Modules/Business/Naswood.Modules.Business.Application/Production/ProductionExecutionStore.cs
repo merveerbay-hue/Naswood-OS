@@ -30,4 +30,7 @@ public interface IProductionExecutionStore
 
     Task AddScrapAsync(ProductionExecutionScrap entity, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductionExecutionScrap>> ListScrapsAsync(Guid executionId, CancellationToken cancellationToken = default);
+
+    Task AddFeedbackAsync(ShopFloorFieldFeedback entity, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ShopFloorFieldFeedback>> ListFeedbackAsync(string? plantId, int take, CancellationToken cancellationToken = default);
 }

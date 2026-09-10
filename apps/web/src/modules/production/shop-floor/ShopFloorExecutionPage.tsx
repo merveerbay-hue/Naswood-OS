@@ -16,6 +16,7 @@ import {
   startDowntime,
   type ExecutionScan,
 } from './shopFloorApi';
+import { ShopFloorReportButton } from './ShopFloorReportButton';
 
 function istanbul(iso?: string) {
   if (!iso) return '—';
@@ -37,6 +38,7 @@ export function ShopFloorExecutionPage() {
   const plant = plantId || homePlantId;
   const qc = useQueryClient();
   const scanRef = useRef<HTMLInputElement>(null);
+  const qtyRef = useRef<HTMLInputElement>(null);
   const [barcode, setBarcode] = useState('');
   const [scan, setScan] = useState<ExecutionScan | null>(null);
   const [qty, setQty] = useState('');
@@ -79,6 +81,10 @@ export function ShopFloorExecutionPage() {
   const data = exec.data;
   const can = (a: string) => data?.allowedActions.includes(a);
 
+  useEffect(() => {
+    if (data?.expectedMaterialId && !outMat) setOutMat(data.expectedMaterialId);
+  }, [data, outMat]);
+
   async function onScan(e: FormEvent) {
     e.preventDefault();
     setError('');
@@ -87,7 +93,10 @@ export function ShopFloorExecutionPage() {
       setScan(row);
       setQty(row.availableQuantity ? String(row.availableQuantity) : '');
       setContentId(row.contents[0]?.id ?? '');
+      if (!wh) setWh(row.warehouseCode);
+      if (!loc) setLoc(row.locationCode);
       if (!row.canConsume) setError(row.inactiveReason || 'Paket tüketilemez.');
+      requestAnimationFrame(() => qtyRef.current?.focus());
     } catch (err) {
       setScan(null);
       setError(err instanceof Error ? err.message : 'Tarama hatası');
@@ -126,7 +135,16 @@ export function ShopFloorExecutionPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 pb-28">
-      <Link to="/production/shop-floor" className="text-sm underline">← Saha</Link>
+      <div className="flex items-start justify-between gap-3">
+        <Link to="/production/shop-floor" className="text-sm underline">← Saha</Link>
+        <ShopFloorReportButton
+          workCenterId={data?.workCenterId}
+          workCenterCode={data?.workCenterCode}
+          executionId={data?.id}
+          executionNumber={data?.number}
+          productionOrderNumber={data?.productionOrderNumber}
+        />
+      </div>
       <header className="space-y-1">
         <p className="text-sm text-muted-foreground">{data?.productionOrderNumber}</p>
         <h1 className="text-2xl font-semibold">{data?.operationName}</h1>
@@ -139,24 +157,26 @@ export function ShopFloorExecutionPage() {
         <Card>
           <CardHeader><CardTitle>Barkod okut</CardTitle></CardHeader>
           <CardContent>
-            <form className="space-y-3" onSubmit={onScan}>
-              <Input ref={scanRef} autoFocus value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Barkod" className="h-14 text-lg" />
-              <Button type="submit" className="h-12 w-full">Bul</Button>
+            <form className="space-y-2" onSubmit={onScan}>
+              <Input ref={scanRef} autoFocus value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Barkod okutun" className="h-14 text-lg" />
+              <p className="text-xs text-muted-foreground">Okuyucu Enter ile arar. Malzeme, lot, depo ve lokasyon otomatik gelir.</p>
+              <button type="submit" className="text-sm underline">Elle ara</button>
             </form>
             {scan ? (
               <div className="mt-4 space-y-2 rounded border p-3">
                 <p className="font-medium">{scan.packageNo}</p>
                 <p>{scan.materialName} · Lot {scan.sourceLotNumber}</p>
-                <p>{scan.warehouseCode} / {scan.locationCode} · {scan.availableQuantity} {scan.unit}</p>
-                {scan.contents.length > 0 ? (
+                <p>{scan.warehouseCode} / {scan.locationCode} · kullanılabilir {scan.availableQuantity} {scan.unit}</p>
+                {scan.contents.length > 1 ? (
                   <select className="h-12 w-full rounded border px-2" value={contentId} onChange={(e) => setContentId(e.target.value)}>
                     {scan.contents.map((c) => (
                       <option key={c.id} value={c.id}>{c.measurement || 'ölçü'} · {c.quantity} {c.unit}</option>
                     ))}
                   </select>
                 ) : null}
-                <Input value={qty} onChange={(e) => setQty(e.target.value)} className="h-12" />
-                <Button className="h-12 w-full" disabled={!scan.canConsume} onClick={() => void onConsume()}>Ekle</Button>
+                <label className="text-sm">Miktar ({scan.unit})</label>
+                <Input ref={qtyRef} value={qty} onChange={(e) => setQty(e.target.value)} className="h-12" inputMode="decimal" />
+                <Button className="h-12 w-full" disabled={!scan.canConsume || run.isPending} onClick={() => void onConsume()}>Onayla</Button>
               </div>
             ) : null}
           </CardContent>

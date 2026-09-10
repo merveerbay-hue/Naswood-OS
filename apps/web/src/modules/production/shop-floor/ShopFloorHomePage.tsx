@@ -2,12 +2,19 @@ import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@naswood/ui';
 import { listShopFloorWorkCenters } from './shopFloorApi';
+import { ShopFloorReportButton } from './ShopFloorReportButton';
 
 export function ShopFloorHomePage() {
   const q = useQuery({ queryKey: ['shop-floor-wcs'], queryFn: listShopFloorWorkCenters });
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4">
-      <h1 className="text-2xl font-semibold">İş Merkezlerim</h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold">İş Merkezlerim</h1>
+        <div className="space-y-1 text-right">
+          <ShopFloorReportButton />
+          <Link to="/production/shop-floor/feedback" className="block text-xs underline">Bildirimler</Link>
+        </div>
+      </div>
       <div className="grid gap-3">
         {(q.data ?? []).map((wc) => (
           <Link key={wc.id} to="/production/shop-floor/work-centers/$id" params={{ id: wc.id }}>

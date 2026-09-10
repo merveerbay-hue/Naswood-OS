@@ -164,4 +164,24 @@ public sealed class ProductionExecutionController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this, successMessage: "İcra iptal edildi.");
     }
+
+    [HttpPost("api/v1/production-execution/feedback")]
+    [RequirePermission("Production.Execution.View")]
+    public async Task<IActionResult> SubmitFeedback([FromBody] ShopFloorFeedbackRequestDto? body, CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+            new SubmitShopFloorFeedbackCommand(body ?? new ShopFloorFeedbackRequestDto(), PlantClaims.AllowedPlantIds(User), User.Identity?.Name ?? string.Empty),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Geri bildirim kaydedildi.");
+    }
+
+    [HttpGet("api/v1/production-execution/feedback")]
+    [RequirePermission("Production.Execution.View")]
+    public async Task<IActionResult> ListFeedback(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(
+            new ListShopFloorFeedbackQuery(PlantClaims.AllowedPlantIds(User)),
+            cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
 }

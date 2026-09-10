@@ -50,6 +50,21 @@ export type ProductionOrderProgress = {
   }[];
 };
 
+export type ShopFloorFeedback = {
+  id: string;
+  topic: string;
+  note: string;
+  screen: string;
+  userId: string;
+  workCenterId?: string | null;
+  workCenterCode: string;
+  executionId?: string | null;
+  executionNumber: string;
+  productionOrderNumber: string;
+  plantId: string;
+  occurredAt: string;
+};
+
 export type ExecutionPassport = {
   id: string;
   number: string;
@@ -58,8 +73,10 @@ export type ExecutionPassport = {
   productionOrderNumber: string;
   productionOrderName: string;
   operationName: string;
+  workCenterId: string;
   workCenterCode: string;
   workCenterName: string;
+  expectedMaterialId?: string | null;
   startedByUserId: string;
   totalRunMinutes: number;
   totalPauseMinutes: number;
@@ -173,6 +190,27 @@ export function addScrap(id: string, quantity: number, reasonCode: string, unit:
     auth: true,
     body: { quantity, reasonCode, unit, note },
   });
+}
+
+export function submitShopFloorFeedback(body: {
+  topic: string;
+  note?: string;
+  screen: string;
+  workCenterId?: string;
+  workCenterCode?: string;
+  executionId?: string;
+  executionNumber?: string;
+  productionOrderNumber?: string;
+}) {
+  return apiRequest<ShopFloorFeedback>('/api/v1/production-execution/feedback', {
+    method: 'POST',
+    auth: true,
+    body,
+  });
+}
+
+export function listShopFloorFeedback() {
+  return apiRequest<ShopFloorFeedback[]>('/api/v1/production-execution/feedback', { auth: true });
 }
 
 export function completeExecution(id: string, body: {
