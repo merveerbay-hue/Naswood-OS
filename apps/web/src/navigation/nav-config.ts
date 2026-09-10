@@ -37,11 +37,9 @@ export const navigationTree: NavItem[] = [
         id: 'inventory-stock',
         label: 'Stok',
         children: [
-          { id: 'inventory-balances', label: 'Stok Bakiyesi', path: '/inventory/stock/balances' },
-          { id: 'inventory-lots', label: 'Lot / Parti', path: '/inventory/stock/lots' },
-          { id: 'inventory-packages', label: 'Paketler', path: '/inventory/stock/packages' },
-          { id: 'inventory-identities', label: 'Material Identity', path: '/inventory/stock/identities' },
+          { id: 'inventory-balances', label: 'Stok Görünümü', path: '/inventory/stock/balances' },
           { id: 'inventory-movements', label: 'Stok Hareketleri', path: '/inventory/stock/movements' },
+          { id: 'inventory-packages', label: 'Paketler', path: '/inventory/stock/packages' },
         ],
       },
       {
@@ -63,10 +61,22 @@ export const navigationTree: NavItem[] = [
             path: '/inventory/master-data/define-material',
           },
           { id: 'inventory-warehouses', label: 'Depolar', path: '/inventory/master-data/warehouses' },
-          { id: 'inventory-locations', label: 'Lokasyonlar', path: '/inventory/master-data/locations' },
+          { id: 'inventory-locations', label: 'Stok Lokasyonları', path: '/inventory/master-data/locations' },
+          {
+            id: 'inventory-production-points',
+            label: 'Üretim Noktaları',
+            path: '/inventory/master-data/production-points',
+          },
         ],
       },
       { id: 'inventory-reports', label: 'Raporlar', path: '/inventory/reports' },
+      {
+        id: 'inventory-traceability',
+        label: 'İzlenebilirlik',
+        children: [
+          { id: 'inventory-lot-query', label: 'Lot sorgula', path: '/inventory/stock/lots' },
+        ],
+      },
     ],
   },
   {

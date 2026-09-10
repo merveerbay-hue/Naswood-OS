@@ -51,7 +51,7 @@ const DEFAULT_FORM: FormState = {
 
 /**
  * INV-008 — Lokasyonlar
- * Hierarchy: Factory (Ana Üs / Diğer Tesis) → Warehouse → Location → Stock
+ * Hierarchy: Factory → Warehouse → Stock location. Lot is not under location.
  * HomeFactory = user.homePlantId; view plant can switch without changing Ana Üs.
  */
 export function LocationListPage() {
@@ -151,8 +151,9 @@ export function LocationListPage() {
           <p className="text-xs font-medium text-[var(--text-muted)]">INV-008</p>
           <h2 className="text-xl font-semibold tracking-tight">{t('inventory.locationsTitle')}</h2>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Fabrika → Depo → Lokasyon. Stoklar Ana Üs kapsamında tutulur. Staging/WIP stok
-            lokasyonudur; İş Merkezi (Work Center) değildir.
+            Fabrika → Depo → Stok lokasyonu. Lot lokasyonun çocuğu değildir; aynı lot
+            farklı lokasyonlara ve tesisler arası transfer sonrası farklı fabrikalara
+            gidebilir. Staging/WIP stok lokasyonudur; üretim noktası (iş merkezi) ayrı master’dır.
           </p>
         </div>
         <Button type="button" onClick={() => setShowCreate((v) => !v)}>
