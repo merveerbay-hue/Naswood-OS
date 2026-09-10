@@ -140,7 +140,7 @@ public sealed class PackageLifecycleGateway
         if (replay is not null) return replay;
 
         var existingRels = await _relations.ListByPackageIdsAsync(ids, ct).ConfigureAwait(false);
-        var number = SystemIdentifier.Ensure(body.Number, "PKOP");
+        var number = await NextOperationNumberAsync(body.Number, plantId, ct).ConfigureAwait(false);
         var op = PackageOperation.Create(number, PackageOperationTypes.Merge, sources[0].WarehouseCode, sources[0].LocationCode, actor, plantId);
         var total = sources.Sum(s => s.Quantity);
         var first = sources[0];
@@ -201,7 +201,7 @@ public sealed class PackageLifecycleGateway
         var replay = await ReplayIfExistsAsync(body.Number, plantId, allowed, ct).ConfigureAwait(false);
         if (replay is not null) return replay;
 
-        var number = SystemIdentifier.Ensure(body.Number, "PKOP");
+        var number = await NextOperationNumberAsync(body.Number, plantId, ct).ConfigureAwait(false);
         var op = PackageOperation.Create(number, PackageOperationTypes.Repack, src.WarehouseCode, src.LocationCode, actor, plantId);
         var child = await MintChildAsync(src, src.Quantity, src.Status, src.WarehouseCode, src.LocationCode, src.WarehouseId, src.LocationId, body.PhysicalGroupLabel, ct).ConfigureAwait(false);
         var contents = await _packages.ListContentsAsync(src.Id, ct).ConfigureAwait(false);
@@ -285,12 +285,14 @@ public sealed class PackageLifecycleGateway
             var loc = await _locations.FindByWarehouseAndCodeAsync(childWh, childLoc, plantId, ct).ConfigureAwait(false);
             if (loc is null)
                 return Result.Failure<PackageOperationResultDto>(Error.Forbidden("INV-PKG-403", $"Lokasyon '{childLoc}' bu tesise ait değil."));
+            var zone = StockZonePolicy.GuardDestination(parent.Status, loc, "MOVE");
+            if (zone.IsFailure) return Result.Failure<PackageOperationResultDto>(zone.Error!);
             var destWh = await _warehouses.GetByCodeAndPlantAsync(childWh, plantId, ct).ConfigureAwait(false);
             destWhId = destWh?.Id;
             destLocId = loc.Id;
         }
 
-        var number = SystemIdentifier.Ensure(numberHint, "PKOP");
+        var number = await NextOperationNumberAsync(numberHint, plantId, ct).ConfigureAwait(false);
         var op = PackageOperation.Create(number, operationType, parent.WarehouseCode, parent.LocationCode, actor, plantId);
         var child = await MintChildAsync(parent, plan.Total, parent.Status, childWh, childLoc, destWhId, destLocId, physicalGroupLabel, ct).ConfigureAwait(false);
 
@@ -347,8 +349,8 @@ public sealed class PackageLifecycleGateway
         }
         dest.ApplyReceipt(qty);
         var note = $"from={parent.PackageNumber} to={child.PackageNumber} partial {parent.WarehouseCode}/{parent.LocationCode}→{toWh}/{toLoc} qty={qty} by={actor}";
-        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "Out", doc, parent.MaterialCode, parent.MaterialIdentityNumber, parent.PackageNumber, parent.WarehouseCode, parent.LocationCode, parent.LotNumber, qty, parent.UnitOfMeasure, note, plantId: plantId), ct).ConfigureAwait(false);
-        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "In", doc, child.MaterialCode, child.MaterialIdentityNumber, child.PackageNumber, toWh, toLoc, child.LotNumber, qty, child.UnitOfMeasure, note, plantId: plantId), ct).ConfigureAwait(false);
+        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "Out", doc, parent.MaterialCode, parent.MaterialIdentityNumber, parent.PackageNumber, parent.WarehouseCode, parent.LocationCode, parent.LotNumber, qty, parent.UnitOfMeasure, note, plantId: plantId, packageId: parent.Id), ct).ConfigureAwait(false);
+        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "In", doc, child.MaterialCode, child.MaterialIdentityNumber, child.PackageNumber, toWh, toLoc, child.LotNumber, qty, child.UnitOfMeasure, note, plantId: plantId, packageId: child.Id), ct).ConfigureAwait(false);
         return Result.Success();
     }
 
@@ -356,7 +358,16 @@ public sealed class PackageLifecycleGateway
     {
         await _movements.AddAsync(InventoryMovement.Post(
             type, "In", doc, pkg.MaterialCode, pkg.MaterialIdentityNumber, pkg.PackageNumber,
-            pkg.WarehouseCode, pkg.LocationCode, pkg.LotNumber, 0, pkg.UnitOfMeasure, notes, plantId: pkg.PlantId), ct).ConfigureAwait(false);
+            pkg.WarehouseCode, pkg.LocationCode, pkg.LotNumber, 0, pkg.UnitOfMeasure, notes, plantId: pkg.PlantId, packageId: pkg.Id), ct).ConfigureAwait(false);
+    }
+
+    private async Task<string> NextOperationNumberAsync(string? hint, string? plantId, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(hint)) return hint.Trim();
+        var now = DateTimeOffset.UtcNow;
+        var existing = await _operations.ListNumbersAsync(plantId, ct).ConfigureAwait(false);
+        var ordinal = OpeningInventoryCodes.NextOrdinal(existing.Select(x => PackageOperationCodes.ParseOrdinal(x, plantId, now)));
+        return PackageOperationCodes.Number(plantId, now, ordinal);
     }
 
     private async Task<InventoryPackage> MintChildAsync(

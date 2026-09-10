@@ -75,6 +75,7 @@ public sealed record CreateLocationCommand(
     string LocationType,
     string Status,
     string Description,
+    string StockZoneType,
     string PlantId,
     IReadOnlyList<string> AllowedPlantIds) : ICommand<Result<LocationDto>>;
 
@@ -86,6 +87,7 @@ public sealed record UpdateLocationCommand(
     string LocationType,
     string Status,
     string Description,
+    string StockZoneType,
     IReadOnlyList<string> AllowedPlantIds) : ICommand<Result<LocationDto>>;
 
 public sealed record DeleteLocationCommand(Guid Id, IReadOnlyList<string> AllowedPlantIds) : ICommand<Result>;
@@ -99,6 +101,7 @@ public static class LocationMapper
         Name = e.Name,
         WarehouseCode = e.WarehouseCode,
         LocationType = e.LocationType,
+        StockZoneType = StockZoneTypes.Resolve(e.StockZoneType, e.LocationType),
         Status = e.Status,
         Description = e.Description,
         CompanyId = e.CompanyId,
@@ -200,7 +203,8 @@ public sealed class CreateLocationCommandHandler : ICommandHandler<CreateLocatio
             locationType,
             status,
             command.Description?.Trim() ?? string.Empty,
-            plantId: command.PlantId);
+            plantId: command.PlantId,
+            stockZoneType: command.StockZoneType);
         await _repo.AddAsync(e, cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(LocationMapper.ToDto(e));
@@ -247,7 +251,7 @@ public sealed class UpdateLocationCommandHandler : ICommandHandler<UpdateLocatio
         if (duplicate is not null && !duplicate.IsDeleted && duplicate.Id != e.Id)
             return Result.Failure<LocationDto>(Error.Conflict("BUS-LOC-005", "Bu depoda aynı lokasyon kodu zaten var."));
 
-        e.Update(code, name, warehouseCode, locationType, status, command.Description?.Trim() ?? e.Description);
+        e.Update(code, name, warehouseCode, locationType, status, command.Description?.Trim() ?? e.Description, command.StockZoneType);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(LocationMapper.ToDto(e));
     }

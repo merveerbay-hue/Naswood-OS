@@ -30,7 +30,9 @@ export function PackageScanPage() {
         <CardTitle>Barkod tara</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-[var(--text-muted)]">Tam barkod + Enter. Kısmi arama yok. Yeni paket oluşmaz.</p>
+        <p className="text-sm text-[var(--text-muted)]">
+          Tam barkod + Enter. Malzeme/lot aramayın — sistem paketin allowedActions listesine göre taşı, böl, paketle veya üretime ver der.
+        </p>
         <Input
           autoFocus
           placeholder="NWPKG-F01-26-000001"

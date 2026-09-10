@@ -171,6 +171,62 @@ export function PackagePassportPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Depo tarayıcı</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <p className="w-full font-mono text-sm">{p.barcode}</p>
+          {can(p, 'MOVE_FULL') || can(p, 'MOVE') ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setMoveMode('full');
+                document.getElementById('pkg-move')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              Tamamını taşı
+            </Button>
+          ) : null}
+          {can(p, 'MOVE_PARTIAL') || can(p, 'MOVE') ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setMoveMode('partial');
+                document.getElementById('pkg-move')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              Kısmi taşı
+            </Button>
+          ) : null}
+          {can(p, 'SPLIT') ? (
+            <Button variant="secondary" onClick={() => document.getElementById('pkg-split')?.scrollIntoView({ behavior: 'smooth' })}>
+              Böl
+            </Button>
+          ) : null}
+          {can(p, 'REPACK') ? (
+            <Button variant="secondary" onClick={() => document.getElementById('pkg-repack')?.scrollIntoView({ behavior: 'smooth' })}>
+              Yeniden paketle
+            </Button>
+          ) : null}
+          {can(p, 'CONSUME') ? (
+            <Button
+              onClick={() =>
+                navigate({
+                  to: '/production/execution/output',
+                  search: { consumeBarcode: p.barcode } as never,
+                })
+              }
+            >
+              Üretime ver
+            </Button>
+          ) : null}
+          {can(p, 'PRINT_LABEL') ? (
+            <Button onClick={() => printMut.mutate()}>Etiket bas</Button>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Fiziksel içerik</CardTitle>
         </CardHeader>
         <CardContent>
@@ -289,7 +345,7 @@ export function PackagePassportPage() {
       </div>
 
       {can(p, 'MOVE') ? (
-        <Card>
+        <Card id="pkg-move">
           <CardHeader>
             <CardTitle>Lokasyon değiştir</CardTitle>
           </CardHeader>
@@ -320,7 +376,7 @@ export function PackagePassportPage() {
       ) : null}
 
       {can(p, 'SPLIT') ? (
-        <Card>
+        <Card id="pkg-split">
           <CardHeader>
             <CardTitle>Paketi böl</CardTitle>
           </CardHeader>
@@ -335,7 +391,7 @@ export function PackagePassportPage() {
       ) : null}
 
       {can(p, 'REPACK') ? (
-        <Card>
+        <Card id="pkg-repack">
           <CardHeader>
             <CardTitle>Yeniden paketle</CardTitle>
           </CardHeader>

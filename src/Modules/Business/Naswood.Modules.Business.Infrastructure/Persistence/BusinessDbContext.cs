@@ -112,6 +112,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.WarehouseCode).HasMaxLength(200);
             entity.Property(x => x.LocationType).HasMaxLength(200);
+            entity.Property(x => x.StockZoneType).HasMaxLength(40);
             entity.Property(x => x.Description).HasMaxLength(500);
             entity.Property(x => x.Status).HasMaxLength(200);
             entity.HasIndex(x => new { x.PlantId, x.WarehouseCode, x.Code });
@@ -244,6 +245,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.MaterialCode).HasMaxLength(200);
             entity.Property(x => x.MaterialIdentityNumber).HasMaxLength(200);
             entity.Property(x => x.PackageNumber).HasMaxLength(200);
+            entity.HasIndex(x => x.PackageId);
             entity.Property(x => x.WarehouseCode).HasMaxLength(200);
             entity.Property(x => x.LocationCode).HasMaxLength(200);
             entity.Property(x => x.LotNumber).HasMaxLength(200);

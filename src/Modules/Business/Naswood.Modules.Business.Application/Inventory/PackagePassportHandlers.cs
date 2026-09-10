@@ -189,6 +189,7 @@ public sealed class PackagePassportLoader
             Movements = moves.Select(m => new PackageMovementRowDto
             {
                 At = m.CreatedAt,
+                PackageId = m.PackageId,
                 Action = m.MovementType,
                 FromLocation = m.Direction == "Out" ? $"{m.WarehouseCode}/{m.LocationCode}" : string.Empty,
                 ToLocation = m.Direction == "In" ? $"{m.WarehouseCode}/{m.LocationCode}" : string.Empty,
@@ -369,6 +370,9 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
         var loc = await _locations.FindByWarehouseAndCodeAsync(toWh, toLoc, plantId, cancellationToken).ConfigureAwait(false);
         if (loc is null)
             return Result.Failure<PackagePassportDto>(Error.Forbidden("INV-PKG-403", $"Lokasyon '{toLoc}' bu tesise ait değil."));
+        var zone = StockZonePolicy.GuardDestination(pkg.Status, loc, "MOVE");
+        if (zone.IsFailure)
+            return Result.Failure<PackagePassportDto>(zone.Error!);
 
         var fromWh = pkg.WarehouseCode;
         var fromLoc = pkg.LocationCode;
@@ -403,8 +407,8 @@ public sealed class RelocatePackageCommandHandler : ICommandHandler<RelocatePack
 
         var doc = $"PKG-MOVE-{pkg.PackageNumber}";
         var note = $"pkg={pkg.PackageNumber} barcode={pkg.Barcode} {fromWh}/{fromLoc}→{toWh}/{toLoc} by={command.Actor}";
-        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "Out", doc, material, pkg.MaterialIdentityNumber, pkg.PackageNumber, fromWh, fromLoc, lot, qty, pkg.UnitOfMeasure, note, plantId: plantId), cancellationToken).ConfigureAwait(false);
-        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "In", doc, material, pkg.MaterialIdentityNumber, pkg.PackageNumber, toWh, toLoc, lot, qty, pkg.UnitOfMeasure, note, plantId: plantId), cancellationToken).ConfigureAwait(false);
+        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "Out", doc, material, pkg.MaterialIdentityNumber, pkg.PackageNumber, fromWh, fromLoc, lot, qty, pkg.UnitOfMeasure, note, plantId: plantId, packageId: pkg.Id), cancellationToken).ConfigureAwait(false);
+        await _movements.AddAsync(InventoryMovement.Post("PACKAGE_MOVE", "In", doc, material, pkg.MaterialIdentityNumber, pkg.PackageNumber, toWh, toLoc, lot, qty, pkg.UnitOfMeasure, note, plantId: plantId, packageId: pkg.Id), cancellationToken).ConfigureAwait(false);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await _loader.LoadAsync(pkg, command.AllowedPlantIds, cancellationToken).ConfigureAwait(false);
     }

@@ -24,7 +24,8 @@ public sealed class InventoryMovement : BusinessEntity
         string status,
         string notes,
         string companyId,
-        string? plantId)
+        string? plantId,
+        Guid? packageId)
         : base(id)
     {
         MovementNumber = movementNumber;
@@ -43,6 +44,7 @@ public sealed class InventoryMovement : BusinessEntity
         Notes = notes;
         CompanyId = companyId;
         PlantId = plantId;
+        PackageId = packageId;
         CreatedAt = UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -60,6 +62,8 @@ public sealed class InventoryMovement : BusinessEntity
     public string UnitOfMeasure { get; private set; } = string.Empty;
     public string Status { get; private set; } = string.Empty;
     public string Notes { get; private set; } = string.Empty;
+    /// <summary>Nullable FK. Legacy rows stay null; PackageNumber remains the snapshot.</summary>
+    public Guid? PackageId { get; private set; }
 
     public static InventoryMovement Post(
         string movementType,
@@ -75,7 +79,8 @@ public sealed class InventoryMovement : BusinessEntity
         string unitOfMeasure,
         string notes,
         string companyId = "COMP-001",
-        string? plantId = "PLANT-001")
+        string? plantId = "PLANT-001",
+        Guid? packageId = null)
     {
         var prefix = direction.Equals("In", StringComparison.OrdinalIgnoreCase) ? "MV-IN" : "MV-OUT";
         return new InventoryMovement(
@@ -95,7 +100,8 @@ public sealed class InventoryMovement : BusinessEntity
             "Posted",
             notes,
             companyId,
-            plantId);
+            plantId,
+            packageId);
     }
 
     public void SoftDelete()

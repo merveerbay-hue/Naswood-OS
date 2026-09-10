@@ -32,6 +32,26 @@ export function isKnownLocationType(type: string): boolean {
   return TYPE_SET.has(String(type || '').trim().toUpperCase() as LocationTypeCode);
 }
 
+export type StockZoneCode = 'NORMAL' | 'QUARANTINE' | 'REJECTED' | 'BLOCKED';
+
+export const STOCK_ZONE_OPTIONS: { token: StockZoneCode; label: string }[] = [
+  { token: 'NORMAL', label: 'Normal stok' },
+  { token: 'QUARANTINE', label: 'Karantina' },
+  { token: 'REJECTED', label: 'Red / Bloke' },
+  { token: 'BLOCKED', label: 'Bloke' },
+];
+
+export function stockZoneFromLocationType(type: string): StockZoneCode {
+  const t = String(type || '').trim().toUpperCase();
+  if (t === 'QUARANTINE' || t === 'QUARANTINE_AREA') return 'QUARANTINE';
+  return 'NORMAL';
+}
+
+export function stockZoneLabel(zone: string): string {
+  const z = String(zone || '').trim().toUpperCase();
+  return STOCK_ZONE_OPTIONS.find((o) => o.token === z)?.label ?? (z || 'Normal stok');
+}
+
 export function locationTypeLabel(type: string): string {
   const t = String(type || '').trim().toUpperCase();
   return LOCATION_TYPE_OPTIONS.find((o) => o.token === t)?.label ?? String(type || '—');

@@ -168,7 +168,8 @@ public static class OpeningInventoryPost
                     qty,
                     first.StockUnit,
                     note.Length > 2000 ? note[..2000] : note,
-                    plantId: plantId);
+                    plantId: plantId,
+                    packageId: package.Id);
                 await movements.AddAsync(movement, cancellationToken).ConfigureAwait(false);
                 adjustments.Add(new InventoryCountAdjustmentDto
                 {

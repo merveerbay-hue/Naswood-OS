@@ -154,6 +154,7 @@ public sealed class PackagePassportDto
 public sealed class PackageMovementRowDto
 {
     public DateTimeOffset At { get; init; }
+    public Guid? PackageId { get; init; }
     public string Action { get; init; } = string.Empty;
     public string FromLocation { get; init; } = string.Empty;
     public string ToLocation { get; init; } = string.Empty;
@@ -205,6 +206,7 @@ public sealed class InventoryMovementDto
     public required string MaterialCode { get; init; }
     public required string LotNumber { get; init; }
     public required string PackageNumber { get; init; }
+    public Guid? PackageId { get; init; }
     public required decimal Quantity { get; init; }
     public required string WarehouseCode { get; init; }
     public string? LocationCode { get; init; }
