@@ -47,11 +47,15 @@ public sealed class InventoryBalance : BusinessEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void ApplyReceipt(decimal quantity)
+    public void ApplyReceipt(decimal quantity, string? status = null)
     {
         if (quantity <= 0) throw new InvalidOperationException("Receipt quantity must be positive.");
         QuantityOnHand += quantity;
-        Status = "Active";
+        if (!string.IsNullOrWhiteSpace(status))
+            Status = status;
+        else if (!string.Equals(Status, "Hold", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(Status, "Quarantine", StringComparison.OrdinalIgnoreCase))
+            Status = "Active";
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

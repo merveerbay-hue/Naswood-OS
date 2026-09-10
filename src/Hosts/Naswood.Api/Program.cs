@@ -55,6 +55,9 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "LocationId" uuid NULL""",
         """ALTER TABLE IF EXISTS business.business_inventory_package ADD COLUMN IF NOT EXISTS "CurrentPlantId" character varying(20) NOT NULL DEFAULT ''""",
         """ALTER TABLE IF EXISTS business.business_inventory_batch ADD COLUMN IF NOT EXISTS "SourceReferenceNo" character varying(80) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelledBy" character varying(200) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelReason" character varying(500) NOT NULL DEFAULT ''""",
+        """ALTER TABLE IF EXISTS business.business_production_output ADD COLUMN IF NOT EXISTS "CancelledAt" timestamp with time zone NULL""",
     })
     {
         try { await businessDb.Database.ExecuteSqlRawAsync(stmt).ConfigureAwait(false); }
@@ -316,6 +319,17 @@ static async Task EnsurePackageIdentityIntegrityAsync(BusinessDbContext business
         """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_number_alive" ON business.business_inventory_package ("PackageNumber") WHERE "IsDeleted" = false AND "PackageNumber" <> ''""").ConfigureAwait(false);
     await businessDb.Database.ExecuteSqlRawAsync(
         """CREATE UNIQUE INDEX IF NOT EXISTS "UX_package_publicid_alive" ON business.business_inventory_package ("PublicId") WHERE "IsDeleted" = false AND "PublicId" <> ''""").ConfigureAwait(false);
+    await businessDb.Database.ExecuteSqlRawAsync(
+        """CREATE UNIQUE INDEX IF NOT EXISTS "UX_batch_production_lot_alive" ON business.business_inventory_batch ("BatchNumber") WHERE "IsDeleted" = false AND "SourceType" = 'PRODUCTION' AND "BatchNumber" <> ''""").ConfigureAwait(false);
+    try
+    {
+        await businessDb.Database.ExecuteSqlRawAsync(
+            """CREATE UNIQUE INDEX IF NOT EXISTS "UX_production_output_number_alive" ON business.business_production_output ("Number") WHERE "IsDeleted" = false AND "Number" <> ''""").ConfigureAwait(false);
+    }
+    catch (Exception ex) when (ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+    {
+        // Table created on next restart after GenerateCreateScript.
+    }
 }
 
 static async Task<List<string>> QueryDuplicatePackageKeysAsync(BusinessDbContext db, string sql)

@@ -8,6 +8,7 @@ public static class DependencyInjection
     public static IServiceCollection AddBusinessApplication(this IServiceCollection services)
     {
         services.AddScoped<PackagePassportLoader>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.ProductionOutputGateway>();
         return services;
     }
 }

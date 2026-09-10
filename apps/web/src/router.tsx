@@ -60,6 +60,7 @@ import { SalesDashboardPage } from './pages/business/SalesDashboardPage';
 import { SalesReportPage } from './pages/business/SalesReportPage';
 import { ProductionWorkspaceLayout } from './modules/production/ProductionWorkspaceLayout';
 import { ProductionDashboardPage } from './modules/production/overview/ProductionDashboardPage';
+import { ProductionOutputPage } from './modules/production/output/ProductionOutputPage';
 import {
   BomDetailPage,
   BomListPage,
@@ -428,6 +429,7 @@ const prdConfirmation = createRoute({ getParentRoute: () => productionRoute, pat
 const prdWip = createRoute({ getParentRoute: () => productionRoute, path: 'execution/wip', component: WipPage });
 const prdPackaging = createRoute({ getParentRoute: () => productionRoute, path: 'execution/packaging', component: PackagingPage });
 const prdFg = createRoute({ getParentRoute: () => productionRoute, path: 'execution/finished-goods', component: FinishedGoodsPage });
+const prdOutput = createRoute({ getParentRoute: () => productionRoute, path: 'execution/output', component: ProductionOutputPage });
 const prdScrap = createRoute({ getParentRoute: () => productionRoute, path: 'execution/scrap', component: ScrapPage });
 const prdRework = createRoute({ getParentRoute: () => productionRoute, path: 'execution/rework', component: ReworkPage });
 const prdBoms = createRoute({ getParentRoute: () => productionRoute, path: 'master-data/boms', component: BomListPage });
@@ -586,6 +588,7 @@ const implemented = new Set([
   '/production/execution/wip',
   '/production/execution/packaging',
   '/production/execution/finished-goods',
+  '/production/execution/output',
   '/production/execution/scrap',
   '/production/execution/rework',
   '/production/master-data/boms',
@@ -727,6 +730,7 @@ export const routeTree = rootRoute.addChildren([
       prdWip,
       prdPackaging,
       prdFg,
+      prdOutput,
       prdScrap,
       prdRework,
       prdBoms,

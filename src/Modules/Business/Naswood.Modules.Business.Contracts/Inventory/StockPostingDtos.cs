@@ -126,6 +126,9 @@ public sealed class PackagePassportDto
     public required string LotNumber { get; init; }
     public string SourceType { get; init; } = string.Empty;
     public string SourceReferenceNo { get; init; } = string.Empty;
+    public string ProductionOrderNumber { get; init; } = string.Empty;
+    public int SourceLotCount { get; init; }
+    public IReadOnlyList<string> SourceLotNumbers { get; init; } = [];
     public required string Factory { get; init; }
     public required string WarehouseCode { get; init; }
     public required string LocationCode { get; init; }
