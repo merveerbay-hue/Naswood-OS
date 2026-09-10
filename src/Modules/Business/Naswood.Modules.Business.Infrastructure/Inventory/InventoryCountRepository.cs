@@ -35,4 +35,16 @@ public sealed class InventoryCountRepository : IInventoryCountRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
     }
+
+    public async Task<IReadOnlyList<InventoryCountLine>> ListLinesAsync(Guid countId, CancellationToken cancellationToken = default) =>
+        await _db.Set<InventoryCountLine>()
+            .Where(x => x.CountId == countId && !x.IsDeleted)
+            .OrderBy(x => x.LineNo)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public async Task AddLineAsync(InventoryCountLine line, CancellationToken cancellationToken = default) =>
+        await _db.Set<InventoryCountLine>().AddAsync(line, cancellationToken).ConfigureAwait(false);
+
+    public void RemoveLine(InventoryCountLine line) => line.SoftDelete();
 }

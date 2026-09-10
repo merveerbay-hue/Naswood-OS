@@ -72,6 +72,17 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE IF EXISTS business.business_inventory_location ADD COLUMN IF NOT EXISTS "Description" character varying(500) NOT NULL DEFAULT '';
         ALTER TABLE IF EXISTS business.business_inventory_goodsreceipt ALTER COLUMN "Notes" TYPE text;
         ALTER TABLE IF EXISTS business.business_inventory_goodsissue ALTER COLUMN "Notes" TYPE text;
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ALTER COLUMN "Notes" TYPE text;
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "LocationCode" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "CountType" character varying(40) NOT NULL DEFAULT 'Normal';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "SnapshotAt" timestamp with time zone NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "StartedBy" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "StartedAt" timestamp with time zone NOT NULL DEFAULT NOW();
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "CountedBy" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "CompletedBy" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "CompletedAt" timestamp with time zone NULL;
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "ApprovedBy" character varying(200) NOT NULL DEFAULT '';
+        ALTER TABLE IF EXISTS business.business_inventory_inventorycount ADD COLUMN IF NOT EXISTS "ApprovedAt" timestamp with time zone NULL;
         """).ConfigureAwait(false);
 }
 

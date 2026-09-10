@@ -76,4 +76,21 @@ public sealed class InventoryBalanceRepository : IInventoryBalanceRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return (items, total);
     }
+
+    public async Task<IReadOnlyList<InventoryBalance>> ListForCountSnapshotAsync(
+        string plantId,
+        string warehouseCode,
+        string? locationCode,
+        CancellationToken cancellationToken = default)
+    {
+        var plant = plantId.Trim();
+        var wh = warehouseCode.Trim();
+        var query = _db.Set<InventoryBalance>().Where(x => !x.IsDeleted && x.PlantId == plant && x.WarehouseCode == wh);
+        if (!string.IsNullOrWhiteSpace(locationCode))
+        {
+            var loc = locationCode.Trim();
+            query = query.Where(x => x.LocationCode == loc);
+        }
+        return await query.OrderBy(x => x.MaterialCode).ThenBy(x => x.LocationCode).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

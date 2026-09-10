@@ -19,6 +19,11 @@ public interface IInventoryBalanceRepository
         string? warehouseCode = null,
         string? locationCode = null,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<InventoryBalance>> ListForCountSnapshotAsync(
+        string plantId,
+        string warehouseCode,
+        string? locationCode,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record SearchInventoryBalanceQuery(
