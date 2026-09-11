@@ -184,4 +184,12 @@ public sealed class ProductionExecutionController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return result.ToActionResult(this);
     }
+
+    [HttpGet("api/v1/production-execution/release")]
+    [RequirePermission("Production.Execution.View")]
+    public async Task<IActionResult> Release(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.QueryAsync(new GetPilotReleaseQuery(), cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
 }

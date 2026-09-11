@@ -263,3 +263,11 @@ public sealed class ShopFloorFeedbackDto
     public string GitSha { get; init; } = string.Empty;
     public DateTimeOffset OccurredAt { get; init; }
 }
+
+public sealed class PilotReleaseDto
+{
+    public string Name { get; init; } = string.Empty;
+    public string AppVersion { get; init; } = string.Empty;
+    public string GitSha { get; init; } = string.Empty;
+    public string FrozenAtUtc { get; init; } = string.Empty;
+}

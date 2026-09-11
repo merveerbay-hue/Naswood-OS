@@ -334,3 +334,20 @@ public sealed class ListShopFloorFeedbackQueryHandler : IQueryHandler<ListShopFl
     public Task<Result<IReadOnlyList<ShopFloorFeedbackDto>>> HandleAsync(ListShopFloorFeedbackQuery query, CancellationToken cancellationToken = default)
         => _gate.ListFeedbackAsync(query.AllowedPlantIds, cancellationToken);
 }
+
+public sealed record GetPilotReleaseQuery : IQuery<Result<PilotReleaseDto>>;
+
+public sealed class GetPilotReleaseQueryHandler : IQueryHandler<GetPilotReleaseQuery, Result<PilotReleaseDto>>
+{
+    public Task<Result<PilotReleaseDto>> HandleAsync(GetPilotReleaseQuery query, CancellationToken cancellationToken = default)
+    {
+        var stamp = ShopFloorReleaseStamp.Current();
+        return Task.FromResult(Result.Success(new PilotReleaseDto
+        {
+            Name = PilotRelease.Name,
+            AppVersion = stamp.Version,
+            GitSha = stamp.GitSha,
+            FrozenAtUtc = PilotRelease.FrozenAtUtc
+        }));
+    }
+}

@@ -498,6 +498,14 @@ public class ProductionExecutionChainTests
         Assert.False(string.IsNullOrWhiteSpace(rows[0].GetProperty("userId").GetString()));
         Assert.Equal(exec, rows[0].GetProperty("executionId").GetGuid());
         Assert.Contains("shop-floor", rows[0].GetProperty("screen").GetString());
+        Assert.Contains("FJ-PILOT-1", rows[0].GetProperty("appVersion").GetString());
+
+        var release = await client.GetAsync("/api/v1/production-execution/release");
+        release.EnsureSuccessStatusCode();
+        var rel = await Data(release);
+        Assert.Equal("FJ-PILOT-1", rel.GetProperty("name").GetString());
+        Assert.Contains("FJ-PILOT-1", rel.GetProperty("appVersion").GetString());
+        Assert.Equal("2026-09-11", rel.GetProperty("frozenAtUtc").GetString());
     }
 
     [Fact]

@@ -18,6 +18,14 @@ public class ProductionExecutionConcurrencyTests
     }
 
     [Fact]
+    public void Pilot_release_stamp_is_fj_pilot_1()
+    {
+        Assert.Equal("FJ-PILOT-1", PilotRelease.Name);
+        var stamp = ShopFloorReleaseStamp.Current();
+        Assert.Contains("FJ-PILOT-1", stamp.Version, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Cancel_reasons_are_closed()
     {
         foreach (var reason in ProductionExecutionPolicy.CancelReasons)

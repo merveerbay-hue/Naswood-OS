@@ -6,18 +6,21 @@ public static class ShopFloorReleaseStamp
 {
     public static (string Version, string GitSha) Current()
     {
-        var version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        var informational = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-            ?? "dev";
+            ?? "";
+        var version = Environment.GetEnvironmentVariable("NASWOOD_PILOT_VERSION");
+        if (string.IsNullOrWhiteSpace(version))
+            version = string.IsNullOrWhiteSpace(informational) ? PilotRelease.Name : $"{PilotRelease.Name}+{informational}";
         var sha = Environment.GetEnvironmentVariable("NASWOOD_GIT_SHA")
             ?? Environment.GetEnvironmentVariable("GITHUB_SHA")
             ?? ReadLocalGitSha()
             ?? "";
         if (sha.Length > 40) sha = sha[..40];
-        var plus = version.IndexOf('+');
-        if (string.IsNullOrWhiteSpace(sha) && plus > 0 && plus < version.Length - 1)
-            sha = version[(plus + 1)..];
-        return (version, sha.Trim());
+        var plus = informational.IndexOf('+');
+        if (string.IsNullOrWhiteSpace(sha) && plus > 0 && plus < informational.Length - 1)
+            sha = informational[(plus + 1)..];
+        return (version.Trim(), sha.Trim());
     }
 
     private static string? ReadLocalGitSha()
