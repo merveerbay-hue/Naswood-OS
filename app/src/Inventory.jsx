@@ -67,6 +67,16 @@ export default function Inventory({ session }) {
           columns={[
             { key: "code", label: "Kod" },
             { key: "name", label: "Ad" },
+            {
+              key: "act",
+              label: "İşlem",
+              render: (row) => (
+                <span className="actions">
+                  <button className="ghost" onClick={() => setEdit(row)}>Düzenle</button>
+                  <button className="ghost" onClick={() => setMove({ id: row.id, type: "Giriş", qty: "", note: "" })}>Hareket</button>
+                </span>
+              ),
+            },
             { key: "category", label: "Kategori" },
             { key: "warehouse", label: "Depo" },
             { key: "onHand", label: "Eldeki", render: (row) => `${row.onHand} ${row.unit}` },
@@ -81,16 +91,6 @@ export default function Inventory({ session }) {
               ),
             },
             { key: "status", label: "Durum", render: (row) => <Badge value={row.status} /> },
-            {
-              key: "act",
-              label: "",
-              render: (row) => (
-                <span className="actions">
-                  <button className="ghost" onClick={() => setEdit(row)}>Düzenle</button>
-                  <button className="ghost" onClick={() => setMove({ id: row.id, type: "Giriş", qty: "", note: "" })}>Hareket</button>
-                </span>
-              ),
-            },
           ]}
         />
       ) : (
