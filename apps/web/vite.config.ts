@@ -137,11 +137,8 @@ export default defineConfig({
     // Vite 6 only reflects localhost origins. Cursor's preview host is rejected,
     // the browser drops the login call, and the form shows a connection error.
     cors: true,
-    // HMR websocket through Cursor port proxy can fail and leave a blank frame.
-    hmr: {
-      overlay: true,
-      clientPort: 5173,
-    },
+    // The preview tunnel resets the page when Vite opens a websocket on 5173.
+    hmr: false,
   },
   preview: {
     host: '0.0.0.0',
