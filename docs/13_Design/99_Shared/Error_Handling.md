@@ -128,16 +128,26 @@ Resolution
 ```json
 {
   "success": false,
-  "error": {
-    "code": "MAT-001",
-    "category": "Validation",
-    "message": "Material Code already exists.",
-    "details": [],
+  "data": null,
+  "message": "Validation failed.",
+  "errors": [
+    {
+      "code": "MAT-001",
+      "category": "Validation",
+      "field": "materialCode",
+      "message": "Material Code already exists.",
+      "details": {}
+    }
+  ],
+  "metadata": {
     "correlationId": "9fd8b9ab-2e5e-47d3-b6cf-f61f0cbb2d9",
     "timestamp": "2026-08-05T10:15:22Z"
   }
 }
 ```
+
+The structure is the canonical API envelope defined by `API_Standards.md`.
+Multiple validation failures are returned as separate entries in `errors`.
 
 ---
 

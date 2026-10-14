@@ -1,0 +1,14 @@
+@Naswood.Api_HostAddress = http://localhost:5080
+
+GET {{Naswood.Api_HostAddress}}/health/live
+Accept: application/json
+
+###
+
+GET {{Naswood.Api_HostAddress}}/health/ready
+Accept: application/json
+
+###
+
+GET {{Naswood.Api_HostAddress}}/health
+Accept: application/json

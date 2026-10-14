@@ -1,0 +1,79 @@
+using Microsoft.EntityFrameworkCore;
+using Naswood.Modules.Business.Application.Inventory;
+using Naswood.Modules.Business.Domain.Inventory;
+using Naswood.Modules.Business.Infrastructure.Persistence;
+
+namespace Naswood.Modules.Business.Infrastructure.Inventory;
+
+public sealed class BatchRepository : IBatchRepository
+{
+    private readonly BusinessDbContext _db;
+    public BatchRepository(BusinessDbContext db) => _db = db;
+
+    public Task<Batch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Set<Batch>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task<Batch?> GetByNumberAndMaterialAsync(
+        string batchNumber,
+        string materialCode,
+        string? plantId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var lot = (batchNumber ?? string.Empty).Trim();
+        var mat = (materialCode ?? string.Empty).Trim();
+        if (lot.Length == 0 || mat.Length == 0)
+            return Task.FromResult<Batch?>(null);
+        var lotLower = lot.ToLowerInvariant();
+        var matLower = mat.ToLowerInvariant();
+        var query = _db.Set<Batch>().Where(x =>
+            !x.IsDeleted
+            && x.BatchNumber.ToLower() == lotLower
+            && x.MaterialCode.ToLower() == matLower);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return query.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task AddAsync(Batch entity, CancellationToken cancellationToken = default) =>
+        await _db.Set<Batch>().AddAsync(entity, cancellationToken).ConfigureAwait(false);
+
+    public async Task<(IReadOnlyList<Batch> Items, int Total)> SearchAsync(
+        string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _db.Set<Batch>().AsNoTracking().Where(x => !x.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var value = q.Trim();
+            query = query.Where(x => EF.Functions.ILike(x.BatchNumber, "%" + value + "%"));
+        }
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        var items = await query.OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        return (items, total);
+    }
+
+    public async Task<IReadOnlyList<string>> ListOpeningLotNumbersAsync(
+        string prefix,
+        string? plantId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var pfx = (prefix ?? string.Empty).Trim();
+        if (pfx.Length == 0) return Array.Empty<string>();
+        var query = _db.Set<Batch>().AsNoTracking().Where(x => !x.IsDeleted && EF.Functions.ILike(x.BatchNumber, pfx + "%"));
+        if (!string.IsNullOrWhiteSpace(plantId))
+        {
+            var plant = plantId.Trim();
+            query = query.Where(x => x.PlantId == plant);
+        }
+        return await query.Select(x => x.BatchNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+}

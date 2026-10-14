@@ -1,0 +1,149 @@
+using Naswood.BuildingBlocks.Application.Abstractions;
+using Naswood.BuildingBlocks.Domain;
+using Naswood.Modules.Business.Application.Common;
+using Naswood.Modules.Business.Contracts.Inventory;
+
+namespace Naswood.Modules.Business.Application.Inventory;
+
+public sealed record GetInventoryDashboardQuery(
+    string? PlantId,
+    IReadOnlyList<string>? AllowedPlantIds = null) : IQuery<Result<InventoryDashboardDto>>;
+
+public sealed class GetInventoryDashboardQueryHandler : IQueryHandler<GetInventoryDashboardQuery, Result<InventoryDashboardDto>>
+{
+    private readonly IWarehouseRepository _warehouses;
+    private readonly ILocationRepository _locations;
+    private readonly IInventoryBalanceRepository _balances;
+    private readonly IGoodsReceiptRepository _goodsReceipts;
+    private readonly IGoodsIssueRepository _goodsIssues;
+    private readonly IStockTransferRepository _transfers;
+    private readonly IInventoryCountRepository _counts;
+    private readonly IInventoryPackageRepository _packages;
+    private readonly IInventoryMovementRepository _movements;
+
+    public GetInventoryDashboardQueryHandler(
+        IWarehouseRepository warehouses,
+        ILocationRepository locations,
+        IInventoryBalanceRepository balances,
+        IGoodsReceiptRepository goodsReceipts,
+        IGoodsIssueRepository goodsIssues,
+        IStockTransferRepository transfers,
+        IInventoryCountRepository counts,
+        IInventoryPackageRepository packages,
+        IInventoryMovementRepository movements)
+    {
+        _warehouses = warehouses;
+        _locations = locations;
+        _balances = balances;
+        _goodsReceipts = goodsReceipts;
+        _goodsIssues = goodsIssues;
+        _transfers = transfers;
+        _counts = counts;
+        _packages = packages;
+        _movements = movements;
+    }
+
+    public async Task<Result<InventoryDashboardDto>> HandleAsync(
+        GetInventoryDashboardQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var plantId = string.IsNullOrWhiteSpace(query.PlantId) ? null : query.PlantId.Trim();
+        if (string.IsNullOrWhiteSpace(plantId))
+            return Result.Failure<InventoryDashboardDto>(Error.Validation(
+                "INV-BAL-004",
+                "Plant / factory context is required."));
+
+        if (query.AllowedPlantIds is { Count: > 0 } && !PlantAccess.CanAccess(query.AllowedPlantIds, plantId))
+            return Result.Failure<InventoryDashboardDto>(Error.Forbidden(
+                "INV-BAL-403",
+                "Bu tesisin stok özetini görüntüleme yetkiniz yok."));
+
+        var warehouses = await _warehouses.SearchAsync(null, plantId, 1, 1, cancellationToken).ConfigureAwait(false);
+        var locations = await _locations.SearchAsync(null, plantId, null, null, 1, 1, cancellationToken).ConfigureAwait(false);
+        // Server-side plant filter — never aggregate other factories' stock quantities.
+        var balances = await _balances.SearchAsync(null, 1, 500, plantId, null, null, cancellationToken).ConfigureAwait(false);
+        var receipts = await _goodsReceipts.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var issues = await _goodsIssues.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var transfers = await _transfers.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var counts = await _counts.SearchAsync(null, 1, 100, plantId, cancellationToken).ConfigureAwait(false);
+        var movements = await _movements.SearchAsync(null, 1, 1, plantId, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        var onHand = balances.Items.Sum(x => x.QuantityOnHand);
+        var reserved = balances.Items.Sum(x => x.QuantityReserved);
+        var negative = balances.Items.Count(x => x.QuantityOnHand < 0);
+        // Plant-scoped material footprint = distinct materials with balance in this factory (master remains global).
+        var plantMaterialCount = balances.Items
+            .Select(x => x.MaterialCode)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+
+        // Hold / available package counts: SQL aggregates (not pageSize=200 capped).
+        var holdPackages = await _packages.CountByStatusesAsync(
+            plantId,
+            new[] { "Hold", "Quarantine" },
+            cancellationToken).ConfigureAwait(false);
+        var availablePackages = await _packages.CountByStatusesAsync(
+            plantId,
+            new[] { "Available" },
+            cancellationToken).ConfigureAwait(false);
+
+        var openReceipts = await _goodsReceipts.CountOpenAsync(plantId, cancellationToken).ConfigureAwait(false);
+        var openIssues = await _goodsIssues.CountOpenAsync(plantId, cancellationToken).ConfigureAwait(false);
+
+        static int OpenDocs<T>(IReadOnlyList<T> items, Func<T, string> status) =>
+            items.Count(x =>
+            {
+                var s = status(x);
+                return !string.Equals(s, "Posted", StringComparison.OrdinalIgnoreCase)
+                       && !string.Equals(s, "Cancelled", StringComparison.OrdinalIgnoreCase)
+                       && !string.Equals(s, "Closed", StringComparison.OrdinalIgnoreCase);
+            });
+
+        // Dock board: plant-scoped receipts (repo already filtered).
+        var dock = receipts.Items
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(8)
+            .Select(r =>
+            {
+                var notes = r.Notes ?? string.Empty;
+                string Pick(string key)
+                {
+                    var token = notes.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                        .FirstOrDefault(p => p.StartsWith(key + "=", StringComparison.OrdinalIgnoreCase));
+                    return token is null ? "—" : token[(key.Length + 1)..];
+                }
+
+                return new InventoryDockItemDto
+                {
+                    Gate = Pick("gate"),
+                    Truck = string.IsNullOrWhiteSpace(r.Reference) ? "—" : r.Reference,
+                    Supplier = Pick("supplier"),
+                    Stage = string.Equals(r.Status, "Posted", StringComparison.OrdinalIgnoreCase) ? "Posted" : "Open",
+                    DocumentNumber = r.Number,
+                    Status = r.Status
+                };
+            })
+            .ToArray();
+
+        return Result.Success(new InventoryDashboardDto
+        {
+            MaterialCount = plantMaterialCount > 0 ? plantMaterialCount : 0,
+            WarehouseCount = warehouses.Total,
+            LocationCount = locations.Total,
+            BalanceRows = balances.Total,
+            QuantityOnHand = onHand,
+            QuantityReserved = reserved,
+            QuantityAvailable = onHand - reserved,
+            OpenGoodsReceipts = openReceipts,
+            OpenGoodsIssues = openIssues,
+            OpenTransfers = OpenDocs(transfers.Items, x => x.Status),
+            OpenCounts = OpenDocs(counts.Items, x => x.Status),
+            NegativeBalanceRows = negative,
+            HoldPackageCount = holdPackages,
+            AvailablePackageCount = availablePackages,
+            PostedMovementCount = movements.Total,
+            DockItems = dock
+        });
+    }
+}

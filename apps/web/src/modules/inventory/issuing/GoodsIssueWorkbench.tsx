@@ -1,0 +1,1821 @@
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Fragment, useMemo, useState, type DragEvent } from 'react';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@naswood/ui';
+import { executeStockDocument, searchResource } from '@/api/business';
+import { useI18n } from '@/i18n';
+
+type StageId =
+  | 'document'
+  | 'materials'
+  | 'aiPick'
+  | 'picking'
+  | 'verify'
+  | 'evidence'
+  | 'quality'
+  | 'destination'
+  | 'review'
+  | 'post';
+
+interface StageDef {
+  id: StageId;
+  titleKey: string;
+  hintKey: string;
+}
+
+const STAGES: StageDef[] = [
+  { id: 'document', titleKey: 'wb.iss.document', hintKey: 'wb.iss.documentHint' },
+  { id: 'materials', titleKey: 'wb.iss.materials', hintKey: 'wb.iss.materialsHint' },
+  { id: 'aiPick', titleKey: 'wb.iss.aiPick', hintKey: 'wb.iss.aiPickHint' },
+  { id: 'picking', titleKey: 'wb.iss.allocWorkspace', hintKey: 'wb.iss.allocWorkspaceHint' },
+  { id: 'verify', titleKey: 'wb.iss.verify', hintKey: 'wb.iss.verifyHint' },
+  { id: 'evidence', titleKey: 'wb.iss.evidence', hintKey: 'wb.iss.evidenceHint' },
+  { id: 'quality', titleKey: 'wb.iss.quality', hintKey: 'wb.iss.qualityHint' },
+  { id: 'destination', titleKey: 'wb.iss.destination', hintKey: 'wb.iss.destinationHint' },
+  { id: 'review', titleKey: 'wb.iss.review', hintKey: 'wb.iss.reviewHint' },
+  { id: 'post', titleKey: 'wb.iss.post', hintKey: 'wb.iss.postHint' },
+];
+
+type DocType = 'production' | 'maintenance' | 'sales' | 'sample' | 'internal' | 'rnd' | 'scrap' | 'transfer' | 'manual';
+
+const DOC_OPTIONS: { id: DocType; ref: string; owner: string; priority: string; due: string; customer?: string }[] = [
+  { id: 'sales', ref: 'SO-250001', owner: 'Satış', priority: 'Yüksek', due: '2026-08-06', customer: 'Nordic Deck AS' },
+  { id: 'production', ref: 'PO-2026-0142', owner: 'Planlama', priority: 'Yüksek', due: '2026-08-06' },
+  { id: 'maintenance', ref: 'WO-2026-0088', owner: 'Bakım', priority: 'Normal', due: '2026-08-07' },
+  { id: 'sample', ref: 'SMP-2026-0012', owner: 'Kalite', priority: 'Düşük', due: '2026-08-08' },
+  { id: 'manual', ref: 'MANUAL', owner: 'Depo', priority: '—', due: '—' },
+];
+
+const MATERIAL_LINES = [
+  {
+    name: 'Thermowood Deck 26×140×4000',
+    required: 50,
+    reserved: 50,
+    available: 86,
+    alt: 'Thermowood Deck 26×140×3000',
+    unit: 'Paket',
+  },
+];
+
+type AllocRow = {
+  code: string;
+  materialCode: string;
+  warehouse: string;
+  location: string;
+  lot: string;
+  mi: string;
+  species: string;
+  dimensions: string;
+  quality: string;
+  moisture: string;
+  available: number;
+  selected: number;
+  /** m³ per piece */
+  unitVolume: number;
+  /** kg per piece */
+  unitWeight: number;
+};
+
+type SortKey = 'code' | 'location' | 'lot' | 'quality' | 'moisture' | 'available' | 'selected';
+type GroupKey = 'none' | 'warehouse' | 'lot' | 'quality';
+
+type Disposition = {
+  good: number;
+  damaged: number;
+  scrap: number;
+  qualityHold: number;
+  rework: number;
+  damageReason: string;
+  scrapReason: string;
+  damagePhoto: boolean;
+  scrapPhoto: boolean;
+  notes: string;
+};
+
+const DAMAGE_REASONS = [
+  'Broken',
+  'Cracked',
+  'Wet',
+  'Blue Stain',
+  'Warped',
+  'Forklift Damage',
+  'Transport Damage',
+  'Packaging Damage',
+  'Missing Material',
+  'Impact Damage',
+  'Other',
+] as const;
+
+const SCRAP_REASONS = [
+  'Machine Damage',
+  'Transport Damage',
+  'Broken Strap',
+  'Forklift Damage',
+  'Operator Damage',
+  'Unknown',
+] as const;
+
+function emptyDisposition(picked: number): Disposition {
+  return {
+    good: picked,
+    damaged: 0,
+    scrap: 0,
+    qualityHold: 0,
+    rework: 0,
+    damageReason: '',
+    scrapReason: '',
+    damagePhoto: false,
+    scrapPhoto: false,
+    notes: '',
+  };
+}
+
+function dispositionSum(d: Disposition) {
+  return d.good + d.damaged + d.scrap + d.qualityHold + d.rework;
+}
+
+const REQUIRED_QTY = 50;
+
+const AI_RULES = [
+  'FIFO/FEFO',
+  'Müşteri',
+  'Rezervasyon',
+  'Kalite',
+  'Lot tutarlılığı',
+  'Nem tutarlılığı',
+  'Ölçü tutarlılığı',
+  'Tür tutarlılığı',
+  'Depo optimizasyonu',
+];
+
+/** Live packages come from /api/v1/packages (stock engine). */
+const UV = 0.0437; // m³ / piece for 26×140×4000 approx
+const UW = 18.5; // kg / piece demo
+
+type SmartScanResult = {
+  pkg: AllocRow;
+  materialOk: boolean;
+  dimensionsOk: boolean;
+  qualityOk: boolean;
+  lotOk: boolean;
+  customerOk: boolean;
+  hardFail: boolean;
+  softWarning: string | null;
+};
+
+function evaluateSmartScan(pkg: AllocRow): SmartScanResult {
+  const materialOk = Boolean(pkg.materialCode);
+  const dimensionsOk = true;
+  const qualityOk = pkg.quality === 'A' || pkg.quality === '—';
+  const lotOk = Boolean(pkg.lot);
+  const customerOk = !pkg.code.startsWith('PKG-D');
+  const hardFail = !materialOk || pkg.available <= 0;
+  const softWarning = !customerOk
+    ? 'Bu paket farklı müşteriye rezervlidir. Devam etmek istiyor musunuz?'
+    : !qualityOk || !lotOk
+      ? 'Kalite veya lot karışımı riski — AI doğrulaması uyarı veriyor.'
+      : null;
+  return { pkg, materialOk, dimensionsOk, qualityOk, lotOk, customerOk, hardFail, softWarning };
+}
+
+type ApiPackage = Record<string, unknown>;
+
+function mapApiPackage(row: ApiPackage, selected = 0): AllocRow {
+  const qty = Number(row.quantity ?? row.Quantity ?? 0);
+  const code = String(row.packageNumber ?? row.PackageNumber ?? '');
+  return {
+    code,
+    materialCode: String(row.materialCode ?? row.MaterialCode ?? ''),
+    warehouse: String(row.warehouseCode ?? row.WarehouseCode ?? ''),
+    location: String(row.locationCode ?? row.LocationCode ?? ''),
+    lot: String(row.lotNumber ?? row.LotNumber ?? ''),
+    mi: String(row.materialIdentityNumber ?? row.MaterialIdentityNumber ?? ''),
+    species: String(row.materialCode ?? row.MaterialCode ?? '—'),
+    dimensions: '—',
+    quality: 'A',
+    moisture: '—',
+    available: qty,
+    selected: selected > 0 ? Math.min(selected, qty) : Math.min(qty, REQUIRED_QTY),
+    unitVolume: UV,
+    unitWeight: UW,
+  };
+}
+
+function buildAiAllocation(catalog: AllocRow[]): AllocRow[] {
+  const rows: AllocRow[] = [];
+  let need = REQUIRED_QTY;
+  for (const p of catalog) {
+    if (need <= 0) break;
+    if (p.available <= 0) continue;
+    const take = Math.min(p.available, need);
+    rows.push({ ...p, selected: take });
+    need -= take;
+  }
+  return rows;
+}
+
+function remainingOf(row: AllocRow) {
+  return Math.max(0, row.available - row.selected);
+}
+
+function mixWarnings(rows: AllocRow[]): string[] {
+  if (rows.length === 0) return [];
+  const warns: string[] = [];
+  const lots = new Set(rows.map((r) => r.lot));
+  const qualities = new Set(rows.map((r) => r.quality));
+  const moistures = new Set(rows.map((r) => r.moisture));
+  const dims = new Set(rows.map((r) => r.dimensions));
+  if (lots.size > 1) warns.push('mixLots');
+  if (qualities.size > 1) warns.push('mixQuality');
+  if (moistures.size > 1) warns.push('mixMoisture');
+  if (dims.size > 1) warns.push('mixDimensions');
+  if (rows.some((r) => r.code.startsWith('PKG-D'))) warns.push('mixCustomer');
+  return warns;
+}
+
+function mintPreview(prefix: string) {
+  const seq = new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + String(Math.floor(100000 + Math.random() * 900000));
+  return `${prefix}-${seq}`;
+}
+
+/** INV-ISS-001 Goods Issue Workbench — not a Create/CRUD form. */
+export function GoodsIssueWorkbench() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const packagesQuery = useQuery({
+    queryKey: ['business', 'packages', 'gi-workbench'],
+    queryFn: () => searchResource<ApiPackage>('packages'),
+  });
+
+  const packageCatalog = useMemo(() => {
+    const items = packagesQuery.data?.items ?? [];
+    return items
+      .filter((row) => String(row.status ?? row.Status ?? '').toLowerCase() === 'available')
+      .map((row) => mapApiPackage(row));
+  }, [packagesQuery.data]);
+
+  const aiAllocation = useMemo(() => buildAiAllocation(packageCatalog), [packageCatalog]);
+  const [stageIdx, setStageIdx] = useState(0);
+  const [maxReached, setMaxReached] = useState(0);
+  const [posted, setPosted] = useState(false);
+  const [mintedGi, setMintedGi] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [approved, setApproved] = useState(false);
+
+  const [docType, setDocType] = useState<DocType | null>('sales');
+  const [manualReason, setManualReason] = useState('');
+  const [aiDecision, setAiDecision] = useState<'none' | 'accept' | 'manual'>('none');
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualMethod, setManualMethod] = useState<'scan' | 'search'>('scan');
+  const [pkgSearch, setPkgSearch] = useState('');
+  const [smartScan, setSmartScan] = useState<SmartScanResult | null>(null);
+  const [softConfirm, setSoftConfirm] = useState(false);
+  const [allocation, setAllocation] = useState<AllocRow[]>([]);
+  const [overrideHistory, setOverrideHistory] = useState<string[]>([]);
+  const [mixWaived, setMixWaived] = useState(false);
+  const [scanValue, setScanValue] = useState('');
+  const [scannedOk, setScannedOk] = useState(false);
+  const [focusedCode, setFocusedCode] = useState<string | null>(null);
+  const [bulkSelected, setBulkSelected] = useState<string[]>([]);
+  const [filterText, setFilterText] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('location');
+  const [groupKey, setGroupKey] = useState<GroupKey>('none');
+  const [dispositions, setDispositions] = useState<Record<string, Disposition>>({});
+  const [closing, setClosing] = useState({
+    restacked: false,
+    strapped: false,
+    labelOk: false,
+    photoUpdated: false,
+  });
+  const [verifyOk, setVerifyOk] = useState(false);
+  const [evidence, setEvidence] = useState<string[]>([]);
+  const [qualityOk, setQualityOk] = useState(false);
+  const [destType, setDestType] = useState<'production' | 'shipping'>('shipping');
+  const [destination, setDestination] = useState('Rampa 2 · Araç 34 ABC 123');
+
+  const stage = STAGES[stageIdx];
+  const selectedDoc = DOC_OPTIONS.find((d) => d.id === docType) ?? null;
+  const progress = Math.round(((stageIdx + (posted ? 1 : 0)) / STAGES.length) * 100);
+  const selectedTotal = useMemo(() => allocation.reduce((s, r) => s + r.selected, 0), [allocation]);
+  const remainingTotal = useMemo(() => allocation.reduce((s, r) => s + remainingOf(r), 0), [allocation]);
+  const selectedVolume = useMemo(
+    () => Number(allocation.reduce((s, r) => s + r.selected * r.unitVolume, 0).toFixed(3)),
+    [allocation],
+  );
+  const selectedWeight = useMemo(
+    () => Number(allocation.reduce((s, r) => s + r.selected * r.unitWeight, 0).toFixed(1)),
+    [allocation],
+  );
+  const remainingVolume = useMemo(
+    () => Number(allocation.reduce((s, r) => s + remainingOf(r) * r.unitVolume, 0).toFixed(3)),
+    [allocation],
+  );
+  const packageCount = useMemo(() => allocation.filter((r) => r.selected > 0).length, [allocation]);
+  const warnings = useMemo(() => mixWarnings(allocation), [allocation]);
+  const focusedRow = useMemo(
+    () => allocation.find((r) => r.code === focusedCode) ?? allocation[0] ?? null,
+    [allocation, focusedCode],
+  );
+  const focusedDisp = focusedRow
+    ? dispositions[focusedRow.code] ?? emptyDisposition(focusedRow.selected)
+    : null;
+  const dispositionOk = useMemo(() => {
+    if (allocation.length === 0) return false;
+    return allocation.every((r) => {
+      const d = dispositions[r.code] ?? emptyDisposition(r.selected);
+      if (dispositionSum(d) !== r.selected) return false;
+      if (d.damaged > 0 && (!d.damageReason || !d.damagePhoto)) return false;
+      if (d.scrap > 0 && (!d.scrapReason || !d.scrapPhoto)) return false;
+      return true;
+    });
+  }, [allocation, dispositions]);
+  const closingOk = closing.restacked && closing.strapped && closing.labelOk;
+  const goodTotal = useMemo(
+    () =>
+      allocation.reduce((s, r) => s + (dispositions[r.code] ?? emptyDisposition(r.selected)).good, 0),
+    [allocation, dispositions],
+  );
+  const viewRows = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    let rows = allocation.filter((r) => {
+      if (!q) return true;
+      return (
+        r.code.toLowerCase().includes(q) ||
+        r.lot.toLowerCase().includes(q) ||
+        r.location.toLowerCase().includes(q) ||
+        r.quality.toLowerCase().includes(q) ||
+        r.moisture.toLowerCase().includes(q) ||
+        r.warehouse.toLowerCase().includes(q)
+      );
+    });
+    rows = [...rows].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+      return String(av).localeCompare(String(bv), 'tr');
+    });
+    return rows;
+  }, [allocation, filterText, sortKey]);
+
+  const gateMessage = useMemo(() => {
+    switch (stage.id) {
+      case 'document':
+        if (!docType) return t('wb.iss.gateNeedDoc');
+        if (docType === 'manual' && !manualReason.trim()) return t('wb.iss.gateNeedManualReason');
+        return null;
+      case 'materials':
+        return null;
+      case 'aiPick':
+        if (aiDecision === 'none') return t('wb.iss.gateNeedAi');
+        if (allocation.length === 0) return t('wb.iss.gateNeedAlloc');
+        return null;
+      case 'picking':
+        if (allocation.length === 0) return t('wb.iss.gateNeedAlloc');
+        if (allocation.some((r) => r.selected <= 0 || r.selected > r.available)) return t('wb.iss.gateNeedPartialQty');
+        if (goodTotal !== REQUIRED_QTY) return t('wb.iss.gateNeedGoodTotal');
+        if (warnings.length > 0 && !mixWaived) return t('wb.iss.gateNeedMixAuth');
+        if (!dispositionOk) return t('wb.iss.gateNeedDisposition');
+        if (!closingOk) return t('wb.iss.gateNeedClosing');
+        return !scannedOk ? t('wb.iss.gateNeedScan') : null;
+      case 'verify':
+        return !verifyOk ? t('wb.iss.gateNeedVerify') : null;
+      case 'evidence':
+        return null;
+      case 'quality':
+        return !qualityOk ? t('wb.iss.gateNeedQuality') : null;
+      case 'destination':
+        return !destination.trim() ? t('wb.iss.gateNeedDest') : null;
+      case 'review':
+        return !approved ? t('wb.iss.gateNeedApprove') : null;
+      default:
+        return null;
+    }
+  }, [
+    stage.id,
+    docType,
+    manualReason,
+    aiDecision,
+    allocation,
+    goodTotal,
+    warnings,
+    mixWaived,
+    dispositionOk,
+    closingOk,
+    scannedOk,
+    verifyOk,
+    qualityOk,
+    destination,
+    approved,
+    t,
+  ]);
+
+  const canAdvance = !gateMessage && !posted;
+
+  const persistMutation = useMutation({
+    mutationFn: async () => {
+      const lines = allocation
+        .map((r) => {
+          const d = dispositions[r.code] ?? emptyDisposition(r.selected);
+          const qty = d.good > 0 ? d.good : r.selected;
+          if (qty <= 0) return null;
+          return {
+            packageNumber: r.code,
+            barcode: r.code,
+            materialCode: r.materialCode || 'MAT-TW-DECK-26140',
+            locationCode: r.location || 'PICK',
+            lotNumber: r.lot || '',
+            materialIdentityNumber: r.mi || '',
+            quantity: qty,
+            unitOfMeasure: 'Piece',
+          };
+        })
+        .filter(Boolean);
+
+      if (!lines.length) {
+        throw new Error('Çıkış satırı yok — paket seçimi ve good miktarı gerekli.');
+      }
+
+      return executeStockDocument<{
+        documentId: string;
+        documentNumber: string;
+        status: string;
+        lines: Array<{ packageNumber: string; movementNumber: string; quantity: number }>;
+      }>('goods-issues/execute', {
+        warehouseCode: 'WH-RM',
+        reference: selectedDoc?.ref || 'MANUAL',
+        notes: [
+          `docType=${docType}`,
+          `ai=${aiDecision}`,
+          `alloc=${allocation
+            .map((r) => {
+              const d = dispositions[r.code] ?? emptyDisposition(r.selected);
+              return `${r.code}:pick=${r.selected}/good=${d.good}/dmg=${d.damaged}/scrap=${d.scrap}/rem=${remainingOf(r)}`;
+            })
+            .join(',')}`,
+          `goodTotal=${goodTotal}`,
+          `selectedTotal=${selectedTotal}`,
+          `mix=${warnings.join(',') || 'ok'}`,
+          `mixWaived=${mixWaived}`,
+          `closing=${JSON.stringify(closing)}`,
+          `dest=${destination}`,
+          `scan=${scanValue || 'OK'}`,
+          `evidence=${evidence.length}`,
+          overrideHistory.length ? `overrides=${overrideHistory.join('|')}` : '',
+          manualReason ? `manualReason=${manualReason}` : '',
+        ]
+          .filter(Boolean)
+          .join('; '),
+        number: '',
+        lines,
+      });
+    },
+    onSuccess: async (created) => {
+      setError(null);
+      setMintedGi(created.documentNumber || mintPreview('GI'));
+      setPosted(true);
+      await queryClient.invalidateQueries({ queryKey: ['business', 'goods-issues'] });
+      await queryClient.invalidateQueries({ queryKey: ['business', 'inventory'] });
+      await queryClient.invalidateQueries({ queryKey: ['business', 'packages'] });
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  function goNext() {
+    if (stage.id === 'post') {
+      persistMutation.mutate();
+      return;
+    }
+    const next = Math.min(stageIdx + 1, STAGES.length - 1);
+    setStageIdx(next);
+    setMaxReached((m) => Math.max(m, next));
+  }
+
+  function addEvidence(kind: string) {
+    setEvidence((e) => (e.includes(kind) ? e : [...e, kind]));
+  }
+
+  function syncDispositions(rows: AllocRow[]) {
+    setDispositions((prev) => {
+      const next: Record<string, Disposition> = {};
+      for (const r of rows) {
+        const existing = prev[r.code];
+        if (existing && dispositionSum(existing) === r.selected) next[r.code] = existing;
+        else next[r.code] = emptyDisposition(r.selected);
+      }
+      return next;
+    });
+  }
+
+  function acceptAi() {
+    if (aiAllocation.length === 0) {
+      setError('Stokta uygun paket yok. Önce mal kabul (execute) ile paket oluşturun.');
+      return;
+    }
+    setAiDecision('accept');
+    setManualOpen(false);
+    setSmartScan(null);
+    setSoftConfirm(false);
+    const rows = aiAllocation.map((p) => ({ ...p }));
+    setAllocation(rows);
+    syncDispositions(rows);
+    setMixWaived(false);
+    setError(null);
+  }
+
+  function openManualSelect() {
+    setAiDecision('manual');
+    setManualOpen(true);
+    setManualMethod('scan');
+    setSmartScan(null);
+    setSoftConfirm(false);
+    setPkgSearch('');
+    setScanValue('');
+    if (allocation.length === 0) {
+      setDispositions({});
+    }
+    setMixWaived(false);
+    setError(null);
+  }
+
+  function resolvePackageLookup(raw: string): AllocRow | null {
+    const q = raw.trim().toLowerCase();
+    if (!q) return null;
+    return (
+      packageCatalog.find(
+        (p) => p.code.toLowerCase() === q || p.code.toLowerCase().includes(q) || p.mi.toLowerCase() === q,
+      ) ?? null
+    );
+  }
+
+  function runSmartScan(raw: string, method: 'scan' | 'search') {
+    const found = resolvePackageLookup(raw);
+    if (!found) {
+      setSmartScan(null);
+      setError(t('wb.iss.pkgNotFound'));
+      return;
+    }
+    setError(null);
+    setSoftConfirm(false);
+    setSmartScan(evaluateSmartScan(found));
+    setOverrideHistory((h) => [
+      ...h,
+      `${new Date().toISOString().slice(11, 19)} ${method === 'scan' ? 'Scan' : 'Search'} → ${found.code}`,
+    ]);
+  }
+
+  function useSmartScanPackage() {
+    if (!smartScan || smartScan.hardFail) return;
+    if (smartScan.softWarning && !softConfirm) return;
+    addPackage(smartScan.pkg.code, 'smart-scan');
+    setSmartScan(null);
+    setSoftConfirm(false);
+    setScanValue('');
+    setPkgSearch('');
+  }
+
+  function addPackage(code: string, via: string = 'add') {
+    const src = packageCatalog.find((p) => p.code === code);
+    if (!src || allocation.some((a) => a.code === code)) return;
+    setAllocation((rows) => {
+      const next = [...rows, { ...src }];
+      syncDispositions(next);
+      return next;
+    });
+    setFocusedCode(code);
+    setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} ${via} → ${code}`]);
+    setMixWaived(false);
+    setError(null);
+  }
+
+  function removePackage(code: string) {
+    setAllocation((rows) => {
+      const next = rows.filter((r) => r.code !== code);
+      syncDispositions(next);
+      return next;
+    });
+    setOverrideHistory((h) => [...h, `${new Date().toISOString().slice(11, 19)} Remove → ${code}`]);
+    setMixWaived(false);
+  }
+
+  function setSelectedQty(code: string, selected: number) {
+    setAllocation((rows) => {
+      const next = rows.map((r) =>
+        r.code === code ? { ...r, selected: Math.min(Math.max(0, selected), r.available) } : r,
+      );
+      syncDispositions(next);
+      return next;
+    });
+    setMixWaived(false);
+  }
+
+  function patchDisposition(code: string, patch: Partial<Disposition>) {
+    setDispositions((prev) => {
+      const row = allocation.find((r) => r.code === code);
+      const base = prev[code] ?? emptyDisposition(row?.selected ?? 0);
+      return { ...prev, [code]: { ...base, ...patch } };
+    });
+  }
+
+  function applyDemoDisposition(code: string) {
+    const pkg = packageCatalog.find((p) => p.code === code);
+    if (!pkg || aiAllocation.length === 0) return;
+    // Prefer live AI allocation + scanned package to hit required good total.
+    const a = { ...aiAllocation[0], selected: Math.min(13, aiAllocation[0].available) };
+    const pick = { ...pkg, selected: Math.min(40, pkg.available) };
+    setAllocation([a, pick]);
+    setDispositions({
+      [a.code]: emptyDisposition(a.selected),
+      [code]: {
+        good: 37,
+        damaged: 2,
+        scrap: 1,
+        qualityHold: 0,
+        rework: 0,
+        damageReason: 'Cracked',
+        scrapReason: 'Forklift Damage',
+        damagePhoto: true,
+        scrapPhoto: true,
+        notes: '2 çatlak · 1 köşe kırık',
+      },
+    });
+    setFocusedCode(code);
+    setClosing({ restacked: true, strapped: true, labelOk: true, photoUpdated: true });
+    setAiDecision('accept');
+    setError(null);
+  }
+
+  function resetToAi() {
+    setAiDecision('accept');
+    const rows = aiAllocation.map((p) => ({ ...p }));
+    setAllocation(rows);
+    syncDispositions(rows);
+    setManualOpen(false);
+    setSmartScan(null);
+    setSoftConfirm(false);
+    setMixWaived(false);
+  }
+
+  function tryScan() {
+    const v = scanValue.trim().toUpperCase();
+    if (!v) {
+      setScannedOk(false);
+      return;
+    }
+    const match = allocation.find(
+      (r) => r.code.toUpperCase() === v || r.code.toUpperCase().includes(v) || v.includes(r.code.toUpperCase().slice(0, 10)),
+    );
+    const inCatalog = packageCatalog.find(
+      (r) => r.code.toUpperCase() === v || r.code.toUpperCase().includes(v),
+    );
+    if (match) {
+      setFocusedCode(match.code);
+      setScannedOk(true);
+      setError(null);
+      return;
+    }
+    if (inCatalog) {
+      addPackage(inCatalog.code);
+      setFocusedCode(inCatalog.code);
+      setScannedOk(true);
+      setError(null);
+      return;
+    }
+    setScannedOk(false);
+    setError(t('wb.iss.scanMismatch'));
+  }
+
+  function toggleBulk(code: string) {
+    setBulkSelected((s) => (s.includes(code) ? s.filter((c) => c !== code) : [...s, code]));
+  }
+
+  function bulkRemove() {
+    bulkSelected.forEach(removePackage);
+    setBulkSelected([]);
+  }
+
+  function bulkZero() {
+    bulkSelected.forEach((c) => setSelectedQty(c, 0));
+  }
+
+  function onDropPackage(e: DragEvent) {
+    e.preventDefault();
+    const code = e.dataTransfer.getData('text/pkg');
+    if (code) addPackage(code);
+  }
+
+  function LiveTotalsStrip() {
+    return (
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        {[
+          [t('wb.iss.required'), String(REQUIRED_QTY)],
+          [t('wb.iss.disp.good'), String(goodTotal)],
+          [t('wb.iss.picked'), String(selectedTotal)],
+          [t('wb.iss.metricVolume'), `${selectedVolume} m³`],
+          [t('wb.iss.metricWeight'), `${selectedWeight} kg`],
+          [t('wb.iss.metricPkgCount'), String(packageCount)],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2.5 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{label}</p>
+            <p
+              className={`font-mono text-sm font-semibold tabular-nums ${
+                label === t('wb.iss.disp.good')
+                  ? goodTotal === REQUIRED_QTY
+                    ? 'text-[var(--color-primary)]'
+                    : 'text-[var(--color-danger)]'
+                  : ''
+              }`}
+            >
+              {value}
+            </p>
+          </div>
+        ))}
+        <p className="col-span-full text-[10px] text-[var(--text-muted)]">
+          {t('wb.iss.remainVolShort')}: {remainingVolume} m³ · {t('wb.iss.inventorySync')}
+        </p>
+      </div>
+    );
+  }
+
+  function PackageAllocationWorkspace({ editable }: { editable: boolean }) {
+    const grouped =
+      groupKey === 'none'
+        ? [{ key: '', rows: viewRows }]
+        : Object.entries(
+            viewRows.reduce<Record<string, AllocRow[]>>((acc, r) => {
+              const k = groupKey === 'warehouse' ? r.warehouse : groupKey === 'lot' ? r.lot : r.quality;
+              (acc[k] ??= []).push(r);
+              return acc;
+            }, {}),
+          ).map(([key, rows]) => ({ key, rows }));
+
+    return (
+      <div
+        className="space-y-3 rounded-lg border-2 border-[var(--color-primary)]/35 bg-[var(--color-surface)] p-3 shadow-sm"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDropPackage}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+              ★ {t('wb.iss.allocWorkspace')}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('wb.iss.allocWorkspaceHint')}</p>
+          </div>
+          <p className="text-[10px] text-[var(--text-muted)]">{t('wb.iss.keyboardHints')}</p>
+        </div>
+
+        <LiveTotalsStrip />
+
+        {editable ? (
+          <div className="flex flex-wrap items-end gap-2 rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)]/40 px-2 py-2">
+            <label className="space-y-0.5 text-[11px]">
+              <span className="text-[var(--text-muted)]">{t('wb.iss.filter')}</span>
+              <Input
+                className="h-8 w-40"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                placeholder={t('wb.iss.filterPh')}
+              />
+            </label>
+            <label className="space-y-0.5 text-[11px]">
+              <span className="text-[var(--text-muted)]">{t('wb.iss.sort')}</span>
+              <select
+                className="h-8 rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+              >
+                <option value="location">{t('wb.iss.loc')}</option>
+                <option value="code">{t('wb.iss.colPkgNo')}</option>
+                <option value="lot">{t('wb.iss.colLot')}</option>
+                <option value="quality">{t('wb.iss.colQuality')}</option>
+                <option value="moisture">{t('wb.iss.colMoisture')}</option>
+                <option value="available">{t('wb.iss.colAvail')}</option>
+                <option value="selected">{t('wb.iss.colSelected')}</option>
+              </select>
+            </label>
+            <label className="space-y-0.5 text-[11px]">
+              <span className="text-[var(--text-muted)]">{t('wb.iss.group')}</span>
+              <select
+                className="h-8 rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                value={groupKey}
+                onChange={(e) => setGroupKey(e.target.value as GroupKey)}
+              >
+                <option value="none">{t('wb.iss.groupNone')}</option>
+                <option value="warehouse">{t('wb.iss.wh')}</option>
+                <option value="lot">{t('wb.iss.colLot')}</option>
+                <option value="quality">{t('wb.iss.colQuality')}</option>
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-1">
+              <Button type="button" variant="secondary" className="h-8" onClick={resetToAi}>
+                {t('wb.iss.resetAi')}
+              </Button>
+              {bulkSelected.length > 0 ? (
+                <>
+                  <Button type="button" variant="secondary" className="h-8" onClick={bulkZero}>
+                    {t('wb.iss.bulkZero')} ({bulkSelected.length})
+                  </Button>
+                  <Button type="button" variant="secondary" className="h-8" onClick={bulkRemove}>
+                    {t('wb.iss.bulkRemove')}
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
+          <table className="w-full min-w-[1100px] text-left text-[11px]">
+            <thead className="sticky top-0 bg-[var(--color-surface-hover)] text-[var(--text-muted)]">
+              <tr>
+                {editable ? <th className="px-2 py-2 w-8" /> : null}
+                <th className="px-2 py-2">{t('wb.iss.colPkgNo')}</th>
+                <th className="px-2 py-2">{t('wb.iss.wh')}</th>
+                <th className="px-2 py-2">{t('wb.iss.loc')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colLot')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colSpecies')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colDims')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colQuality')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colMoisture')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colAvail')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colSelected')}</th>
+                <th className="px-2 py-2">{t('wb.iss.colRemain')}</th>
+                <th className="px-2 py-2">{t('wb.iss.metricVolume')}</th>
+                <th className="px-2 py-2">{t('wb.iss.metricWeight')}</th>
+                {editable ? <th className="px-2 py-2" /> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {grouped.map((g) => (
+                <Fragment key={g.key || 'all'}>
+                  {g.key ? (
+                    <tr className="bg-[var(--color-primary)]/5">
+                      <td colSpan={editable ? 15 : 13} className="px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                        {g.key}
+                      </td>
+                    </tr>
+                  ) : null}
+                  {g.rows.map((r) => {
+                    const idx = viewRows.findIndex((x) => x.code === r.code);
+                    return (
+                    <tr
+                      key={r.code}
+                      className={`border-t border-[var(--border-default)] ${
+                        focusedCode === r.code ? 'bg-[var(--color-primary)]/15 ring-1 ring-inset ring-[var(--color-primary)]' : ''
+                      } ${bulkSelected.includes(r.code) ? 'bg-[var(--color-primary)]/5' : ''}`}
+                      onClick={() => setFocusedCode(r.code)}
+                    >
+                      {editable ? (
+                        <td className="px-2 py-1">
+                          <input type="checkbox" checked={bulkSelected.includes(r.code)} onChange={() => toggleBulk(r.code)} />
+                        </td>
+                      ) : null}
+                      <td className="px-2 py-1.5 font-mono font-medium">{r.code}</td>
+                      <td className="px-2 py-1.5">{r.warehouse}</td>
+                      <td className="px-2 py-1.5 font-mono">{r.location}</td>
+                      <td className="px-2 py-1.5 font-mono">{r.lot}</td>
+                      <td className="px-2 py-1.5">{r.species}</td>
+                      <td className="px-2 py-1.5">{r.dimensions}</td>
+                      <td className="px-2 py-1.5">{r.quality}</td>
+                      <td className="px-2 py-1.5">{r.moisture}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{r.available}</td>
+                      <td className="px-2 py-1.5">
+                        {editable ? (
+                          <Input
+                            type="number"
+                            className="h-7 w-16"
+                            min={0}
+                            max={r.available}
+                            value={r.selected}
+                            autoFocus={focusedCode === r.code}
+                            onChange={(e) => setSelectedQty(r.code, Number(e.target.value) || 0)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                                e.preventDefault();
+                                const next = viewRows[idx + 1] ?? viewRows[0];
+                                if (next) setFocusedCode(next.code);
+                              }
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                const prev = viewRows[idx - 1] ?? viewRows[viewRows.length - 1];
+                                if (prev) setFocusedCode(prev.code);
+                              }
+                              if (e.key === 'Delete') {
+                                e.preventDefault();
+                                removePackage(r.code);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="tabular-nums font-medium">{r.selected}</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 tabular-nums text-[var(--color-primary)]">{remainingOf(r)}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{(r.selected * r.unitVolume).toFixed(3)}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{(r.selected * r.unitWeight).toFixed(1)}</td>
+                      {editable ? (
+                        <td className="px-2 py-1.5">
+                          <Button type="button" variant="secondary" className="h-7 px-2 text-[10px]" onClick={() => removePackage(r.code)}>
+                            {t('wb.iss.removePkg')}
+                          </Button>
+                        </td>
+                      ) : null}
+                    </tr>
+                    );
+                  })}
+                </Fragment>
+              ))}
+              <tr className="border-t border-[var(--border-default)] bg-[var(--color-surface-hover)] font-medium">
+                <td className="px-2 py-2" colSpan={editable ? 10 : 9}>
+                  {t('wb.iss.total')} · {t('wb.iss.required')}: {REQUIRED_QTY}
+                </td>
+                <td className="px-2 py-2 tabular-nums">{allocation.reduce((s, r) => s + r.available, 0)}</td>
+                <td
+                  className={`px-2 py-2 tabular-nums ${selectedTotal === REQUIRED_QTY ? 'text-[var(--color-primary)]' : 'text-[var(--color-danger)]'}`}
+                >
+                  {selectedTotal}
+                </td>
+                <td className="px-2 py-2 tabular-nums">{remainingTotal}</td>
+                <td className="px-2 py-2 tabular-nums">{selectedVolume}</td>
+                <td className="px-2 py-2 tabular-nums">{selectedWeight}</td>
+                {editable ? <td /> : null}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.partialAuto')}</p>
+        {editable ? (
+          <p className="text-[10px] text-[var(--text-muted)]">{t('wb.iss.dndHint')}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-[calc(100vh-7rem)] flex-col gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-default)] pb-3">
+        <div>
+          <p className="text-xs font-medium text-[var(--text-muted)]">INV-ISS-001 · {t('wb.iss.screenType')}</p>
+          <h2 className="text-xl font-semibold tracking-tight">{t('wb.iss.title')}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">{t('wb.iss.desc')}</p>
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
+            {selectedDoc
+              ? `${t(`wb.iss.docType.${docType!}`)} · ${selectedDoc.ref} · ${selectedDoc.priority}`
+              : t('wb.iss.noDocYet')}
+            {' · '}
+            {t('wb.iss.stageOf').replace('{n}', String(stageIdx + 1)).replace('{total}', String(STAGES.length))}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-3 py-2 text-right">
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{t('wizard.systemCode')}</p>
+            <p className="font-mono text-sm font-medium">{mintedGi ?? t('wizard.autoGenerated')}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">GI-… · txn oto</p>
+          </div>
+          <Link
+            to="/inventory/operations/goods-issues"
+            className="text-sm font-medium text-[var(--color-primary)] hover:underline"
+          >
+            {t('wizard.backToLibrary')}
+          </Link>
+        </div>
+      </div>
+
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-hover)]">
+        <div
+          className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-300"
+          style={{ width: `${posted ? 100 : progress}%` }}
+        />
+      </div>
+
+      <div className="grid flex-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
+        <nav className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-2">
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            {t('wb.iss.timeline')}
+          </p>
+          <ol className="space-y-0.5">
+            {STAGES.map((s, i) => {
+              const locked = i > maxReached && i !== stageIdx;
+              const done = i < stageIdx || (posted && i <= stageIdx);
+              const active = i === stageIdx;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    disabled={locked}
+                    onClick={() => !locked && setStageIdx(i)}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+                      active
+                        ? 'bg-[var(--color-primary)] text-white'
+                        : done
+                          ? 'bg-[var(--color-surface-hover)] text-[var(--text-primary)]'
+                          : locked
+                            ? 'cursor-not-allowed text-[var(--text-muted)] opacity-50'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--color-surface-hover)]'
+                    }`}
+                  >
+                    <span className="font-mono tabular-nums opacity-80">{i + 1}</span>
+                    <span className="leading-snug">{t(s.titleKey)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+
+        <main className="min-w-0 space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {stageIdx + 1}. {t(stage.titleKey)}
+              </CardTitle>
+              <CardDescription>{t(stage.hintKey)}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {stage.id === 'document' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.documentIntro')}</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {DOC_OPTIONS.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setDocType(d.id)}
+                        className={`rounded-md border px-3 py-2 text-left text-sm ${
+                          docType === d.id
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+                            : 'border-[var(--border-default)]'
+                        }`}
+                      >
+                        <p className="font-medium">{t(`wb.iss.docType.${d.id}`)}</p>
+                        <p className="font-mono text-xs text-[var(--text-muted)]">{d.ref}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          {d.owner} · {d.priority} · {d.due}
+                          {d.customer ? ` · ${d.customer}` : ''}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                  {docType === 'manual' ? (
+                    <label className="block space-y-1 text-sm">
+                      <span className="text-[var(--text-secondary)]">{t('wb.iss.manualReason')}</span>
+                      <Input
+                        value={manualReason}
+                        onChange={(e) => setManualReason(e.target.value)}
+                        placeholder={t('wb.iss.manualReasonPh')}
+                      />
+                      <p className="text-xs text-[var(--color-danger)]">{t('wb.iss.manualPermission')}</p>
+                    </label>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {stage.id === 'materials' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.materialsIntro')}</p>
+                  <div className="overflow-x-auto rounded-md border border-[var(--border-default)]">
+                    <table className="w-full min-w-[560px] text-left text-xs">
+                      <thead className="bg-[var(--color-surface-hover)] text-[var(--text-muted)]">
+                        <tr>
+                          <th className="px-3 py-2">{t('wb.iss.colMaterial')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colRequired')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colReserved')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colAvailable')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colAlt')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {MATERIAL_LINES.map((m) => (
+                          <tr key={m.name} className="border-t border-[var(--border-default)]">
+                            <td className="px-3 py-2 font-medium">{m.name}</td>
+                            <td className="px-3 py-2 tabular-nums">
+                              {m.required} {m.unit}
+                            </td>
+                            <td className="px-3 py-2 tabular-nums">
+                              {m.reserved} {m.unit}
+                            </td>
+                            <td className="px-3 py-2 tabular-nums">
+                              {m.available} {m.unit}
+                            </td>
+                            <td className="px-3 py-2 text-[var(--text-muted)]">{m.alt}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.noMaterialCreate')}</p>
+                </div>
+              ) : null}
+
+              {stage.id === 'aiPick' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.aiPickIntro')}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {selectedDoc?.ref ?? 'SO-250001'} · {MATERIAL_LINES[0].name} · {REQUIRED_QTY} ·{' '}
+                    {t('wb.iss.minPackages')}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AI_RULES.map((r) => (
+                      <span
+                        key={r}
+                        className="rounded-md border border-[var(--border-default)] bg-[var(--color-surface-hover)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{t('wb.iss.aiSuggestion')}</p>
+                  <div className="overflow-x-auto rounded-md border border-[var(--color-primary)]/30">
+                    <table className="w-full min-w-[520px] text-left text-xs">
+                      <thead className="bg-[var(--color-primary)]/10 text-[var(--text-muted)]">
+                        <tr>
+                          <th className="px-3 py-2">{t('wb.iss.colPkgNo')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.loc')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colSelected')}</th>
+                          <th className="px-3 py-2">{t('wb.iss.colLot')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {aiAllocation.map((p) => (
+                          <tr key={p.code} className="border-t border-[var(--border-default)]">
+                            <td className="px-3 py-2 font-mono font-medium">{p.code}</td>
+                            <td className="px-3 py-2 font-mono">{p.location}</td>
+                            <td className="px-3 py-2 tabular-nums">{p.selected}</td>
+                            <td className="px-3 py-2 font-mono text-[10px]">{p.lot}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-[var(--border-default)] bg-[var(--color-surface-hover)] font-medium">
+                          <td className="px-3 py-2">{t('wb.iss.total')}</td>
+                          <td />
+                          <td className="px-3 py-2 tabular-nums">{REQUIRED_QTY}</td>
+                          <td />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant={aiDecision === 'accept' ? 'default' : 'secondary'} onClick={acceptAi}>
+                      ✓ {t('wb.iss.acceptAi')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={aiDecision === 'manual' ? 'default' : 'secondary'}
+                      onClick={openManualSelect}
+                    >
+                      {t('wb.iss.manualSelect')}
+                    </Button>
+                  </div>
+                  {aiDecision === 'accept' ? (
+                    <p className="text-sm text-[var(--color-primary)]">{t('wb.iss.acceptOk')}</p>
+                  ) : null}
+                  {manualOpen || aiDecision === 'manual' ? (
+                    <div className="space-y-3 rounded-md border border-[var(--border-default)] px-3 py-3">
+                      <p className="text-sm font-semibold">{t('wb.iss.manualSelectTitle')}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t('wb.iss.manualSelectHint')}</p>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="manual-method"
+                            checked={manualMethod === 'scan'}
+                            onChange={() => {
+                              setManualMethod('scan');
+                              setSmartScan(null);
+                              setSoftConfirm(false);
+                            }}
+                          />
+                          {t('wb.iss.methodScan')}
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="manual-method"
+                            checked={manualMethod === 'search'}
+                            onChange={() => {
+                              setManualMethod('search');
+                              setSmartScan(null);
+                              setSoftConfirm(false);
+                            }}
+                          />
+                          {t('wb.iss.methodSearch')}
+                        </label>
+                      </div>
+
+                      {manualMethod === 'scan' ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Input
+                            value={scanValue}
+                            onChange={(e) => setScanValue(e.target.value)}
+                            placeholder={t('wb.iss.scanPh')}
+                            className="min-w-[200px] flex-1 font-mono"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') runSmartScan(scanValue, 'scan');
+                            }}
+                          />
+                          <Button type="button" onClick={() => runSmartScan(scanValue, 'scan')}>
+                            {t('wb.iss.scanValidate')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => {
+                              setScanValue('PKG-001245');
+                              runSmartScan('PKG-001245', 'scan');
+                            }}
+                          >
+                            {t('wb.iss.demoSmartScan')}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          <Input
+                            value={pkgSearch}
+                            onChange={(e) => setPkgSearch(e.target.value)}
+                            placeholder={t('wb.iss.searchPh')}
+                            className="min-w-[200px] flex-1 font-mono"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') runSmartScan(pkgSearch, 'search');
+                            }}
+                          />
+                          <Button type="button" onClick={() => runSmartScan(pkgSearch, 'search')}>
+                            {t('wb.iss.searchBtn')}
+                          </Button>
+                        </div>
+                      )}
+
+                      {smartScan ? (
+                        <div
+                          className={`space-y-2 rounded-md border px-3 py-3 ${
+                            smartScan.hardFail
+                              ? 'border-[var(--color-danger)]/50 bg-[var(--color-danger)]/5'
+                              : smartScan.softWarning
+                                ? 'border-amber-500/40 bg-amber-500/5'
+                                : 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5'
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">
+                            {smartScan.hardFail
+                              ? t('wb.iss.smartScanWrong')
+                              : smartScan.softWarning
+                                ? t('wb.iss.smartScanWarn')
+                                : t('wb.iss.smartScanOk')}
+                          </p>
+                          <p className="font-mono text-sm font-medium">📦 {smartScan.pkg.code}</p>
+                          <ul className="space-y-1 text-sm text-[var(--text-secondary)]">
+                            <li>🌲 {smartScan.pkg.species}</li>
+                            <li>📏 {smartScan.pkg.dimensions}</li>
+                            <li>
+                              📦 {smartScan.pkg.available} {t('wb.iss.pcs')}
+                            </li>
+                            <li>
+                              📐 {(smartScan.pkg.available * smartScan.pkg.unitVolume).toFixed(3)} m³
+                            </li>
+                            <li>
+                              📍 {smartScan.pkg.warehouse} / {smartScan.pkg.location}
+                            </li>
+                            <li>
+                              {smartScan.qualityOk ? '🟢' : '⚠'} {t('wb.iss.checkQuality')}
+                            </li>
+                            <li>
+                              {smartScan.customerOk ? '🟢' : '⚠'} {t('wb.iss.checkCustomer')}
+                            </li>
+                            <li>
+                              {smartScan.lotOk ? '🟢' : '⚠'} {t('wb.iss.checkLot')}
+                            </li>
+                            <li>
+                              {smartScan.dimensionsOk ? '🟢' : '⚠'} {t('wb.iss.checkDims')}
+                            </li>
+                            <li>
+                              {smartScan.materialOk ? '🟢' : '⚠'} {t('wb.iss.checkMaterial')}
+                            </li>
+                          </ul>
+                          {smartScan.softWarning ? (
+                            <label className="flex items-start gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={softConfirm}
+                                onChange={(e) => setSoftConfirm(e.target.checked)}
+                                className="mt-1"
+                              />
+                              <span>{smartScan.softWarning}</span>
+                            </label>
+                          ) : null}
+                          <Button
+                            type="button"
+                            disabled={
+                              smartScan.hardFail ||
+                              Boolean(smartScan.softWarning && !softConfirm) ||
+                              allocation.some((a) => a.code === smartScan.pkg.code)
+                            }
+                            onClick={useSmartScanPackage}
+                          >
+                            {t('wb.iss.usePackage')}
+                          </Button>
+                        </div>
+                      ) : null}
+
+                      {allocation.length > 0 ? <PackageAllocationWorkspace editable={false} /> : null}
+                      <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.aiValidationManual')}</p>
+                      <button
+                        type="button"
+                        className="text-xs text-[var(--text-muted)] underline"
+                        onClick={() => setError(t('wb.iss.browseOptionalHint'))}
+                      >
+                        {t('wb.iss.browseWarehouse')}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {stage.id === 'picking' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.allocIntro')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" onClick={resetToAi}>
+                      {t('wb.iss.resetAi')}
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={openManualSelect}>
+                      {t('wb.iss.manualSelect')}
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => applyDemoDisposition('PKG-00254')}>
+                      {t('wb.iss.demoDisposition')}
+                    </Button>
+                  </div>
+                  {manualOpen && stage.id === 'picking' ? (
+                    <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-2">
+                      <p className="text-xs text-[var(--text-secondary)]">{t('wb.iss.manualSelectHint')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Input
+                          value={scanValue}
+                          onChange={(e) => setScanValue(e.target.value)}
+                          placeholder={t('wb.iss.scanPh')}
+                          className="min-w-[180px] flex-1 font-mono"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') runSmartScan(scanValue, 'scan');
+                          }}
+                        />
+                        <Button type="button" onClick={() => runSmartScan(scanValue, 'scan')}>
+                          {t('wb.iss.scanValidate')}
+                        </Button>
+                      </div>
+                      {smartScan ? (
+                        <div className="space-y-2 rounded-md border border-[var(--border-default)] px-3 py-2 text-sm">
+                          <p className="font-mono font-medium">{smartScan.pkg.code}</p>
+                          <p className="text-xs text-[var(--text-muted)]">
+                            {smartScan.pkg.species} · {smartScan.pkg.dimensions} · {smartScan.pkg.location}
+                          </p>
+                          {smartScan.softWarning ? (
+                            <label className="flex items-start gap-2 text-xs">
+                              <input
+                                type="checkbox"
+                                checked={softConfirm}
+                                onChange={(e) => setSoftConfirm(e.target.checked)}
+                                className="mt-0.5"
+                              />
+                              {smartScan.softWarning}
+                            </label>
+                          ) : null}
+                          <Button
+                            type="button"
+                            disabled={
+                              smartScan.hardFail || Boolean(smartScan.softWarning && !softConfirm)
+                            }
+                            onClick={useSmartScanPackage}
+                          >
+                            {t('wb.iss.usePackage')}
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
+                    <div className="min-w-0 space-y-3">
+                      <PackageAllocationWorkspace editable />
+                      {warnings.length > 0 ? (
+                        <div className="space-y-2 rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2">
+                          <p className="text-xs font-semibold text-[var(--color-danger)]">{t('wb.iss.mixWarnings')}</p>
+                          <ul className="list-inside list-disc text-xs text-[var(--text-secondary)]">
+                            {warnings.map((w) => (
+                              <li key={w}>{t(`wb.iss.warn.${w}`)}</li>
+                            ))}
+                          </ul>
+                          <label className="flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" checked={mixWaived} onChange={(e) => setMixWaived(e.target.checked)} />
+                            {t('wb.iss.mixWaive')}
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--color-primary)]">{t('wb.iss.mixOk')}</p>
+                      )}
+                    </div>
+
+                    <aside className="space-y-3">
+                      {focusedRow && focusedDisp ? (
+                        <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+                            {t('wb.iss.takeFromPackage')}
+                          </p>
+                          <p className="font-mono text-xs font-medium">{focusedRow.code}</p>
+                          <dl className="grid grid-cols-2 gap-1 text-xs">
+                            <dt className="text-[var(--text-muted)]">{t('wb.iss.requested')}</dt>
+                            <dd className="tabular-nums text-right">{focusedRow.selected}</dd>
+                            <dt className="text-[var(--text-muted)]">{t('wb.iss.picked')}</dt>
+                            <dd className="tabular-nums text-right font-medium">{focusedRow.selected}</dd>
+                          </dl>
+                          <hr className="border-[var(--border-default)]" />
+                          {(
+                            [
+                              ['good', 'good'],
+                              ['damaged', 'damaged'],
+                              ['scrap', 'scrap'],
+                              ['qualityHold', 'qualityHold'],
+                              ['rework', 'rework'],
+                            ] as const
+                          ).map(([key, labelKey]) => (
+                            <label key={key} className="flex items-center justify-between gap-2 text-xs">
+                              <span>{t(`wb.iss.disp.${labelKey}`)}</span>
+                              <Input
+                                type="number"
+                                className="h-7 w-16"
+                                min={0}
+                                max={focusedRow.selected}
+                                value={focusedDisp[key]}
+                                onChange={(e) =>
+                                  patchDisposition(focusedRow.code, { [key]: Number(e.target.value) || 0 })
+                                }
+                              />
+                            </label>
+                          ))}
+                          <p
+                            className={`text-[11px] ${
+                              dispositionSum(focusedDisp) === focusedRow.selected
+                                ? 'text-[var(--color-primary)]'
+                                : 'text-[var(--color-danger)]'
+                            }`}
+                          >
+                            Σ {dispositionSum(focusedDisp)} / {focusedRow.selected} · {t('wb.iss.remainingInPkg')}:{' '}
+                            {remainingOf(focusedRow)}
+                          </p>
+
+                          {focusedDisp.damaged > 0 ? (
+                            <div className="space-y-1 rounded-md border border-[var(--border-default)] px-2 py-2">
+                              <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                                {t('wb.iss.damageEvidence')}
+                              </p>
+                              <select
+                                className="h-8 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                                value={focusedDisp.damageReason}
+                                onChange={(e) => patchDisposition(focusedRow.code, { damageReason: e.target.value })}
+                              >
+                                <option value="">{t('wb.iss.selectReason')}</option>
+                                {DAMAGE_REASONS.map((r) => (
+                                  <option key={r} value={r}>
+                                    {r}
+                                  </option>
+                                ))}
+                              </select>
+                              <label className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={focusedDisp.damagePhoto}
+                                  onChange={(e) =>
+                                    patchDisposition(focusedRow.code, { damagePhoto: e.target.checked })
+                                  }
+                                />
+                                {t('wb.iss.photoCaptured')}
+                              </label>
+                            </div>
+                          ) : null}
+
+                          {focusedDisp.scrap > 0 ? (
+                            <div className="space-y-1 rounded-md border border-[var(--border-default)] px-2 py-2">
+                              <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">
+                                {t('wb.iss.scrapHandling')}
+                              </p>
+                              <select
+                                className="h-8 w-full rounded-md border border-[var(--border-default)] bg-[var(--color-surface)] px-2 text-xs"
+                                value={focusedDisp.scrapReason}
+                                onChange={(e) => patchDisposition(focusedRow.code, { scrapReason: e.target.value })}
+                              >
+                                <option value="">{t('wb.iss.selectReason')}</option>
+                                {SCRAP_REASONS.map((r) => (
+                                  <option key={r} value={r}>
+                                    {r}
+                                  </option>
+                                ))}
+                              </select>
+                              <label className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={focusedDisp.scrapPhoto}
+                                  onChange={(e) =>
+                                    patchDisposition(focusedRow.code, { scrapPhoto: e.target.checked })
+                                  }
+                                />
+                                {t('wb.iss.photoCaptured')}
+                              </label>
+                              <p className="text-[10px] text-[var(--text-muted)]">{t('wb.iss.scrapNeverReturns')}</p>
+                            </div>
+                          ) : null}
+
+                          <label className="block space-y-1 text-xs">
+                            <span className="text-[var(--text-muted)]">{t('wb.iss.notes')}</span>
+                            <Input
+                              value={focusedDisp.notes}
+                              onChange={(e) => patchDisposition(focusedRow.code, { notes: e.target.value })}
+                              placeholder={t('wb.iss.notesPh')}
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.selectPkgForTake')}</p>
+                      )}
+
+                      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3 space-y-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                          {t('wb.iss.closingChecklist')}
+                        </p>
+                        {(
+                          [
+                            ['restacked', 'closeRestack'],
+                            ['strapped', 'closeStrap'],
+                            ['labelOk', 'closeLabel'],
+                            ['photoUpdated', 'closePhoto'],
+                          ] as const
+                        ).map(([key, labelKey]) => (
+                          <label key={key} className="flex items-start gap-2 text-xs">
+                            <input
+                              type="checkbox"
+                              className="mt-0.5"
+                              checked={closing[key]}
+                              onChange={(e) => setClosing((c) => ({ ...c, [key]: e.target.checked }))}
+                            />
+                            <span>{t(`wb.iss.${labelKey}`)}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </aside>
+                  </div>
+
+                  <label className="block max-w-md space-y-1 text-sm">
+                    <span className="text-[var(--text-secondary)]">{t('wb.iss.scanLabel')}</span>
+                    <div className="flex gap-2">
+                      <Input
+                        value={scanValue}
+                        onChange={(e) => setScanValue(e.target.value)}
+                        placeholder={allocation[0]?.code ?? 'PKG-…'}
+                      />
+                      <Button type="button" variant="secondary" onClick={tryScan}>
+                        {t('wb.iss.scanValidate')}
+                      </Button>
+                    </div>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setScanValue(allocation.map((r) => r.code).join('+'));
+                      setScannedOk(true);
+                      setError(null);
+                    }}
+                  >
+                    {t('wb.iss.demoScan')}
+                  </Button>
+                  {scannedOk ? <p className="text-sm text-[var(--color-primary)]">{t('wb.iss.scanOk')}</p> : null}
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {t('wb.iss.goodForDemand')}: {goodTotal} · {t('wb.iss.integrityHint')}
+                  </p>
+                </div>
+              ) : null}
+
+              {stage.id === 'verify' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.verifyIntro')}</p>
+                  <ul className="list-inside list-disc text-sm">
+                    <li>{t('wb.iss.checkMaterial')}</li>
+                    <li>{t('wb.iss.checkLot')}</li>
+                    <li>{t('wb.iss.checkQty')}</li>
+                    <li>{t('wb.iss.checkQuality')}</li>
+                    <li>{t('wb.iss.checkReservation')}</li>
+                  </ul>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input type="checkbox" checked={verifyOk} onChange={(e) => setVerifyOk(e.target.checked)} />
+                    {t('wb.iss.verifyOk')}
+                  </label>
+                </div>
+              ) : null}
+
+              {stage.id === 'evidence' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.evidenceIntro')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['damage', 'missing', 'brokenPkg', 'note'].map((k) => (
+                      <Button key={k} type="button" variant="secondary" onClick={() => addEvidence(k)}>
+                        {evidence.includes(k) ? '✓ ' : '+ '}
+                        {t(`wb.iss.ev.${k}`)}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {evidence.length} {t('wb.iss.evidenceCount')} — {t('wb.iss.evidenceBelongs')}
+                  </p>
+                </div>
+              ) : null}
+
+              {stage.id === 'quality' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.qualityIntro')}</p>
+                  <div className="rounded-md border border-[var(--border-default)] px-3 py-2 text-sm">
+                    <p>✓ {t('wb.iss.qBlocked')}</p>
+                    <p>✓ {t('wb.iss.qHold')}</p>
+                    <p>✓ {t('wb.iss.qQuarantine')}</p>
+                    <p>✓ {t('wb.iss.qExpired')}</p>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input type="checkbox" checked={qualityOk} onChange={(e) => setQualityOk(e.target.checked)} />
+                    {t('wb.iss.qualityClear')}
+                  </label>
+                </div>
+              ) : null}
+
+              {stage.id === 'destination' ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant={destType === 'production' ? 'default' : 'secondary'}
+                      onClick={() => {
+                        setDestType('production');
+                        setDestination('Hat 1 · WC-SAW · OP-10');
+                      }}
+                    >
+                      {t('wb.iss.destProduction')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={destType === 'shipping' ? 'default' : 'secondary'}
+                      onClick={() => {
+                        setDestType('shipping');
+                        setDestination('Rampa 3 · Araç 34 ABC 123');
+                      }}
+                    >
+                      {t('wb.iss.destShipping')}
+                    </Button>
+                  </div>
+                  <label className="block space-y-1 text-sm">
+                    <span className="text-[var(--text-secondary)]">{t('wb.iss.destLabel')}</span>
+                    <Input value={destination} onChange={(e) => setDestination(e.target.value)} />
+                  </label>
+                  <p className="text-xs text-[var(--text-muted)]">{t('wb.iss.noCodeInput')}</p>
+                </div>
+              ) : null}
+
+              {stage.id === 'review' ? (
+                <div className="space-y-3">
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {[
+                      [t('wb.iss.document'), selectedDoc ? `${t(`wb.iss.docType.${docType!}`)} · ${selectedDoc.ref}` : '—'],
+                      [t('wb.iss.colMaterial'), `${MATERIAL_LINES[0].name} · ${REQUIRED_QTY}`],
+                      [
+                        t('wb.iss.aiDecision'),
+                        aiDecision === 'accept'
+                          ? t('wb.iss.acceptAi')
+                          : aiDecision === 'manual'
+                            ? t('wb.iss.manualSelect')
+                            : '—',
+                      ],
+                      [
+                        t('wb.iss.allocGrid'),
+                        allocation.map((r) => `${r.code}:${r.selected}`).join(' · ') || '—',
+                      ],
+                      [t('wb.iss.total'), `${selectedTotal} / ${REQUIRED_QTY}`],
+                      [t('wb.iss.evidence'), `${evidence.length} ${t('wb.iss.evidenceCount')}`],
+                      [t('wb.iss.destination'), destination],
+                      [
+                        t('wb.iss.manualHistory'),
+                        overrideHistory.length ? overrideHistory.join(' · ') : t('wb.iss.noManualSelect'),
+                      ],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-md border border-[var(--border-default)] px-3 py-2">
+                        <p className="text-[10px] uppercase text-[var(--text-muted)]">{label}</p>
+                        <p className="text-sm font-medium">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} />
+                    {t('wb.iss.approvePost')}
+                  </label>
+                </div>
+              ) : null}
+
+              {stage.id === 'post' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">{t('wb.iss.postIntro')}</p>
+                  <ul className="list-inside list-disc text-sm">
+                    <li>{t('wb.iss.postItem.gi')}</li>
+                    <li>{t('wb.iss.postItem.txn')}</li>
+                    <li>{t('wb.iss.postItem.history')}</li>
+                    <li>{t('wb.iss.postItem.reservation')}</li>
+                    <li>{t('wb.iss.postItem.genealogy')}</li>
+                    <li>{t('wb.iss.postItem.evidence')}</li>
+                  </ul>
+                  {posted ? (
+                    <p className="text-sm font-medium text-[var(--color-primary)]">
+                      {t('wb.iss.postedBanner')}
+                      {mintedGi ? ` · ${mintedGi}` : ''}
+                      {' — '}
+                      {t('wizard.inLibrary')}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {gateMessage ? <p className="text-sm text-[var(--color-danger)]">{gateMessage}</p> : null}
+              {error ? <p className="text-sm text-[var(--color-danger)]">{error}</p> : null}
+            </CardContent>
+          </Card>
+        </main>
+
+        <aside className="space-y-3">
+          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--color-surface)] p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">{t('wb.iss.context')}</p>
+            <dl className="mt-2 space-y-2 text-xs">
+              <div>
+                <dt className="text-[var(--text-muted)]">{t('wb.iss.aiDecision')}</dt>
+                <dd className="font-medium">
+                  {aiDecision === 'accept'
+                    ? t('wb.iss.acceptAi')
+                    : aiDecision === 'manual'
+                      ? t('wb.iss.manualSelect')
+                      : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[var(--text-muted)]">{t('wb.iss.allocGrid')}</dt>
+                <dd className="font-medium tabular-nums">
+                  {allocation.length} pkg · Σ {selectedTotal}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[var(--text-muted)]">{t('wb.iss.validation')}</dt>
+                <dd className="font-medium">
+                  {warnings.length && !mixWaived
+                    ? t('wb.iss.mixWarnings')
+                    : verifyOk && qualityOk
+                      ? t('wb.iss.validationOk')
+                      : t('wb.iss.validationOpen')}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[var(--text-muted)]">{t('wb.iss.noManualIds')}</dt>
+                <dd className="text-[var(--text-secondary)]">GI · Lot · MI · WH kodu elle yok</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+      </div>
+
+      <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border-default)] bg-[var(--color-bg,var(--color-surface))] px-2 py-3">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" disabled={stageIdx === 0 || posted} onClick={() => setStageIdx((s) => s - 1)}>
+            {t('wizard.back')}
+          </Button>
+          <Button type="button" variant="secondary" disabled={posted}>
+            {t('wb.iss.saveDraft')}
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {stage.id !== 'post' ? (
+            <Button type="button" disabled={!canAdvance || posted} onClick={goNext}>
+              {t('wb.iss.nextStage')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="button"
+                disabled={posted || persistMutation.isPending || !approved}
+                onClick={() => persistMutation.mutate()}
+              >
+                {persistMutation.isPending ? t('saving') : t('wizard.post')}
+              </Button>
+              {posted ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void navigate({ to: '/inventory/operations/goods-issues' })}
+                >
+                  {t('wizard.backToLibrary')}
+                </Button>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

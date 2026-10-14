@@ -1,0 +1,127 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Naswood.BuildingBlocks.Application.Abstractions;
+using Naswood.BuildingBlocks.AspNetCore;
+using Naswood.Modules.Platform.Application.Authentication;
+using Naswood.Modules.Platform.Contracts.Authentication;
+using Naswood.Modules.Platform.Presentation.Authorization;
+
+namespace Naswood.Modules.Platform.Presentation.Authentication;
+
+[ApiController]
+[Route("api/v1/auth")]
+public sealed class AuthenticationController : ControllerBase
+{
+    private readonly IDispatcher _dispatcher;
+
+    public AuthenticationController(IDispatcher dispatcher) => _dispatcher = dispatcher;
+
+    [AllowAnonymous]
+    [HttpPost("login")]
+    [EnableRateLimiting("auth-login")]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(
+                new LoginCommand(
+                    request.Username,
+                    request.Password,
+                    request.RememberMe,
+                    request.CompanyId,
+                    request.PlantId,
+                    request.DeviceId,
+                    request.DeviceName,
+                    request.Browser,
+                    request.OperatingSystem),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.ToActionResult(this);
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher.SendAsync(new LogoutCommand(), cancellationToken).ConfigureAwait(false);
+        return result.ToActionResult(this, "Logged out.");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshTokenRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .SendAsync(new RefreshTokenCommand(request.RefreshToken), cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.ToActionResult(this);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("revoke")]
+    public async Task<IActionResult> Revoke(
+        [FromBody] RevokeTokenRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .SendAsync(new RevokeTokenCommand(request.RefreshToken), cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.ToActionResult(this, "Token revoked.");
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .QueryAsync(new GetCurrentUserQuery(), cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.ToActionResult(this);
+    }
+
+    [Authorize]
+    [HttpGet("session")]
+    public async Task<IActionResult> Session(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .QueryAsync(new GetCurrentSessionQuery(), cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.ToActionResult(this);
+    }
+
+    /// <summary>
+    /// Üst Yönetici: switch working plant among authorized factories. Ana Üs (HomePlantId) unchanged.
+    /// Requires Plant.Switch (or Administrator role with that permission).
+    /// </summary>
+    [Authorize]
+    [HttpPost("switch-plant")]
+    [RequirePermission("Plant.Switch")]
+    public async Task<IActionResult> SwitchPlant(
+        [FromBody] SwitchWorkingPlantRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .SendAsync(new SwitchWorkingPlantCommand(request.PlantId), cancellationToken)
+            .ConfigureAwait(false);
+        return result.ToActionResult(this, successMessage: "Working plant switched.");
+    }
+
+    /// <summary>Plants visible to the current user (operators: Ana Üs only).</summary>
+    [Authorize]
+    [HttpGet("plants")]
+    public async Task<IActionResult> VisiblePlants(CancellationToken cancellationToken)
+    {
+        var result = await _dispatcher
+            .QueryAsync(new GetVisiblePlantsQuery(), cancellationToken)
+            .ConfigureAwait(false);
+        return result.ToActionResult(this);
+    }
+}

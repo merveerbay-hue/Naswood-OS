@@ -1,0 +1,137 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Naswood.Modules.Platform.Application.Authentication;
+using Naswood.Modules.Platform.Application.Authorization;
+
+namespace Naswood.Modules.Platform.Infrastructure.Authorization;
+
+public sealed class AuthorizationBootstrapHostedService : IHostedService
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<AuthorizationBootstrapHostedService> _logger;
+
+    public AuthorizationBootstrapHostedService(
+        IServiceScopeFactory scopeFactory,
+        ILogger<AuthorizationBootstrapHostedService> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        if (environment.IsEnvironment("Testing"))
+        {
+            return;
+        }
+
+        var permissions = scope.ServiceProvider.GetRequiredService<IPermissionCatalogRepository>();
+        var roles = scope.ServiceProvider.GetRequiredService<IRoleCatalogRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IPlatformUnitOfWork>();
+        var catalog = AuthorizationCatalogSeed.CreatePermissions();
+
+        if (!await permissions.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            await permissions.AddRangeAsync(catalog, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Seeded {Count} permissions.", catalog.Count);
+        }
+        else
+        {
+            // Upsert newly introduced permission codes without wiping existing catalog.
+            var existing = await permissions.GetAllActiveAsync(cancellationToken).ConfigureAwait(false);
+            var existingCodes = existing.Select(p => p.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var missing = catalog.Where(p => !existingCodes.Contains(p.Code)).ToArray();
+            if (missing.Length > 0)
+            {
+                await permissions.AddRangeAsync(missing, cancellationToken).ConfigureAwait(false);
+                _logger.LogInformation("Seeded {Count} newly added permissions.", missing.Length);
+            }
+        }
+
+        if (!await roles.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            // Use in-memory catalog (not DB query) so permission codes are present before SaveChanges.
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateAdministratorRole(catalog), cancellationToken)
+                .ConfigureAwait(false);
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateReadOnlyRole(), cancellationToken)
+                .ConfigureAwait(false);
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateExecutiveRole(), cancellationToken)
+                .ConfigureAwait(false);
+            await roles.AddAsync(AuthorizationCatalogSeed.CreateWarehouseOperatorRole(), cancellationToken)
+                .ConfigureAwait(false);
+            _logger.LogInformation("Seeded Administrator, ReadOnly, Executive, WarehouseOperator roles.");
+        }
+        else
+        {
+            // Keep Administrator in sync when new permission codes are introduced.
+            var administrator = await roles.GetByCodeAsync("Administrator", cancellationToken).ConfigureAwait(false);
+            if (administrator is not null)
+            {
+                var before = administrator.PermissionCodes.Count;
+                var result = administrator.AssignPermissions(
+                    catalog.Select(p => p.Code),
+                    updatedBy: null,
+                    utcNow: DateTimeOffset.UtcNow);
+                if (result.IsSuccess && administrator.PermissionCodes.Count > before)
+                {
+                    _logger.LogInformation(
+                        "Synced {Count} new permissions onto Administrator role.",
+                        administrator.PermissionCodes.Count - before);
+                }
+            }
+
+            // Ensure persona roles exist on upgraded environments.
+            if (await roles.GetByCodeAsync("Executive", cancellationToken).ConfigureAwait(false) is null)
+            {
+                await roles.AddAsync(AuthorizationCatalogSeed.CreateExecutiveRole(), cancellationToken)
+                    .ConfigureAwait(false);
+                _logger.LogInformation("Seeded Executive role.");
+            }
+
+            var executive = await roles.GetByCodeAsync("Executive", cancellationToken).ConfigureAwait(false);
+            if (executive is not null)
+            {
+                var beforeExec = executive.PermissionCodes.Count;
+                executive.AssignPermissions(
+                    AuthorizationCatalogSeed.CreateExecutiveRole().PermissionCodes,
+                    updatedBy: null,
+                    utcNow: DateTimeOffset.UtcNow);
+                if (executive.PermissionCodes.Count > beforeExec)
+                {
+                    _logger.LogInformation(
+                        "Synced {Count} new permissions onto Executive role.",
+                        executive.PermissionCodes.Count - beforeExec);
+                }
+            }
+
+            var warehouseOperator = await roles.GetByCodeAsync("WarehouseOperator", cancellationToken).ConfigureAwait(false);
+            if (warehouseOperator is null)
+            {
+                await roles.AddAsync(AuthorizationCatalogSeed.CreateWarehouseOperatorRole(), cancellationToken)
+                    .ConfigureAwait(false);
+                _logger.LogInformation("Seeded WarehouseOperator role.");
+            }
+            else
+            {
+                var before = warehouseOperator.PermissionCodes.Count;
+                warehouseOperator.AssignPermissions(
+                    AuthorizationCatalogSeed.CreateWarehouseOperatorRole().PermissionCodes,
+                    updatedBy: null,
+                    utcNow: DateTimeOffset.UtcNow);
+                if (warehouseOperator.PermissionCodes.Count > before)
+                {
+                    _logger.LogInformation(
+                        "Synced {Count} new permissions onto WarehouseOperator role.",
+                        warehouseOperator.PermissionCodes.Count - before);
+                }
+            }
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}

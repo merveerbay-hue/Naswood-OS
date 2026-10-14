@@ -1,0 +1,75 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Naswood.Modules.Business.Infrastructure.Persistence;
+
+namespace Naswood.Modules.Business.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddBusinessInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        var cs = configuration.GetConnectionString("Platform")
+            ?? throw new InvalidOperationException("Connection string 'Platform' is required.");
+        services.AddDbContext<BusinessDbContext>(o => o.UseNpgsql(cs));
+        services.AddScoped<Naswood.Modules.Business.Application.Common.IBusinessUnitOfWork, Persistence.BusinessUnitOfWork>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IMaterialRepository, Naswood.Modules.Business.Infrastructure.Inventory.MaterialRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IWarehouseRepository, Naswood.Modules.Business.Infrastructure.Inventory.WarehouseRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.ILocationRepository, Naswood.Modules.Business.Infrastructure.Inventory.LocationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryBalanceRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryBalanceRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IMasterStockReadRepository, Naswood.Modules.Business.Infrastructure.Inventory.MasterStockReadRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IBatchRepository, Naswood.Modules.Business.Infrastructure.Inventory.BatchRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IGoodsReceiptRepository, Naswood.Modules.Business.Infrastructure.Inventory.GoodsReceiptRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IGoodsIssueRepository, Naswood.Modules.Business.Infrastructure.Inventory.GoodsIssueRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IStockTransferRepository, Naswood.Modules.Business.Infrastructure.Inventory.StockTransferRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryCountRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryCountRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryAdjustmentRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryAdjustmentRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IMaterialIdentityRepository, Naswood.Modules.Business.Infrastructure.Inventory.MaterialIdentityRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryPackageRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryPackageRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IInventoryMovementRepository, Naswood.Modules.Business.Infrastructure.Inventory.InventoryMovementRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IPackageOperationRepository, Naswood.Modules.Business.Infrastructure.Inventory.PackageOperationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IPackageRelationRepository, Naswood.Modules.Business.Infrastructure.Inventory.PackageRelationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.ISupplierRepository, Naswood.Modules.Business.Infrastructure.Purchasing.SupplierRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IPurchaseRequestRepository, Naswood.Modules.Business.Infrastructure.Purchasing.PurchaseRequestRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IRfqRepository, Naswood.Modules.Business.Infrastructure.Purchasing.RfqRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.ISupplierQuotationRepository, Naswood.Modules.Business.Infrastructure.Purchasing.SupplierQuotationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IPurchaseOrderRepository, Naswood.Modules.Business.Infrastructure.Purchasing.PurchaseOrderRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IPurchaseGoodsReceiptRepository, Naswood.Modules.Business.Infrastructure.Purchasing.PurchaseGoodsReceiptRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IPurchaseReturnRepository, Naswood.Modules.Business.Infrastructure.Purchasing.PurchaseReturnRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.ISupplierInvoiceRepository, Naswood.Modules.Business.Infrastructure.Purchasing.SupplierInvoiceRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Purchasing.IPurchasingReportRepository, Naswood.Modules.Business.Infrastructure.Purchasing.PurchasingReportRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.ICustomerRepository, Naswood.Modules.Business.Infrastructure.Sales.CustomerRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.ILeadRepository, Naswood.Modules.Business.Infrastructure.Sales.LeadRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.IOpportunityRepository, Naswood.Modules.Business.Infrastructure.Sales.OpportunityRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.ISalesQuotationRepository, Naswood.Modules.Business.Infrastructure.Sales.SalesQuotationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.ISalesOrderRepository, Naswood.Modules.Business.Infrastructure.Sales.SalesOrderRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.IShipmentRepository, Naswood.Modules.Business.Infrastructure.Sales.ShipmentRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.IDeliveryRepository, Naswood.Modules.Business.Infrastructure.Sales.DeliveryRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.ICustomerInvoiceRepository, Naswood.Modules.Business.Infrastructure.Sales.CustomerInvoiceRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Sales.ISalesReportRepository, Naswood.Modules.Business.Infrastructure.Sales.SalesReportRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IBomRepository, Naswood.Modules.Business.Infrastructure.Production.BomRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IRoutingRepository, Naswood.Modules.Business.Infrastructure.Production.RoutingRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IMachineRepository, Naswood.Modules.Business.Infrastructure.Production.MachineRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IWorkCenterRepository, Naswood.Modules.Business.Infrastructure.Production.WorkCenterRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionLineRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionLineRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IShiftRepository, Naswood.Modules.Business.Infrastructure.Production.ShiftRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.ICalendarRepository, Naswood.Modules.Business.Infrastructure.Production.CalendarRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IToolingRepository, Naswood.Modules.Business.Infrastructure.Production.ToolingRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IOperationRepository, Naswood.Modules.Business.Infrastructure.Production.OperationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionParameterRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionParameterRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionOrderRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionOrderRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IWorkOrderRepository, Naswood.Modules.Business.Infrastructure.Production.WorkOrderRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IMaterialConsumptionRepository, Naswood.Modules.Business.Infrastructure.Production.MaterialConsumptionRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionConfirmationRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionConfirmationRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IWipRepository, Naswood.Modules.Business.Infrastructure.Production.WipRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IPackagingRepository, Naswood.Modules.Business.Infrastructure.Production.PackagingRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IFinishedGoodRepository, Naswood.Modules.Business.Infrastructure.Production.FinishedGoodRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IScrapRepository, Naswood.Modules.Business.Infrastructure.Production.ScrapRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IReworkRepository, Naswood.Modules.Business.Infrastructure.Production.ReworkRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IStructuralProductionLotRepository, Naswood.Modules.Business.Infrastructure.Production.StructuralProductionLotRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionOutputRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionOutputRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionLotSourceRepository, Naswood.Modules.Business.Infrastructure.Production.ProductionLotSourceRepository>();
+        services.AddScoped<Naswood.Modules.Business.Application.Production.IProductionExecutionStore, Naswood.Modules.Business.Infrastructure.Production.ProductionExecutionStore>();
+        return services;
+    }
+}

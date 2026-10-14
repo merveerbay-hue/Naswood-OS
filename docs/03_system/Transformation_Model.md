@@ -39,6 +39,11 @@ It contains:
 
 A Transformation becomes part of the permanent manufacturing genealogy.
 
+**On each transformation:** mint a **new Material Identity** for output(s); link parent → child.  
+Never overwrite the input Material Identity.
+
+Authority: `docs/13_Design/99_Shared/Material_Identity_Architecture.md` · graph: `Material_Genealogy.md` · formats: `Document_Numbering.md`.
+
 ---
 
 # 3. Transformation Types

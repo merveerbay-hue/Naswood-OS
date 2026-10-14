@@ -51,13 +51,13 @@ The Purchasing module includes
 
 The following processes are outside the scope of this module
 
-- Material Master
+- Material Definitions (`Material_Definition_Architecture.md`)
 - Inventory Management
 - Production Planning
 - Sales Management
 - Payment Processing
 
-These processes are handled by their respective modules.
+These processes are handled by their respective modules. Purchasing **consumes** Released Material Definitions (Purchase UoM · quality inbound · conversion).
 
 ---
 
@@ -127,7 +127,7 @@ Purchasing owns
 Purchasing does NOT own
 
 - Inventory Balances
-- Material Master
+- Material Definitions
 - Financial Posting
 - Production Orders
 - Sales Orders

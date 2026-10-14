@@ -134,9 +134,8 @@ Soft Delete
 ```json
 {
   "success": true,
-  "message": "Material created successfully.",
   "data": {},
-  "errors": [],
+  "message": "Material created successfully.",
   "metadata": {}
 }
 ```
@@ -148,15 +147,26 @@ Soft Delete
 ```json
 {
   "success": false,
+  "data": null,
   "message": "Validation failed.",
   "errors": [
     {
+      "code": "MAT-001",
+      "category": "Validation",
       "field": "materialCode",
-      "message": "Material Code already exists."
+      "message": "Material Code already exists.",
+      "details": {}
     }
-  ]
+  ],
+  "metadata": {
+    "correlationId": "9fd8b9ab-2e5e-47d3-b6cf-f61f0cbb2d9",
+    "timestamp": "2026-08-05T10:15:22Z"
+  }
 }
 ```
+
+Error codes use `{MODULE}-{NNN}`. Error details shall never expose stack
+traces, secrets or internal implementation details.
 
 ---
 
@@ -213,8 +223,13 @@ Example
 ```
 ?sort=name
 
-?sort=-createdDate
+?sort=-createdAt
+
+?sort=status,-createdAt
 ```
+
+A leading `-` indicates descending order. Absence indicates ascending order.
+The separate `direction` parameter is not part of the canonical contract.
 
 ---
 

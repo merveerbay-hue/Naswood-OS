@@ -49,7 +49,7 @@ Location management does NOT include
 
 - Warehouse Definition
 - Inventory Transactions
-- Material Master
+- Material Definitions
 
 Reference
 

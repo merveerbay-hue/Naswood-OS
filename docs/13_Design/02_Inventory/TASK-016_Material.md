@@ -12,15 +12,17 @@
 
 # Purpose
 
-The Material entity represents every inventory-controlled item managed within Naswood OS.
+The Material entity represents physical Material identity owned by Inventory.
 
 It provides the inventory behavior of a material and defines how materials are received, stored, moved, consumed, produced and traced throughout the warehouse and manufacturing processes.
 
-Business information such as commercial definitions, purchasing attributes and sales attributes are managed by the Master Data module. This document only defines the inventory perspective of a material.
+Product definition, Product Type and capabilities are owned by Product
+Management. Material references a released Product revision and exists only
+after an authorized physical Inventory transaction is posted.
 
 Reference
 
-01_Master_Data/Material.md
+Material_Master.md
 
 ---
 
@@ -58,25 +60,16 @@ This document does NOT define
 
 ---
 
-# Material Classification
+# Product Reference
 
-Inventory supports various material categories.
+Every Material references a released Product revision.
 
-Examples
-
-- Raw Material
-- Semi Finished Product
-- Finished Product
-- Consumable
-- Spare Part
-- Packaging
-- Chemical
-- Tool
-- Maintenance Material
+Product Type and capabilities are evaluated from Product Management and are not
+duplicated as Material classifications.
 
 Reference
 
-Material.md
+Product_Type_and_Capabilities.md
 
 ---
 
@@ -86,12 +79,10 @@ Every inventory-controlled material contains operational inventory settings.
 
 ## Inventory Managed
 
-Determines whether stock quantities are tracked.
-
-Values
-
-- Yes
-- No
+Material can exist only when the referenced Product has Inventory Capability
+`OPTIONAL` or `ENABLED`. `OPTIONAL` requires explicit transaction selection.
+This is validated by Inventory and is not an independently editable Material
+flag.
 
 ---
 
@@ -156,13 +147,7 @@ Values
 
 ## Negative Stock Allowed
 
-Defines negative inventory policy.
-
-Values
-
-- Allowed
-- Not Allowed
-- Company Policy
+Negative stock is always prohibited without exception.
 
 Reference
 
@@ -172,12 +157,9 @@ Negative_Stock.md
 
 ## Quality Inspection Required
 
-Determines whether received inventory requires inspection before becoming available.
-
-Values
-
-- Yes
-- No
+Quality requirements are resolved from the released Product revision and
+Quality-owned inspection rules. Material does not define a competing quality
+flag.
 
 ---
 

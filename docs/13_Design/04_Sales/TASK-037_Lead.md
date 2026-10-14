@@ -1,3 +1,5 @@
+> **UX authority note:** `+ New` / Create wireframes in this TASK are historical. Live CTAs: [`Sales_Screens.md`](./Sales_Screens.md) · [`Screen_Types.md`](../Common/Screen_Types.md) § Create matrix · Process_Screens.
+
 # TASK-037 — Lead
 
 **Module:** Sales
@@ -55,7 +57,7 @@ Lead Grid
 
 ────────────────────────────────────────────────────────────
 
-+ New Lead
+**Capture lead** / Lead kaydet
 
 Import
 

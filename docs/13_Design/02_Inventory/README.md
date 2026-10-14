@@ -10,6 +10,28 @@
 
 ---
 
+# Design pack
+
+| Document | Role |
+|----------|------|
+| [`Inventory_Architecture.md`](./Inventory_Architecture.md) | Ownership & boundaries |
+| [`Inventory_Workflow.md`](./Inventory_Workflow.md) | Process truth |
+| [`Inventory_Screens.md`](./Inventory_Screens.md) | Job screens |
+| [`Inventory_Workspaces.md`](./Inventory_Workspaces.md) | Workspace tree |
+| [`Inventory_Navigation.md`](./Inventory_Navigation.md) | Sidebar & deep links |
+| [`Inventory_User_Flows.md`](./Inventory_User_Flows.md) | Role journeys |
+| [`Inventory_Dashboard.md`](./Inventory_Dashboard.md) | **Warehouse Command Center** (not KPI page) |
+| [`Inventory_Design_Program.md`](./Inventory_Design_Program.md) | **Design sequence + question template** (one process at a time) |
+| [`Inventory_API.md`](./Inventory_API.md) | HTTP surface |
+| [`Inventory_Mobile.md`](./Inventory_Mobile.md) | Mobile jobs |
+
+Receiving UX: `docs/00_Product/Process_Screens/INV_Receiving_Workbench.md`
+
+SSOT: `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`  
+Numbering: `docs/13_Design/99_Shared/Document_Numbering.md`
+
+---
+
 # Overview
 
 The Inventory module is the central warehouse and inventory management component of Naswood OS.
@@ -64,13 +86,13 @@ The Inventory module manages
 
 The module does not manage
 
-- Material Master Data
+- Material Definitions (catalog rule packs — `Material_Definition_Architecture.md`)
 - Purchasing Processes
 - Sales Processes
 - Production Planning
 - Financial Accounting
 
-These processes are handled by their respective modules.
+These processes are handled by their respective modules. Inventory **consumes** Released Material Definitions and the Measurement & Conversion Engine.
 
 ---
 
@@ -292,7 +314,7 @@ The Inventory module exchanges information with the following modules.
 
 | Module | Purpose |
 |----------|---------|
-| Master Data | Material definitions |
+| Master Data | Material Definitions (Designer) |
 | Purchasing | Supplier receipts |
 | Sales | Customer shipments |
 | Production | Material consumption and finished goods receipt |

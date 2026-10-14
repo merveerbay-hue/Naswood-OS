@@ -1,3 +1,5 @@
+> **UX authority note:** `+ New` / Create wireframes in this TASK are historical. Live CTAs: [`Sales_Screens.md`](./Sales_Screens.md) · [`Screen_Types.md`](../Common/Screen_Types.md) § Create matrix · Process_Screens.
+
 # TASK-038 — Opportunity
 
 **Module:** Sales
@@ -55,7 +57,7 @@ Opportunity Grid
 
 ────────────────────────────────────────────────────────────
 
-+ New Opportunity
+**Open opportunity** / Fırsat aç
 
 Forecast
 

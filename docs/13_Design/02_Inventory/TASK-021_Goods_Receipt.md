@@ -1,3 +1,5 @@
+> **UX authority:** Live receiving UI is [`INV_Receiving_Workbench.md`](../../00_Product/Process_Screens/INV_Receiving_Workbench.md) — full truck-to-post Workbench (not CRUD). Spine: Depo select + lot by material category (`INV_Receiving_Wizard.md`). This TASK is historical.
+
 # TASK-021 — Goods Receipt
 
 **Module:** Inventory
@@ -47,7 +49,7 @@ Goods Receipt supports inventory receipts from
 Goods Receipt does NOT
 
 - Approve Purchase Orders
-- Create Material Master
+- Create Material Definition (engineering track — Definition Designer)
 - Calculate Inventory Cost
 - Process Supplier Invoices
 

@@ -127,13 +127,19 @@ GET /materials?page=1&pageSize=25
 
 ```json
 {
-  "items": [],
-  "page": 1,
-  "pageSize": 25,
-  "totalItems": 1240,
-  "totalPages": 50,
-  "hasNext": true,
-  "hasPrevious": false
+  "success": true,
+  "data": [],
+  "message": null,
+  "metadata": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "totalItems": 1240,
+      "totalPages": 50,
+      "hasNext": true,
+      "hasPrevious": false
+    }
+  }
 }
 ```
 
@@ -143,9 +149,15 @@ GET /materials?page=1&pageSize=25
 
 ```json
 {
-  "items": [],
-  "nextCursor": "eyJpZCI6MTI0NTZ9",
-  "hasNext": true
+  "success": true,
+  "data": [],
+  "message": null,
+  "metadata": {
+    "pagination": {
+      "nextCursor": "eyJpZCI6MTI0NTZ9",
+      "hasNext": true
+    }
+  }
 }
 ```
 

@@ -4,9 +4,13 @@
 
 **Category:** File Management
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Status:** Approved
+
+**Product law (Evidence · Document Library · Export):**  
+[`Document_Management_Evidence_and_Export.md`](./Document_Management_Evidence_and_Export.md) — permanence, transaction digital file, history chain, ops search, Excel/CSV/PDF export sets.  
+This document owns **infrastructure** (bytes, storage providers, metadata schema, service API). It does **not** redefine Evidence Archive or export column laws.
 
 ---
 

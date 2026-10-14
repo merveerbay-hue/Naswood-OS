@@ -8,6 +8,8 @@
 
 **Status:** Approved
 
+**Material multi-UoM business engine (enter-once / all modules):** [`Measurement_Conversion_Engine.md`](./Measurement_Conversion_Engine.md) — compose; this document remains the SI / precision / measurable-value authority.
+
 ---
 
 # Purpose

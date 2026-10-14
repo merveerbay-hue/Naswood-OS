@@ -342,7 +342,11 @@ Allocation
 
 Atomic Adjustments
 
-No Negative Stock (Policy Based)
+No Negative Stock (Mandatory, No Exceptions)
+
+Reference
+
+`Negative_Stock.md`
 
 ---
 

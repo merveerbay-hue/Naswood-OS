@@ -32,7 +32,7 @@ The Products module manages all commercial products offered by Naswood.
 
 Products represent sellable items defined for quotations, sales orders, production planning and customer deliveries.
 
-Unlike Materials, Products are commercial entities and do not directly participate in manufacturing transformations.
+Unlike **Material Definitions** (`Material_Definition_Architecture.md`), Products are commercial entities and do not directly participate in manufacturing transformations. A Product **links to** one or more Material Definitions for fulfillment, dimensions, and conversion — it does not duplicate those rule packs.
 
 ---
 

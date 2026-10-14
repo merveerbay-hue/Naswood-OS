@@ -103,8 +103,6 @@ Relevance Sorting
 
 ```
 sort
-
-direction
 ```
 
 Examples
@@ -112,9 +110,9 @@ Examples
 ```
 ?sort=name
 
-?sort=createdAt&direction=desc
+?sort=-createdAt
 
-?sort=status,name
+?sort=status,-createdAt,name
 ```
 
 ---
@@ -124,6 +122,9 @@ Examples
 Ascending
 
 Unless explicitly configured otherwise.
+
+A leading `-` before a field indicates descending order. The separate
+`direction` parameter is superseded and shall not be used in new contracts.
 
 ---
 

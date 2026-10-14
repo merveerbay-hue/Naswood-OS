@@ -147,7 +147,7 @@ Machine maintenance reminder
 
 Examples
 
-Create Purchase Request
+Raise purchase request
 
 Increase Safety Stock
 

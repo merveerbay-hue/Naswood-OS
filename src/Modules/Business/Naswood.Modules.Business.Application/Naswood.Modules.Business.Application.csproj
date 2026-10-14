@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Naswood.Modules.Business.Domain\Naswood.Modules.Business.Domain.csproj" />
+    <ProjectReference Include="..\Naswood.Modules.Business.Contracts\Naswood.Modules.Business.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Naswood.BuildingBlocks.Application\Naswood.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

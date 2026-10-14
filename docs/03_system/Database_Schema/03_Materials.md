@@ -1,10 +1,27 @@
 # Database Schema — Materials
 
+> **Status: Superseded**
+>
+> This schema combines Purchasing, Inventory, Manufacturing genealogy,
+> reservations and document ownership. It shall not be implemented as a shared
+> cross-module schema.
+>
+> Canonical sources:
+>
+> - Inventory Material Master:
+>   `../../13_Design/02_Inventory/Material_Master.md`
+> - Inventory Ledger and reservations:
+>   `../../13_Design/02_Inventory/Inventory_Ledger.md`
+> - Product definition and capabilities:
+>   `../../13_Design/01_Product_Management/Product_Management_Architecture.md`
+> - Manufacturing BOM:
+>   `../../13_Design/05_Production/BOM_Architecture.md`
+
 **Project:** Naswood OS
 **Document:** Materials Schema
 **Database:** PostgreSQL
 **Version:** 2.0
-**Status:** Approved
+**Status:** Superseded
 
 ---
 

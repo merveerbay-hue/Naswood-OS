@@ -1,0 +1,50 @@
+---
+description: NOS kimliği, teknoloji kararları ve çalışma kuralları
+alwaysApply: true
+---
+
+# NOS çekirdek
+
+## Kimlik
+
+- Platform adı Naswood Operating System (NOS). Geleneksel ERP diye anlatma.
+- Modüler monolittir: tek dağıtım, modül sınırları katıdır, modül başka modülün verisine sahip olmaz.
+- Sektör ahşap üretimidir: tomruk, biçme, kurutma, thermowood, kalite, stok, sevkiyat, bakım.
+- Her özellik tek işletim platformuna bağlanır. İzole ekran veya kopuk servis üretme.
+- Karar sırası: mimari bütünlük, sürdürülebilirlik, güvenlik, ölçek, yeniden kullanım, hız.
+
+## Teknoloji
+
+- Backend: ASP.NET Core, Clean Architecture, komut/sorgu ayrımı (MediatR yok; BuildingBlocks içindeki ince dağıtıcı).
+- Hedef çatı .NET 10 LTS'dir (ADR-001). Kod bugün `net8.0` üzerindedir; yükseltme ayrı bir görevdir, başka görevin içinde sürüm değiştirme.
+- Teknoloji kararlarının otoritesi `docs/00_Decisions/ADR-001_Technology_Stack.md` dosyasıdır; bu dosya ile çelişirse ADR geçerlidir.
+- Veri: EF Core ve PostgreSQL. Birincil anahtar UUID. Zaman damgası UTC.
+- Doğrulama FluentValidation ile yapılır. HTTP sözleşmesi versiyonlu REST’tir (`/api/v1/...`).
+- Kimlik JWT ve OAuth2 ile kurulur. Anlık bildirim SignalR ile gider.
+- Arayüz React, TypeScript ve Tailwind CSS kullanır.
+- Çalışma zamanı Docker’dır. Kubernetes ancak ayrı mimari onayından sonra gelir.
+- Yapay zeka onaylı kurumsal veri ve OpenAI uyumlu sağlayıcı kullanır. İş verisi uydurma.
+
+## Cursor Rules özeti
+
+- Mevcut mimariyi izle. Aynı işlevi ikinci kez yazma. Paylaşılan modülü ve bileşeni yeniden kullan.
+- Basit, okunur ve test edilebilir kod yaz. Geriye uyumu koru. Kullanılmayan kodu sil.
+- Anlamlı isim kullan. Fonksiyonu küçük tut. Mevcut klasör düzeninin dışına çıkma.
+- Yeni modülden önce aynı işin var olup olmadığına bak. İlgili modülleri kontrol et.
+- Özellik kaydı amaç, iş hedefi, teknik tasarım, API değişikliği, veritabanı değişikliği ve ilgili dokümanları içerir.
+- API önce sözleşmedir: versiyon, tutarlı isim, standart hata gövdesi, kimlik ve yetki.
+- Veriyi gerektiği kadar normalleştir. Ana veriyi kopyalama. Denetim alanı ve yabancı anahtar koy.
+- Girdiyi doğrula. Rol bazlı yetki uygula. Sır, parola ve token sızdırma. Kritik işlemi logla.
+- Sorguyu ölç. Gereksiz çağrıyı kes. Bloklayan işi arka plana al. Ölçeği baştan tasarla.
+- Test işlevi, API’yi, hata yolunu, yetkiyi ve regresyonu kapsar.
+- Bitirme koşulu: gereksinim duruyor, testler geçiyor, doküman güncel, kritik hata kalmıyor.
+- Commit tek işe odaklanır ve mesajı o işi söyler. Geçmişi bozan yeniden yazma yapma.
+- Kısa yolu uzun ömürlü bakımın önüne koyma.
+
+## Çalışma şekli
+
+- Koddan önce kısa plan sun. Onay gelmeden dosya değiştirme.
+- Yalnızca görevin kapsadığı dosyalara dokun.
+- Placeholder, sahte iş kuralı, boş `return` ve geçici üretim kodu yazma.
+- İş kuralı belgede yoksa uydurma. Dur ve sor.
+- Her görevin sonunda ilgili testleri çalıştır ve sonucu yaz.

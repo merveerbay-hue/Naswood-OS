@@ -21,6 +21,21 @@ It never creates engineering definitions.
 
 ---
 
+# 1.1 AUTHORITY REFERENCES (do not redefine)
+
+This document owns **Production execution process** (phases, gates, outcomes).
+See `docs/00_Product/DOCUMENTATION_AUTHORITY_MATRIX.md`.
+
+| Topic | Authority — reference only |
+|-------|----------------------------|
+| Numbering (Material, Lot, Serial, Package, Pallet, Production IDs) | `docs/13_Design/99_Shared/Document_Numbering.md` |
+| Genealogy graph | `docs/05_Modules/02_Production/Material_Genealogy.md` |
+| Stock balances / inventory transactions | `docs/13_Design/02_Inventory/Inventory_Architecture.md` |
+| Traceability inquiry (QMS/WMS views) | Quality + Inventory Architecture |
+| UX steps / wizards | `Production_Screens.md` + `Production_User_Flows.md` |
+
+---
+
 # 2. HIGH LEVEL WORKFLOW
 
 ```

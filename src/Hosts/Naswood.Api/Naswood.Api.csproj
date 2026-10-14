@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Presentation\Naswood.Modules.Platform.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Platform\Naswood.Modules.Platform.Infrastructure\Naswood.Modules.Platform.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Business\Naswood.Modules.Business.Presentation\Naswood.Modules.Business.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Business\Naswood.Modules.Business.Infrastructure\Naswood.Modules.Business.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.17" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+</Project>

@@ -22,6 +22,7 @@ All reports follow the shared reporting standards defined in:
 - PDF.md
 - Print.md
 - Dashboard_Widgets.md
+- [`Document_Management_Evidence_and_Export.md`](../99_Shared/Document_Management_Evidence_and_Export.md) — Receiving / Goods Issue / Material / Transaction / Counting / Difference / Inspection export sets · Excel column law
 
 ---
 

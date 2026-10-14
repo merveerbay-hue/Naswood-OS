@@ -1,364 +1,71 @@
-# ==============================================================================
-# INVENTORY WORKSPACES
-# Naswood Operating System (NOS)
-# Module: Inventory
-# Version: 1.0
-# ==============================================================================
+# Inventory Workspaces
 
-# PURPOSE
-
-This document defines the functional workspaces of the Inventory module.
-
-A Workspace represents a business capability that groups related screens,
-business processes, permissions and components.
-
-Inventory Workspaces are process-oriented.
-
-Users perform inventory operations through Workspaces rather than generic CRUD
-pages.
-
-Every inventory transaction must be traceable and auditable.
+**Module:** Inventory  
+**Version:** 1.1  
+**Status:** Active  
+**Owns:** Inventory workspace tree and job grouping  
+**Screen index:** `Inventory_Screens.md`  
+**Navigation:** `Inventory_Navigation.md`  
+**Design program:** [`Inventory_Design_Program.md`](./Inventory_Design_Program.md) — one process at a time
 
 ---
 
-# DESIGN PRINCIPLES
+# Authority references
 
-Inventory Workspaces shall
-
-- follow warehouse operations
-- support barcode and QR workflows
-- minimize manual data entry
-- support mobile devices
-- be transaction-oriented
-- provide real-time inventory visibility
-- support multi-warehouse operations
-- integrate seamlessly with Production, Purchasing, Sales and Quality
+| Topic | Authority |
+|-------|-----------|
+| Screen IDs / jobs | `Inventory_Screens.md` |
+| Design sequence | `Inventory_Design_Program.md` |
+| Process truth | `Inventory_Workflow.md` |
+| Ownership | `Inventory_Architecture.md` |
+| Numbering | `Document_Numbering.md` (reference only) |
+| Screen types | `Screen_Types.md` |
 
 ---
 
-# WORKSPACE HIERARCHY
+# Workspace tree
 
 ```text
 Inventory
-
-├── Dashboard
-
-├── Inventory Operations
-
-├── Receiving
-
-├── Shipping
-
-├── Warehouse Management
-
-├── Inventory Control
-
-├── Material Tracking
-
-├── Planning
-
+├── Dashboard          — Command Center (ops)
+├── Operations         — receive → putaway → issue → transfer → ship (Design Program order)
+├── Stock              — explorer · balances · lots · reservations · traceability
+├── Counts & Adjustments
+├── Master Data        — separate track (not in ops sequence)
+├── Reports
 ├── Analytics
-
-└── Reports
+└── Settings
 ```
 
 ---
 
-# 1. DASHBOARD
+# Workspace → primary jobs
 
-Purpose
-
-Provide a real-time overview of inventory operations.
-
-Primary Users
-
-- Warehouse Manager
-- Inventory Manager
-- Supply Chain Manager
-
-Contains
-
-- Stock Summary
-- Warehouse Utilization
-- Receiving Status
-- Shipping Status
-- Low Stock Alerts
-- Reserved Materials
-- Inventory Value
-- Open Transactions
+| Workspace | Primary CTAs (job verbs) | Not allowed |
+|-----------|--------------------------|-------------|
+| Dashboard | **Warehouse Command Center** — queues · exceptions · job CTAs | KPI wall / valuation charts (→ Reports) |
+| **Operations** | **Mal kabul başlat** · **Mal çıkışı** (GI Workbench) · Putaway (next) · Transfer · Ship | “Yeni çıkış / Create GI” |
+| Stock | Warehouse Explorer · Balance · Lot / MI · Reservation · Traceability | Manual Lot / MI create |
+| Counts & Adjustments | Start count · Physical inventory · Post adjustment | Bare Create Adjustment |
+| Master Data | **Malzeme tanımla** (Material Definition Designer) · Depo yapılandır · Lokasyon ekle | Code * Create forms / passive Material Master card |
+| Reports / Analytics | Run / drill (item 12 in Design Program) | Replacing Command Center |
+| Settings | Parameters | — |
 
 ---
 
-# 2. INVENTORY OPERATIONS
+# Operations — designed so far
 
-Purpose
+| Job | Screen | Type | Spec |
+|-----|--------|------|------|
+| Run warehouse today | Command Center | Dashboard | `Inventory_Dashboard.md` |
+| Receive goods | Receiving Workbench | Workbench | `INV_Receiving_Workbench.md` |
+| Issue goods | Goods Issue Workbench | Workbench | `INV_Goods_Issue_Workbench.md` |
+| Putaway | *(next in sequence)* | Terminal / Workbench | Design Program |
 
-Execute all inventory transactions.
-
-Contains
-
-- Goods Receipt
-- Goods Issue
-- Stock Transfer
-- Warehouse Transfer
-- Location Transfer
-- Material Reservation
-- Inventory Adjustment
-- Opening Balance
-
-Primary Users
-
-- Warehouse Operator
-- Inventory Clerk
+Purchasing owns PO / supplier; Inventory owns truck-to-stock → putaway chain.
 
 ---
 
-# 3. RECEIVING
+# Related
 
-Purpose
-
-Manage incoming materials.
-
-Contains
-
-- Purchase Receipt
-- Production Receipt
-- Customer Return
-- Supplier Return
-- Inspection Receipt
-- Putaway
-
-Primary Users
-
-- Receiving Operator
-- Warehouse Clerk
-
----
-
-# 4. SHIPPING
-
-Purpose
-
-Manage outgoing inventory.
-
-Contains
-
-- Sales Shipment
-- Production Issue
-- Maintenance Issue
-- Sample Issue
-- Customer Delivery
-- Loading
-
-Primary Users
-
-- Shipping Operator
-- Warehouse Operator
-
----
-
-# 5. WAREHOUSE MANAGEMENT
-
-Purpose
-
-Manage warehouse structure and storage.
-
-Contains
-
-- Warehouses
-- Zones
-- Locations
-- Bins
-- Storage Rules
-- Putaway Rules
-- Picking Rules
-
-Primary Users
-
-- Warehouse Manager
-
----
-
-# 6. INVENTORY CONTROL
-
-Purpose
-
-Control inventory accuracy.
-
-Contains
-
-- Cycle Count
-- Physical Inventory
-- Inventory Reconciliation
-- Stock Adjustments
-- Count Approval
-- Variance Analysis
-
-Primary Users
-
-- Inventory Controller
-- Warehouse Manager
-
----
-
-# 7. MATERIAL TRACKING
-
-Purpose
-
-Track inventory movement and traceability.
-
-Contains
-
-- Lots
-- Serials
-- Material History
-- Inventory Transactions
-- Genealogy
-- Traceability
-
-Primary Users
-
-- Quality
-- Warehouse
-- Production
-
----
-
-# 8. PLANNING
-
-Purpose
-
-Support inventory planning.
-
-Contains
-
-- Stock Availability
-- Material Reservations
-- Safety Stock
-- Reorder Suggestions
-- Shortage Analysis
-- Inventory Forecast
-
-Primary Users
-
-- Planner
-- Inventory Manager
-
----
-
-# 9. ANALYTICS
-
-Purpose
-
-Analyze inventory performance.
-
-Contains
-
-- Inventory Turnover
-- Stock Aging
-- ABC Analysis
-- XYZ Analysis
-- Warehouse Utilization
-- Slow Moving Materials
-- Dead Stock
-- Inventory Valuation
-
-Primary Users
-
-- Inventory Manager
-- Finance
-- Supply Chain
-
----
-
-# 10. REPORTS
-
-Purpose
-
-Generate inventory reports.
-
-Contains
-
-- Inventory Reports
-- Transaction Reports
-- Stock Reports
-- Warehouse Reports
-- Lot Reports
-- Serial Reports
-- Valuation Reports
-- Movement Reports
-
----
-
-# CROSS MODULE INTEGRATION
-
-Production
-
-- Material Consumption
-- Finished Goods Receipt
-- WIP Inventory
-
-Purchasing
-
-- Purchase Receipt
-- Supplier Return
-
-Sales
-
-- Shipment
-- Customer Return
-
-Quality
-
-- Inspection Hold
-- Quarantine Stock
-
-Maintenance
-
-- Spare Part Issue
-- Spare Part Return
-
-Finance
-
-- Inventory Valuation
-- Costing
-
----
-
-# DESIGN RULES
-
-Every Workspace
-
-- has its own dashboard
-- has its own navigation
-- has its own permissions
-- has its own filters
-- has its own business processes
-- may contain multiple screens
-- may contain Wizards
-- may contain operational consoles
-
-Inventory operations must always be transaction-driven.
-
-Inventory balances are updated only by posted inventory transactions.
-
-CRUD screens must never be the primary user experience.
-
----
-
-# IMPLEMENTATION RULES
-
-Frontend implementation shall
-
-- create Workspaces before Screens
-- group screens by warehouse process
-- optimize operator workflows
-- support barcode and QR scanning
-- support touch devices
-- minimize navigation during warehouse operations
-- preserve transaction traceability
-- provide contextual actions based on inventory status
-
-Workspaces are the primary navigation units of the Inventory module.
-
-Screens shall always be generated from business processes rather than database entities.
+`Inventory_Design_Program.md` · `Inventory_Screens.md` · `Inventory_Navigation.md` · `Inventory_User_Flows.md`
