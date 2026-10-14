@@ -5,7 +5,7 @@ Ahşap üretimi için modüler monolit: ASP.NET Core + EF Core + PostgreSQL back
 ## Kurallar (otorite sırası)
 
 1. Teknoloji kararları: @docs/00_Decisions/ADR-001_Technology_Stack.md — çelişkide ADR geçerlidir.
-   Stok ve malzeme: @docs/00_Decisions/ADR-002_Shared_Stock_Core.md — stok çekirdeği Operations'tadır; NOS'ta yeni stok özelliği yazma.
+   Stok ve malzeme: @docs/00_Decisions/ADR-002_Plant_Stock_Ownership.md — Bucak stoğu NOS'ta; stok davranışı Operations ile birebir; karşı tesis stoğu salt okunur.
 2. Çekirdek çalışma kuralları: @.cursor/rules/00-core.mdc
 3. Backend (`src/**/*.cs` üzerinde çalışırken): @.cursor/rules/10-backend.mdc
 4. Veritabanı (migration ve `*Configuration.cs` üzerinde çalışırken): @.cursor/rules/20-database.mdc

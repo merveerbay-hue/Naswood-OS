@@ -16,7 +16,8 @@ alwaysApply: true
 ## Kapsam
 
 - NOS, Bucak fabrikasının üretim programıdır (MES). Antalya, Naswood Operations'ta yönetilir.
-- Stok çekirdeği ve malzeme kodları Operations'tadır (`docs/00_Decisions/ADR-002_Shared_Stock_Core.md`). NOS'ta ikinci stok motoru veya istemci tarafı kod üretimi yazma.
+- Bucak stoğunun sahibi NOS'tur. Stok ekranları, akışları, çıktıları ve etiketleri Naswood Operations ile birebir aynı davranır (`docs/00_Decisions/ADR-002_Plant_Stock_Ownership.md`).
+- Malzeme kodu Operations ile aynı kuralı izler ve sunucuda üretilir. Antalya stoğu NOS'ta yalnızca salt okunur görünür; ona yazan kod yazma.
 
 ## Teknoloji
 
