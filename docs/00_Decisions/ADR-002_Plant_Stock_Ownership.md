@@ -43,9 +43,11 @@ Naswood'da iki uygulama vardır:
 6. **Ortak kimlik sözleşmesi (etiket, QR, lot).** Bir tesiste basılan etiket diğer tesiste okutulduğunda tanınır ve izlenebilirlik kesilmez.
    - Kimlik formatı: `<TİP>-<TESİS>-<SIRA>`. Tesis kodları: `ANT` (Antalya), `BUC` (Bucak). Sıra en az 6 hanedir ve tesis içinde artar.
      - Paket: `PKG-BUC-000001` · Lot: `LOT-BUC-000001` · Lamine birimi: `LAM-BUC-000001`
+     - Aynı kural Operations'taki diğer kimliklere de uygulanır: transfer `TRF-BUC-…`, kesim artığı `REST-BUC-…`, otomatik lamine etiketi `AUTO-BUC-…`.
+   - Operations'ın bugünkü kodları (2026-10-14 kontrolü): `PKG-000245`, `LOT-000123`, `LAM-000001`, `AUTO-000001`, `TRF-000001`, `REST-000001` — tesis ön eksiz, 6 haneli veritabanı sırası. `NW-PKG-…`, `NWPKG-…`, `LOT-OPEN-…`, `LOT-PR-…` yalnız NOS'ta vardır; Operations'ta kullanılmaz.
    - Operations'ta bugüne kadar basılmış ön eksiz kodlar (`PKG-000245`, `LOT-000123`) geçerli kalır ve Antalya'ya ait sayılır; yeniden basılmaz.
    - QR ve Code128 yalnızca bu kodu taşır. URL, GUID veya tesis sunucusu adresi taşımaz. Kod değişmez; etiket yeniden basılsa da aynı kalır.
-   - Okutucu kuralı (iki uygulamada aynı): `^(PKG|LOT|LAM)-(?:(ANT|BUC)-)?\d{6,}$`. Ön ek yoksa `ANT` kabul edilir.
+   - Okutucu kuralı (iki uygulamada aynı): `^(PKG|LOT|LAM|AUTO|TRF|REST)-(?:(ANT|BUC)-)?\d{6,}$`. Ön ek yoksa `ANT` kabul edilir.
    - Çözümleme: okutulan kodun tesisi kendi tesisiyse yerel kayıt açılır; değilse karşı uygulamanın salt-okunur kimlik uç noktasından pasaport (malzeme, lot, ölçü, miktar, durum, tesis, hareket özeti) getirilir ve "salt okunur" gösterilir.
    - Fabrikalar arası sevkiyatta kimlik korunur: Bucak'tan gelen `PKG-BUC-…` Antalya'da aynı kodla kabul edilir, kaynak lot (`LOT-BUC-…`) soy kökü olarak saklanır. Kabul eden taraf yeni kod basmaz.
 
