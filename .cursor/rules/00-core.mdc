@@ -13,6 +13,11 @@ alwaysApply: true
 - Her özellik tek işletim platformuna bağlanır. İzole ekran veya kopuk servis üretme.
 - Karar sırası: mimari bütünlük, sürdürülebilirlik, güvenlik, ölçek, yeniden kullanım, hız.
 
+## Kapsam
+
+- NOS, Bucak fabrikasının üretim programıdır (MES). Antalya, Naswood Operations'ta yönetilir.
+- Stok çekirdeği ve malzeme kodları Operations'tadır (`docs/00_Decisions/ADR-002_Shared_Stock_Core.md`). NOS'ta ikinci stok motoru veya istemci tarafı kod üretimi yazma.
+
 ## Teknoloji
 
 - Backend: ASP.NET Core, Clean Architecture, komut/sorgu ayrımı (MediatR yok; BuildingBlocks içindeki ince dağıtıcı).
