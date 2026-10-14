@@ -147,6 +147,22 @@ Platformun gerçekten şirket üstü katalogları, bu filtrenin belgelenmiş ist
 
 **İleride eklenebilir:** `de-DE` ve Localization belgesindeki diğer diller, yeni çeviri dosyasıyla.
 
+## 11. Mevcut kod ile fark ve geçiş
+
+Bu ADR hedef durumu tanımlar. Birleştirme sırasında (integration/consolidate) kodun bugünkü hali şudur:
+
+| Konu | Bugünkü kod | ADR hedefi |
+|---|---|---|
+| Çatı | `net8.0` (`src/Directory.Build.props`) | .NET 10 LTS |
+| Modül yapısı | `Platform` + tek `Business` modülü (Inventory, Production, Purchasing, Sales klasörleri) | Her iş alanı ayrı modül projesi |
+| Şema | `platform` ve tek `business` şeması | Modül başına şema (`inventory`, `production`, …) |
+
+Geçiş kuralları:
+
+- .NET 8 desteği 10 Kasım 2026'da biter. .NET 10 yükseltmesi ayrı ve öncelikli bir görevdir; başka bir özelliğin içinde yapılmaz.
+- `Business` modülünün ayrı modüllere bölünmesi bir defada yapılmaz. Yeni iş alanları (Quality, Maintenance, …) ayrı modül olarak açılır; mevcut alanlar, ilgili alanda büyük bir değişiklik gerektiğinde ayrı görevle taşınır.
+- `fj-pilot-1` etiketli sürümün davranışı taşıma sırasında değişmez; taşıma görevleri mevcut testlerin yeşil kalmasıyla kabul edilir.
+
 ## Sonuç
 
 İlk sürüm tek host, tek PostgreSQL, modül şemaları, `masterdata` istisnası, kendi JWT’si ve kalıcı süreç içi olaydır. Her iş satırı şirket, tesis, UTC zaman ve denetim taşır. .NET 10, EF Core, React ve Vite bu sınırı taşır. RabbitMQ, Redis, Keycloak, OpenIddict ve mikroservis ancak ölçülen bir ihtiyaçla eklenir.

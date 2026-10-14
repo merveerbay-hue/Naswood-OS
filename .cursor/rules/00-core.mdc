@@ -15,7 +15,9 @@ alwaysApply: true
 
 ## Teknoloji
 
-- Backend: .NET 9, ASP.NET Core, Clean Architecture, CQRS, MediatR.
+- Backend: ASP.NET Core, Clean Architecture, komut/sorgu ayrımı (MediatR yok; BuildingBlocks içindeki ince dağıtıcı).
+- Hedef çatı .NET 10 LTS'dir (ADR-001). Kod bugün `net8.0` üzerindedir; yükseltme ayrı bir görevdir, başka görevin içinde sürüm değiştirme.
+- Teknoloji kararlarının otoritesi `docs/00_Decisions/ADR-001_Technology_Stack.md` dosyasıdır; bu dosya ile çelişirse ADR geçerlidir.
 - Veri: EF Core ve PostgreSQL. Birincil anahtar UUID. Zaman damgası UTC.
 - Doğrulama FluentValidation ile yapılır. HTTP sözleşmesi versiyonlu REST’tir (`/api/v1/...`).
 - Kimlik JWT ve OAuth2 ile kurulur. Anlık bildirim SignalR ile gider.
