@@ -6,6 +6,14 @@
 
 Bu belge iki uygulamanın stok modülünü alan alan karşılaştırır ve NOS'un Operations ile birebir davranması için yapılacak işleri sıralar. Her aşama ayrı bir dal ve PR'dır. Her PR'da "Operations karşılığı" bölümü bulunur.
 
+## Ayna ilkesi
+
+NOS stok modülü Operations'ın aynasıdır. Sayım formları (XLSX, PDF, elle yazılı form), mal kabul akışı, etiketler ve ekranlar Operations'taki ile aynı düzen, alan ve metinlerle kurulur. Tek fark tesis bilgisidir:
+
+- Operations'ta Antalya'ya sabit olan yerler NOS'ta Bucak'a sabittir: form başlığı "NASWOOD — BUCAK STOK SAYIM FORMU", PDF dosya adı `NASWOOD_BUCAK_STOK_SAYIM_FORMU.pdf`, varsayılan tesis Bucak, depo kodları `BUC-…`.
+- Operations'taki Antalya sabitleri doğrudur ve değiştirilmez.
+- Operations'ta bir form veya akış değişirse NOS'taki karşılığı aynı değişikliği alır.
+
 ## Fark özeti
 
 | # | Alan | Operations | NOS bugün | Fark |
