@@ -40,6 +40,15 @@ Naswood'da iki uygulama vardır:
 
 5. **Fabrikalar arası sevkiyat iki ayrı kayıttır.** Bucak'tan Antalya'ya giden mal, NOS'ta çıkış, Operations'ta mal kabul olarak işlenir. İki kayıt sevkiyat belge numarasıyla eşleşir. Hiçbir uygulama karşı tarafta stok oluşturmaz.
 
+6. **Ortak kimlik sözleşmesi (etiket, QR, lot).** Bir tesiste basılan etiket diğer tesiste okutulduğunda tanınır ve izlenebilirlik kesilmez.
+   - Kimlik formatı: `<TİP>-<TESİS>-<SIRA>`. Tesis kodları: `ANT` (Antalya), `BUC` (Bucak). Sıra en az 6 hanedir ve tesis içinde artar.
+     - Paket: `PKG-BUC-000001` · Lot: `LOT-BUC-000001` · Lamine birimi: `LAM-BUC-000001`
+   - Operations'ta bugüne kadar basılmış ön eksiz kodlar (`PKG-000245`, `LOT-000123`) geçerli kalır ve Antalya'ya ait sayılır; yeniden basılmaz.
+   - QR ve Code128 yalnızca bu kodu taşır. URL, GUID veya tesis sunucusu adresi taşımaz. Kod değişmez; etiket yeniden basılsa da aynı kalır.
+   - Okutucu kuralı (iki uygulamada aynı): `^(PKG|LOT|LAM)-(?:(ANT|BUC)-)?\d{6,}$`. Ön ek yoksa `ANT` kabul edilir.
+   - Çözümleme: okutulan kodun tesisi kendi tesisiyse yerel kayıt açılır; değilse karşı uygulamanın salt-okunur kimlik uç noktasından pasaport (malzeme, lot, ölçü, miktar, durum, tesis, hareket özeti) getirilir ve "salt okunur" gösterilir.
+   - Fabrikalar arası sevkiyatta kimlik korunur: Bucak'tan gelen `PKG-BUC-…` Antalya'da aynı kodla kabul edilir, kaynak lot (`LOT-BUC-…`) soy kökü olarak saklanır. Kabul eden taraf yeni kod basmaz.
+
 ## Sonuçlar
 
 - NOS'un .NET stok kodu korunur ve Operations davranışına hizalanır; ikinci bir kopya olarak değil, Bucak'ın asıl stok motoru olarak.
@@ -48,10 +57,11 @@ Naswood'da iki uygulama vardır:
 
 ## Yol haritası
 
-1. **Fark analizi:** Operations stok modülünün her ekranı, iş akışı, çıktısı ve etiketi NOS'taki karşılığıyla eşleştirilir; eksik, farklı ve fazla olanlar listelenir.
+1. **Fark analizi:** tamamlandı — `ADR-002_Stock_Parity_Plan.md` (P0–P7 aşamaları).
 2. **Birebir hizalama:** Fark listesi ekran ekran kapatılır (mal kabul → paket/lot → hareket → sayım → etiket/yazdırma → çıktılar).
 3. **Salt-okunur görünüm:** NOS stok bakiyesi uç noktası + Operations'ta Bucak görünümü; Operations bakiye görünümü + NOS'ta Antalya görünümü.
-4. **Fabrikalar arası sevkiyat eşleştirmesi.**
+4. **Ortak kimlik sözleşmesi:** NOS numaralandırması `PKG/LOT/LAM-BUC-…` formatına geçer; Operations okutucusu ön ekli kodu tanır ve `BUC` kodlarını NOS'tan çözer (Operations tarafı Cuma canlıya çıkışından sonra).
+5. **Fabrikalar arası sevkiyat eşleştirmesi.**
 
 ## Açık konular
 
