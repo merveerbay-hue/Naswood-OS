@@ -98,7 +98,7 @@ public class PackageLifecycleTests
         var t1 = a.PostAsJsonAsync($"/api/v1/packages/{world.PackageAId}/split", body);
         var t2 = b.PostAsJsonAsync($"/api/v1/packages/{world.PackageAId}/split", body);
         await Task.WhenAll(t1, t2);
-        var codes = new[] { t1.Result.StatusCode, t2.Result.StatusCode };
+        var codes = new[] { (await t1).StatusCode, (await t2).StatusCode };
         Assert.Contains(HttpStatusCode.OK, codes);
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();

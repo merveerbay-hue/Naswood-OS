@@ -255,8 +255,8 @@ public class ProductionExecutionChainTests
         var t2 = c2.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/consume",
             new { barcode = world.BarcodeA, quantity = 1.2m, idempotencyKey = "pb" });
         await Task.WhenAll(t1, t2);
-        var ok = new[] { t1.Result, t2.Result }.Count(r => r.IsSuccessStatusCode);
-        var fail = new[] { t1.Result, t2.Result }.Where(r => !r.IsSuccessStatusCode).ToList();
+        var ok = new[] { await t1, await t2 }.Count(r => r.IsSuccessStatusCode);
+        var fail = new[] { await t1, await t2 }.Where(r => !r.IsSuccessStatusCode).ToList();
         Assert.Equal(1, ok);
         Assert.Single(fail);
         var code = await Code(fail[0]);
@@ -284,9 +284,9 @@ public class ProductionExecutionChainTests
         var t1 = a.PostAsJsonAsync($"/api/v1/production-execution/operations/{opId}/start", new { });
         var t2 = b.PostAsJsonAsync($"/api/v1/production-execution/operations/{opId}/start", new { });
         await Task.WhenAll(t1, t2);
-        Assert.True(t1.Result.IsSuccessStatusCode);
-        Assert.True(t2.Result.IsSuccessStatusCode);
-        Assert.Equal((await Data(t1.Result)).GetProperty("id").GetGuid(), (await Data(t2.Result)).GetProperty("id").GetGuid());
+        Assert.True((await t1).IsSuccessStatusCode);
+        Assert.True((await t2).IsSuccessStatusCode);
+        Assert.Equal((await Data(await t1)).GetProperty("id").GetGuid(), (await Data(await t2)).GetProperty("id").GetGuid());
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
         Assert.Equal(1, db.ProductionOperationExecutions.Count(e => e.ProductionOperationId == opId && !e.IsDeleted));
@@ -317,8 +317,8 @@ public class ProductionExecutionChainTests
         var t1 = a.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/complete", body);
         var t2 = b.PostAsJsonAsync($"/api/v1/production-execution/executions/{exec}/complete", body);
         await Task.WhenAll(t1, t2);
-        Assert.True(t1.Result.IsSuccessStatusCode, await t1.Result.Content.ReadAsStringAsync());
-        Assert.True(t2.Result.IsSuccessStatusCode, await t2.Result.Content.ReadAsStringAsync());
+        Assert.True((await t1).IsSuccessStatusCode, await (await t1).Content.ReadAsStringAsync());
+        Assert.True((await t2).IsSuccessStatusCode, await (await t2).Content.ReadAsStringAsync());
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
         Assert.Equal(1, db.ProductionOutputs.Count(o => o.ProductionOperationExecutionId == exec && !o.IsDeleted));
