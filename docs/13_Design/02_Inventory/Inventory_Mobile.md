@@ -1,258 +1,284 @@
-# Inventory Mobile
+# ==============================================================================
+# INVENTORY MOBILE
+# Naswood Operating System (NOS)
+# Module: Inventory
+# Version: 1.0
+# ==============================================================================
 
-**Module:** Inventory
+# PURPOSE
 
-**Category:** Mobile Application
+This document defines the mobile experience for the Inventory module.
 
-**Version:** 1.0
+Inventory Mobile is designed for warehouse operators working in real warehouse
+environments using handheld terminals, tablets and rugged mobile devices.
 
-**Status:** Approved
+The mobile experience is execution-oriented rather than administration-oriented.
 
----
-
-# Purpose
-
-The Inventory Mobile application enables warehouse personnel to perform inventory operations directly from mobile devices using barcode and QR code scanning.
-
-The application is designed for fast, paperless and real-time warehouse execution while supporting offline operation when network connectivity is unavailable.
-
-Inventory Mobile extends the Inventory module and follows all shared platform standards.
+Users perform warehouse operations through guided workflows with minimal typing.
 
 ---
 
-# Objectives
+# DESIGN PRINCIPLES
 
-- Paperless Warehouse Operations
-- Real-Time Inventory Transactions
-- Fast Barcode Scanning
-- Offline Capability
-- Reduced Human Errors
-- Mobile First User Experience
+Inventory Mobile shall
 
----
+- prioritize barcode scanning
+- minimize keyboard usage
+- support one-hand operation
+- support offline execution
+- synchronize automatically
+- provide instant feedback
+- support industrial handheld devices
+- support Android, iOS and rugged terminals
 
-# Scope
+Inventory Mobile is an operational application.
 
-Inventory Mobile supports:
-
-- Goods Receipt
-- Goods Issue
-- Stock Transfer
-- Putaway
-- Picking
-- Inventory Count
-- Inventory Adjustment
-- Reservation Lookup
-- Batch Lookup
-- Location Lookup
-- Inventory Search
+Configuration and engineering tasks are performed on Desktop.
 
 ---
 
-# Supported Devices
-
-- Android Phones
-- Android Industrial Terminals
-- Zebra Devices
-- Honeywell Devices
-- Tablets
-- Rugged Warehouse Devices
-
----
-
-# Authentication
-
-Supports
-
-- Username / Password
-- SSO
-- Biometric Authentication
-- PIN Login
-- Token Refresh
-
-Reference
-
-Security.md
-
----
-
-# User Roles
-
-Supports
+# PRIMARY USERS
 
 - Warehouse Operator
-- Warehouse Manager
-- Production Operator
-- Quality Inspector
+- Receiving Operator
+- Shipping Operator
 - Inventory Controller
-
-Reference
-
-Permission_Model.md
+- Warehouse Supervisor
+- Production Operator
+- Maintenance Technician
+- Quality Inspector
 
 ---
 
-# Home Screen
+# MOBILE HOME
 
 Displays
 
 - Assigned Tasks
-- Favorite Operations
-- Inventory Alerts
-- Recent Transactions
-- Warehouse Status
+- Pending Receipts
+- Pending Shipments
+- Transfer Requests
+- Cycle Count Tasks
+- Alerts
+- Quick Actions
 
 Quick Actions
 
 - Scan Barcode
-- Goods Receipt
-- Goods Issue
-- Transfer
-- Inventory Count
+- Receive Material
+- Issue Material
+- Transfer Stock
+- Locate Material
+- Cycle Count
 
 ---
 
-# Navigation
+# MOBILE NAVIGATION
 
-Main Navigation
+Bottom Navigation
 
-```
+```text
 Home
-
-↓
-
-Inventory
-
-↓
-
-Warehouse
-
-↓
-
-Transactions
-
-↓
 
 Tasks
 
-↓
-
 Scanner
 
-↓
+Notifications
 
 Profile
 ```
 
-Bottom navigation shall support one-handed operation.
+Side Menu
 
-Reference
+```text
+Receiving
 
-09_Mobile/Navigation.md
+Shipping
+
+Transfers
+
+Inventory Control
+
+Material Tracking
+
+Offline Queue
+
+Settings
+```
 
 ---
 
-# Barcode Scanning
+# MOBILE WORKSPACES
+
+## Receiving
 
 Supports
 
-- 1D Barcode
-- QR Code
-- GS1 Barcode
-- Camera Scanner
-- Hardware Scanner
-
-Reference
-
-Barcode_Strategy.md
-
-Scanner_UI.md
+- Purchase Receipt
+- Production Receipt
+- Customer Return
+- Supplier Return
+- Inspection Receipt
+- Putaway
 
 ---
 
-# Goods Receipt
-
-Workflow
-
-```
-Scan Purchase Document
-
-↓
-
-Scan Material
-
-↓
-
-Scan Batch (If Required)
-
-↓
-
-Enter Quantity
-
-↓
-
-Select Location
-
-↓
-
-Confirm
-
-↓
-
-Inventory Updated
-```
+## Shipping
 
 Supports
 
-- Partial Receipt
-- Complete Receipt
-- Damage Reporting
-- Photo Attachment
-
----
-
-# Goods Issue
-
-Workflow
-
-```
-Select Document
-
-↓
-
-Scan Material
-
-↓
-
-Scan Location
-
-↓
-
-Enter Quantity
-
-↓
-
-Confirm
-
-↓
-
-Inventory Reduced
-```
-
-Supports
-
+- Sales Shipment
 - Production Issue
-- Shipment Issue
 - Maintenance Issue
-- Adjustment Issue
+- Loading
 
 ---
 
-# Stock Transfer
+## Inventory Operations
 
-Workflow
+Supports
 
+- Goods Receipt
+- Goods Issue
+- Stock Transfer
+- Location Transfer
+- Reservation
+- Inventory Adjustment
+
+---
+
+## Inventory Control
+
+Supports
+
+- Cycle Count
+- Physical Inventory
+- Stock Verification
+- Adjustment Approval
+
+---
+
+## Material Tracking
+
+Supports
+
+- Material Search
+- Lot Tracking
+- Serial Tracking
+- Transaction History
+- Traceability
+
+---
+
+# BARCODE WORKFLOW
+
+```text
+Open Scanner
+
+↓
+
+Scan Barcode
+
+↓
+
+System Identifies Material
+
+↓
+
+Display Material Details
+
+↓
+
+Show Available Actions
+
+↓
+
+Execute Selected Action
 ```
+
+Supported
+
+- Material Barcode
+- Package Barcode
+- Pallet Barcode
+- Location Barcode
+- Warehouse Barcode
+- Lot Barcode
+- Serial Barcode
+- QR Code
+
+Manual code entry is not allowed unless explicitly authorized.
+
+---
+
+# RECEIVING FLOW
+
+```text
+Purchase Receipt
+
+↓
+
+Scan Purchase Order
+
+↓
+
+Scan Material
+
+↓
+
+Enter Quantity
+
+↓
+
+System Generates Lot
+
+↓
+
+Assign Location
+
+↓
+
+Print Label
+
+↓
+
+Confirm Receipt
+```
+
+---
+
+# GOODS ISSUE FLOW
+
+```text
+Scan Work Order
+
+↓
+
+Reserved Materials
+
+↓
+
+Scan Material
+
+↓
+
+Scan Lot
+
+↓
+
+Confirm Quantity
+
+↓
+
+Issue Material
+```
+
+---
+
+# STOCK TRANSFER FLOW
+
+```text
 Scan Source Location
 
 ↓
@@ -265,27 +291,19 @@ Scan Destination Location
 
 ↓
 
-Enter Quantity
+Transfer
 
 ↓
 
-Confirm
+Completed
 ```
-
-Supports
-
-- Warehouse Transfer
-- Bin Transfer
-- Internal Movement
 
 ---
 
-# Putaway
+# PUTAWAY FLOW
 
-Workflow
-
-```
-Receive Material
+```text
+Scan Material
 
 ↓
 
@@ -293,27 +311,19 @@ Suggested Location
 
 ↓
 
-Scan Destination
+Confirm
 
 ↓
 
-Confirm
+Inventory Updated
 ```
-
-Supports
-
-- AI Suggested Location
-- Manual Override
-- Capacity Validation
 
 ---
 
-# Picking
+# PICKING FLOW
 
-Workflow
-
-```
-Assigned Picking Task
+```text
+Open Pick List
 
 ↓
 
@@ -333,30 +343,18 @@ Confirm Quantity
 
 ↓
 
-Complete Task
+Complete Pick
 ```
-
-Supports
-
-- FIFO
-- FEFO
-- Batch Validation
-- Serial Validation
 
 ---
 
-# Inventory Count
+# CYCLE COUNT FLOW
 
-Supports
+```text
+Assigned Count
 
-- Cycle Count
-- Physical Count
-- Blind Count
-- Recount
+↓
 
-Workflow
-
-```
 Scan Location
 
 ↓
@@ -365,11 +363,11 @@ Scan Material
 
 ↓
 
-Enter Quantity
+Count
 
 ↓
 
-Variance Check
+Variance
 
 ↓
 
@@ -378,274 +376,150 @@ Submit
 
 ---
 
-# Inventory Lookup
+# MATERIAL SEARCH
 
-Users can search by
+Supports Search By
 
 - Barcode
-- Material Code
+- QR Code
 - Material Name
-- Batch
-- Location
-- Warehouse
+- Lot
+- Serial
 
 Displays
 
-- Available Stock
-- Reserved Stock
-- Batch
+- Warehouse
 - Location
+- Available Quantity
+- Reserved Quantity
+- Material Status
 - Last Movement
 
 ---
 
-# Reservation Lookup
-
-Displays
-
-- Reserved Quantity
-- Source Document
-- Reservation Status
-- Expiration
-
----
-
-# Batch Tracking
-
-Displays
-
-- Batch Number
-- Production Date
-- Supplier Batch
-- Quantity
-- Status
-- Traceability
-
----
-
-# Offline Mode
+# OFFLINE MODE
 
 Supports
 
-- Offline Login
-- Offline Transactions
-- Offline Scanning
-- Offline Inventory Search
-- Automatic Synchronization
-
-Transactions are synchronized when connectivity is restored.
-
-Reference
-
-Offline_UI.md
-
----
-
-# Synchronization
-
-Supports
-
-- Automatic Sync
-- Manual Sync
-- Conflict Detection
-- Retry Queue
-
-Reference
-
-Concurrency.md
-
----
-
-# Notifications
-
-Supports
-
-- Assigned Tasks
-- Low Stock
-- Transfer Requests
-- Count Requests
-- Approval Required
-
-Reference
-
-Notification_System.md
-
----
-
-# Dashboard
-
-Displays
-
-- Daily Transactions
-- Assigned Tasks
-- Warehouse KPIs
-- Inventory Alerts
-
-Reference
-
-Inventory_Dashboard.md
-
----
-
-# AI Features
-
-Supports
-
-- Suggested Putaway Location
-- Picking Route Optimization
-- Inventory Anomaly Detection
-- Low Stock Prediction
-- Voice Assistance (Future)
-
-Reference
-
-AI_Copilot.md
-
----
-
-# User Experience
-
-Supports
-
-- Large Touch Targets
-- Dark Mode
-- High Contrast
-- Landscape Mode
-- Left / Right Hand Usage
-- Fast Keyboard Input
-
-Reference
-
-09_Mobile/Cards.md
-
-09_Mobile/Forms.md
-
----
-
-# Security
-
-Supports
-
-- HTTPS
-- Device Registration
-- Encrypted Local Storage
-- Remote Logout
-- Session Timeout
-
-Sensitive inventory data shall not remain unencrypted on the device.
-
-Reference
-
-Security.md
-
----
-
-# Performance
-
-Requirements
-
-- Application Startup < 3 Seconds
-- Barcode Recognition < 1 Second
-- Screen Transition < 500 ms
-- Offline Transaction Queue Supported
-- Battery Optimized
-
-Reference
-
-Performance.md
-
----
-
-# Error Handling
-
-Supports
-
-- Offline Validation
-- Retry Failed Sync
-- Conflict Resolution
-- User-Friendly Messages
-
-Reference
-
-Error_Handling.md
-
----
-
-# Audit
-
-The following actions shall be audited
-
-- Login
+- Barcode Scanning
 - Goods Receipt
 - Goods Issue
-- Stock Transfer
-- Inventory Count
-- Inventory Adjustment
-- Synchronization
+- Transfers
+- Cycle Count
+- Material Search
 
-Reference
+Offline Queue
 
-Audit_Log.md
+```text
+Pending Synchronization
+
+↓
+
+Automatic Sync
+
+↓
+
+Conflict Resolution
+
+↓
+
+Completed
+```
 
 ---
 
-# Acceptance Criteria
+# PUSH NOTIFICATIONS
+
+Displays
+
+- New Receiving Task
+- New Transfer Request
+- Pick List Assigned
+- Shipment Ready
+- Low Stock Alert
+- Cycle Count Due
+- Quality Hold
+- Reservation Conflict
+
+Notifications navigate directly to the related workflow.
+
+---
+
+# MOBILE DASHBOARD
+
+Displays
+
+- Current Tasks
+- Completed Tasks
+- Warehouse Activity
+- Pending Approvals
+- Inventory Alerts
+- Scanner Status
+
+---
+
+# USER EXPERIENCE
 
 Inventory Mobile shall
 
-- Support barcode and QR scanning.
-- Operate in offline mode.
-- Synchronize automatically.
-- Perform real-time inventory transactions.
-- Support warehouse workflows.
-- Respect role-based permissions.
-- Integrate with AI recommendations.
-- Meet platform security standards.
+- support gloves
+- support large buttons
+- minimize scrolling
+- use touch-first interaction
+- provide vibration feedback
+- provide audio confirmation
+- display high-contrast screens
 
 ---
 
-# Related Documents
+# SECURITY
 
-Inventory_Architecture.md
+Supports
 
-Inventory_Dashboard.md
+- PIN Login
+- RFID Badge Login
+- Biometric Authentication
+- Device Registration
+- Session Timeout
 
-Inventory_API.md
+Permissions are role-based.
 
-TASK-017_Warehouse.md
+---
 
-TASK-018_Location.md
+# PERFORMANCE
 
-TASK-019_Inventory.md
+Inventory Mobile shall
 
-TASK-020_Batch.md
+- load screens in under 2 seconds
+- synchronize automatically
+- support unstable warehouse Wi-Fi
+- cache frequently used data
+- support background synchronization
 
-TASK-021_Goods_Receipt.md
+---
 
-TASK-022_Goods_Issue.md
+# DESIGN RULES
 
-TASK-023_Stock_Transfer.md
+- Mobile is execution-focused.
+- Mobile shall never expose engineering master data management.
+- Inventory balances are updated only after confirmed transactions.
+- Barcode scanning is the primary interaction method.
+- Manual typing shall be minimized.
+- System-generated identifiers are never entered manually.
+- Every mobile transaction shall be fully traceable.
 
-TASK-024_Inventory_Count.md
+---
 
-TASK-025_Inventory_Adjustment.md
+# IMPLEMENTATION RULES
 
-Offline_UI.md
+Frontend implementation shall
 
-Scanner_UI.md
+- support Android, iOS and industrial handheld devices
+- support offline-first architecture
+- optimize barcode workflows
+- support QR scanning
+- support responsive layouts
+- preserve transaction history
+- synchronize automatically after connectivity is restored
 
-Barcode_Strategy.md
-
-Notification_System.md
-
-Permission_Model.md
-
-Security.md
-
-Performance.md
-
-Concurrency.md
-
-Audit_Log.md
-
-AI_Copilot.md
+Inventory Mobile is designed to execute warehouse operations quickly, safely and with minimal user input.
