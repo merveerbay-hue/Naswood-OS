@@ -396,16 +396,56 @@ export async function unzipLocalFiles(buf: ArrayBuffer): Promise<Map<string, Uin
 }
 
 export async function parseXlsxWorkbook(buf: ArrayBuffer): Promise<string[][]> {
+  const sheets = await parseXlsxAllSheets(buf);
+  return sheets.find((s) => /sayım|sayim|count/i.test(s.name) && !/^_/.test(s.name))?.rows
+    ?? sheets.find((s) => !/^_/.test(s.name))?.rows
+    ?? sheets[0]?.rows
+    ?? [];
+}
+
+/** All worksheets (including hidden _MATERIALS). */
+export async function parseXlsxAllSheets(buf: ArrayBuffer): Promise<{ name: string; rows: string[][] }[]> {
   const files = await unzipLocalFiles(buf);
   const decoder = new TextDecoder();
   const shared = files.get('xl/sharedStrings.xml');
   const strings = shared ? parseSharedStringsXml(decoder.decode(shared)) : [];
-  const sheet =
-    files.get('xl/worksheets/sheet1.xml') ??
-    [...files.keys()].filter((k) => k.startsWith('xl/worksheets/sheet') && k.endsWith('.xml')).sort()[0];
-  const sheetBytes = typeof sheet === 'string' ? files.get(sheet) : sheet;
-  if (!sheetBytes) throw new Error('Excel sayfası okunamadı.');
-  return parseXlsxSheetXml(decoder.decode(sheetBytes), strings);
+  const wb = files.get('xl/workbook.xml');
+  const rels = files.get('xl/_rels/workbook.xml.rels');
+  const idToTarget = new Map<string, string>();
+  if (rels) {
+    const relXml = decoder.decode(rels);
+    const re = /<Relationship\b([^>]*)\/?>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(relXml))) {
+      const id = m[1].match(/\bId="([^"]+)"/i)?.[1];
+      const target = m[1].match(/\bTarget="([^"]+)"/i)?.[1];
+      if (id && target) idToTarget.set(id, target.replace(/^\//, '').replace(/^xl\//, ''));
+    }
+  }
+  const out: { name: string; rows: string[][] }[] = [];
+  if (wb) {
+    const wbXml = decoder.decode(wb);
+    const sheetRe = /<sheet\b([^>]*)\/?>/gi;
+    let sm: RegExpExecArray | null;
+    while ((sm = sheetRe.exec(wbXml))) {
+      const name = sm[1].match(/\bname="([^"]+)"/i)?.[1] ?? `Sheet${out.length + 1}`;
+      const rid = sm[1].match(/\br:id="([^"]+)"/i)?.[1];
+      const target = rid ? idToTarget.get(rid) : null;
+      const path = target
+        ? target.startsWith('xl/')
+          ? target
+          : `xl/${target.replace(/^\.\//, '')}`
+        : `xl/worksheets/sheet${out.length + 1}.xml`;
+      const bytes = files.get(path) ?? files.get(path.replace(/^xl\//, 'xl/worksheets/'));
+      if (!bytes) continue;
+      out.push({ name, rows: parseXlsxSheetXml(decoder.decode(bytes), strings) });
+    }
+  }
+  if (out.length === 0) {
+    const first = files.get('xl/worksheets/sheet1.xml');
+    if (first) out.push({ name: 'Sayım', rows: parseXlsxSheetXml(decoder.decode(first), strings) });
+  }
+  return out;
 }
 
 export function tableToDrafts(

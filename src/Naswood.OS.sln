@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naswood.Modules.Platform.Un
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naswood.Api.IntegrationTests", "..\tests\Naswood.Api.IntegrationTests\Naswood.Api.IntegrationTests.csproj", "{F2DDD06E-9923-46BF-A97F-55D0D5C9EE05}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naswood.Modules.Business.UnitTests", "..\tests\Naswood.Modules.Business.UnitTests\Naswood.Modules.Business.UnitTests.csproj", "{C8F1A2B3-4D5E-6789-ABCD-EF0123456789}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Business", "Business", "{FA8BF4A1-54B4-4AD4-86E5-1958DBEC59ED}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naswood.Modules.Business.Domain", "Modules\Business\Naswood.Modules.Business.Domain\Naswood.Modules.Business.Domain.csproj", "{2D10806E-3543-488B-81CD-A57871E211DE}"
@@ -130,6 +132,10 @@ Global
 		{ED787640-1F8C-4ACE-8718-5E38575D8FE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED787640-1F8C-4ACE-8718-5E38575D8FE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED787640-1F8C-4ACE-8718-5E38575D8FE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8F1A2B3-4D5E-6789-ABCD-EF0123456789}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8F1A2B3-4D5E-6789-ABCD-EF0123456789}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8F1A2B3-4D5E-6789-ABCD-EF0123456789}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8F1A2B3-4D5E-6789-ABCD-EF0123456789}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1D1E2BCC-5EB4-42A2-9AB4-4A6CE98A8CCC} = {D1FD8CA4-7E62-47CE-A9FA-2A804241EB23}

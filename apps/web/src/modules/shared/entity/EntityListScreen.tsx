@@ -202,6 +202,8 @@ export function EntityListScreen({
         <CardContent>
           {listQuery.isLoading ? (
             <p className="text-sm text-[var(--text-secondary)]">{t('loading')}</p>
+          ) : listQuery.isError ? (
+            <p className="text-sm text-[var(--color-danger)]">{(listQuery.error as Error).message}</p>
           ) : (listQuery.data?.items?.length ?? 0) === 0 ? (
             <p className="text-sm text-[var(--text-secondary)]">
               {t('entity.noRecords').replace('{action}', actionLabel)}

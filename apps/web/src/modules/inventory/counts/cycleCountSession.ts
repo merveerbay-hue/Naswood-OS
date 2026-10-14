@@ -1,66 +1,24 @@
-/** INV-CNT-001 / TASK-024 — cycle count session rules (client mirror). */
-
-export const COUNT_TYPES = ['Cycle', 'Full', 'Spot', 'Blind', 'ABC'] as const;
+export const COUNT_TYPES = ['Normal', 'Blind'] as const;
 export type CountType = (typeof COUNT_TYPES)[number];
-
-export const FREEZE_MODES = ['None', 'Location', 'Warehouse', 'Material'] as const;
-export type FreezeMode = (typeof FREEZE_MODES)[number];
 
 export type CycleCountOpenDraft = {
   plantId: string;
   warehouseCode: string;
-  zone: string;
-  abcClass: string;
+  locationCode: string;
   countType: CountType;
-  countDate: string;
-  assignedTo: string;
-  blindCount: boolean;
-  freezeMode: FreezeMode;
+  notes: string;
 };
 
 export function canOpenCountSession(draft: CycleCountOpenDraft): { ok: true } | { ok: false; reason: string } {
-  if (!draft.plantId.trim()) {
-    return { ok: false, reason: 'INV-CNT-004: tesis / fabrika bağlamı zorunlu.' };
-  }
-  if (!draft.warehouseCode.trim()) {
-    return { ok: false, reason: 'INV-CNT-015: kapsam deposu boş olamaz — oturum açılamaz.' };
-  }
-  if (!draft.countDate.trim()) {
-    return { ok: false, reason: 'Sayım tarihi zorunlu.' };
-  }
-  if (draft.countType === 'Blind' && !draft.blindCount) {
-    return { ok: false, reason: 'Kör sayım tipi seçiliyse kör sayım kapısı açık olmalı.' };
-  }
+  if (!draft.plantId.trim()) return { ok: false, reason: 'INV-CNT-004: Ana Üs / fabrika bağlamı zorunlu.' };
+  if (!draft.warehouseCode.trim()) return { ok: false, reason: 'INV-CNT-015: depo seçin.' };
   return { ok: true };
 }
-
-export function buildCountSessionNotes(draft: CycleCountOpenDraft): string {
-  const parts = [
-    `type=${draft.countType}`,
-    draft.zone.trim() ? `zone=${draft.zone.trim()}` : null,
-    draft.abcClass.trim() ? `abc=${draft.abcClass.trim()}` : null,
-    `blind=${draft.blindCount ? '1' : '0'}`,
-    `freeze=${draft.freezeMode}`,
-    draft.assignedTo.trim() ? `assigned=${draft.assignedTo.trim()}` : null,
-    `date=${draft.countDate}`,
-  ];
-  return parts.filter(Boolean).join('; ');
-}
-
-export type CountLine = {
-  key: string;
-  materialCode: string;
-  locationCode: string;
-  lotNumber: string;
-  systemQty: number;
-  countedQty: string;
-};
 
 export function isAdministrator(roles: string[] | null | undefined): boolean {
   return (roles ?? []).some((r) => r.trim().toLowerCase() === 'administrator');
 }
 
-/** Logged-in staff with count permission already passed login — no second sign-in. */
 export function canSaveCountLines(roles: string[] | null | undefined): boolean {
   if (isAdministrator(roles)) return true;
   const set = new Set((roles ?? []).map((r) => r.trim().toLowerCase()));
@@ -71,16 +29,86 @@ export function canOpenCountDocument(roles: string[] | null | undefined): boolea
   return canSaveCountLines(roles);
 }
 
-/** Admin (and any viewer of this wizard) always sees every step's page. */
 export function canViewAllCountPages(roles: string[] | null | undefined): boolean {
   return isAdministrator(roles) || canSaveCountLines(roles) || (roles?.length ?? 0) > 0;
 }
 
-/** Blind hides system qty from counters; Administrator still sees the sheet. */
-export function showSystemQuantity(roles: string[] | null | undefined, blindCount: boolean): boolean {
+export function showSystemQuantity(
+  roles: string[] | null | undefined,
+  blindCount: boolean,
+  status?: string,
+): boolean {
+  const st = String(status ?? '').toUpperCase();
+  if (st === 'REVIEW' || st === 'APPROVED' || st === 'POSTED') return true;
   if (isAdministrator(roles)) return true;
   return !blindCount;
 }
+
+export type CountLineDto = {
+  id: string;
+  lineNo: number;
+  role: string;
+  source: string;
+  materialId?: string | null;
+  materialCode: string;
+  materialName: string;
+  locationCode: string;
+  batchNumber: string;
+  lotUnknown: boolean;
+  packageNumber?: string | null;
+  thicknessMm?: number | null;
+  widthMm?: number | null;
+  lengthMm?: number | null;
+  pieceCount?: number | null;
+  measuredVolumeM3?: number | null;
+  systemQuantityAtStart: number;
+  countedQuantity: number;
+  difference: number;
+  stockUnit: string;
+  countUnit: string;
+  calculatedStockQty: number;
+  lineStatus: string;
+  duplicate: boolean;
+  keepSeparate: boolean;
+  approved: boolean;
+  notes?: string | null;
+};
+
+export type InventoryCountSession = {
+  id: string;
+  number: string;
+  warehouseCode: string;
+  locationCode?: string | null;
+  countType: string;
+  status: string;
+  notes?: string | null;
+  snapshotAt?: string | null;
+  plantId?: string | null;
+  countedBy?: string | null;
+  approvedBy?: string | null;
+  midCountMovement?: boolean;
+  midCountMovementCount?: number;
+  lines?: CountLineDto[];
+  summary?: {
+    totalLines: number;
+    matched: number;
+    variance: number;
+    unexpected: number;
+    missing: number;
+    unmatched: number;
+    duplicates: number;
+    midCountMovement: boolean;
+  };
+};
+
+export type CountLine = {
+  key: string;
+  materialCode: string;
+  locationCode: string;
+  lotNumber: string;
+  systemQty: number;
+  countedQty: string;
+};
 
 export function lineVariance(line: CountLine): number | null {
   const raw = line.countedQty.trim();
@@ -102,17 +130,24 @@ export function summarizeVariances(lines: CountLine[]): { counted: number; diffe
   return { counted, differed };
 }
 
-/** Client never mints CNT-… — Numbering Service (or SystemIdentifier stand-in) assigns on persist. */
 export function buildCountSessionCreateBody(draft: CycleCountOpenDraft): {
   number: string;
   warehouseCode: string;
+  locationCode: string;
+  countType: string;
   status: string;
   notes: string;
 } {
   return {
     number: '',
     warehouseCode: draft.warehouseCode.trim(),
-    status: 'In Progress',
-    notes: buildCountSessionNotes(draft),
+    locationCode: draft.locationCode.trim(),
+    countType: draft.countType,
+    status: 'COUNTING',
+    notes: draft.notes.trim(),
   };
 }
+
+/** @deprecated freeze/ABC not used on the factory count screen */
+export const FREEZE_MODES = ['None'] as const;
+export type FreezeMode = (typeof FREEZE_MODES)[number];
