@@ -1,0 +1,39 @@
+---
+description: C# katman, isimlendirme ve hata kuralları
+globs: src/**/*.cs
+alwaysApply: false
+---
+
+# Backend
+
+## Katman
+
+- Bağımlılık içeri bakar: Presentation, Application’a; Application, Domain’e bakar.
+- Infrastructure, Domain ve Application portlarını uygular. Domain dışarı bakmaz.
+- Domain varlık, value object, iş kuralı ve domain event tutar. EF, ASP.NET ve HTTP referansı koyma.
+- Application komut, sorgu, DTO, doğrulama ve transaksiyon yönetir. İş kuralını buraya taşıma.
+- Infrastructure kalıcılık, dosya, e-posta, önbellek ve dış API’yi tutar.
+- Controller ve minimal API yalnızca HTTP çevirir. Sorgu, kural ve yetki kararı koyma.
+- Modül başka modülün tablosuna ve repository’sine girmez. Sözleşme veya olay kullan.
+- Sınıf tek sorumluluk taşır. God class, şişman controller ve döngüsel bağımlılık bırakma.
+
+## İsimlendirme
+
+- Teknik kimlik İngilizce ve iş sözlüğüyle aynıdır. Resmi olmayan kısaltma kullanma.
+- Tip, public metot ve public property PascalCase. Parametre ve yerel değişken camelCase.
+- Arayüz `I` ile başlar: `IMaterialRepository`.
+- Sınıf son ekleri: `Service`, `Repository`, `Controller`.
+- Komut emir kipidir: `CreateMaterialCommand`. Sorgu: `GetMaterialQuery`.
+- Olay geçmiş zamandadır: `MaterialCreated`.
+- DTO son eki `Dto`, `Request` veya `Response` olur. Enum tekildir, değerleri PascalCase.
+- Dosya ve klasör PascalCase’dir ve tür adıyla aynıdır.
+
+## Hata
+
+- Başarı gövdesi `success`, `data`, `meta` ve boş `errors` taşır.
+- Hata gövdesi `success: false`, `data: null` ve `errors: [{ code, message }]` taşır.
+- `code` iş alanlı ve kararlıdır (`MAT-001`). `message` kullanıcıya yöneliktir ve sır içermez.
+- Doğrulama 422, bulunamadı 404, kimlik 401, yetki 403, çakışma 409, altyapı 500 döner.
+- Türler: `ValidationException`, `NotFoundException`, `AuthorizationException`, `BusinessException`, `ConcurrencyException`, `InfrastructureException`.
+- İstisnayı yutma. Stack trace, bağlantı dizesi ve token yanıtta veya logda yer almaz.
+- Beklenmeyen hatayı correlation id ile logla. Anlamsız genel hata metni dönme.

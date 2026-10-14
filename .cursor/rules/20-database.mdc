@@ -1,0 +1,37 @@
+---
+description: EF Core denetim alanları, isimlendirme ve migration kuralları
+globs: "**/Migrations/**,**/*Configuration.cs"
+alwaysApply: false
+---
+
+# Veritabanı
+
+## Denetim alanları
+
+- Her iş tablosu `id`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`, `isDeleted` ve `version` taşır.
+- `id` UUID’dir. Zaman UTC `timestamptz` olur. `createdAt` ve `createdBy` sonradan değişmez.
+- Güncelleme `updatedAt` ve `updatedBy` doldurur. `version` iyimser kilittir; elle atlama.
+- Silme `isDeleted = true` olur. Fiziksel silme yalnızca teknik ara tabloda ve açık onayla yapılır.
+- Global query filter yumuşak silinen satırı gizler.
+- Denetim ve olay tablosu append-only’dir. Satırı güncelleme ve silme.
+- Denetim kaydı kullanıcı, zaman, eylem, modül, varlık, eski değer, yeni değer ve gerekçe tutar.
+
+## İsimlendirme
+
+- Tablo tekil PascalCase: `PurchaseOrder`. Kolon camelCase: `materialCode`, `createdAt`.
+- Birincil anahtar `id`. Yabancı anahtar `{hedef}Id`: `materialId`, `supplierId`.
+- Kısıt adları: `PK_Table`, `FK_Order_Customer`, `IX_Table_Column`, `UK_Table_Field`.
+- `businessCode` kullanıcıya görünen kimliktir. UUID iç kimlik olarak kalır.
+- JSONB yalnızca esnek yük içindir. İş kuralını kolon varsayılanına, trigger’a veya procedure’a koyma.
+- Boolean `is` veya `has` ile başlar. Enum kolonu enum adını taşır.
+
+## Migration
+
+- Şema değişikliği versiyonlu EF Core migration ile gider. Uygulanmış migration dosyasını düzenleme.
+- Ad değişikliği söyler. Bir migration tek değişiklik taşır. `Down` geri alır.
+- Üretim veritabanına elle SQL uygulama.
+- Yabancı anahtar zorunludur. `ON DELETE CASCADE` kullanma. Restrict veya yumuşak silme kullan.
+- Index yabancı anahtar, tekil alan, arama alanı ve sık filtrelenen kolon için vardır.
+- İş verisi seed etme. Yalnızca belgedeki referans verisini ekle.
+- `IEntityTypeConfiguration<T>` tablo, kolon, index ve ilişkiyi tanımlar. İş kuralı koyma.
+- Ana veriyi ikinci tabloya kopyalama. Stok bakiyesini elle yazılan kolon yapma; hareketten türet.
