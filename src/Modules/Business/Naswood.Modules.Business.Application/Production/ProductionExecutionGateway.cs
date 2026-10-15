@@ -221,7 +221,7 @@ public sealed class ProductionExecutionGateway
         else
         {
             var existingNos = await _store.ListNumbersAsync(order.PlantId, cancellationToken).ConfigureAwait(false);
-            var ordinal = OpeningInventoryCodes.NextOrdinal(existingNos.Select(x => ProductionExecutionNumbers.ParseOrdinal(x, order.PlantId, now)));
+            var ordinal = DocumentNumberTokens.NextOrdinal(existingNos.Select(x => ProductionExecutionNumbers.ParseOrdinal(x, order.PlantId, now)));
             exec = ProductionOperationExecution.Create(
                 ProductionExecutionNumbers.Number(order.PlantId, now, ordinal),
                 order.Id, plan.Id, plan.WorkCenterId, order.PlantId,

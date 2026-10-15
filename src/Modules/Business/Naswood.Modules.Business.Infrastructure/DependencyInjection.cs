@@ -13,6 +13,7 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'Platform' is required.");
         services.AddDbContext<BusinessDbContext>(o => o.UseNpgsql(cs, BusinessDbContext.ConfigureNpgsql));
         services.AddScoped<Naswood.Modules.Business.Application.Common.IBusinessUnitOfWork, Persistence.BusinessUnitOfWork>();
+        services.AddScoped<Naswood.Modules.Business.Application.Inventory.IIdentityCodeAllocator, Naswood.Modules.Business.Infrastructure.Inventory.IdentityCodeAllocator>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IMaterialRepository, Naswood.Modules.Business.Infrastructure.Inventory.MaterialRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.IWarehouseRepository, Naswood.Modules.Business.Infrastructure.Inventory.WarehouseRepository>();
         services.AddScoped<Naswood.Modules.Business.Application.Inventory.ILocationRepository, Naswood.Modules.Business.Infrastructure.Inventory.LocationRepository>();

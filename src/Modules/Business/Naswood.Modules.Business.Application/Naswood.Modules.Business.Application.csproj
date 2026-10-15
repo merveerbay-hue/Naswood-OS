@@ -5,6 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Naswood.Modules.Business.Domain\Naswood.Modules.Business.Domain.csproj" />
     <ProjectReference Include="..\Naswood.Modules.Business.Contracts\Naswood.Modules.Business.Contracts.csproj" />
+    <ProjectReference Include="..\..\Platform\Naswood.Modules.Platform.Contracts\Naswood.Modules.Platform.Contracts.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Naswood.BuildingBlocks.Application\Naswood.BuildingBlocks.Application.csproj" />
   </ItemGroup>
   <PropertyGroup>

@@ -117,7 +117,7 @@ public class PackageLedgerZoneTests
         db.Locations.AddRange(locA, locB, locQ);
         db.Batchs.Add(lot);
         db.InventoryBalances.Add(InventoryBalance.Create(mat.Code, "WH-FG", quarantine ? "Q-01" : "A-01", lot.BatchNumber, 50, 0, "Active", plantId: Plant));
-        var mint = Naswood.Modules.Business.Application.Inventory.PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 21);
+        var mint = SeedCodes.Package(21);
         var home = quarantine ? locQ : locA;
         var pkg = InventoryPackage.Create(
             mint.PackageNumber, "MI-Z", mat.Code, lot.BatchNumber, "WH-FG", home.Code, 50, "PCS", mint.BarcodeValue,

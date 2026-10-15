@@ -152,7 +152,6 @@ public sealed class PackagePassportLoader
             PackageNo = pkg.PackageNumber,
             Barcode = pkg.Barcode,
             PublicId = pkg.PublicId,
-            QrPath = PackageIdentityService.QrPath(pkg.PublicId),
             MaterialCode = pkg.MaterialCode,
             MaterialName = material?.Name ?? pkg.MaterialCode,
             MaterialGroup = Read(def, "mainCategory") ?? material?.Category ?? string.Empty,
@@ -265,9 +264,14 @@ public sealed class GetPackagePassportByBarcodeQueryHandler : IQueryHandler<GetP
 
     public async Task<Result<PackagePassportDto>> HandleAsync(GetPackagePassportByBarcodeQuery query, CancellationToken cancellationToken = default)
     {
-        var key = (query.Barcode ?? string.Empty).Trim();
+        var key = (query.Barcode ?? string.Empty).Trim().ToUpperInvariant();
         if (key.Length == 0)
             return Result.Failure<PackagePassportDto>(Error.Validation("INV-PKG-070", "Barkod gerekli."));
+        // ADR-002 §6 scanner rule; a code without site prefix or with ANT belongs to Antalya.
+        if (!IdentityCodes.TryParse(key, out var code) || code.Type != IdentityType.Pkg)
+            return Result.Failure<PackagePassportDto>(Error.Validation(IdentityCodes.ErrorInvalidCode, "Geçerli bir paket kodu değil."));
+        if (!code.IsLocal)
+            return Result.Failure<PackagePassportDto>(Error.Validation(IdentityCodes.ErrorForeignSite, IdentityCodes.ForeignSiteMessage));
         var hits = await _packages.ListByBarcodeExactAsync(key, cancellationToken).ConfigureAwait(false);
         if (hits.Count == 0)
             return Result.Failure<PackagePassportDto>(Error.NotFound("INV-PKG-404", "Barkod sistemde bulunamadı."));

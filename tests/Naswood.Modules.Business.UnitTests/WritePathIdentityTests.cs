@@ -55,7 +55,7 @@ public sealed class WritePathIdentityTests
         Guid? materialId = null,
         Guid? batchId = null) =>
         InventoryPackage.Create(
-            "NW-PKG-F01-26-000001", "MI-1", "YM-PR-AYO-001", "LOT-1", "WH", "A-01", 1, "M3",
+            "PKG-BUC-000001", "MI-1", "YM-PR-AYO-001", "LOT-1", "WH", "A-01", 1, "M3",
             plantId: plantId,
             publicId: publicId,
             materialId: materialId == Guid.Empty ? null : materialId ?? Guid.NewGuid(),

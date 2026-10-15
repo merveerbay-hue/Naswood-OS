@@ -161,6 +161,7 @@ public sealed class ProductionOutputGateway
     private readonly IInventoryMovementRepository _movements;
     private readonly IMaterialIdentityRepository _identities;
     private readonly IPackageRelationRepository _relations;
+    private readonly IIdentityCodeAllocator _identityCodes;
 
     public ProductionOutputGateway(
         IProductionOrderRepository orders,
@@ -174,8 +175,10 @@ public sealed class ProductionOutputGateway
         IInventoryPackageRepository packages,
         IInventoryMovementRepository movements,
         IMaterialIdentityRepository identities,
-        IPackageRelationRepository relations)
+        IPackageRelationRepository relations,
+        IIdentityCodeAllocator identityCodes)
     {
+        _identityCodes = identityCodes;
         _orders = orders;
         _outputs = outputs;
         _sources = sources;
@@ -247,11 +250,9 @@ public sealed class ProductionOutputGateway
         var qc = ProductionOutputQcPolicy.Resolve(c.Material, body.WorkCenterCode, body.StockStatus);
         var stockStatus = ProductionOutputQcPolicy.Apply(qc, body.StockStatus, body.AllowQcOverride);
 
-        var now = DateTimeOffset.UtcNow;
-        var lotPrefix = ProductionLotCodes.LotPrefixForDay(c.PlantId, now);
-        var existingLots = await _batches.ListOpeningLotNumbersAsync(lotPrefix, c.PlantId, cancellationToken).ConfigureAwait(false);
-        var lotOrdinal = OpeningInventoryCodes.NextOrdinal(existingLots.Select(x => ProductionLotCodes.ParseLotOrdinal(x, c.PlantId, now)));
-        var lotNo = ProductionLotCodes.ProductionLot(c.PlantId, now, lotOrdinal);
+        var site = await PackageIdentityService.RequireSiteCodeAsync(_identityCodes, c.PlantId, cancellationToken).ConfigureAwait(false);
+        if (site.IsFailure) return Result.Failure<ProductionOutputResultDto>(site.Error!);
+        var lotNo = await _identityCodes.NextAsync(site.Value, IdentityType.Lot, cancellationToken).ConfigureAwait(false);
         var lot = Batch.Create(
             lotNo, c.Material.Code, 0, null, "Active",
             plantId: c.PlantId,
@@ -319,9 +320,6 @@ public sealed class ProductionOutputGateway
             await _sources.AddRangeAsync(sourceRows, cancellationToken).ConfigureAwait(false);
 
         var stacks = ProductionOutputComposer.GroupStacks(c.Order.Id, lot.Id, c.Material.Id, c.Location.Id, c.Lines);
-        var existingPkgs = await _packages.ListPackageNumbersAsync(cancellationToken).ConfigureAwait(false);
-        var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
-            existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, c.PlantId, now)));
         var created = new List<ProductionOutputPackageCreatedDto>();
         var packageStatus = ProductionOutputQcPolicy.IsHold(stockStatus) ? "Quarantine" : "Available";
         var outputQty = c.Lines.Sum(l => l.Quantity);
@@ -329,10 +327,7 @@ public sealed class ProductionOutputGateway
         foreach (var stack in stacks)
         {
             var qty = stack.Sum(x => x.Quantity);
-            var mint = PackageIdentityService.Mint(c.PlantId, now, pkgOrdinal++);
-            var dup = await _packages.ListByBarcodeExactAsync(mint.BarcodeValue, cancellationToken).ConfigureAwait(false);
-            if (dup.Count > 0)
-                return Result.Failure<ProductionOutputResultDto>(Error.Validation("INV-PKG-061", $"Barkod çakışması: {mint.BarcodeValue}"));
+            var mint = await PackageIdentityService.MintAsync(_identityCodes, site.Value, cancellationToken).ConfigureAwait(false);
 
             var mi = SystemIdentifier.Ensure(null, "MI");
             await _identities.AddAsync(MaterialIdentity.CreateRoot(

@@ -21,8 +21,6 @@ public interface IBatchRepository
     Task AddAsync(Batch entity, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Batch> Items, int Total)> SearchAsync(
         string? q, int page, int pageSize, string? plantId = null, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<string>> ListOpeningLotNumbersAsync(
-        string prefix, string? plantId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record SearchBatchQuery(
@@ -132,10 +130,12 @@ public sealed class GetBatchByIdQueryHandler : IQueryHandler<GetBatchByIdQuery, 
 public sealed class CreateBatchCommandHandler : ICommandHandler<CreateBatchCommand, Result<BatchDto>>
 {
     private readonly IBatchRepository _repo;
+    private readonly IIdentityCodeAllocator _identityCodes;
     private readonly IBusinessUnitOfWork _uow;
 
-    public CreateBatchCommandHandler(IBatchRepository repo, IBusinessUnitOfWork uow)
+    public CreateBatchCommandHandler(IBatchRepository repo, IIdentityCodeAllocator identityCodes, IBusinessUnitOfWork uow)
     {
+        _identityCodes = identityCodes;
         _repo = repo;
         _uow = uow;
     }
@@ -153,8 +153,16 @@ public sealed class CreateBatchCommandHandler : ICommandHandler<CreateBatchComma
                 "INV-LOT-403",
                 "Bu tesise lot/batch oluşturma yetkiniz yok."));
 
+        // ADR-002 §6: the lot code (LOT-BUC-…) is minted by the server.
+        if (!string.IsNullOrWhiteSpace(command.BatchNumber))
+            return Result.Failure<BatchDto>(Error.Validation(
+                "INV-LOT-005",
+                "Lot numarası sunucuda basılır; istemci numara göndermez."));
+        var site = await PackageIdentityService.RequireSiteCodeAsync(_identityCodes, plantId, cancellationToken).ConfigureAwait(false);
+        if (site.IsFailure) return Result.Failure<BatchDto>(site.Error!);
+
         var e = Batch.Create(
-            SystemIdentifier.Ensure(command.BatchNumber, "LOT"),
+            await _identityCodes.NextAsync(site.Value, IdentityType.Lot, cancellationToken).ConfigureAwait(false),
             command.MaterialCode,
             command.Quantity,
             command.ExpiryDate,
@@ -189,7 +197,13 @@ public sealed class UpdateBatchCommandHandler : ICommandHandler<UpdateBatchComma
                 "INV-LOT-403",
                 "Bu lot/batch kaydını değiştirme yetkiniz yok."));
 
-        e.Update(command.BatchNumber, command.MaterialCode, command.Quantity, command.ExpiryDate, command.Status);
+        // ADR-002 §6: a lot code never changes once minted.
+        if (!string.IsNullOrWhiteSpace(command.BatchNumber)
+            && !string.Equals(command.BatchNumber.Trim(), e.BatchNumber, StringComparison.OrdinalIgnoreCase))
+            return Result.Failure<BatchDto>(Error.Validation(
+                "INV-LOT-006",
+                "Lot numarası değiştirilemez."));
+        e.Update(e.BatchNumber, command.MaterialCode, command.Quantity, command.ExpiryDate, command.Status);
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(BatchMapper.ToDto(e));
     }

@@ -37,6 +37,7 @@ public sealed class ExecuteStockTransferCommandHandler
     private readonly IMaterialIdentityRepository _identities;
     private readonly IWarehouseRepository _warehouses;
     private readonly ILocationRepository _locations;
+    private readonly IIdentityCodeAllocator _identityCodes;
     private readonly IBusinessUnitOfWork _uow;
 
     public ExecuteStockTransferCommandHandler(
@@ -47,8 +48,10 @@ public sealed class ExecuteStockTransferCommandHandler
         IMaterialIdentityRepository identities,
         IWarehouseRepository warehouses,
         ILocationRepository locations,
+        IIdentityCodeAllocator identityCodes,
         IBusinessUnitOfWork uow)
     {
+        _identityCodes = identityCodes;
         _transfers = transfers;
         _balances = balances;
         _movements = movements;
@@ -68,6 +71,14 @@ public sealed class ExecuteStockTransferCommandHandler
             return Result.Failure<ExecuteStockTransferResultDto>(Error.Forbidden(
                 "INV-TRF-403",
                 "Bu tesiste transfer yetkiniz yok."));
+
+        // ADR-002 §6: the transfer code (TRF-BUC-…) is minted by the server.
+        if (!string.IsNullOrWhiteSpace(command.Number))
+            return Result.Failure<ExecuteStockTransferResultDto>(Error.Validation(
+                "INV-TRF-020",
+                "Transfer numarası sunucuda basılır; istemci numara göndermez."));
+        var site = await PackageIdentityService.RequireSiteCodeAsync(_identityCodes, plantId, cancellationToken).ConfigureAwait(false);
+        if (site.IsFailure) return Result.Failure<ExecuteStockTransferResultDto>(site.Error!);
 
         // Rule 10 — inter-factory transfer is a future module.
         if (!string.IsNullOrWhiteSpace(command.ToPlantId)
@@ -274,7 +285,7 @@ public sealed class ExecuteStockTransferCommandHandler
             identity.Relocate(toWh, toLoc);
         }
 
-        var transferNumber = SystemIdentifier.Ensure(command.Number, "TRF");
+        var transferNumber = await _identityCodes.NextAsync(site.Value, IdentityType.Trf, cancellationToken).ConfigureAwait(false);
         var headerNote = Truncate(
             $"{fromWh}/{fromLoc}→{toWh}/{toLoc} {materialCode} {lotNumber} qty={command.Quantity}"
             + (string.IsNullOrWhiteSpace(command.Notes) ? string.Empty : $" | {command.Notes.Trim()}"),

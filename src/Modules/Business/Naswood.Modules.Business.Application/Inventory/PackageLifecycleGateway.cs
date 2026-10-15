@@ -2,6 +2,7 @@ using Naswood.BuildingBlocks.Application.Abstractions;
 using Naswood.BuildingBlocks.Domain;
 using Naswood.Modules.Business.Application.Common;
 using Naswood.Modules.Business.Contracts.Inventory;
+using Naswood.Modules.Business.Application.Production;
 using Naswood.Modules.Business.Domain.Inventory;
 
 namespace Naswood.Modules.Business.Application.Inventory;
@@ -64,6 +65,7 @@ public sealed class PackageLifecycleGateway
     private readonly IWarehouseRepository _warehouses;
     private readonly PackagePassportLoader _loader;
     private readonly IBusinessUnitOfWork _uow;
+    private readonly IIdentityCodeAllocator _identities;
 
     public PackageLifecycleGateway(
         IInventoryPackageRepository packages,
@@ -74,8 +76,10 @@ public sealed class PackageLifecycleGateway
         ILocationRepository locations,
         IWarehouseRepository warehouses,
         PackagePassportLoader loader,
-        IBusinessUnitOfWork uow)
+        IBusinessUnitOfWork uow,
+        IIdentityCodeAllocator identities)
     {
+        _identities = identities;
         _packages = packages;
         _operations = operations;
         _relations = relations;
@@ -144,7 +148,9 @@ public sealed class PackageLifecycleGateway
         var op = PackageOperation.Create(number, PackageOperationTypes.Merge, sources[0].WarehouseCode, sources[0].LocationCode, actor, plantId);
         var total = sources.Sum(s => s.Quantity);
         var first = sources[0];
-        var child = await MintChildAsync(first, total, first.Status, first.WarehouseCode, first.LocationCode, first.WarehouseId, first.LocationId, body.PhysicalGroupLabel, ct).ConfigureAwait(false);
+        var minted = await MintChildAsync(first, total, first.Status, first.WarehouseCode, first.LocationCode, first.WarehouseId, first.LocationId, body.PhysicalGroupLabel, ct).ConfigureAwait(false);
+        if (minted.IsFailure) return Result.Failure<PackageOperationResultDto>(minted.Error!);
+        var child = minted.Value;
 
         foreach (var src in sources)
         {
@@ -203,7 +209,9 @@ public sealed class PackageLifecycleGateway
 
         var number = await NextOperationNumberAsync(body.Number, plantId, ct).ConfigureAwait(false);
         var op = PackageOperation.Create(number, PackageOperationTypes.Repack, src.WarehouseCode, src.LocationCode, actor, plantId);
-        var child = await MintChildAsync(src, src.Quantity, src.Status, src.WarehouseCode, src.LocationCode, src.WarehouseId, src.LocationId, body.PhysicalGroupLabel, ct).ConfigureAwait(false);
+        var minted = await MintChildAsync(src, src.Quantity, src.Status, src.WarehouseCode, src.LocationCode, src.WarehouseId, src.LocationId, body.PhysicalGroupLabel, ct).ConfigureAwait(false);
+        if (minted.IsFailure) return Result.Failure<PackageOperationResultDto>(minted.Error!);
+        var child = minted.Value;
         var contents = await _packages.ListContentsAsync(src.Id, ct).ConfigureAwait(false);
         var copies = contents.Select((c, i) => InventoryPackageContent.Create(
             child.Id, i + 1, c.ThicknessMm, c.WidthMm, c.LengthMm, c.PieceCount, c.Quantity, c.UnitOfMeasure, plantId)).ToArray();
@@ -294,7 +302,9 @@ public sealed class PackageLifecycleGateway
 
         var number = await NextOperationNumberAsync(numberHint, plantId, ct).ConfigureAwait(false);
         var op = PackageOperation.Create(number, operationType, parent.WarehouseCode, parent.LocationCode, actor, plantId);
-        var child = await MintChildAsync(parent, plan.Total, parent.Status, childWh, childLoc, destWhId, destLocId, physicalGroupLabel, ct).ConfigureAwait(false);
+        var minted = await MintChildAsync(parent, plan.Total, parent.Status, childWh, childLoc, destWhId, destLocId, physicalGroupLabel, ct).ConfigureAwait(false);
+        if (minted.IsFailure) return Result.Failure<PackageOperationResultDto>(minted.Error!);
+        var child = minted.Value;
 
         foreach (var step in plan.Rows)
             step.Content.Reduce(step.Quantity, step.PieceCount);
@@ -366,11 +376,11 @@ public sealed class PackageLifecycleGateway
         if (!string.IsNullOrWhiteSpace(hint)) return hint.Trim();
         var now = DateTimeOffset.UtcNow;
         var existing = await _operations.ListNumbersAsync(plantId, ct).ConfigureAwait(false);
-        var ordinal = OpeningInventoryCodes.NextOrdinal(existing.Select(x => PackageOperationCodes.ParseOrdinal(x, plantId, now)));
+        var ordinal = DocumentNumberTokens.NextOrdinal(existing.Select(x => PackageOperationCodes.ParseOrdinal(x, plantId, now)));
         return PackageOperationCodes.Number(plantId, now, ordinal);
     }
 
-    private async Task<InventoryPackage> MintChildAsync(
+    private async Task<Result<InventoryPackage>> MintChildAsync(
         InventoryPackage parent,
         decimal qty,
         string status,
@@ -381,11 +391,10 @@ public sealed class PackageLifecycleGateway
         string? physicalGroupLabel,
         CancellationToken ct)
     {
-        var now = DateTimeOffset.UtcNow;
-        var existing = await _packages.ListPackageNumbersAsync(ct).ConfigureAwait(false);
-        var ordinal = OpeningInventoryCodes.NextOrdinal(existing.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, parent.PlantId, now)));
-        var mint = PackageIdentityService.Mint(parent.PlantId, now, ordinal);
-        return InventoryPackage.Create(
+        var site = await PackageIdentityService.RequireSiteCodeAsync(_identities, parent.PlantId, ct).ConfigureAwait(false);
+        if (site.IsFailure) return Result.Failure<InventoryPackage>(site.Error!);
+        var mint = await PackageIdentityService.MintAsync(_identities, site.Value, ct).ConfigureAwait(false);
+        return Result.Success(InventoryPackage.Create(
             mint.PackageNumber,
             parent.MaterialIdentityNumber,
             parent.MaterialCode,
@@ -403,7 +412,7 @@ public sealed class PackageLifecycleGateway
             materialId: parent.MaterialId,
             batchId: parent.BatchId,
             warehouseId: warehouseId,
-            locationId: locationId);
+            locationId: locationId));
     }
 
     private async Task<Result<PackageOperationResultDto>?> ReplayIfExistsAsync(
@@ -461,8 +470,8 @@ public sealed class PackageLifecycleGateway
         {
             await _uow.SaveChangesAsync(ct).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex.GetType().Name.Contains("Concurrency", StringComparison.OrdinalIgnoreCase)
-            || ex.InnerException?.GetType().Name.Contains("Concurrency", StringComparison.OrdinalIgnoreCase) == true)
+        catch (Exception ex) when (ProductionExecutionConcurrency.IsOptimisticConflict(ex)
+            || ProductionExecutionConcurrency.IsUniqueViolation(ex, "UX_packageoperation_number"))
         {
             return Result.Failure<PackageOperationResultDto>(Error.Conflict("PKG-LIFE-009", "Paket aynı anda başka bir işlemde kullanıldı. Yeniden deneyin."));
         }

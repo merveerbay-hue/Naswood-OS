@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text.RegularExpressions;
 using Naswood.Modules.Business.Application.Inventory;
 using Naswood.Modules.Business.Domain.Inventory;
 using Naswood.Modules.Business.Domain.Production;
@@ -15,7 +13,6 @@ public static class ProductionLotCodes
     public const string ConsumptionReversalMovement = "PRODUCTION_CONSUMPTION_REVERSAL";
     public const string QcReleaseMovement = "QC_RELEASE";
     public const string QcRejectMovement = "QC_REJECT";
-    public const string LotPrefix = "LOT-PR-";
 
     public static string QcNotes(string decision, string inspectionReference, string actor)
         => $"qc={decision} ref={inspectionReference} actor={actor} qtyUnchanged=1";
@@ -36,22 +33,6 @@ public static class ProductionLotCodes
         var text = notes ?? "";
         return text.Contains($"sourceLot={sourceLotNumber}", StringComparison.OrdinalIgnoreCase)
             && text.Contains($"sourceLotId={sourceLotId:D}", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static string FactoryToken(string? plantId) => OpeningInventoryCodes.FactoryToken(plantId);
-
-    public static string ProductionLot(string? plantId, DateTimeOffset utc, int ordinal)
-        => $"{LotPrefix}{FactoryToken(plantId)}-{utc.UtcDateTime.ToString("yyMMdd", CultureInfo.InvariantCulture)}-{ordinal:0000}";
-
-    public static string LotPrefixForDay(string? plantId, DateTimeOffset utc)
-        => $"{LotPrefix}{FactoryToken(plantId)}-{utc.UtcDateTime.ToString("yyMMdd", CultureInfo.InvariantCulture)}-";
-
-    public static int ParseLotOrdinal(string? lotNumber, string? plantId, DateTimeOffset utc)
-    {
-        var factory = FactoryToken(plantId);
-        var day = utc.UtcDateTime.ToString("yyMMdd", CultureInfo.InvariantCulture);
-        var m = Regex.Match(lotNumber ?? "", $@"^LOT-PR-{Regex.Escape(factory)}-{Regex.Escape(day)}-(\d+)$", RegexOptions.IgnoreCase);
-        return m.Success && int.TryParse(m.Groups[1].Value, out var n) ? n : 0;
     }
 
     public static string StackKey(

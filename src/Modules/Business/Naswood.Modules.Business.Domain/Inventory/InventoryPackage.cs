@@ -133,11 +133,14 @@ public sealed class InventoryPackage : BusinessEntity
             throw new InvalidOperationException("Package.MaterialId is required.");
         if (batchId is null)
             throw new InvalidOperationException("Package.BatchId is required.");
-        var code = string.IsNullOrWhiteSpace(barcode) ? packageNumber : barcode.Trim();
+        // ADR-002 §6: the barcode carries the package code and nothing else.
+        var code = (packageNumber ?? string.Empty).Trim();
+        if (!string.IsNullOrWhiteSpace(barcode) && !string.Equals(barcode.Trim(), code, StringComparison.Ordinal))
+            throw new InvalidOperationException("Package barcode must equal the package code.");
         var normalized = string.IsNullOrWhiteSpace(status) ? "Available" : status.Trim();
         return new InventoryPackage(
             UuidV7.NewGuid(),
-            packageNumber,
+            code,
             materialIdentityNumber,
             materialCode,
             lotNumber,
