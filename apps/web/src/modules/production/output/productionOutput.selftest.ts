@@ -1,23 +1,22 @@
 import { encodeCode128B } from '@/modules/inventory/stock/code128Svg';
-import { sourceLine } from '@/modules/inventory/stock/packageLabelPrint';
+import { qrSvg, sourceLine } from '@/modules/inventory/stock/packageLabelPrint';
 import type { PackagePassport } from '@/modules/inventory/stock/packagePassportApi';
 
 function assert(cond: unknown, msg: string): void {
   if (!cond) throw new Error(msg);
 }
 
-const encoded = encodeCode128B('NWPKG-F01-26-000401');
+const encoded = encodeCode128B('PKG-BUC-000401');
 assert(encoded[0] === 104, 'TEST7 code128 start B');
 
-const qr = '/inventory/packages/p/opaqueid';
-assert(!qr.includes('11111111-'), 'TEST8 qr has no db id');
+const qr = qrSvg('PKG-BUC-000401');
+assert(qr.startsWith('<svg') && !qr.includes('http') && !qr.includes('opaqueid'), 'TEST8 qr is local svg, code only');
 
 const label: PackagePassport = {
   id: 'x',
-  packageNo: 'NW-PKG-F01-26-000401',
-  barcode: 'NWPKG-F01-26-000401',
+  packageNo: 'PKG-BUC-000401',
+  barcode: 'PKG-BUC-000401',
   publicId: 'opaqueid',
-  qrPath: qr,
   materialCode: 'YM-LM-PIN-FJ-001',
   materialName: 'Çam Finger Joint Lamel',
   materialGroup: 'YM',
@@ -26,7 +25,7 @@ const label: PackagePassport = {
   quality: '',
   stockUnit: 'M3',
   countUnit: 'PCS',
-  lotNumber: 'LOT-PR-F01-260910-0004',
+  lotNumber: 'LOT-BUC-000004',
   sourceType: 'PRODUCTION',
   sourceReferenceNo: 'PRD-2026-0042',
   productionOrderNumber: 'PRD-2026-0042',

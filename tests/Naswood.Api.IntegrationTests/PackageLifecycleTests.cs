@@ -317,7 +317,7 @@ public class PackageLifecycleTests
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<BusinessDbContext>();
         var parent = db.InventoryPackages.Single(p => p.Id == world.PackageAId);
-        var mint = Naswood.Modules.Business.Application.Inventory.PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 80);
+        var mint = SeedCodes.Package(80);
         var pkg = InventoryPackage.Create(
             mint.PackageNumber, parent.MaterialIdentityNumber, parent.MaterialCode, parent.LotNumber,
             parent.WarehouseCode, parent.LocationCode, 30, "PCS", mint.BarcodeValue, "Available",
@@ -379,7 +379,7 @@ public class PackageLifecycleTests
         if (secondPackage && (differentLot || differentMaterial))
             db.InventoryBalances.Add(InventoryBalance.Create(differentMaterial ? mat2.Code : mat.Code, "WH-FG", "A-01", lot2.BatchNumber, 30, 0, "Active", plantId: Plant));
 
-        var mintA = Naswood.Modules.Business.Application.Inventory.PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 10);
+        var mintA = SeedCodes.Package(10);
         var statusA = rejectedA ? "Rejected" : quarantineA ? "Quarantine" : "Available";
         var pkgA = InventoryPackage.Create(
             mintA.PackageNumber, "MI-A", mat.Code, lot.BatchNumber, "WH-FG", "A-01", 50, "PCS", mintA.BarcodeValue, statusA,
@@ -392,7 +392,7 @@ public class PackageLifecycleTests
         Guid? pkgBId = null;
         if (secondPackage)
         {
-            var mintB = Naswood.Modules.Business.Application.Inventory.PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 11);
+            var mintB = SeedCodes.Package(11);
             var statusB = quarantineB ? "Quarantine" : "Available";
             var useMat = differentMaterial ? mat2 : mat;
             var useLot = differentLot || differentMaterial ? lot2 : lot;

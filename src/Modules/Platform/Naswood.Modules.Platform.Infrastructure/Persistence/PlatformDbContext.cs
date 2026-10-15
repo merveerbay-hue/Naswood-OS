@@ -240,6 +240,7 @@ public sealed class PlatformDbContext : DbContext
             entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
             entity.Property(x => x.CompanyCode).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.SiteCode).HasMaxLength(3);
             entity.Ignore(x => x.DomainEvents);
         });
 

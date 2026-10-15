@@ -490,7 +490,7 @@ export function CycleCountSessionPage() {
         <h1 className="text-2xl font-semibold">Stok Sayımı</h1>
         <p className="text-sm text-[var(--text-muted)]">
           {opening
-            ? 'Açılış stok sayımı: fiili stok sıfırdan sisteme alınır. Onayda Lot (LOT-OPEN-…) + Package + Barkod üretilir. Hareket: OPENING_INVENTORY. Sahte tedarik lotu yazılmaz.'
+            ? 'Açılış stok sayımı: fiili stok sıfırdan sisteme alınır. Onayda Lot (LOT-BUC-…) + Paket (PKG-BUC-…, barkod = paket kodu) üretilir. Hareket: OPENING_INVENTORY. Sahte tedarik lotu yazılmaz.'
             : 'Periyodik sayım: mevcut Lot/Package/Barkod doğrulanır. Yeni kimlik üretilmez. Fark: INVENTORY_COUNT_ADJUSTMENT.'}
         </p>
       </div>
@@ -1068,7 +1068,7 @@ export function CycleCountSessionPage() {
             <CardTitle>{opening ? 'Açılış stok sonucu' : 'Stok sayım sonucu'}</CardTitle>
             <CardDescription>
               {opening
-                ? `Fiziksel satır ${physicalLines.length}. Onayda malzeme başına LOT-OPEN, istif başına PKG + NW-PKG barkod.`
+                ? `Fiziksel satır ${physicalLines.length}. Onayda malzeme başına LOT-BUC, istif başına PKG-BUC (barkod = paket kodu).`
                 : `Toplam ${opened.summary?.totalLines ?? resultRows.length} · Uyumlu ${opened.summary?.matched ?? 0} · Farklı ${opened.summary?.variance ?? 0} · Eşleşmeyen ${(opened.summary?.unexpected ?? 0) + (opened.summary?.missing ?? 0)} · Sayım sırasında hareket ${opened.midCountMovement ? 'VAR' : 'yok'}`}
             </CardDescription>
           </CardHeader>
@@ -1122,9 +1122,9 @@ export function CycleCountSessionPage() {
                         <>
                           <td>{r.istif || '—'}</td>
                           <td>{r.counted}</td>
-                          <td>{r.lot || (posted ? '—' : 'onayda LOT-OPEN')}</td>
+                          <td>{r.lot || (posted ? '—' : 'onayda LOT-BUC')}</td>
                           <td>{r.pkg || (posted ? '—' : 'onayda PKG')}</td>
-                          <td>{r.barcode || (posted ? '—' : 'onayda NW-PKG')}</td>
+                          <td>{r.barcode || (posted ? '—' : 'onayda PKG-BUC')}</td>
                         </>
                       ) : (
                         <>

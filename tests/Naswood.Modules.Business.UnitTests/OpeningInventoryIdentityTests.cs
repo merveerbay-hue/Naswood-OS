@@ -38,24 +38,14 @@ public sealed class OpeningInventoryIdentityTests
     public void Package_create_requires_material_and_batch()
     {
         Assert.Throws<InvalidOperationException>(() =>
-            InventoryPackage.Create("NW-PKG-F01-26-000001", "MI-1", "YM-PR-AYO-001", "LOT-1", "WH", "A-01", 1, "M3", plantId: "F01"));
+            InventoryPackage.Create("PKG-BUC-000001", "MI-1", "YM-PR-AYO-001", "LOT-BUC-000001", "WH", "A-01", 1, "M3", plantId: "F01"));
         var pkg = InventoryPackage.Create(
-            "NW-PKG-F01-26-000001", "MI-1", "YM-PR-AYO-001", "LOT-1", "WH", "A-01", 1, "M3",
+            "PKG-BUC-000001", "MI-1", "YM-PR-AYO-001", "LOT-BUC-000001", "WH", "A-01", 1, "M3",
             plantId: "F01",
             materialId: Guid.NewGuid(),
             batchId: Guid.NewGuid());
         Assert.False(string.IsNullOrWhiteSpace(pkg.PublicId));
-        Assert.Equal("NWPKG-F01-26-000001", OpeningInventoryCodes.Barcode(pkg.PackageNumber));
-    }
-
-    [Fact]
-    public void Mint_uses_shared_identity_service()
-    {
-        var day = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
-        var mint = PackageIdentityService.Mint("F01", day, 3);
-        Assert.Equal("NW-PKG-F01-26-000003", mint.PackageNumber);
-        Assert.Equal("NWPKG-F01-26-000003", mint.BarcodeValue);
-        Assert.Equal(32, mint.PublicId.Length);
+        Assert.Equal("PKG-BUC-000001", pkg.Barcode);
     }
 
     [Fact]

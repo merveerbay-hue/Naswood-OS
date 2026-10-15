@@ -181,14 +181,17 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
     private readonly IInventoryCountRepository _repo;
     private readonly IMaterialRepository _materials;
     private readonly ILocationRepository _locations;
+    private readonly IInventoryPackageRepository _packages;
     private readonly IBusinessUnitOfWork _uow;
 
     public ReplaceInventoryCountLinesCommandHandler(
         IInventoryCountRepository repo,
         IMaterialRepository materials,
         ILocationRepository locations,
+        IInventoryPackageRepository packages,
         IBusinessUnitOfWork uow)
     {
+        _packages = packages;
         _repo = repo;
         _materials = materials;
         _locations = locations;
@@ -257,7 +260,7 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
                 return Result.Failure<InventoryCountDto>(Error.Validation("INV-CNT-008", calc.Error ?? "Geçersiz ölçü."));
 
             var opening = InventoryCountKinds.IsOpening(e.CountType);
-            // Opening: no fake supplier lot. Identity is minted on post (LOT-OPEN-…).
+            // Opening: no fake supplier lot. Identity is minted on post (LOT-BUC-…).
             var lotUnknown = !opening && (dto.LotUnknown || string.IsNullOrWhiteSpace(dto.BatchNumber));
             var batchNumber = opening
                 ? string.Empty
@@ -287,14 +290,20 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
             }
             var packageNumber = string.Empty;
             var barcode = string.Empty;
-            // Periodic/Blind: keep an existing system package if already on the line. Never mint.
-            // Opening: operator writes only the physical group; lot/package/barcode mint on post.
-            if (!opening
-                && !string.IsNullOrWhiteSpace(dto.PackageNumber)
-                && dto.PackageNumber.Trim().StartsWith("PKG-", StringComparison.OrdinalIgnoreCase))
+            // Periodic/Blind: keep the counted system package on the line. Never mint.
+            // Opening: operator writes only the physical group; lot/package mint on post.
+            var packageInput = string.IsNullOrWhiteSpace(dto.PackageNumber) ? dto.Barcode : dto.PackageNumber;
+            if (!opening && !string.IsNullOrWhiteSpace(packageInput))
             {
-                packageNumber = dto.PackageNumber.Trim();
-                barcode = string.IsNullOrWhiteSpace(dto.Barcode) ? packageNumber : dto.Barcode.Trim();
+                var pkg = await ResolveCountedPackageAsync(packageInput, material, plantId, cancellationToken).ConfigureAwait(false);
+                if (pkg.IsFailure) return Result.Failure<InventoryCountDto>(pkg.Error!);
+                packageNumber = pkg.Value.PackageNumber;
+                barcode = pkg.Value.Barcode;
+                if (lotUnknown && !string.IsNullOrWhiteSpace(pkg.Value.LotNumber))
+                {
+                    batchNumber = pkg.Value.LotNumber;
+                    lotUnknown = false;
+                }
             }
             var line = InventoryCountLine.CreatePhysical(
                 e.Id,
@@ -327,6 +336,38 @@ public sealed class ReplaceInventoryCountLinesCommandHandler : ICommandHandler<R
         await _uow.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         var all = await _repo.ListLinesAsync(e.Id, cancellationToken).ConfigureAwait(false);
         return Result.Success(InventoryCountMapper.ToDto(e, InventoryCountSessionComposer.ToLineDtos(all)));
+    }
+
+    /// <summary>
+    /// A counted package must be a local package code (ADR-002 §6) that exists in the count's plant
+    /// for the line's material. Anything else is rejected instead of being dropped from the line.
+    /// </summary>
+    private async Task<Result<InventoryPackage>> ResolveCountedPackageAsync(
+        string raw,
+        Material material,
+        string plantId,
+        CancellationToken cancellationToken)
+    {
+        var text = raw.Trim();
+        if (!IdentityCodes.TryParse(text, out var code) || code.Type != IdentityType.Pkg)
+            return Result.Failure<InventoryPackage>(Error.Validation(
+                "INV-CNT-070",
+                $"'{text}' geçerli bir paket kodu değil (PKG-BUC-000001)."));
+        if (!code.IsLocal)
+            return Result.Failure<InventoryPackage>(Error.Validation(
+                IdentityCodes.ErrorForeignSite,
+                $"{text}: {IdentityCodes.ForeignSiteMessage}"));
+        var normalized = text.ToUpperInvariant();
+        var package = await _packages.GetByNumberAsync(normalized, plantId, cancellationToken).ConfigureAwait(false);
+        if (package is null || package.IsDeleted)
+            return Result.Failure<InventoryPackage>(Error.Validation(
+                "INV-CNT-071",
+                $"Paket '{normalized}' bu tesiste bulunamadı."));
+        if (package.MaterialId != material.Id)
+            return Result.Failure<InventoryPackage>(Error.Validation(
+                "INV-CNT-072",
+                $"Paket '{normalized}' {package.MaterialCode} malzemesine ait; satır malzemesi {material.Code}."));
+        return Result.Success(package);
     }
 }
 
@@ -407,6 +448,7 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
     private readonly IInventoryPackageRepository _packages;
     private readonly IMaterialIdentityRepository _identities;
     private readonly IMaterialRepository _materials;
+    private readonly IIdentityCodeAllocator _identityCodes;
     private readonly IBusinessUnitOfWork _uow;
 
     public PostInventoryCountCommandHandler(
@@ -419,8 +461,10 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         IInventoryPackageRepository packages,
         IMaterialIdentityRepository identities,
         IMaterialRepository materials,
+        IIdentityCodeAllocator identityCodes,
         IBusinessUnitOfWork uow)
     {
+        _identityCodes = identityCodes;
         _repo = repo;
         _balances = balances;
         _movements = movements;
@@ -466,7 +510,7 @@ public sealed class PostInventoryCountCommandHandler : ICommandHandler<PostInven
         {
             var opened = await OpeningInventoryPost.ExecuteAsync(
                 e, raw, plantId, command.Actor, command.Reason, wh,
-                _balances, _movements, _locations, _batches, _packages, _identities, _materials,
+                _balances, _movements, _locations, _batches, _packages, _identities, _materials, _identityCodes,
                 cancellationToken).ConfigureAwait(false);
             if (opened.IsFailure) return opened;
             e.MarkPosted();

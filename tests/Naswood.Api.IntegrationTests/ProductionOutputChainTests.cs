@@ -350,7 +350,7 @@ public class ProductionOutputChainTests
         if (twoSourceBalances)
             db.InventoryBalances.Add(InventoryBalance.Create(rawB.Code, "WH-SFG", "YM-A01", lotB.BatchNumber, 8, 0, "Active", plantId: Plant));
 
-        var mint = PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 9);
+        var mint = SeedCodes.Package(9);
         var pkgA = InventoryPackage.Create(
             mint.PackageNumber, "MI-SRC-A", rawA.Code, lotA.BatchNumber, "WH-SFG", "YM-A01",
             sourcePackageQty, "PCS", mint.BarcodeValue, "Available", plantId: Plant,

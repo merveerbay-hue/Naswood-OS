@@ -21,6 +21,7 @@ public static class OpeningInventoryPost
         IInventoryPackageRepository packages,
         IMaterialIdentityRepository identities,
         IMaterialRepository materials,
+        IIdentityCodeAllocator identityCodes,
         CancellationToken cancellationToken)
     {
         var physical = lines.Where(l => !l.IsDeleted && l.Role == "PHYSICAL" && l.CalculatedStockQty > 0).ToArray();
@@ -54,13 +55,8 @@ public static class OpeningInventoryPost
             resolved.Add((line, material, loc));
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var lotPrefix = OpeningInventoryCodes.LotPrefixForDay(plantId, now);
-        var existingLots = await batches.ListOpeningLotNumbersAsync(lotPrefix, plantId, cancellationToken).ConfigureAwait(false);
-        var lotOrdinal = OpeningInventoryCodes.NextOrdinal(existingLots.Select(x => OpeningInventoryCodes.ParseLotOrdinal(x, plantId, now)));
-        var existingPkgs = await packages.ListPackageNumbersAsync(cancellationToken).ConfigureAwait(false);
-        var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
-            existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, plantId, now)));
+        var site = await PackageIdentityService.RequireSiteCodeAsync(identityCodes, plantId, cancellationToken).ConfigureAwait(false);
+        if (site.IsFailure) return Result.Failure<InventoryCountPostResultDto>(site.Error!);
 
         var lotByMaterial = new Dictionary<Guid, Batch>();
         var createdLots = new List<string>();
@@ -72,18 +68,14 @@ public static class OpeningInventoryPost
             var material = g.First().Material;
             if (!lotByMaterial.TryGetValue(material.Id, out var batch))
             {
-                var lot = OpeningInventoryCodes.OpeningLot(plantId, now, lotOrdinal++);
-                batch = await batches.GetByNumberAndMaterialAsync(lot, material.Code, plantId, cancellationToken).ConfigureAwait(false);
-                if (batch is null)
-                {
-                    batch = Batch.Create(
-                        lot, material.Code, 0, null, "Active",
-                        plantId: plantId,
-                        sourceType: OpeningInventoryCodes.SourceType,
-                        sourceReferenceNo: count.Number);
-                    await batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
-                    createdLots.Add(lot);
-                }
+                var lot = await identityCodes.NextAsync(site.Value, IdentityType.Lot, cancellationToken).ConfigureAwait(false);
+                batch = Batch.Create(
+                    lot, material.Code, 0, null, "Active",
+                    plantId: plantId,
+                    sourceType: OpeningInventoryCodes.SourceType,
+                    sourceReferenceNo: count.Number);
+                await batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+                createdLots.Add(lot);
                 lotByMaterial[material.Id] = batch;
             }
 
@@ -96,10 +88,7 @@ public static class OpeningInventoryPost
                 var loc = stackRows[0].Location;
                 var first = stackRows[0].Line;
 
-                var mint = PackageIdentityService.Mint(plantId, now, pkgOrdinal++);
-                var dup = await packages.ListByBarcodeExactAsync(mint.BarcodeValue, cancellationToken).ConfigureAwait(false);
-                if (dup.Count > 0)
-                    return Result.Failure<InventoryCountPostResultDto>(Error.Validation("INV-PKG-061", $"Barkod çakışması: {mint.BarcodeValue}"));
+                var mint = await PackageIdentityService.MintAsync(identityCodes, site.Value, cancellationToken).ConfigureAwait(false);
 
                 var mi = SystemIdentifier.Ensure(null, "MI");
                 var identity = MaterialIdentity.CreateRoot(

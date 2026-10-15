@@ -111,7 +111,7 @@ public class ProductionExecutionChainTests
         var d1 = await Data(loaded1);
         var wipLot = d1.GetProperty("productionLotNumber").GetString()!;
         var wipBarcode = d1.GetProperty("packages")[0].GetProperty("barcode").GetString()!;
-        Assert.StartsWith("LOT-PR-", wipLot);
+        Assert.Matches("^LOT-BUC-\\d{6,}$", wipLot);
         Assert.Equal(world.PlotNumber, d1.GetProperty("structuralProductionLotNumber").GetString());
         Assert.NotEqual(world.PlotNumber, wipLot);
 
@@ -160,7 +160,7 @@ public class ProductionExecutionChainTests
         loaded2.EnsureSuccessStatusCode();
         var d2 = await Data(loaded2);
         Assert.Equal("Quarantine", d2.GetProperty("qcStatus").GetString());
-        Assert.StartsWith("LOT-PR-", d2.GetProperty("productionLotNumber").GetString());
+        Assert.Matches("^LOT-BUC-\\d{6,}$", d2.GetProperty("productionLotNumber").GetString());
 
         var viewer = await SeedViewerAsync();
         var forbidden = await viewer.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
@@ -558,10 +558,10 @@ public class ProductionExecutionChainTests
             InventoryBalance.Create(raw.Code, "WH-SFG", "WIP-FJ-OUT", lotA.BatchNumber, 2, 0, "Active", plantId: Plant),
             InventoryBalance.Create(raw.Code, "WH-SFG", "WIP-FJ-OUT", lotB.BatchNumber, 2, 0, "Active", plantId: Plant),
             InventoryBalance.Create(raw.Code, "WH-SFG", "Q-01", lotQ.BatchNumber, 1, 0, "Hold", plantId: Plant));
-        var mintA = PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 41);
-        var mintB = PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 42);
-        var mintQ = PackageIdentityService.Mint(Plant, DateTimeOffset.UtcNow, 43);
-        var mint2 = PackageIdentityService.Mint("PLANT-002", DateTimeOffset.UtcNow, 1);
+        var mintA = SeedCodes.Package(41);
+        var mintB = SeedCodes.Package(42);
+        var mintQ = SeedCodes.Package(43);
+        var mint2 = SeedCodes.Package(99_001);
         var pkgA = InventoryPackage.Create(mintA.PackageNumber, "MI-A", raw.Code, lotA.BatchNumber, "WH-SFG", "WIP-FJ-OUT", 2, "M3", mintA.BarcodeValue, "Available", plantId: Plant, publicId: mintA.PublicId, materialId: raw.Id, batchId: lotA.Id, warehouseId: wh.Id, locationId: loc.Id);
         var pkgB = InventoryPackage.Create(mintB.PackageNumber, "MI-B", raw.Code, lotB.BatchNumber, "WH-SFG", "WIP-FJ-OUT", 2, "M3", mintB.BarcodeValue, "Available", plantId: Plant, publicId: mintB.PublicId, materialId: raw.Id, batchId: lotB.Id, warehouseId: wh.Id, locationId: loc.Id);
         var pkgQ = InventoryPackage.Create(mintQ.PackageNumber, "MI-Q", raw.Code, lotQ.BatchNumber, "WH-SFG", "Q-01", 1, "M3", mintQ.BarcodeValue, "Quarantine", plantId: Plant, publicId: mintQ.PublicId, materialId: raw.Id, batchId: lotQ.Id, warehouseId: wh.Id, locationId: qloc.Id);
@@ -630,7 +630,7 @@ public class ProductionExecutionChainTests
         string BarcodeA, string BarcodeB, string QuarantineBarcode, string F02Barcode,
         string LotANo, Guid PlotId, string PlotNumber)
     {
-        public string UnknownBarcode => "NWPKG-NONE";
+        public string UnknownBarcode => "PKG-BUC-999999";
 
         public Guid GetOpId(HttpClient client, int seq)
         {

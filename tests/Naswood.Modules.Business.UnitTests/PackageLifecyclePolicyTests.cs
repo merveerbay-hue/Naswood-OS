@@ -71,8 +71,8 @@ public class PackageLifecyclePolicyTests
         var mat = Guid.NewGuid();
         var lot = Guid.NewGuid();
         return InventoryPackage.Create(
-            "NW-PKG-F01-26-000001", "MI-1", "MAT-1", "LOT-1", "WH-1", "A-01",
-            qty, "PCS", "NWPKG-F01-26-000001", status, plantId: "PLANT-001",
+            "PKG-BUC-000001", "MI-1", "MAT-1", "LOT-1", "WH-1", "A-01",
+            qty, "PCS", "PKG-BUC-000001", status, plantId: "PLANT-001",
             materialId: mat, batchId: lot);
     }
 }

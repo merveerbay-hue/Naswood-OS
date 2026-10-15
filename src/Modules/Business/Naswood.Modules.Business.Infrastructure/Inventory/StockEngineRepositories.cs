@@ -132,13 +132,6 @@ public sealed class InventoryPackageRepository : IInventoryPackageRepository
         return await query.CountAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default)
-        => await _db.Set<InventoryPackage>().AsNoTracking()
-            .Where(x => !x.IsDeleted)
-            .Select(x => x.PackageNumber)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
     public async Task<IReadOnlyList<InventoryPackage>> ListByBarcodeExactAsync(string barcode, CancellationToken cancellationToken = default)
     {
         var key = (barcode ?? string.Empty).Trim();

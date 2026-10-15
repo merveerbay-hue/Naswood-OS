@@ -846,6 +846,10 @@ namespace Naswood.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("SiteCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")

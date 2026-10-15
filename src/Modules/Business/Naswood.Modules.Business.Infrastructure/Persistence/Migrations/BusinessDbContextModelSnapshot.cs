@@ -23,6 +23,18 @@ namespace Naswood.Modules.Business.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("identity_buc_auto", "business");
+
+            modelBuilder.HasSequence("identity_buc_lam", "business");
+
+            modelBuilder.HasSequence("identity_buc_lot", "business");
+
+            modelBuilder.HasSequence("identity_buc_pkg", "business");
+
+            modelBuilder.HasSequence("identity_buc_rest", "business");
+
+            modelBuilder.HasSequence("identity_buc_trf", "business");
+
             modelBuilder.Entity("Naswood.Modules.Business.Domain.Inventory.Batch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -80,9 +92,8 @@ namespace Naswood.Modules.Business.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "BatchNumber" }, "UX_batch_production_lot_alive")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false AND \"SourceType\" = 'PRODUCTION' AND \"BatchNumber\" <> ''");
+                    b.HasIndex(new[] { "BatchNumber" }, "UX_batch_number")
+                        .IsUnique();
 
                     b.ToTable("business_inventory_batch", "business");
                 });
@@ -657,7 +668,7 @@ namespace Naswood.Modules.Business.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<Guid?>("BatchId")
+                    b.Property<Guid>("BatchId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("CompanyId")
@@ -700,7 +711,7 @@ namespace Naswood.Modules.Business.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<Guid?>("MaterialId")
+                    b.Property<Guid>("MaterialId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("MaterialIdentityNumber")
@@ -760,23 +771,17 @@ namespace Naswood.Modules.Business.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Barcode");
-
                     b.HasIndex("BatchId");
 
                     b.HasIndex("MaterialId");
 
-                    b.HasIndex("PackageNumber");
-
                     b.HasIndex("PublicId");
 
-                    b.HasIndex(new[] { "Barcode" }, "UX_package_barcode_alive")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false AND \"Barcode\" <> ''");
+                    b.HasIndex(new[] { "Barcode" }, "UX_package_barcode")
+                        .IsUnique();
 
-                    b.HasIndex(new[] { "PackageNumber" }, "UX_package_number_alive")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false AND \"PackageNumber\" <> ''");
+                    b.HasIndex(new[] { "PackageNumber" }, "UX_package_number")
+                        .IsUnique();
 
                     b.HasIndex(new[] { "PublicId" }, "UX_package_publicid_alive")
                         .IsUnique()
@@ -4124,6 +4129,23 @@ namespace Naswood.Modules.Business.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("business_sales_shipment", "business");
+                });
+
+            modelBuilder.Entity("Naswood.Modules.Business.Domain.Inventory.InventoryPackage", b =>
+                {
+                    b.HasOne("Naswood.Modules.Business.Domain.Inventory.Batch", null)
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_package_batch");
+
+                    b.HasOne("Naswood.Modules.Business.Domain.Inventory.Material", null)
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_package_material");
                 });
 
             modelBuilder.Entity("Naswood.Modules.Business.Domain.Production.StructuralProductionLotInput", b =>

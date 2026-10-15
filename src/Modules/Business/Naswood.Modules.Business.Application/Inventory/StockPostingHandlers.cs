@@ -37,7 +37,6 @@ public interface IInventoryPackageRepository
         string? plantId,
         IReadOnlyList<string> statuses,
         CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<string>> ListPackageNumbersAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryPackage>> ListByBarcodeExactAsync(string barcode, CancellationToken cancellationToken = default);
     Task<InventoryPackage?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryPackage>> ListByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
@@ -145,6 +144,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
     private readonly IInventoryMovementRepository _movements;
     private readonly ILocationRepository _locations;
     private readonly IWarehouseRepository _warehouses;
+    private readonly IIdentityCodeAllocator _identityCodes;
     private readonly IBusinessUnitOfWork _uow;
 
     public ExecuteGoodsReceiptCommandHandler(
@@ -157,8 +157,10 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         IInventoryMovementRepository movements,
         ILocationRepository locations,
         IWarehouseRepository warehouses,
+        IIdentityCodeAllocator identityCodes,
         IBusinessUnitOfWork uow)
     {
+        _identityCodes = identityCodes;
         _receipts = receipts;
         _balances = balances;
         _batches = batches;
@@ -219,6 +221,16 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             });
         }
 
+        // ADR-002 §6: lot, package and barcode codes are minted by the server, never sent by the client.
+        if (command.Lines.Any(l => !string.IsNullOrWhiteSpace(l.LotNumber)
+                                   || !string.IsNullOrWhiteSpace(l.PackageNumber)
+                                   || !string.IsNullOrWhiteSpace(l.Barcode)))
+            return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                "INV-POST-021",
+                "Mal kabulde lot, paket ve barkod kodu sunucuda basılır; istemci kod göndermez."));
+        var site = await PackageIdentityService.RequireSiteCodeAsync(_identityCodes, plantId, cancellationToken).ConfigureAwait(false);
+        if (site.IsFailure) return Result.Failure<ExecuteStockDocumentResultDto>(site.Error!);
+
         var receipt = GoodsReceipt.Create(
             receiptNumber,
             command.WarehouseCode.Trim(),
@@ -230,10 +242,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
         await _receipts.AddAsync(receipt, cancellationToken).ConfigureAwait(false);
 
         var results = new List<StockPostLineResultDto>();
-        var now = DateTimeOffset.UtcNow;
-        var existingPkgs = await _packages.ListPackageNumbersAsync(cancellationToken).ConfigureAwait(false);
-        var pkgOrdinal = OpeningInventoryCodes.NextOrdinal(
-            existingPkgs.Select(x => OpeningInventoryCodes.ParsePackageOrdinal(x, plantId, now)));
+        var lotsByReceiptLine = new Dictionary<string, Batch>(StringComparer.Ordinal);
         var lineNo = 0;
         foreach (var line in command.Lines)
         {
@@ -321,9 +330,16 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
             warehouseCode = warehouse.Code;
             locationCode = location.Code;
 
-            var lotNumber = string.IsNullOrWhiteSpace(line.LotNumber)
-                ? SystemIdentifier.Ensure(null, "LOT")
-                : line.LotNumber.Trim();
+            // One lot per receipt line (Operations parity): the same material on two lines gets two lots;
+            // slices of one receipt line share its lot.
+            var lotKey = line.ReceiptLineNo is int receiptLineNo ? $"R{receiptLineNo}" : $"#{lineNo}";
+            var lotForLine = lotsByReceiptLine.GetValueOrDefault(lotKey);
+            if (lotForLine is not null && !string.Equals(lotForLine.MaterialCode, materialCode, StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
+                    "INV-POST-022",
+                    $"Line {lineNo}: mal kabul satırı {line.ReceiptLineNo} tek malzeme taşır ({lotForLine.MaterialCode})."));
+            var lotNumber = lotForLine?.BatchNumber
+                ?? await _identityCodes.NextAsync(site.Value, IdentityType.Lot, cancellationToken).ConfigureAwait(false);
             var uom = string.IsNullOrWhiteSpace(line.UnitOfMeasure) ? "Piece" : line.UnitOfMeasure.Trim();
             var miNumber = string.IsNullOrWhiteSpace(line.MaterialIdentityNumber)
                 ? SystemIdentifier.Ensure(null, "MI")
@@ -341,7 +357,7 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                 plantId: plantId);
             await _identities.AddAsync(identity, cancellationToken).ConfigureAwait(false);
 
-            var batch = await _batches.GetByNumberAndMaterialAsync(lotNumber, materialCode, plantId, cancellationToken).ConfigureAwait(false);
+            var batch = lotForLine;
             if (batch is null)
             {
                 batch = Batch.Create(
@@ -349,44 +365,15 @@ public sealed class ExecuteGoodsReceiptCommandHandler : ICommandHandler<ExecuteG
                     plantId: plantId,
                     sourceType: "GOODS_RECEIPT",
                     sourceReferenceNo: receipt.Number);
-                    await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
-            }
-            else if (!string.IsNullOrWhiteSpace(batch.PlantId)
-                && !string.Equals(batch.PlantId, plantId, StringComparison.OrdinalIgnoreCase))
-            {
-                return Result.Failure<ExecuteStockDocumentResultDto>(Error.Forbidden(
-                    "INV-POST-403",
-                    $"Line lot '{lotNumber}' belongs to another plant."));
+                await _batches.AddAsync(batch, cancellationToken).ConfigureAwait(false);
+                lotsByReceiptLine[lotKey] = batch;
             }
             batch.ApplyReceipt(line.Quantity, batchStatus == "Hold" ? "Hold" : null);
 
-            string packageNumber;
-            string barcode;
-            string publicId;
-            if (string.IsNullOrWhiteSpace(line.PackageNumber))
-            {
-                var mint = PackageIdentityService.Mint(plantId, now, pkgOrdinal++);
-                packageNumber = mint.PackageNumber;
-                barcode = string.IsNullOrWhiteSpace(line.Barcode) ? mint.BarcodeValue : line.Barcode.Trim();
-                publicId = mint.PublicId;
-            }
-            else
-            {
-                packageNumber = line.PackageNumber.Trim();
-                barcode = string.IsNullOrWhiteSpace(line.Barcode)
-                    ? OpeningInventoryCodes.Barcode(packageNumber)
-                    : line.Barcode.Trim();
-                publicId = Guid.NewGuid().ToString("N");
-            }
-
-            if (!string.IsNullOrWhiteSpace(barcode))
-            {
-                var dup = await _packages.ListByBarcodeExactAsync(barcode, cancellationToken).ConfigureAwait(false);
-                if (dup.Count > 0)
-                    return Result.Failure<ExecuteStockDocumentResultDto>(Error.Validation(
-                        "INV-PKG-061",
-                        $"Barkod çakışması: {barcode}"));
-            }
+            var mint = await PackageIdentityService.MintAsync(_identityCodes, site.Value, cancellationToken).ConfigureAwait(false);
+            var packageNumber = mint.PackageNumber;
+            var barcode = mint.BarcodeValue;
+            var publicId = mint.PublicId;
 
             var package = InventoryPackage.Create(
                 packageNumber, miNumber, materialCode, lotNumber, warehouseCode, locationCode, line.Quantity, uom,
@@ -528,6 +515,7 @@ public sealed class ExecuteGoodsIssueCommandHandler : ICommandHandler<ExecuteGoo
         await _issues.AddAsync(issue, cancellationToken).ConfigureAwait(false);
 
         var results = new List<StockPostLineResultDto>();
+        var lotsByReceiptLine = new Dictionary<string, Batch>(StringComparer.Ordinal);
         var lineNo = 0;
         foreach (var line in command.Lines)
         {

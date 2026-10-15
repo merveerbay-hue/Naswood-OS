@@ -82,6 +82,10 @@ public sealed class BusinessDbContext : DbContext
     {
         modelBuilder.HasDefaultSchema(Schema);
 
+        // ADR-002 §6: one sequence per (site code, identity type).
+        foreach (var sequence in Naswood.Modules.Business.Infrastructure.Inventory.IdentitySequences.All())
+            modelBuilder.HasSequence<long>(sequence, Schema).StartsAt(1).IncrementsBy(1);
+
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.Material>(entity =>
         {
             entity.ToTable("business_inventory_material");
@@ -160,9 +164,8 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Status).HasMaxLength(200);
             entity.Property(x => x.SourceType).HasMaxLength(40);
             entity.Property(x => x.SourceReferenceNo).HasMaxLength(80);
-            entity.HasIndex(x => x.BatchNumber, "UX_batch_production_lot_alive")
-                .IsUnique()
-                .HasFilter("\"IsDeleted\" = false AND \"SourceType\" = 'PRODUCTION' AND \"BatchNumber\" <> ''");
+            // ADR-002 §6: a lot code is minted once and never reused, deleted rows included.
+            entity.HasIndex(x => x.BatchNumber, "UX_batch_number").IsUnique();
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.GoodsReceipt>(entity =>
@@ -232,17 +235,24 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.PhysicalGroupLabel).HasMaxLength(200);
             entity.Property(x => x.SourcePlantId).HasMaxLength(20);
             entity.Property(x => x.CurrentPlantId).HasMaxLength(20);
-            entity.HasIndex(x => x.PackageNumber);
-            entity.HasIndex(x => x.Barcode);
             entity.HasIndex(x => x.PublicId);
             entity.HasIndex(x => x.MaterialId);
             entity.HasIndex(x => x.BatchId);
-            entity.HasIndex(x => x.Barcode, "UX_package_barcode_alive")
-                .IsUnique()
-                .HasFilter("\"IsDeleted\" = false AND \"Barcode\" <> ''");
-            entity.HasIndex(x => x.PackageNumber, "UX_package_number_alive")
-                .IsUnique()
-                .HasFilter("\"IsDeleted\" = false AND \"PackageNumber\" <> ''");
+            // ADR-002 §6: package code and barcode (= package code) are minted once and never reused.
+            entity.HasIndex(x => x.Barcode, "UX_package_barcode").IsUnique();
+            entity.HasIndex(x => x.PackageNumber, "UX_package_number").IsUnique();
+            entity.Property(x => x.MaterialId).IsRequired();
+            entity.Property(x => x.BatchId).IsRequired();
+            entity.HasOne<Naswood.Modules.Business.Domain.Inventory.Material>()
+                .WithMany()
+                .HasForeignKey(x => x.MaterialId)
+                .HasConstraintName("FK_package_material")
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Naswood.Modules.Business.Domain.Inventory.Batch>()
+                .WithMany()
+                .HasForeignKey(x => x.BatchId)
+                .HasConstraintName("FK_package_batch")
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.PublicId, "UX_package_publicid_alive")
                 .IsUnique()
                 .HasFilter("\"IsDeleted\" = false AND \"PublicId\" <> ''");

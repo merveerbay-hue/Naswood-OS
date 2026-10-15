@@ -76,6 +76,7 @@ public class WritePathIdentityTests
             sp.GetRequiredService<IInventoryPackageRepository>(),
             sp.GetRequiredService<IMaterialIdentityRepository>(),
             sp.GetRequiredService<IMaterialRepository>(),
+            sp.GetRequiredService<IIdentityCodeAllocator>(),
             CancellationToken.None);
         Assert.True(result.IsSuccess, result.Error?.Message);
         await sp.GetRequiredService<IBusinessUnitOfWork>().SaveChangesAsync();

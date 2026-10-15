@@ -16,17 +16,15 @@ public sealed class ProductionOutputTests
     [Fact]
     public void Production_lot_number_and_source_type()
     {
-        var day = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
-        Assert.Equal("LOT-PR-F01-260910-0004", ProductionLotCodes.ProductionLot("F01", day, 4));
         Assert.Equal("PRODUCTION", ProductionLotCodes.SourceType);
         Assert.Equal("PRODUCTION_OUTPUT", ProductionLotCodes.OutputMovement);
         Assert.Equal("PRODUCTION_CONSUMPTION", ProductionLotCodes.ConsumptionMovement);
         Assert.Equal("PRODUCTION_OUTPUT_REVERSAL", ProductionLotCodes.OutputReversalMovement);
         Assert.Equal("PRODUCTION_CONSUMPTION_REVERSAL", ProductionLotCodes.ConsumptionReversalMovement);
-        var lot = Batch.Create("LOT-PR-F01-260910-0004", "YM-LM-PIN-FJ-001", 0, null, "Active",
+        var lot = Batch.Create("LOT-BUC-000004", "YM-LM-PIN-FJ-001", 0, null, "Active",
             plantId: "F01", sourceType: ProductionLotCodes.SourceType, sourceReferenceNo: "PRD-2026-0042");
         Assert.Equal("PRODUCTION", lot.SourceType);
-        Assert.False(lot.BatchNumber.StartsWith("LOT-OPEN-", StringComparison.Ordinal));
+        Assert.True(IdentityCodes.TryParse(lot.BatchNumber, out _));
         Assert.False(lot.BatchNumber.StartsWith("PLOT-", StringComparison.Ordinal));
     }
 
@@ -77,23 +75,13 @@ public sealed class ProductionOutputTests
     }
 
     [Fact]
-    public void Identity_service_same_as_opening()
-    {
-        var day = new DateTimeOffset(2026, 9, 10, 0, 0, 0, TimeSpan.Zero);
-        var mint = PackageIdentityService.Mint("F01", day, 401);
-        Assert.Equal("NW-PKG-F01-26-000401", mint.PackageNumber);
-        Assert.Equal("NWPKG-F01-26-000401", mint.BarcodeValue);
-        Assert.Equal("/inventory/packages/p/abc", PackageIdentityService.QrPath("abc"));
-    }
-
-    [Fact]
     public void Package_material_mismatch_is_rejected()
     {
         var material = FjLamel();
         var other = Material.Create("OTHER", "X", "", "YM", "M3", "Active", plantId: "F01");
-        var lot = Batch.Create("LOT-PR-F01-260910-0001", material.Code, 0, null, "Active", plantId: "F01", sourceType: "PRODUCTION");
+        var lot = Batch.Create("LOT-BUC-000001", material.Code, 0, null, "Active", plantId: "F01", sourceType: "PRODUCTION");
         var pkg = InventoryPackage.Create(
-            "NW-PKG-F01-26-000001", "MI-1", material.Code, lot.BatchNumber, "WH-SFG", "YM-A01", 1, "M3",
+            "PKG-BUC-000001", "MI-1", material.Code, lot.BatchNumber, "WH-SFG", "YM-A01", 1, "M3",
             plantId: "F01", materialId: material.Id, batchId: lot.Id);
         Assert.Throws<InvalidOperationException>(() => ProductionLotCodes.EnsurePackageMatchesLot(pkg, lot, other));
         ProductionLotCodes.EnsurePackageMatchesLot(pkg, lot, material);
@@ -128,8 +116,8 @@ public sealed class ProductionOutputTests
             ProductionOutputComposer.GroupStacks(Guid.NewGuid(), Guid.Empty, material.Id, Guid.NewGuid(), resolved.Value.Lines),
             2);
         Assert.Equal("Otomatik oluşturulacak", preview.LotHint);
-        Assert.DoesNotContain("LOT-PR-", preview.LotHint);
-        Assert.DoesNotContain("NW-PKG", preview.Packages[0].PhysicalGroupLabel);
+        Assert.DoesNotContain("LOT-BUC-", preview.LotHint);
+        Assert.DoesNotContain("PKG-BUC-", preview.Packages[0].PhysicalGroupLabel);
         Assert.Equal(1, preview.PackageCount);
     }
 
@@ -174,7 +162,7 @@ public sealed class ProductionOutputTests
     public void Consumption_notes_bind_same_source_lot_as_genealogy()
     {
         var sourceId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-        var notes = ProductionLotCodes.ConsumptionNotes("PRD-1", "LOT-PR-F01-260910-0001", "LOT-GR-A", sourceId, "NW-PKG-F01-26-000010");
+        var notes = ProductionLotCodes.ConsumptionNotes("PRD-1", "LOT-BUC-000001", "LOT-GR-A", sourceId, "PKG-BUC-000010");
         Assert.True(ProductionLotCodes.NotesBindSource(notes, "LOT-GR-A", sourceId));
         Assert.False(ProductionLotCodes.NotesBindSource(notes, "LOT-GR-B", sourceId));
         Assert.False(ProductionLotCodes.NotesBindSource(notes, "LOT-GR-A", Guid.NewGuid()));
@@ -184,7 +172,7 @@ public sealed class ProductionOutputTests
     public void Posted_output_can_be_cancelled_not_deleted()
     {
         var doc = ProductionOutput.Create("POUT-1", Guid.NewGuid(), Guid.NewGuid(), "CLT-001", "WH", "A", null, null, "WC-CLT", "Quarantine", "PLANT-001");
-        doc.MarkPosted(Guid.NewGuid(), "LOT-PR-1", 2, 1, 0, "PCS", "admin");
+        doc.MarkPosted(Guid.NewGuid(), "LOT-BUC-000001", 2, 1, 0, "PCS", "admin");
         doc.MarkCancelled("admin", "yanlış miktar");
         Assert.Equal(ProductionOutputStatuses.Cancelled, doc.Status);
         Assert.Equal("yanlış miktar", doc.CancelReason);
@@ -198,7 +186,7 @@ public sealed class ProductionOutputTests
         var id = Guid.NewGuid();
         var pkgs = new Dictionary<Guid, PackagePhysicalSnapshot>
         {
-            [id] = new(id, "NW-PKG-1", InventoryPackageStatuses.Available, 2.00m, 2.00m)
+            [id] = new(id, "PKG-BUC-000001", InventoryPackageStatuses.Available, 2.00m, 2.00m)
         };
         var ok = PackageConsumptionIntegrity.Validate(new[] { (id, 1.20m), (id, 0.80m) }, pkgs);
         Assert.True(ok.IsSuccess);
@@ -213,20 +201,20 @@ public sealed class ProductionOutputTests
         var material = FjLamel();
         var lot = Batch.Create("LOT-GR-A", material.Code, 2, null, "Active", plantId: "F01");
         var pkg = InventoryPackage.Create(
-            "NW-PKG-F01-26-000010", "MI-1", material.Code, lot.BatchNumber, "WH", "A", 2, "M3",
-            "NWPKG-F01-26-000010", plantId: "F01", materialId: material.Id, batchId: lot.Id);
+            "PKG-BUC-000010", "MI-1", material.Code, lot.BatchNumber, "WH", "A", 2, "M3",
+            "PKG-BUC-000010", plantId: "F01", materialId: material.Id, batchId: lot.Id);
         pkg.Consume(2);
         Assert.Equal(InventoryPackageStatuses.Consumed, pkg.Status);
         Assert.Equal(0m, pkg.Quantity);
         pkg.Restore(2);
         Assert.Equal(InventoryPackageStatuses.Available, pkg.Status);
         Assert.Equal(2m, pkg.Quantity);
-        Assert.Equal("NW-PKG-F01-26-000010", pkg.PackageNumber);
-        Assert.Equal("NWPKG-F01-26-000010", pkg.Barcode);
+        Assert.Equal("PKG-BUC-000010", pkg.PackageNumber);
+        Assert.Equal("PKG-BUC-000010", pkg.Barcode);
 
         var outPkg = InventoryPackage.Create(
-            "NW-PKG-F01-26-000011", "MI-2", material.Code, "LOT-PR-1", "WH", "A", 4, "PCS",
-            "NWPKG-F01-26-000011", "Quarantine", plantId: "F01", materialId: material.Id, batchId: Guid.NewGuid());
+            "PKG-BUC-000011", "MI-2", material.Code, "LOT-BUC-000001", "WH", "A", 4, "PCS",
+            "PKG-BUC-000011", "Quarantine", plantId: "F01", materialId: material.Id, batchId: Guid.NewGuid());
         outPkg.MarkCancelled();
         Assert.Equal(4m, outPkg.Quantity);
         Assert.Equal(InventoryPackageStatuses.Cancelled, outPkg.Status);
@@ -239,7 +227,7 @@ public sealed class ProductionOutputTests
     public void Qc_release_and_reject_change_status_not_qty()
     {
         var doc = ProductionOutput.Create("POUT-2", Guid.NewGuid(), Guid.NewGuid(), "CLT-001", "WH", "A", null, null, "WC-CLT", "Quarantine", "PLANT-001");
-        doc.MarkPosted(Guid.NewGuid(), "LOT-PR-1", 2, 4, 0, "PCS", "admin");
+        doc.MarkPosted(Guid.NewGuid(), "LOT-BUC-000001", 2, 4, 0, "PCS", "admin");
         doc.RecordQc("Released", "qa", "INS-1", "ok");
         Assert.Equal(ProductionQcDecisions.Released, doc.QcDecision);
         Assert.Equal("Available", doc.StockStatus);

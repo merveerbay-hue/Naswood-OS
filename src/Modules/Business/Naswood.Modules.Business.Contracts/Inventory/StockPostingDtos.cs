@@ -20,6 +20,11 @@ public sealed class StockPostLineRequestDto
     public decimal? ActualThicknessMm { get; init; }
     public decimal? ActualWidthMm { get; init; }
     public decimal? ActualLengthMm { get; init; }
+    /// <summary>
+    /// Goods receipt only: the receipt line this stock slice belongs to. Slices of one receipt line
+    /// (warehouses, dimension groups, quality buckets) share one lot; without it each slice is its own line.
+    /// </summary>
+    public int? ReceiptLineNo { get; init; }
 }
 
 public sealed class ExecuteGoodsReceiptRequestDto
@@ -115,7 +120,6 @@ public sealed class PackagePassportDto
     public required string PackageNo { get; init; }
     public required string Barcode { get; init; }
     public required string PublicId { get; init; }
-    public required string QrPath { get; init; }
     public required string MaterialCode { get; init; }
     public string MaterialName { get; init; } = string.Empty;
     public string MaterialGroup { get; init; } = string.Empty;
