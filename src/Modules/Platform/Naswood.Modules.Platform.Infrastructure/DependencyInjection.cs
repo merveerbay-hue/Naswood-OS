@@ -43,7 +43,7 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'Platform' is required.");
 
         services.AddDbContext<PlatformDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, PlatformDbContext.ConfigureNpgsql));
 
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthUserRepository, AuthUserRepository>();

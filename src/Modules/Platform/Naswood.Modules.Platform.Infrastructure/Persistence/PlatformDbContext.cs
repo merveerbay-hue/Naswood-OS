@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using Naswood.Modules.Platform.Application.Users;
 using Naswood.Modules.Platform.Domain.Authentication;
 using Naswood.Modules.Platform.Domain.Authorization;
@@ -46,9 +48,15 @@ public sealed class PlatformDbContext : DbContext
     public DbSet<Naswood.Modules.Platform.Domain.Files.StoredFile> Files =>
         Set<Naswood.Modules.Platform.Domain.Files.StoredFile>();
 
+    public const string Schema = "platform";
+
+    /// <summary>Keeps this module's migration history inside its own schema.</summary>
+    public static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql) =>
+        npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schema);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("platform");
+        modelBuilder.HasDefaultSchema(Schema);
 
         modelBuilder.Entity<AuthUser>(entity =>
         {
