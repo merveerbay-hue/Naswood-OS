@@ -18,6 +18,7 @@ using Naswood.Modules.Platform.Application.Files;
 using Naswood.Modules.Platform.Application.Health;
 using Naswood.Modules.Platform.Application.Settings;
 using Naswood.Modules.Platform.Application.Users;
+using Naswood.Modules.Platform.Contracts.Organization;
 using Naswood.Modules.Platform.Infrastructure.Audit;
 using Naswood.Modules.Platform.Infrastructure.Authentication;
 using Naswood.Modules.Platform.Infrastructure.Authorization;
@@ -51,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<ILoginHistoryRepository, LoginHistoryRepository>();
         services.AddScoped<IUserManagementRepository, UserManagementRepository>();
         services.AddScoped<IOrganizationReferenceRepository, OrganizationReferenceRepository>();
+        services.AddScoped<IPlantSiteCodeReader, PlantSiteCodeReader>();
         services.AddScoped<IUserHistoryRepository, UserHistoryRepository>();
         services.AddScoped<IAuditWriter, AuditLogRepository>();
         services.AddScoped<IAuditQueryRepository, AuditLogRepository>();
