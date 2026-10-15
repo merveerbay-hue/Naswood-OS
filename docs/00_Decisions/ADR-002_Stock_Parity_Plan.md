@@ -45,6 +45,16 @@ Ortak temel kurallar (iki tarafta da geçerli olacak): bakiye yalnızca kesinle�
 | **P6** | Ekran yapısı: menü ve sekmeler Operations düzenine | Görünüm birebirliği; P1–P5 ekranları bu kabuğa oturur |
 | **P7** | Karşılıklı salt-okunur stok görünümü ve kimlik çözümleme uç noktası (NOS tarafı); Operations tarafı Cuma sonrası | Etiketin karşı tesiste tanınması |
 
+## Takip işleri (PR #96 bulguları, 2026-10-15)
+
+| # | Bulgu | Aşama |
+|---|---|---|
+| T1 | Stok transferi paketi id vermeden taşıyor; bakiye yeni depoya geçerken paket eski depoda görünüyor (`StockTransferExecuteHandlers.cs`) | P3 |
+| T2 | Kısmi taşımada tesisi boş depoya giden pakette `WarehouseId` boş kalıyor (`PackageLifecycleGateway.cs`, `WarehouseRepository.cs`); geçici doldurma `BusinessStartupDataFixes`'ta | P3 |
+| T3 | MP malzeme M2 ile açılabiliyor, açılışta M3'e çevriliyor; kural oluşturma anında zorlanmalı, başlangıç düzeltmesi silinmeli | P5 |
+| T4 | Paralel üretim başlatma toparlaması unique indekslerin oluşturulma sırasına bağlı; hata kısıt adıyla yakalanmalı | Ayrı PR |
+| T5 | 79 tabloda 1 yabancı anahtar; referans bütünlüğü her aşamada dokunulan tablolara eklenir | P0–P7 |
+
 ## Açık konular
 
 - Operations Windows Print Bridge'i Supabase kuyruğuna bağlıdır. NOS'un aynı köprüyü mü (iki kuyruğu dinleyen sürüm) yoksa kendi köprüsünü mü kullanacağı P1'de karar verilir.
