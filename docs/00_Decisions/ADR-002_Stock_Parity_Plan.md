@@ -54,6 +54,7 @@ Ortak temel kurallar (iki tarafta da geçerli olacak): bakiye yalnızca kesinle�
 | T3 | MP malzeme M2 ile açılabiliyor, açılışta M3'e çevriliyor; kural oluşturma anında zorlanmalı, başlangıç düzeltmesi silinmeli | P5 |
 | T4 | Paralel üretim başlatma toparlaması unique indekslerin oluşturulma sırasına bağlı; hata kısıt adıyla yakalanmalı | Ayrı PR |
 | T5 | 79 tabloda 1 yabancı anahtar; referans bütünlüğü her aşamada dokunulan tablolara eklenir | P0–P7 |
+| T6 | Bucak üç tesis kaydıyla duruyor (`PLANT-001`, `BUCAK`, `F01`) ve birçok handler boş tesiste sessizce `PLANT-001` varsayıyor; tek tesis kaydına birleştirilmeli, varsayılan tesis kaldırılmalı (tesis yoksa hata) | P5 |
 
 ## Açık konular
 
