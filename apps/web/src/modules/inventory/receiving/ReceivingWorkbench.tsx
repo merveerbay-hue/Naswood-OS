@@ -41,7 +41,6 @@ import {
   acceptedStockLines,
   buildDefaultDistributions,
   buildExecuteLines,
-  mintLotNumber,
   validateDistributions,
   type DistributionAllowlist,
   type StockDistributionRow,
@@ -114,7 +113,6 @@ export function ReceivingWorkbench() {
   const [location, setLocation] = useState('');
   const [distributions, setDistributions] = useState<StockDistributionRow[]>([]);
   const [grNumber] = useState(() => mintPreview('GR'));
-  const [sharedLot] = useState(() => mintLotNumber());
   const [lotNote, setLotNote] = useState('');
   const [lotTracking, setLotTracking] = useState(true);
 
@@ -373,7 +371,7 @@ export function ReceivingWorkbench() {
         throw new Error(t('wb.rcv.gateNeedWh'));
       }
 
-      const postLines = buildExecuteLines(incomingLines, distributions, sharedLot);
+      const postLines = buildExecuteLines(incomingLines, distributions);
       if (postLines.length === 0) throw new Error(t('wb.rcv.stockStep.noAccepted'));
       const headerWh = postLines[0]!.warehouseCode;
 
@@ -397,7 +395,6 @@ export function ReceivingWorkbench() {
         extractSource: 'manual',
         plantId: postingPlantId,
         notes: [
-          `lot=${sharedLot}`,
           `lotTracking=${lotTracking}`,
           lotNote ? `lotNote=${lotNote}` : null,
           `pipeline=truckEvidence>materialCheck>physicalCount>compare>result>stock`,
@@ -434,13 +431,11 @@ export function ReceivingWorkbench() {
           materialId: p.materialId,
           warehouseCode: p.warehouseCode,
           locationCode: p.locationCode,
-          lotNumber: p.lotNumber,
-          packageNumber: p.packageNumber,
           materialIdentityNumber: p.materialIdentityNumber,
           quantity: p.quantity,
           unitOfMeasure: p.unitOfMeasure,
-          barcode: p.barcode,
           stockStatus: p.stockStatus,
+          receiptLineNo: p.receiptLineNo,
           actualThicknessMm: p.actualThicknessMm ?? undefined,
           actualWidthMm: p.actualWidthMm ?? undefined,
           actualLengthMm: p.actualLengthMm ?? undefined,
@@ -454,7 +449,7 @@ export function ReceivingWorkbench() {
         ...m,
         gr: created.documentNumber || grNumber,
         mi: line?.materialIdentityNumber || m.mi,
-        lot: line?.lotNumber || sharedLot || m.lot,
+        lot: [...new Set((created.lines ?? []).map((l) => l.lotNumber).filter(Boolean))].join(', ') || m.lot,
         pkg: line?.packageNumber || m.pkg,
       }));
       setPosted(true);
@@ -510,7 +505,7 @@ export function ReceivingWorkbench() {
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{t('wizard.systemCode')}</p>
             <p className="font-mono text-sm font-medium">{minted.gr ?? grNumber}</p>
             <p className="font-mono text-xs text-[var(--text-secondary)]">
-              {lotTracking ? minted.lot || sharedLot : t('wb.rcv.lotOff')}
+              {lotTracking ? minted.lot || t('wb.rcv.lot.pending') : t('wb.rcv.lotOff')}
             </p>
             <p className="text-[10px] text-[var(--text-muted)]">GR · LOT</p>
           </div>
@@ -665,7 +660,7 @@ export function ReceivingWorkbench() {
                   postedDocumentNumber={minted.gr || grNumber}
                   postBlockedReason={postBlockedReason}
                   disabled={posted}
-                  lotNumber={sharedLot}
+                  lotNumber={minted.lot ?? ''}
                   lotTracking={lotTracking}
                   onLotTrackingChange={setLotTracking}
                   lotNote={lotNote}

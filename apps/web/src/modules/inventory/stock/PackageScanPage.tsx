@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@naswood/ui';
+import { resolveScan } from './identityCode';
 import { getPackageByBarcode } from './packagePassportApi';
 
 export function PackageScanPage() {
@@ -10,12 +11,24 @@ export function PackageScanPage() {
   const [busy, setBusy] = useState(false);
 
   async function lookup(raw: string) {
-    const barcode = raw.trim();
-    if (!barcode) return;
-    setBusy(true);
+    if (!raw.trim()) return;
     setErr(null);
+    const scan = resolveScan(raw);
+    if (scan.kind === 'invalid' || scan.kind === 'foreign' || scan.kind === 'unsupported') {
+      setErr(scan.kind === 'invalid' ? scan.message : `${scan.code}: ${scan.message}`);
+      return;
+    }
+    if (scan.kind === 'lot') {
+      navigate({ to: '/inventory/stock/lots' });
+      return;
+    }
+    if (scan.kind === 'transfer') {
+      navigate({ to: '/inventory/operations/transfers' });
+      return;
+    }
+    setBusy(true);
     try {
-      const doc = await getPackageByBarcode(barcode);
+      const doc = await getPackageByBarcode(scan.code);
       navigate({ to: '/inventory/packages/p/$publicId', params: { publicId: doc.publicId } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Barkod sistemde bulunamadı.');
@@ -31,11 +44,11 @@ export function PackageScanPage() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-[var(--text-muted)]">
-          Tam barkod + Enter. Malzeme/lot aramayın — sistem paketin allowedActions listesine göre taşı, böl, paketle veya üretime ver der.
+          Paket kodu (PKG-BUC-000001) okutun veya yazın + Enter. Ön eksiz ya da ANT kodlar Antalya'ya aittir.
         </p>
         <Input
           autoFocus
-          placeholder="NWPKG-F01-26-000001"
+          placeholder="PKG-BUC-000001"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => {

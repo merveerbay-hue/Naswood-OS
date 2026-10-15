@@ -212,7 +212,7 @@ export function StockStep({
         </label>
         <div>
           <p className="text-[10px] uppercase text-[var(--text-muted)]">{t('wb.rcv.lot.number')}</p>
-          <p className="font-mono text-sm font-medium">{lotTracking ? lotNumber : '—'}</p>
+          <p className="font-mono text-sm font-medium">{lotTracking ? lotNumber || t('wb.rcv.lot.pending') : '—'}</p>
           <p className="text-xs text-[var(--text-muted)]">{t('wb.rcv.lot.autoHint')}</p>
         </div>
         <label className="block space-y-1">

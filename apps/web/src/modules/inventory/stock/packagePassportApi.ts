@@ -27,7 +27,6 @@ export type PackagePassport = {
   packageNo: string;
   barcode: string;
   publicId: string;
-  qrPath: string;
   materialCode: string;
   materialName: string;
   materialGroup: string;

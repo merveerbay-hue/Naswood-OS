@@ -1,3 +1,6 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { QRCodeSVG } from 'qrcode.react';
 import { code128Svg } from './code128Svg';
 import type { PackagePassport } from './packagePassportApi';
 
@@ -12,6 +15,11 @@ export function sourceLine(p: PackagePassport) {
   return p.sourceType || '';
 }
 
+/** QR carries the package code only (ADR-002 §6); generated locally, no external service. */
+export function qrSvg(code: string) {
+  return renderToStaticMarkup(createElement(QRCodeSVG, { value: code, size: 110, level: 'M', marginSize: 0 }));
+}
+
 function esc(s: string) {
   return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 }
@@ -20,7 +28,6 @@ export function buildPackageLabelHtml(docs: PackagePassport[], printedAt = new D
   const when = printedAt.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
   const cards = docs
     .map((p) => {
-      const qr = encodeURIComponent(`${window.location.origin}${p.qrPath}`);
       const rows = (p.contents ?? []).slice(0, 4);
       const extra = (p.contents?.length ?? 0) > 4 ? `<div class="muted">+${p.contents.length - 4} ölçü — QR ile detay</div>` : '';
       const measures = rows
@@ -42,7 +49,7 @@ export function buildPackageLabelHtml(docs: PackagePassport[], printedAt = new D
         <div class="loc">${esc(p.factory)} · ${esc(p.warehouseCode)} / ${esc(p.locationCode)} · ${esc(p.status)}</div>
         <div class="codes">
           <div class="bc">${code128Svg(p.barcode)}</div>
-          <img alt="QR" src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${qr}" />
+          <div class="qr">${qrSvg(p.packageNo)}</div>
         </div>
         <div class="bc-text">${esc(p.barcode)}</div>
         <footer>Etiket: ${esc(when)}</footer>
@@ -63,7 +70,7 @@ table { width: 100%; font-size: 11px; margin: 3px 0; }
 .codes { display: flex; align-items: flex-end; justify-content: space-between; gap: 4mm; margin-top: 2mm; }
 .bc svg { height: 12mm; width: auto; max-width: 62mm; }
 .bc-text { font-family: monospace; font-size: 11px; letter-spacing: .08em; }
-img { width: 18mm; height: 18mm; }
+.qr svg { width: 18mm; height: 18mm; }
 </style></head><body>${cards}<script>window.onload=()=>window.print()</script></body></html>`;
 }
 

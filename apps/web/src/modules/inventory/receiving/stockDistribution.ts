@@ -206,13 +206,12 @@ export type ExecutePostLine = {
   materialId: string;
   warehouseCode: string;
   locationCode: string;
-  lotNumber: string;
-  packageNumber: string;
   materialIdentityNumber: string;
   quantity: number;
   unitOfMeasure: string;
-  barcode: string;
   stockStatus: 'Available' | 'Quarantine';
+  /** Receipt line this slice belongs to — slices of one line share one server-minted lot. */
+  receiptLineNo: number;
   /** Actual physical dims for this stock slice (not material nominal). */
   actualThicknessMm?: number | null;
   actualWidthMm?: number | null;
@@ -220,31 +219,23 @@ export type ExecutePostLine = {
   actualDimsLabel?: string | null;
 };
 
-/** Operational lot for a goods-receipt / shipment session — not per dim group / WH / package. */
-export function mintLotNumber(now = new Date()): string {
-  const year = now.getFullYear();
-  const seq = String(Math.floor(10000 + Math.random() * 90000)).padStart(5, '0');
-  return `LOT-${year}-${seq}`;
-}
-
-function mintPreview(prefix: string) {
-  if (prefix === 'LOT') return mintLotNumber();
+function mintMaterialIdentityPreview() {
   const seq =
     new Date().toISOString().slice(2, 10).replace(/-/g, '') +
     '-' +
     String(Math.floor(100000 + Math.random() * 900000));
-  return `${prefix}-${seq}`;
+  return `MI-${seq}`;
 }
 
-/** Build multi-line execute payload from validated distributions. */
-export function buildExecuteLines(
-  lines: IncomingLine[],
-  dists: StockDistributionRow[],
-  sharedLot?: string,
-): ExecutePostLine[] {
-  const byId = new Map(acceptedStockLines(lines).map((l) => [l.id, l]));
-  // One lot per receiving/shipment — shared across dim groups, warehouses, quality buckets.
-  const lot = sharedLot?.trim() || mintLotNumber();
+/**
+ * Build multi-line execute payload from validated distributions.
+ * Lot, package and barcode codes are minted by the server (ADR-002 §6): one lot per receipt line,
+ * one package per slice, barcode = package code.
+ */
+export function buildExecuteLines(lines: IncomingLine[], dists: StockDistributionRow[]): ExecutePostLine[] {
+  const accepted = acceptedStockLines(lines);
+  const byId = new Map(accepted.map((l) => [l.id, l]));
+  const receiptLineNo = new Map(accepted.map((l, i) => [l.id, i + 1]));
   const result: ExecutePostLine[] = [];
 
   for (const d of dists) {
@@ -252,8 +243,6 @@ export function buildExecuteLines(
     if (!line) continue;
     const qty = parseQty(d.qty);
     if (qty <= 0) continue;
-    const mi = mintPreview('MI');
-    const pkg = mintPreview('PKG');
     const group = d.groupId ? line.physicalGroups.find((g) => g.id === d.groupId) ?? null : null;
     const t = group ? Number(group.thicknessMm) : Number(line.physicalGroups[0]?.thicknessMm);
     const w = group ? Number(group.widthMm) : Number(line.physicalGroups[0]?.widthMm);
@@ -264,13 +253,11 @@ export function buildExecuteLines(
       materialId: line.matchedMaterialId.trim(),
       warehouseCode: d.warehouseCode.trim(),
       locationCode: d.locationCode.trim(),
-      lotNumber: lot,
-      packageNumber: pkg,
-      materialIdentityNumber: mi,
+      materialIdentityNumber: mintMaterialIdentityPreview(),
       quantity: qty,
       unitOfMeasure: 'Piece',
-      barcode: pkg,
       stockStatus: d.bucket === 'quarantine' ? 'Quarantine' : 'Available',
+      receiptLineNo: receiptLineNo.get(line.id)!,
       actualThicknessMm: Number.isFinite(t) && t > 0 ? t : null,
       actualWidthMm: Number.isFinite(w) && w > 0 ? w : null,
       actualLengthMm: Number.isFinite(len) && len > 0 ? len : null,

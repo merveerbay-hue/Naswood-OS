@@ -143,9 +143,9 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   dists[0]!.locationCode = 'K-01';
   const v = validateDistributions([line], dists);
   assert(v.ok, 'TEST8 validate');
-  const posts = buildExecuteLines([line], dists, 'LOT-TEST8');
+  const posts = buildExecuteLines([line], dists);
   assert(posts.length === 2, 'TEST8 two post lines');
-  assert(posts.every((p) => p.lotNumber === 'LOT-TEST8'), 'TEST8 same lot for both buckets');
+  assert(posts.every((p) => p.receiptLineNo === 1), 'TEST8 same receipt line → server mints one lot for both buckets');
   const q = posts.find((p) => p.stockStatus === 'Quarantine');
   const a = posts.find((p) => p.stockStatus === 'Available');
   assert(q?.quantity === 20, 'TEST8 quarantine qty');
@@ -162,22 +162,21 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   dists[0]!.locationCode = 'A-03';
   dists[1]!.warehouseCode = 'WH-B';
   dists[1]!.locationCode = 'B-02';
-  const posts = buildExecuteLines([line], dists, 'LOT-2026-00125');
+  const posts = buildExecuteLines([line], dists);
   assert(posts.length === 2, 'TEST8b two groups');
-  assert(posts[0]!.lotNumber === posts[1]!.lotNumber, 'TEST8b same lot');
-  assert(posts[0]!.lotNumber === 'LOT-2026-00125', 'TEST8b lot value');
+  assert(posts[0]!.receiptLineNo === posts[1]!.receiptLineNo, 'TEST8b same receipt line → same lot');
+  assert(posts.every((p) => !('lotNumber' in p) && !('packageNumber' in p) && !('barcode' in p)), 'TEST8b client sends no lot/package/barcode code');
   assert(posts[0]!.materialIdentityNumber !== posts[1]!.materialIdentityNumber, 'TEST8b distinct MI backend');
-  assert(posts[0]!.packageNumber !== posts[1]!.packageNumber, 'TEST8b distinct PKG');
   assert(posts[0]!.actualThicknessMm === 45 && posts[1]!.actualThicknessMm === 46, 'TEST8b actual dims');
-  console.log('TEST8b OK — one lot · two phys groups · two WH · MI/PKG backend');
+  console.log('TEST8b OK — one receipt line · two phys groups · two WH · LOT/PKG minted by backend');
 }
 
 // --- TEST 9: idempotent post payload stable GR number (FE contract) ---
 {
   const line = lumberLine();
   const dists = buildDefaultDistributions([line], 'WH-RM', 'A-03');
-  const posts1 = buildExecuteLines([line], dists, 'LOT-IDEMP');
-  const posts2 = buildExecuteLines([line], dists, 'LOT-IDEMP');
+  const posts1 = buildExecuteLines([line], dists);
+  const posts2 = buildExecuteLines([line], dists);
   assert(posts1.length === posts2.length, 'TEST9 same line count');
   assert(
     posts1.reduce((s, p) => s + p.quantity, 0) === 98 &&
@@ -309,15 +308,15 @@ function lumberLine(overrides: Partial<IncomingLine> = {}): IncomingLine {
   const dists = buildDefaultDistributions([line], 'WH-RM', 'A-03');
   dists[0]!.locationCode = 'A-03';
   dists[1]!.locationCode = 'A-04';
-  const posts = buildExecuteLines([line], dists, 'LOT-001');
+  const posts = buildExecuteLines([line], dists);
   assert(posts.length === 2, 'two physical posts');
-  assert(posts.every((p) => p.lotNumber === 'LOT-001'), 'same lot');
+  assert(posts.every((p) => p.receiptLineNo === 1), 'same receipt line → same lot');
   assert(posts[0]!.locationCode === 'A-03' && posts[1]!.locationCode === 'A-04', 'two locs');
   assert(posts.reduce((s, p) => s + p.quantity, 0) === 98, 'total 98');
   const keys = new Set(
     posts.map(
       (p) =>
-        `F01|${p.materialCode}|${p.lotNumber}|${p.warehouseCode}|${p.locationCode}`.toUpperCase(),
+        `F01|${p.materialCode}|${p.receiptLineNo}|${p.warehouseCode}|${p.locationCode}`.toUpperCase(),
     ),
   );
   assert(keys.size === 2, 'two balance keys');
