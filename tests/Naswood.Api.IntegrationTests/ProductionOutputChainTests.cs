@@ -55,6 +55,7 @@ public class ProductionOutputChainTests
     {
         await _factory.ResetDatabaseAsync();
         var world = await SeedAsync(twoSourceBalances: true, sourcePackageQty: 10);
+        var writtenAfter = DateTimeOffset.UtcNow;
         var client = await LoginAsync();
 
         var preview = await client.PostAsJsonAsync("/api/v1/production-outputs/preview", world.DefaultPost(3, 2));
@@ -110,6 +111,8 @@ public class ProductionOutputChainTests
         var closedScan = await client.GetAsync($"/api/v1/production-outputs/consume-by-barcode/{Uri.EscapeDataString(outBarcode)}");
         Assert.Equal(HttpStatusCode.BadRequest, closedScan.StatusCode);
         Assert.Equal(0m, BalanceOf(lotNo));
+
+        await WritePathIdentity.AssertCompleteAsync(_factory, writtenAfter);
     }
 
     [Fact]

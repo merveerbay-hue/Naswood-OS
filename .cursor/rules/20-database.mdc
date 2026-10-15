@@ -27,7 +27,10 @@ alwaysApply: false
 
 ## Migration
 
-- Şema değişikliği versiyonlu EF Core migration ile gider. Uygulanmış migration dosyasını düzenleme.
+- Şema değişikliği yalnız versiyonlu EF Core migration ile gider. `Program.cs`'e veya başka bir yere ALTER/CREATE/`EnsureCreated` ekleme. Uygulanmış migration dosyasını düzenleme.
+- Her şema değişikliği PR'ında `dotnet ef migrations has-pending-model-changes --project <Infrastructure projesi> --context <DbContext>` iki DbContext için de temiz olmalı.
+- Migration modülün Infrastructure projesinde `Persistence/Migrations/` altında durur. Ad PascalCase, fiille başlar ve tek değişikliği söyler: `AddPackageLabelProfile`, `AddIndexMovementDocumentDate`, `RenameBatchSourceType`. Dosya `20261020103000_AddPackageLabelProfile.cs` olur. İlk migration `Baseline`'dır.
+- Açılışta yalnız `MigrateAsync` çalışır. `BusinessStartupDataFixes.cs` yalnız iki geçici veri düzeltmesi içerir (MP M2→M3, paket `WarehouseId` doldurma); oraya yeni düzeltme eklenmez, ikisi de kaynak hata düzeltilince silinir.
 - Ad değişikliği söyler. Bir migration tek değişiklik taşır. `Down` geri alır.
 - Üretim veritabanına elle SQL uygulama.
 - Yabancı anahtar zorunludur. `ON DELETE CASCADE` kullanma. Restrict veya yumuşak silme kullan.

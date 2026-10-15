@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
 namespace Naswood.Modules.Business.Infrastructure.Persistence;
 
@@ -70,9 +72,15 @@ public sealed class BusinessDbContext : DbContext
     public DbSet<Naswood.Modules.Business.Domain.Production.ProductionExecutionScrap> ProductionExecutionScraps => Set<Naswood.Modules.Business.Domain.Production.ProductionExecutionScrap>();
     public DbSet<Naswood.Modules.Business.Domain.Production.ShopFloorFieldFeedback> ShopFloorFieldFeedbacks => Set<Naswood.Modules.Business.Domain.Production.ShopFloorFieldFeedback>();
 
+    public const string Schema = "business";
+
+    /// <summary>Keeps this module's migration history inside its own schema.</summary>
+    public static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql) =>
+        npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schema);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("business");
+        modelBuilder.HasDefaultSchema(Schema);
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.Material>(entity =>
         {
@@ -152,6 +160,9 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Status).HasMaxLength(200);
             entity.Property(x => x.SourceType).HasMaxLength(40);
             entity.Property(x => x.SourceReferenceNo).HasMaxLength(80);
+            entity.HasIndex(x => x.BatchNumber, "UX_batch_production_lot_alive")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"SourceType\" = 'PRODUCTION' AND \"BatchNumber\" <> ''");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.GoodsReceipt>(entity =>
@@ -226,6 +237,15 @@ public sealed class BusinessDbContext : DbContext
             entity.HasIndex(x => x.PublicId);
             entity.HasIndex(x => x.MaterialId);
             entity.HasIndex(x => x.BatchId);
+            entity.HasIndex(x => x.Barcode, "UX_package_barcode_alive")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"Barcode\" <> ''");
+            entity.HasIndex(x => x.PackageNumber, "UX_package_number_alive")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"PackageNumber\" <> ''");
+            entity.HasIndex(x => x.PublicId, "UX_package_publicid_alive")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"PublicId\" <> ''");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.InventoryPackageContent>(entity =>
@@ -263,6 +283,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Notes).HasColumnType("text");
             entity.HasIndex(x => x.MovementNumber);
             entity.HasIndex(x => x.DocumentNumber);
+            entity.HasIndex(x => x.PackageId, "IX_movement_packageid");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.StockTransfer>(entity =>
@@ -915,6 +936,9 @@ public sealed class BusinessDbContext : DbContext
                 .IsUnique()
                 .HasFilter("\"IsDeleted\" = false AND \"ProductionOperationExecutionId\" IS NOT NULL")
                 .HasDatabaseName("UX_prd_out_execution");
+            entity.HasIndex(x => x.Number, "UX_production_output_number_alive")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"Number\" <> ''");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionLotSource>(entity =>
@@ -943,6 +967,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Status).HasMaxLength(40);
             entity.HasIndex(x => x.ProductionOrderId);
             entity.HasIndex(x => x.WorkCenterId);
+            entity.HasIndex(x => x.ProductionOrderId, "IX_prd_op_order");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionOperationExecution>(entity =>
@@ -970,6 +995,9 @@ public sealed class BusinessDbContext : DbContext
                 .HasFilter("\"IsDeleted\" = false AND \"Status\" IN ('RUNNING','PAUSED','NOT_STARTED')")
                 .HasDatabaseName("UX_prd_exec_open_operation");
             entity.HasIndex(x => x.WorkCenterId);
+            entity.HasIndex(x => new { x.PlantId, x.Number }, "UX_prd_exec_number")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"Number\" <> ''");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionExecutionEvent>(entity =>
@@ -984,6 +1012,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.ReasonCode).HasMaxLength(40);
             entity.Property(x => x.Note).HasMaxLength(500);
             entity.HasIndex(x => x.ExecutionId);
+            entity.HasIndex(x => x.ExecutionId, "IX_prd_exec_event");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionExecutionConsumption>(entity =>
@@ -1008,6 +1037,7 @@ public sealed class BusinessDbContext : DbContext
                 .IsUnique()
                 .HasFilter("\"IsDeleted\" = false AND \"IdempotencyKey\" <> ''")
                 .HasDatabaseName("UX_prd_exec_consume_idem");
+            entity.HasIndex(x => x.ExecutionId, "IX_prd_exec_cons");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ProductionExecutionScrap>(entity =>
@@ -1022,6 +1052,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Note).HasMaxLength(500);
             entity.Property(x => x.UserId).HasMaxLength(200);
             entity.HasIndex(x => x.ExecutionId);
+            entity.HasIndex(x => x.ExecutionId, "IX_prd_exec_scrap");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Production.ShopFloorFieldFeedback>(entity =>
@@ -1043,6 +1074,7 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.GitSha).HasMaxLength(40);
             entity.HasIndex(x => x.CreatedAt);
             entity.HasIndex(x => x.WorkCenterId);
+            entity.HasIndex(x => x.CreatedAt, "IX_prd_sf_feedback_created");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.PackageOperation>(entity =>
@@ -1060,6 +1092,9 @@ public sealed class BusinessDbContext : DbContext
             entity.Property(x => x.Notes).HasMaxLength(500);
             entity.Property(x => x.PostedBy).HasMaxLength(200);
             entity.HasIndex(x => new { x.PlantId, x.Number });
+            entity.HasIndex(x => new { x.PlantId, x.Number }, "UX_packageoperation_number_alive")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false AND \"Number\" <> ''");
         });
 
         modelBuilder.Entity<Naswood.Modules.Business.Domain.Inventory.PackageRelation>(entity =>
@@ -1075,6 +1110,11 @@ public sealed class BusinessDbContext : DbContext
             entity.HasIndex(x => x.SourcePackageId);
             entity.HasIndex(x => x.TargetPackageId);
             entity.HasIndex(x => new { x.OperationId, x.SourcePackageId, x.TargetPackageId, x.RelationType }).IsUnique();
+            entity.HasIndex(x => x.SourcePackageId, "IX_packagerelation_source");
+            entity.HasIndex(x => x.TargetPackageId, "IX_packagerelation_target");
+            entity.HasIndex(x => new { x.OperationId, x.SourcePackageId, x.TargetPackageId, x.RelationType }, "UX_packagerelation_edge")
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false");
         });
     }
 }

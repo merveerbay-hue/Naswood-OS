@@ -28,6 +28,7 @@ public class ProductionExecutionChainTests
     {
         await _factory.ResetDatabaseAsync();
         var world = await SeedAsync();
+        var writtenAfter = DateTimeOffset.UtcNow;
         var client = await LoginAsync();
 
         var plan = await client.PostAsJsonAsync($"/api/v1/production-execution/orders/{world.OrderId}/operations", new[]
@@ -164,6 +165,8 @@ public class ProductionExecutionChainTests
         var viewer = await SeedViewerAsync();
         var forbidden = await viewer.PostAsJsonAsync($"/api/v1/production-execution/operations/{world.GetOpId(client, 10)}/start", new { });
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        await WritePathIdentity.AssertCompleteAsync(_factory, writtenAfter);
     }
 
     [Fact]

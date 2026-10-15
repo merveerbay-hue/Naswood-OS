@@ -30,9 +30,22 @@ pnpm install
 pnpm --filter @naswood/web dev          # geliştirme sunucusu
 pnpm --filter @naswood/web exec vite build
 pnpm --filter @naswood/web typecheck    # bilinen: mevcut tip hataları var, yenisini ekleme
+
+dotnet tool restore                     # dotnet-ef (dotnet-tools.json)
+dotnet ef migrations add <Ad> --project <Infrastructure projesi> --context <DbContext> --output-dir Persistence/Migrations
+dotnet ef migrations has-pending-model-changes --project <Infrastructure projesi> --context <DbContext>
+# Örnek: --project src/Modules/Business/Naswood.Modules.Business.Infrastructure --context BusinessDbContext
+#        --project src/Modules/Platform/Naswood.Modules.Platform.Infrastructure --context PlatformDbContext
 ```
 
 API yerelde `http://localhost:5080` (sağlık: `/health`), web `http://localhost:5173`.
+
+## Şema değişikliği
+
+- Şema değişikliği yalnız EF Core migration ile yapılır. `Program.cs`'e veya başka bir yere ALTER/CREATE/`EnsureCreated` ekleme.
+- Her şema değişikliği PR'ında `has-pending-model-changes` iki DbContext için de temiz olmalı.
+- `BusinessStartupDataFixes.cs` yalnız iki geçici veri düzeltmesi içerir (MP M2→M3, paket `WarehouseId` doldurma). Oraya yeni düzeltme eklenmez; ikisi de kaynak hata düzeltilince silinir.
+- Ayrıntı: @.cursor/rules/20-database.mdc
 
 ## Git akışı
 

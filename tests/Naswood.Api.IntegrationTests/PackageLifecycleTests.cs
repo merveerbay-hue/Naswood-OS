@@ -24,6 +24,7 @@ public class PackageLifecycleTests
     {
         await _factory.ResetDatabaseAsync();
         var world = await SeedAsync();
+        var writtenAfter = DateTimeOffset.UtcNow;
         var client = await LoginAsync();
         var key = "PKOP-SPLIT-001";
         var first = await client.PostAsJsonAsync($"/api/v1/packages/{world.PackageAId}/split", new
@@ -66,6 +67,8 @@ public class PackageLifecycleTests
             Assert.Equal(world.MaterialCode, child.MaterialCode);
             Assert.Equal(parent.BatchId, child.BatchId);
         }
+
+        await WritePathIdentity.AssertCompleteAsync(_factory, writtenAfter);
     }
 
     [Fact]
@@ -114,6 +117,7 @@ public class PackageLifecycleTests
     {
         await _factory.ResetDatabaseAsync();
         var world = await SeedAsync(secondPackage: true);
+        var writtenAfter = DateTimeOffset.UtcNow;
         var client = await LoginAsync();
         var res = await client.PostAsJsonAsync("/api/v1/packages/merge", new
         {
@@ -136,6 +140,8 @@ public class PackageLifecycleTests
         using var pass = JsonDocument.Parse(await passport.Content.ReadAsStringAsync());
         Assert.Equal("Merged", pass.RootElement.GetProperty("data").GetProperty("status").GetString());
         Assert.Contains("AKTİF DEĞİL", pass.RootElement.GetProperty("data").GetProperty("inactiveReason").GetString());
+
+        await WritePathIdentity.AssertCompleteAsync(_factory, writtenAfter);
     }
 
     [Fact]
@@ -179,6 +185,7 @@ public class PackageLifecycleTests
     {
         await _factory.ResetDatabaseAsync();
         var world = await SeedAsync();
+        var writtenAfter = DateTimeOffset.UtcNow;
         var client = await LoginAsync();
         var res = await client.PostAsJsonAsync($"/api/v1/packages/{world.PackageAId}/repack", new { number = "PKOP-REPACK-001" });
         res.EnsureSuccessStatusCode();
@@ -194,6 +201,8 @@ public class PackageLifecycleTests
         old.EnsureSuccessStatusCode();
         using var pass = JsonDocument.Parse(await old.Content.ReadAsStringAsync());
         Assert.Contains("yeniden paketlendi", pass.RootElement.GetProperty("data").GetProperty("inactiveReason").GetString(), StringComparison.OrdinalIgnoreCase);
+
+        await WritePathIdentity.AssertCompleteAsync(_factory, writtenAfter);
     }
 
     [Fact]
@@ -201,6 +210,7 @@ public class PackageLifecycleTests
     {
         await _factory.ResetDatabaseAsync();
         var world = await SeedAsync();
+        var writtenAfter = DateTimeOffset.UtcNow;
         var client = await LoginAsync();
         var full = await client.PostAsJsonAsync($"/api/v1/packages/{world.PackageAId}/relocate", new { warehouseCode = "WH-FG", locationCode = "B-01" });
         full.EnsureSuccessStatusCode();
@@ -234,6 +244,8 @@ public class PackageLifecycleTests
             Assert.Equal(20m, db.InventoryBalances.Single(b => b.LocationCode == "B-01" && b.BatchNumber == world.LotNo).QuantityOnHand);
             Assert.Equal(2, db.InventoryMovements.Count(m => m.MovementType == "PACKAGE_MOVE" && m.Quantity == 20));
         }
+
+        await WritePathIdentity.AssertCompleteAsync(_factory, writtenAfter);
     }
 
     [Fact]
